@@ -1,3 +1,4 @@
+import Banner from "@/components/Banner";
 import CounterProps from "@/components/CounterProps";
 import HowItWorksSection from "@/components/HowItWorksSection";
 
@@ -7,7 +8,7 @@ export default function Home() {
     <div>
       <Banner />
       <CounterProps />
-      <HowItWorksSection/>
+      <HowItWorksSection />
     </div>
   );
 }
