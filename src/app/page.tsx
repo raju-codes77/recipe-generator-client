@@ -1,7 +1,16 @@
-import { h1 } from "framer-motion/client";
+import Banner from "@/components/Banner";
+import PersonalizationSection from "@/components/PersonalizationSection";
+import CounterProps from "@/components/CounterProps";
+import HowItWorksSection from "@/components/HowItWorksSection";
+
 
 export default function Home() {
   return (
-    <h1>hero</h1>
+    <div>
+      <Banner />
+      <PersonalizationSection />
+      <CounterProps />
+      <HowItWorksSection />
+    </div>
   );
 }
