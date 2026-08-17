@@ -3,12 +3,22 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Search, Bell, Menu, X, Sun, Moon } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const pathname = usePathname();
+
+  const navLinks = [
+    { name: "Home", href: "/" },
+    { name: "Recipes", href: "/recipes" },
+    { name: "AI Tools", href: "/ai-tools" },
+    { name: "Community", href: "/community" },
+    { name: "Challenges", href: "/challenges" },
+  ];
 
   useEffect(() => {
     if (
@@ -38,7 +48,7 @@ export default function Navbar() {
 
   return (
     <div className="w-full sticky top-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-gray-100 dark:border-slate-800 transition-colors duration-300">
-      <header className="flex items-center justify-between px-6 lg:px-12 py-3 lg:py-4">
+      <header className="flex items-center justify-between px-6 lg:px-10 py-3 lg:py-4">
 
         {/* Left Section: Logo & Nav */}
         <div className="flex items-center gap-12 lg:gap-16">
@@ -58,21 +68,21 @@ export default function Navbar() {
 
           {/* Desktop Navigation Links */}
           <nav className="hidden md:flex items-center gap-8">
-            <Link href="/" className="text-[15px] font-semibold text-emerald-700 dark:text-emerald-400">
-              Home
-            </Link>
-            <Link href="/recipes" className="text-[15px] font-medium text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white transition-colors">
-              Recipes
-            </Link>
-            <Link href="/ai-tools" className="text-[15px] font-medium text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white transition-colors">
-              AI Tools
-            </Link>
-            <Link href="/community" className="text-[15px] font-medium text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white transition-colors">
-              Community
-            </Link>
-            <Link href="/challenges" className="text-[15px] font-medium text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white transition-colors">
-              Challenges
-            </Link>
+            {navLinks.map((link) => {
+              const isActive = pathname === link.href;
+              return (
+                <Link
+                  key={link.name}
+                  href={link.href}
+                  className={`text-[15px] transition-colors ${isActive
+                      ? "font-bold text-emerald-700 dark:text-emerald-400"
+                      : "font-medium text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white"
+                    }`}
+                >
+                  {link.name}
+                </Link>
+              );
+            })}
           </nav>
         </div>
 
@@ -117,6 +127,7 @@ export default function Navbar() {
             />
           </button>
 
+
           {/* Mobile Menu Toggle Button */}
           <button
             className="md:hidden p-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
@@ -149,21 +160,23 @@ export default function Navbar() {
                 />
               </div>
 
-              <Link href="/" className="text-[15px] font-semibold text-emerald-700 dark:text-emerald-400 py-2 border-b border-gray-50 dark:border-slate-800" onClick={() => setIsMobileMenuOpen(false)}>
-                Home
-              </Link>
-              <Link href="/recipes" className="text-[15px] font-medium text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white transition-colors py-2 border-b border-gray-50 dark:border-slate-800" onClick={() => setIsMobileMenuOpen(false)}>
-                Recipes
-              </Link>
-              <Link href="/ai-tools" className="text-[15px] font-medium text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white transition-colors py-2 border-b border-gray-50 dark:border-slate-800" onClick={() => setIsMobileMenuOpen(false)}>
-                AI Tools
-              </Link>
-              <Link href="/community" className="text-[15px] font-medium text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white transition-colors py-2 border-b border-gray-50 dark:border-slate-800" onClick={() => setIsMobileMenuOpen(false)}>
-                Community
-              </Link>
-              <Link href="/challenges" className="text-[15px] font-medium text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white transition-colors py-2" onClick={() => setIsMobileMenuOpen(false)}>
-                Challenges
-              </Link>
+              {navLinks.map((link, index) => {
+                const isActive = pathname === link.href;
+                return (
+                  <Link
+                    key={link.name}
+                    href={link.href}
+                    className={`text-[15px] py-2 transition-colors ${index !== navLinks.length - 1 ? "border-b border-gray-50 dark:border-slate-800" : ""
+                      } ${isActive
+                        ? "font-bold text-emerald-700 dark:text-emerald-400"
+                        : "font-medium text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white"
+                      }`}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    {link.name}
+                  </Link>
+                );
+              })}
             </div>
           </motion.div>
         )}
