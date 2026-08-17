@@ -1,5 +1,6 @@
 "use client";
 import Image from "next/image";
+import { motion } from "framer-motion";
 
 import { ArrowRight, Sparkles, Activity, Leaf, Users, Flame, Utensils } from "lucide-react";
 
@@ -14,7 +15,12 @@ export default function Banner() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-6 items-center">
 
         {/* Left Column (Span 6) */}
-        <div className="lg:col-span-6 flex flex-col items-start text-left z-10">
+        <motion.div 
+          className="lg:col-span-6 flex flex-col items-start text-left z-10"
+          initial={{ opacity: 0, x: -40 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+        >
 
           {/* Top Pill Tag */}
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200/60 dark:border-emerald-800/50 text-emerald-700 dark:text-emerald-400 text-xs font-semibold mb-6">
@@ -82,10 +88,15 @@ export default function Banner() {
             </div>
           </div>
 
-        </div>
+        </motion.div>
 
         {/* Right Column: Hero Bowl & Floating Badges (Span 6) */}
-        <div className="lg:col-span-6 relative flex justify-center items-center">
+        <motion.div 
+          className="lg:col-span-6 relative flex justify-center items-center"
+          initial={{ opacity: 0, scale: 0.9, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
+        >
 
           {/* Subtle Back Glow */}
           <div className="absolute w-[450px] h-[450px] bg-emerald-300/20 dark:bg-emerald-600/15 rounded-full blur-3xl -z-10" />
@@ -145,12 +156,17 @@ export default function Banner() {
             </div>
 
           </div>
-        </div>
+        </motion.div>
 
       </div>
 
       {/* Bottom Floating Stats Card Bar */}
-      <div className="mt-14 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-3xl shadow-xl shadow-slate-200/50 dark:shadow-none p-6 sm:p-8">
+      <motion.div 
+        className="mt-14 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-3xl shadow-xl shadow-slate-200/50 dark:shadow-none p-6 sm:p-8"
+        initial={{ opacity: 0, y: 40 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
+      >
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-4 divide-y sm:divide-y-0 sm:divide-x divide-gray-100 dark:divide-slate-800">
 
           {/* Stat 1: Recipes Created */}
@@ -200,7 +216,7 @@ export default function Banner() {
           </div>
 
         </div>
-      </div>
+      </motion.div>
 
     </section>
   );
