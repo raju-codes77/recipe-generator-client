@@ -218,13 +218,7 @@ export default function DashboardSidebar() {
 
         {/* Bottom Theme Toggle & User Profile Preview */}
         <div className="space-y-3 pt-4 border-t border-gray-200 dark:border-[#89986D]/20">
-          <button
-            onClick={toggleTheme}
-            className="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-gray-100 dark:bg-[#89986D]/10 text-gray-800 dark:text-[#F6F0D7] hover:bg-gray-200 dark:hover:bg-[#89986D]/20 text-xs font-medium transition"
-          >
-            <span>{darkMode ? "Dark Mode" : "Light Mode"}</span>
-            {darkMode ? <FiSun className="text-[#B7E35F]" /> : <FiMoon className="text-[#FF9F43]" />}
-          </button>
+        
 
           <div className="flex items-center justify-between px-2 pt-1">
             <div className="flex items-center space-x-2">
