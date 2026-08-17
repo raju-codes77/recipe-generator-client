@@ -128,6 +128,7 @@ export default function Navbar() {
             />
           </button>
 
+
           {/* Mobile Menu Toggle Button */}
           <button
             className="md:hidden p-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
