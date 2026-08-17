@@ -1,7 +1,9 @@
-import { h1 } from "framer-motion/client";
+import Banner from "@/components/Banner";
 
 export default function Home() {
   return (
-    <h1>hero</h1>
+    <div>
+      <Banner />
+    </div>
   );
 }
