@@ -71,6 +71,7 @@ export default function Navbar() {
               className="object-cover w-full h-full"
             />
           </button>
+          
         </div>
 
       </header>
