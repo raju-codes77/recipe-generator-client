@@ -1,11 +1,16 @@
+"use client";
+
 import {
   ArrowUpRight,
   Clock3,
   Flame,
   Leaf,
   Star,
+  Bookmark,
+  Heart,
 } from "lucide-react";
 import Image from "next/image";
+import { useState } from "react";
 
 interface Recipe {
   id: number | string;
@@ -21,6 +26,9 @@ interface RecipeCardProps {
 }
 
 export default function RecipeCard({ recipe }: RecipeCardProps) {
+  const [isSaved, setIsSaved] = useState(false);
+  const [isLiked, setIsLiked] = useState(false);
+
   return (
     <article className="group relative flex h-full w-full flex-col overflow-hidden rounded-[28px] border border-[#E2EBE4] bg-white p-3 shadow-[0_10px_35px_rgba(37,83,49,0.06)] transition-all duration-500 ease-out hover:-translate-y-2 hover:border-[#C5DED0] hover:shadow-[0_22px_50px_rgba(37,83,49,0.14)]">
       
@@ -36,7 +44,7 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
 
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/40 via-black/10 to-transparent" />
 
-        {/* Category Badge */}
+        {/* 1. Top-Left: Category/Popular Badge */}
         <div className="absolute left-3.5 top-3.5 inline-flex items-center gap-1.5 rounded-full border border-white/80 bg-white/95 px-3 py-1.5 shadow-[0_4px_16px_rgba(0,0,0,0.1)] backdrop-blur-md">
           <Leaf className="h-3.5 w-3.5 text-[#3F864B]" />
           <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-[#37713F]">
@@ -44,13 +52,35 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
           </span>
         </div>
 
-        {/* Rating */}
+        {/* 2. Top-Right: Bookmark Icon Button */}
+        <button
+          onClick={() => setIsSaved(!isSaved)}
+          className={`absolute right-3.5 top-3.5 flex h-8 w-8 items-center justify-center rounded-full border border-white/80 bg-white/95 shadow-[0_4px_16px_rgba(0,0,0,0.1)] backdrop-blur-md transition-transform active:scale-95 cursor-pointer ${
+            isSaved ? "text-[#24733E]" : "text-gray-600 hover:text-[#24733E]"
+          }`}
+          title="Save Recipe"
+        >
+          <Bookmark className={`h-4 w-4 ${isSaved ? "fill-[#24733E]" : ""}`} />
+        </button>
+
+        {/* 3. Bottom-Left: Rating */}
         <div className="absolute bottom-3.5 left-3.5 flex items-center gap-1.5 rounded-full border border-white/80 bg-white/95 px-3 py-1.5 shadow-[0_4px_16px_rgba(0,0,0,0.12)] backdrop-blur-md">
           <Star className="h-3.5 w-3.5 fill-[#F6A51A] text-[#F6A51A]" />
           <span className="text-[11px] font-bold text-[#17231A]">
             {recipe.rating.toFixed(1)}
           </span>
         </div>
+
+        {/* 4. Bottom-Right: Love/Like Icon Button (The empty corner) */}
+        <button
+          onClick={() => setIsLiked(!isLiked)}
+          className={`absolute bottom-3.5 right-3.5 flex h-8 w-8 items-center justify-center rounded-full border border-white/80 bg-white/95 shadow-[0_4px_16px_rgba(0,0,0,0.12)] backdrop-blur-md transition-transform active:scale-95 cursor-pointer ${
+            isLiked ? "text-red-500" : "text-gray-600 hover:text-red-500"
+          }`}
+          title="Like Recipe"
+        >
+          <Heart className={`h-4 w-4 ${isLiked ? "fill-red-500 text-red-500" : ""}`} />
+        </button>
       </div>
 
       {/* ================= CONTENT ================= */}
