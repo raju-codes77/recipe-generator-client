@@ -37,8 +37,8 @@ export default function Navbar() {
   };
 
   return (
-    <div className="w-full relative">
-      <header className="flex items-center justify-between px-6 lg:px-12 py-6 bg-transparent transition-all duration-300">
+    <div className="w-full sticky top-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-gray-100 dark:border-slate-800 transition-colors duration-300">
+      <header className="flex items-center justify-between px-6 lg:px-12 py-3 lg:py-4">
 
         {/* Left Section: Logo & Nav */}
         <div className="flex items-center gap-12 lg:gap-16">
@@ -48,9 +48,10 @@ export default function Navbar() {
               <Image
                 src="/logo3.png"
                 alt="FoodCanvas Logo"
-                width={200}
-                height={66}
-                className="h-12 md:h-18 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
+                width={240}
+                height={80}
+                className="h-10 sm:h-12 lg:h-[52px] w-auto object-contain transition-transform duration-300 group-hover:scale-105"
+                priority
               />
             </Link>
           </div>
