@@ -9,14 +9,18 @@ export default function Banner() {
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
-      transition: { staggerChildren: 0.15 }
-    }
-  };
+      transition: { staggerChildren: 0.15 },
+    },
+  } as const;
 
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0, transition: { type: "spring", duration: 0.6 } }
-  };
+    show: {
+      opacity: 1,
+      y: 0,
+      transition: { type: "spring" as const, duration: 0.6 },
+    },
+  } as const;
 
   return (
     <section className="relative w-full max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-12 lg:pt-10 lg:pb-16 overflow-hidden">

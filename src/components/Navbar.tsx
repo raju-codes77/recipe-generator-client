@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Search, Bell, Menu, X, Sun, Moon } from "lucide-react";
+import { Search, Bell, Menu, X, Sun, Moon, ChefHat } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 
 export default function Navbar() {
@@ -54,16 +54,17 @@ export default function Navbar() {
         <div className="flex items-center gap-12 lg:gap-16">
           {/* Logo Section */}
           <div className="flex items-center gap-2">
-            <Link href="/" className="flex items-center gap-2 group">
-              <Image
-                src="/logo3.png"
-                alt="FoodCanvas Logo"
-                width={240}
-                height={80}
-                className="h-10 sm:h-12 lg:h-[52px] w-auto object-contain transition-transform duration-300 group-hover:scale-105"
-                priority
-              />
-            </Link>
+          <Link href="/" className="flex items-center gap-2 group transition-all duration-300">
+  <div className="bg-green-500 p-1.5 rounded-lg text-white group-hover:rotate-12 transition-transform">
+    <ChefHat size={20} />
+  </div>
+  <h1 className="text-2xl font-extrabold tracking-tight">
+    <span className="text-gray-900 dark:text-white">Food</span>
+    <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-500 to-emerald-600 ml-1">
+      Canvas
+    </span>
+  </h1>
+</Link>
           </div>
 
           {/* Desktop Navigation Links */}
@@ -118,16 +119,12 @@ export default function Navbar() {
           </button>
 
           {/* User Profile */}
-          <button className="h-9 w-9 rounded-full overflow-hidden border border-gray-200">
-            <Image
-              src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-              alt="User profile"
-              width={36}
-              height={36}
-              className="object-cover w-full h-full"
-            />
-          </button>
-
+        <Link 
+  href="/registrationProcess/login"
+  className="inline-flex items-center justify-center px-5 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all duration-200 transform hover:-translate-y-0.5"
+>
+  Sign In
+</Link>
 
           {/* Mobile Menu Toggle Button */}
           <button
