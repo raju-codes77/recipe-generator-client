@@ -1,371 +1,263 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState, useEffect } from "react";
+import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import {
-  FiUser,
-  FiMail,
-  FiLock,
-  FiImage,
-  FiArrowRight,
-  FiCheckCircle,
-  FiLoader,
-} from "react-icons/fi";
-import { FcGoogle } from "react-icons/fc";
-import { authClient } from "@/lib/auth-client";
+import { usePathname } from "next/navigation";
+import { Search, Bell, Menu, X, Sun, Moon, LogOut } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 
-export default function RegisterPage() {
-  const router = useRouter();
+export default function Navbar() {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  
+  // TODO: Replace with your actual auth state (e.g., from useSession() or useUser())
+  const [isLoggedIn, setIsLoggedIn] = useState(true); 
+  const [userName, setUserName] = useState("John Doe (Admin)"); // ইউজার বা অ্যাডমিনের নাম এখানে আসবে
+  
+  const pathname = usePathname();
 
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [photo, setPhoto] = useState("");
-
-  const [loading, setLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
-
-  // Password requirements
-  const passwordSteps = [
-    {
-      label: "At least 8 characters long",
-      met: password.length >= 8,
-    },
-    {
-      label: "Contains a uppercase letter",
-      met: /[A-Z]/.test(password),
-    },
-    {
-      label: "Contains a number",
-      met: /[0-9]/.test(password),
-    },
-    {
-      label: "Contains a special character",
-      met: /[^A-Za-z0-9]/.test(password),
-    },
+  const navLinks = [
+    { name: "Home", href: "/" },
+    { name: "Recipes", href: "/recipes" },
+    { name: "AI Tools", href: "/ai-tools" },
+    { name: "Community", href: "/community" },
+    { name: "Challenges", href: "/challenges" },
   ];
 
-  const isPasswordValid = passwordSteps.every((step) => step.met);
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-
-    setErrorMessage("");
-    setSuccessMessage("");
-
-    // Basic validation
-    if (!name.trim()) {
-      setErrorMessage("Please enter your full name.");
-      return;
+  useEffect(() => {
+    if (
+      localStorage.theme === "dark" ||
+      (!("theme" in localStorage) &&
+        window.matchMedia("(prefers-color-scheme: dark)").matches)
+    ) {
+      setIsDarkMode(true);
+      document.documentElement.classList.add("dark");
+    } else {
+      setIsDarkMode(false);
+      document.documentElement.classList.remove("dark");
     }
+  }, []);
 
-    if (!email.trim()) {
-      setErrorMessage("Please enter your email address.");
-      return;
-    }
-
-    if (!isPasswordValid) {
-      setErrorMessage(
-        "Please fulfill all password requirements before creating your account."
-      );
-      return;
-    }
-
-    try {
-      setLoading(true);
-
-      const { data, error } = await authClient.signUp.email({
-        name: name.trim(),
-        email: email.trim(),
-        password,
-      });
-
-      if (error) {
-        console.error("Signup error:", error);
-
-        setErrorMessage(
-          error.message || "Unable to create your account. Please try again."
-        );
-
-        return;
-      }
-
-      console.log("Signup successful:", data);
-
-      setSuccessMessage(
-        "Account created successfully! Redirecting..."
-      );
-
-      // photo is currently collected from the form,
-      // but it is not sent to Better Auth's default signup endpoint.
-      console.log("Profile photo URL:", photo);
-
-      // Small delay so user can see success message
-      setTimeout(() => {
-        router.push("/registrationProcess/login");
-        router.refresh();
-      }, 1000);
-    } catch (error) {
-      console.error("Unexpected signup error:", error);
-
-      setErrorMessage(
-        "Something went wrong. Please check your connection and try again."
-      );
-    } finally {
-      setLoading(false);
+  const toggleTheme = () => {
+    if (isDarkMode) {
+      document.documentElement.classList.remove("dark");
+      localStorage.theme = "light";
+      setIsDarkMode(false);
+    } else {
+      document.documentElement.classList.add("dark");
+      localStorage.theme = "dark";
+      setIsDarkMode(true);
     }
   };
 
-  const handleGoogleSignup = async () => {
-    setErrorMessage("");
-    setSuccessMessage("");
-
-    try {
-      setLoading(true);
-
-      await authClient.signIn.social({
-        provider: "google",
-        callbackURL: "/dashboard",
-      });
-    } catch (error) {
-      console.error("Google signup error:", error);
-
-      setErrorMessage(
-        "Google signup is not configured yet."
-      );
-
-      setLoading(false);
-    }
+  const handleLogout = () => {
+    // Perform your logout logic here (e.g., clearing tokens, signOut())
+    setIsLoggedIn(false);
+    setIsMobileMenuOpen(false);
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-black p-4 relative overflow-hidden transition-colors duration-300 py-12">
-      {/* Background Decorative Shapes */}
-      <div className="absolute top-1/4 -right-24 w-96 h-96 bg-[#2F8F46]/10 dark:bg-[#2F8F46]/20 rounded-full blur-3xl pointer-events-none" />
+    <div className="w-full sticky top-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-gray-100 dark:border-slate-800 transition-colors duration-300">
+      <header className="flex items-center justify-between px-6 lg:px-10 py-3 lg:py-4">
 
-      <div className="absolute bottom-10 -left-24 w-96 h-96 bg-[#FF9F43]/10 dark:bg-[#FF9F43]/15 rounded-full blur-3xl pointer-events-none" />
-
-      <div className="w-full max-w-md bg-white dark:bg-black/60 border border-gray-200 dark:border-[#89986D]/20 backdrop-blur-xl p-8 rounded-3xl shadow-2xl relative z-10">
-
-        {/* Brand Header */}
-        <div className="text-center mb-6">
-          <div className="w-12 h-12 mx-auto rounded-2xl bg-[#2F8F46] flex items-center justify-center text-white font-bold text-2xl shadow-lg shadow-[#2F8F46]/30 mb-3">
-            F
-          </div>
-
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-[#F6F0D7]">
-            Create Account
-          </h1>
-
-          <p className="text-xs text-gray-500 dark:text-[#F6F0D7]/60 mt-1">
-            Join FlavorAI and start generating smart recipes
-          </p>
-        </div>
-
-        {/* Google Signup Button */}
-        <button
-          type="button"
-          onClick={handleGoogleSignup}
-          disabled={loading}
-          className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl border border-gray-200 dark:border-[#89986D]/20 bg-gray-50 dark:bg-[#89986D]/5 hover:bg-gray-100 dark:hover:bg-[#89986D]/15 text-xs font-semibold text-gray-800 dark:text-[#F6F0D7] transition shadow-sm mb-4 disabled:opacity-60 disabled:cursor-not-allowed"
-        >
-          <FcGoogle size={20} />
-          <span>Sign up with Google</span>
-        </button>
-
-        {/* Divider */}
-        <div className="flex items-center mb-5">
-          <div className="flex-grow border-t border-gray-200 dark:border-[#89986D]/20" />
-
-          <span className="px-3 text-[10px] uppercase font-semibold text-gray-400 dark:text-[#F6F0D7]/40">
-            or with details
-          </span>
-
-          <div className="flex-grow border-t border-gray-200 dark:border-[#89986D]/20" />
-        </div>
-
-        {/* Error Message */}
-        {errorMessage && (
-          <div className="mb-4 rounded-xl border border-red-200 bg-red-50 dark:bg-red-950/20 dark:border-red-900/40 px-4 py-3">
-            <p className="text-xs text-red-600 dark:text-red-400">
-              {errorMessage}
-            </p>
-          </div>
-        )}
-
-        {/* Success Message */}
-        {successMessage && (
-          <div className="mb-4 rounded-xl border border-green-200 bg-green-50 dark:bg-green-950/20 dark:border-green-900/40 px-4 py-3">
-            <p className="text-xs text-green-600 dark:text-green-400">
-              {successMessage}
-            </p>
-          </div>
-        )}
-
-        {/* Register Form */}
-        <form onSubmit={handleSubmit} className="space-y-3.5">
-
-          {/* Full Name */}
-          <div>
-            <label className="block text-xs font-semibold text-gray-700 dark:text-[#F6F0D7]/80 mb-1">
-              Full Name
-            </label>
-
-            <div className="relative">
-              <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-gray-400">
-                <FiUser />
-              </span>
-
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Chef Alex"
-                required
-                disabled={loading}
-                className="w-full pl-10 pr-4 py-3 rounded-xl bg-gray-50 dark:bg-[#89986D]/10 border border-gray-200 dark:border-[#89986D]/20 text-xs text-gray-900 dark:text-[#F6F0D7] focus:outline-none focus:border-[#2F8F46] disabled:opacity-60"
+        {/* Left Section: Logo & Nav */}
+        <div className="flex items-center gap-12 lg:gap-16">
+          {/* Logo Section */}
+          <div className="flex items-center gap-2">
+            <Link href="/" className="flex items-center gap-2 group">
+              <Image
+                src="/logo3.png"
+                alt="FoodCanvas Logo"
+                width={240}
+                height={80}
+                className="h-10 sm:h-12 lg:h-[52px] w-auto object-contain transition-transform duration-300 group-hover:scale-105"
+                priority
               />
-            </div>
+            </Link>
           </div>
 
-          {/* Email */}
-          <div>
-            <label className="block text-xs font-semibold text-gray-700 dark:text-[#F6F0D7]/80 mb-1">
-              Email Address
-            </label>
-
-            <div className="relative">
-              <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-gray-400">
-                <FiMail />
-              </span>
-
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="chef@flavorai.com"
-                required
-                disabled={loading}
-                className="w-full pl-10 pr-4 py-3 rounded-xl bg-gray-50 dark:bg-[#89986D]/10 border border-gray-200 dark:border-[#89986D]/20 text-xs text-gray-900 dark:text-[#F6F0D7] focus:outline-none focus:border-[#2F8F46] disabled:opacity-60"
-              />
-            </div>
-          </div>
-
-          {/* Password */}
-          <div>
-            <label className="block text-xs font-semibold text-gray-700 dark:text-[#F6F0D7]/80 mb-1">
-              Password
-            </label>
-
-            <div className="relative">
-              <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-gray-400">
-                <FiLock />
-              </span>
-
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-                disabled={loading}
-                className="w-full pl-10 pr-4 py-3 rounded-xl bg-gray-50 dark:bg-[#89986D]/10 border border-gray-200 dark:border-[#89986D]/20 text-xs text-gray-900 dark:text-[#F6F0D7] focus:outline-none focus:border-[#2F8F46] disabled:opacity-60"
-              />
-            </div>
-          </div>
-
-          {/* Password Requirements */}
-          <div className="p-3 rounded-xl bg-gray-50 dark:bg-[#89986D]/5 border border-gray-100 dark:border-[#89986D]/10 space-y-1.5">
-
-            <p className="text-[10px] font-bold text-gray-500 dark:text-[#F6F0D7]/60 uppercase tracking-wide">
-              Password Requirements:
-            </p>
-
-            {passwordSteps.map((step, idx) => (
-              <div
-                key={idx}
-                className="flex items-center gap-2 text-[11px]"
-              >
-                <FiCheckCircle
-                  className={
-                    step.met
-                      ? "text-[#2F8F46]"
-                      : "text-gray-300 dark:text-gray-600"
-                  }
-                  size={13}
-                />
-
-                <span
-                  className={
-                    step.met
-                      ? "text-gray-900 dark:text-[#F6F0D7] font-medium"
-                      : "text-gray-400 dark:text-[#F6F0D7]/40"
-                  }
+          {/* Desktop Navigation Links */}
+          <nav className="hidden md:flex items-center gap-8">
+            {navLinks.map((link) => {
+              const isActive = pathname === link.href;
+              return (
+                <Link
+                  key={link.name}
+                  href={link.href}
+                  className={`text-[15px] transition-colors ${
+                    isActive
+                      ? "font-bold text-emerald-700 dark:text-emerald-400"
+                      : "font-medium text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white"
+                  }`}
                 >
-                  {step.label}
-                </span>
-              </div>
-            ))}
-          </div>
+                  {link.name}
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
 
-          {/* Profile Photo URL */}
-          <div>
-            <label className="block text-xs font-semibold text-gray-700 dark:text-[#F6F0D7]/80 mb-1">
-              Profile Photo URL{" "}
-              <span className="text-[10px] text-gray-400 font-normal">
-                (Optional)
-              </span>
-            </label>
+        {/* Right Section (Search & Actions) */}
+        <div className="flex items-center gap-4 sm:gap-6">
 
-            <div className="relative">
-              <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-gray-400">
-                <FiImage />
-              </span>
-
-              <input
-                type="url"
-                value={photo}
-                onChange={(e) => setPhoto(e.target.value)}
-                placeholder="https://example.com/photo.jpg"
-                disabled={loading}
-                className="w-full pl-10 pr-4 py-3 rounded-xl bg-gray-50 dark:bg-[#89986D]/10 border border-gray-200 dark:border-[#89986D]/20 text-xs text-gray-900 dark:text-[#F6F0D7] focus:outline-none focus:border-[#2F8F46] disabled:opacity-60"
-              />
+          {/* Search Bar (Desktop) */}
+          <div className="hidden lg:flex items-center relative">
+            <div className="absolute left-3 text-gray-400">
+              <Search size={18} />
             </div>
+            <input
+              type="text"
+              placeholder="Search recipes, ingredient..."
+              className="w-64 pl-10 pr-4 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-100 dark:border-slate-700 text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-gray-700 dark:text-slate-200 placeholder-gray-400 dark:placeholder-slate-500"
+            />
           </div>
 
-          {/* Submit Button */}
+          {/* Theme Toggle */}
           <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3 bg-[#2F8F46] hover:bg-[#2F8F46]/90 text-white font-bold rounded-xl shadow-lg shadow-[#2F8F46]/30 transition flex items-center justify-center gap-2 text-xs mt-2 disabled:opacity-60 disabled:cursor-not-allowed"
+            onClick={toggleTheme}
+            className="p-2 text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors relative"
+            aria-label="Toggle Dark Mode"
           >
-            {loading ? (
-              <>
-                <FiLoader className="animate-spin" size={16} />
-                <span>Creating Account...</span>
-              </>
-            ) : (
-              <>
-                <span>Create Account</span>
-                <FiArrowRight size={16} />
-              </>
-            )}
+            {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
           </button>
-        </form>
 
-        {/* Login Link */}
-        <p className="text-center text-xs text-gray-500 dark:text-[#F6F0D7]/60 mt-6">
-          Already have an account?{" "}
-          <Link
-            href="/login"
-            className="text-[#2F8F46] dark:text-[#B7E35F] font-bold hover:underline"
+          {/* Conditional Authentication Actions */}
+          {isLoggedIn ? (
+            <>
+              {/* Notifications */}
+              <button className="p-2 text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors relative">
+                <Bell size={20} />
+                <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
+              </button>
+
+              {/* User Info & Logout Button (Desktop) */}
+              <div className="hidden sm:flex items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <div className="h-9 w-9 rounded-full overflow-hidden border border-gray-200 flex-shrink-0">
+                    <Image
+                      src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
+                      alt="User profile"
+                      width={36}
+                      height={36}
+                      className="object-cover w-full h-full"
+                    />
+                  </div>
+                  <span className="text-sm font-semibold text-gray-700 dark:text-slate-200 max-w-[120px] truncate">
+                    {userName}
+                  </span>
+                </div>
+
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-1.5 px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 dark:bg-slate-800 dark:text-red-400 dark:hover:bg-slate-700 text-sm font-semibold rounded-full transition-colors shadow-sm"
+                >
+                  <LogOut size={16} /> Logout
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="hidden sm:flex items-center gap-3">
+              <Link 
+                href="/registrationProcess/signin"
+                className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-full transition-colors shadow-sm shadow-emerald-600/20"
+              >
+                Login
+              </Link>
+            </div>
+          )}
+
+          {/* Mobile Menu Toggle Button */}
+          <button
+            className="md:hidden p-2 text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           >
-            Log in
-          </Link>
-        </p>
-      </div>
+            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
+      </header>
+
+      {/* Mobile Menu Dropdown */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -10, height: 0 }}
+            animate={{ opacity: 1, y: 0, height: "auto" }}
+            exit={{ opacity: 0, y: -10, height: 0 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+            className="md:hidden absolute top-full left-0 w-full bg-white dark:bg-slate-900 shadow-lg px-6 z-50 rounded-b-2xl overflow-hidden border-b border-gray-100 dark:border-slate-800"
+          >
+            <div className="flex flex-col gap-4 py-4">
+              <div className="flex items-center relative mb-2">
+                <div className="absolute left-3 text-gray-400">
+                  <Search size={18} />
+                </div>
+                <input
+                  type="text"
+                  placeholder="Search recipes, ingredient..."
+                  className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-100 dark:border-slate-700 text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-gray-700 dark:text-slate-200 placeholder-gray-400 dark:placeholder-slate-500"
+                />
+              </div>
+
+              {navLinks.map((link, index) => {
+                const isActive = pathname === link.href;
+                return (
+                  <Link
+                    key={link.name}
+                    href={link.href}
+                    className={`text-[15px] py-2 transition-colors ${
+                      index !== navLinks.length - 1 ? "border-b border-gray-50 dark:border-slate-800" : ""
+                    } ${
+                      isActive
+                        ? "font-bold text-emerald-700 dark:text-emerald-400"
+                        : "font-medium text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white"
+                    }`}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    {link.name}
+                  </Link>
+                );
+              })}
+
+              {/* Mobile Auth Options */}
+              <div className="pt-3 border-t border-gray-100 dark:border-slate-800 flex flex-col gap-3">
+                {isLoggedIn ? (
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-center gap-3 py-1">
+                      <div className="h-9 w-9 rounded-full overflow-hidden border border-gray-200 flex-shrink-0">
+                        <Image
+                          src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
+                          alt="User profile"
+                          width={36}
+                          height={36}
+                          className="object-cover w-full h-full"
+                        />
+                      </div>
+                      <span className="text-sm font-bold text-gray-800 dark:text-slate-100 truncate">
+                        {userName}
+                      </span>
+                    </div>
+                    <button
+                      onClick={handleLogout}
+                      className="flex items-center justify-center gap-2 w-full py-2.5 bg-red-50 hover:bg-red-100 text-red-600 dark:bg-slate-800 dark:text-red-400 dark:hover:bg-slate-700 text-sm font-semibold rounded-full transition-colors"
+                    >
+                      <LogOut size={16} /> Logout
+                    </button>
+                  </div>
+                ) : (
+                  <Link
+                    href="/registrationProcess/signin"
+                    className="flex items-center justify-center w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-full transition-colors"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    Login
+                  </Link>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

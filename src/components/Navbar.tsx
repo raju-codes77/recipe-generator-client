@@ -4,12 +4,16 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Search, Bell, Menu, X, Sun, Moon } from "lucide-react";
+import { Search, Bell, Menu, X, Sun, Moon, LogOut, LogIn } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  
+  // TODO: Replace this mock state with your actual auth check (e.g., useSession() or useUser())
+  const [isLoggedIn, setIsLoggedIn] = useState(true); 
+  
   const pathname = usePathname();
 
   const navLinks = [
@@ -46,6 +50,11 @@ export default function Navbar() {
     }
   };
 
+  const handleLogout = () => {
+    // Perform your logout logic here (e.g., clearing tokens, signOut())
+    setIsLoggedIn(false);
+  };
+
   return (
     <div className="w-full sticky top-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-gray-100 dark:border-slate-800 transition-colors duration-300">
       <header className="flex items-center justify-between px-6 lg:px-10 py-3 lg:py-4">
@@ -74,10 +83,11 @@ export default function Navbar() {
                 <Link
                   key={link.name}
                   href={link.href}
-                  className={`text-[15px] transition-colors ${isActive
+                  className={`text-[15px] transition-colors ${
+                    isActive
                       ? "font-bold text-emerald-700 dark:text-emerald-400"
                       : "font-medium text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white"
-                    }`}
+                  }`}
                 >
                   {link.name}
                 </Link>
@@ -110,38 +120,58 @@ export default function Navbar() {
             {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
           </button>
 
-          {/* Sign Up Button */}
-          <Link 
-            href="/registrationProcess/register"
-            className="hidden sm:block px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-full transition-colors shadow-sm shadow-emerald-600/20"
-          >
-            Sign Up
-          </Link>
+          {/* Conditional Authentication Actions */}
+          {isLoggedIn ? (
+            <>
+              {/* Notifications */}
+              <button className="p-2 text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors relative">
+                <Bell size={20} />
+                <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
+              </button>
 
-          {/* Notifications */}
-          <button className="p-2 text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors relative">
-            <Bell size={20} />
-            <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
-          </button>
-
-          {/* User Profile */}
-          <button className="h-9 w-9 rounded-full overflow-hidden border border-gray-200">
-            <Image
-              src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-              alt="User profile"
-              width={36}
-              height={36}
-              className="object-cover w-full h-full"
-            />
-          </button>
-
+              {/* User Profile & Logout Button Container */}
+              <div className="hidden sm:flex items-center gap-3">
+                <button className="h-9 w-9 rounded-full overflow-hidden border border-gray-200">
+                  <Image
+                    src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
+                    alt="User profile"
+                    width={36}
+                    height={36}
+                    className="object-cover w-full h-full"
+                  />
+                </button>
+                <button
+                  onClick={handleLogout}
+                  title="Logout"
+                  className="p-2 text-gray-600 dark:text-slate-300 hover:bg-red-50 hover:text-red-600 dark:hover:bg-slate-800 dark:hover:text-red-400 rounded-full transition-colors"
+                >
+                  <LogOut size={20} />
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="hidden sm:flex items-center gap-3">
+              <Link 
+                href="/registrationProcess/signin"
+                className="px-4 py-2 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-slate-800 text-sm font-semibold rounded-full transition-colors"
+              >
+                Sign In
+              </Link>
+              <Link 
+                href="/registrationProcess/register"
+                className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-full transition-colors shadow-sm shadow-emerald-600/20"
+              >
+                Sign Up
+              </Link>
+            </div>
+          )}
 
           {/* Mobile Menu Toggle Button */}
           <button
-            className="md:hidden p-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+            className="md:hidden p-2 text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           >
-            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            {isMobileMenuOpen ? <X size={24} /> : <Menu size5={24} />}
           </button>
         </div>
       </header>
@@ -154,9 +184,9 @@ export default function Navbar() {
             animate={{ opacity: 1, y: 0, height: "auto" }}
             exit={{ opacity: 0, y: -10, height: 0 }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
-            className="md:hidden absolute top-full left-0 w-full bg-white dark:bg-slate-900 shadow-lg px-6 z-50 rounded-b-2xl overflow-hidden"
+            className="md:hidden absolute top-full left-0 w-full bg-white dark:bg-slate-900 shadow-lg px-6 z-50 rounded-b-2xl overflow-hidden border-b border-gray-100 dark:border-slate-800"
           >
-            <div className="flex flex-col gap-4 py-4 border-t border-gray-100 dark:border-slate-800">
+            <div className="flex flex-col gap-4 py-4">
               <div className="flex items-center relative mb-2">
                 <div className="absolute left-3 text-gray-400">
                   <Search size={18} />
@@ -174,11 +204,13 @@ export default function Navbar() {
                   <Link
                     key={link.name}
                     href={link.href}
-                    className={`text-[15px] py-2 transition-colors ${index !== navLinks.length - 1 ? "border-b border-gray-50 dark:border-slate-800" : ""
-                      } ${isActive
+                    className={`text-[15px] py-2 transition-colors ${
+                      index !== navLinks.length - 1 ? "border-b border-gray-50 dark:border-slate-800" : ""
+                    } ${
+                      isActive
                         ? "font-bold text-emerald-700 dark:text-emerald-400"
                         : "font-medium text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white"
-                      }`}
+                    }`}
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     {link.name}
@@ -186,13 +218,37 @@ export default function Navbar() {
                 );
               })}
 
-              <Link
-                href="/registrationProcess/register"
-                className="text-[15px] font-bold text-emerald-700 dark:text-emerald-400 py-2 border-t border-gray-50 dark:border-slate-800 mt-2"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Sign Up
-              </Link>
+              {/* Mobile Auth Options */}
+              <div className="pt-2 border-t border-gray-100 dark:border-slate-800 flex flex-col gap-2">
+                {isLoggedIn ? (
+                  <button
+                    onClick={() => {
+                      handleLogout();
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="flex items-center gap-2 text-[15px] font-bold text-red-600 dark:text-red-400 py-2"
+                  >
+                    <LogOut size={18} /> Logout
+                  </button>
+                ) : (
+                  <>
+                    <Link
+                      href="/registrationProcess/signin"
+                      className="text-[15px] font-bold text-gray-700 dark:text-slate-200 py-2"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      Sign In
+                    </Link>
+                    <Link
+                      href="/registrationProcess/register"
+                      className="text-[15px] font-bold text-emerald-700 dark:text-emerald-400 py-2"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      Sign Up
+                    </Link>
+                  </>
+                )}
+              </div>
             </div>
           </motion.div>
         )}
