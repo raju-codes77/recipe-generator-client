@@ -121,7 +121,7 @@ export default function Navbar({ initialUser }: NavbarProps) {
                 <Link
                   key={link.name}
                   href={link.href}
-                  className={`text-[15px] transition-colors ${
+                  className={`text-[15px] whitespace-nowrap transition-colors ${
                     isActive
                       ? "font-bold text-emerald-700 dark:text-emerald-400"
                       : "font-medium text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white"
@@ -137,16 +137,6 @@ export default function Navbar({ initialUser }: NavbarProps) {
         {/* Right Section (Search & Actions) */}
         <div className="flex items-center gap-4 sm:gap-6">
 
-          <div className="hidden lg:flex items-center relative">
-            <div className="absolute left-3 text-gray-400">
-              <Search size={18} />
-            </div>
-            <input
-              type="text"
-              placeholder="Search recipes, ingredient..."
-              className="w-64 pl-10 pr-4 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-100 dark:border-slate-700 text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-gray-700 dark:text-slate-200 placeholder-gray-400 dark:placeholder-slate-500"
-            />
-          </div>
 
           <button
             onClick={toggleTheme}
@@ -219,16 +209,7 @@ export default function Navbar({ initialUser }: NavbarProps) {
             className="md:hidden absolute top-full left-0 w-full bg-white dark:bg-slate-900 shadow-lg px-6 z-50 rounded-b-2xl overflow-hidden border-b border-gray-100 dark:border-slate-800"
           >
             <div className="flex flex-col gap-4 py-4">
-              <div className="flex items-center relative mb-2">
-                <div className="absolute left-3 text-gray-400">
-                  <Search size={18} />
-                </div>
-                <input
-                  type="text"
-                  placeholder="Search recipes, ingredient..."
-                  className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-100 dark:border-slate-700 text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-gray-700 dark:text-slate-200 placeholder-gray-400 dark:placeholder-slate-500"
-                />
-              </div>
+
 
               {/* Mobile Nav Links (Dashboard included here automatically if logged in) */}
               {navLinks.map((link, index) => {
