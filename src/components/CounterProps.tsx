@@ -77,15 +77,15 @@ export default function HealthyWorldSection() {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         transition={{ duration: 0.8, ease: "easeOut" }}
-        className="relative w-full max-w-6xl bg-emerald-900 dark:bg-gray-900 rounded-3xl p-8 md:p-12 text-white shadow-2xl overflow-hidden flex flex-col md:flex-row items-center justify-between border border-emerald-800 dark:border-gray-800"
+        className="relative w-full max-w-6xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-3xl p-8 md:p-12 text-gray-900 dark:text-white shadow-xl shadow-slate-200/50 dark:shadow-none border border-gray-100 dark:border-slate-800 overflow-hidden flex flex-col md:flex-row items-center justify-between"
       >
         {/* Left side with the specific image link */}
-        <div className="flex items-center justify-center mb-8 md:mb-0 md:w-1/3">
+        <div className="flex items-center justify-center mb-8 md:mb-0 md:w-1/3 relative z-10">
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             whileInView={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="relative w-48 h-48 md:w-60 md:h-60"
+            className="relative w-48 h-48 md:w-60 md:h-60 drop-shadow-2xl"
           >
             <Image
               src="https://static.vecteezy.com/system/resources/previews/044/771/696/non_2x/a-basket-brimming-with-vegetables-free-png.png"
@@ -98,8 +98,8 @@ export default function HealthyWorldSection() {
         </div>
 
         {/* Right side stats and content */}
-        <div className="w-full md:w-2/3 flex flex-col items-center">
-          <h3 className="text-emerald-100 dark:text-gray-300 text-lg md:text-xl font-medium mb-8 text-center tracking-wide">
+        <div className="w-full md:w-2/3 flex flex-col items-center relative z-10">
+          <h3 className="text-gray-600 dark:text-slate-400 text-lg md:text-xl font-medium mb-8 text-center tracking-wide">
             Making a healthier world, one meal at a time
           </h3>
 
@@ -112,11 +112,13 @@ export default function HealthyWorldSection() {
                 transition={{ duration: 0.5, delay: index * 0.15 }}
                 className="flex flex-col items-center justify-center"
               >
-                {stat.icon}
-                <h4 className="text-2xl md:text-3xl font-bold text-white dark:text-emerald-400 mb-1">
+                <div className="w-14 h-14 rounded-2xl bg-gray-50 dark:bg-slate-800/50 border border-gray-100 dark:border-slate-700/50 flex items-center justify-center mb-3 shadow-sm">
+                  {stat.icon}
+                </div>
+                <h4 className="text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-white mb-1">
                   <Counter end={stat.value} suffix={stat.suffix} />
                 </h4>
-                <p className="text-xs md:text-sm text-emerald-200/70 dark:text-gray-400 font-light">
+                <p className="text-xs md:text-sm text-gray-500 dark:text-slate-400 font-medium">
                   {stat.label}
                 </p>
               </motion.div>
