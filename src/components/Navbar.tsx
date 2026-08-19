@@ -48,7 +48,7 @@ export default function Navbar() {
 
   return (
     <div className="w-full sticky top-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-gray-100 dark:border-slate-800 transition-colors duration-300">
-      <header className="flex items-center justify-between px-6 lg:px-12 py-3 lg:py-4">
+      <header className="flex items-center justify-between px-6 lg:px-10 py-3 lg:py-4">
 
         {/* Left Section: Logo & Nav */}
         <div className="flex items-center gap-12 lg:gap-16">
@@ -74,11 +74,10 @@ export default function Navbar() {
                 <Link
                   key={link.name}
                   href={link.href}
-                  className={`text-[15px] transition-colors ${
-                    isActive
+                  className={`text-[15px] transition-colors ${isActive
                       ? "font-bold text-emerald-700 dark:text-emerald-400"
                       : "font-medium text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white"
-                  }`}
+                    }`}
                 >
                   {link.name}
                 </Link>
@@ -111,6 +110,14 @@ export default function Navbar() {
             {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
           </button>
 
+          {/* Sign Up Button */}
+          <Link 
+            href="/registrationProcess/register"
+            className="hidden sm:block px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-full transition-colors shadow-sm shadow-emerald-600/20"
+          >
+            Sign Up
+          </Link>
+
           {/* Notifications */}
           <button className="p-2 text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors relative">
             <Bell size={20} />
@@ -127,6 +134,7 @@ export default function Navbar() {
               className="object-cover w-full h-full"
             />
           </button>
+
 
           {/* Mobile Menu Toggle Button */}
           <button
@@ -166,19 +174,25 @@ export default function Navbar() {
                   <Link
                     key={link.name}
                     href={link.href}
-                    className={`text-[15px] py-2 transition-colors ${
-                      index !== navLinks.length - 1 ? "border-b border-gray-50 dark:border-slate-800" : ""
-                    } ${
-                      isActive
+                    className={`text-[15px] py-2 transition-colors ${index !== navLinks.length - 1 ? "border-b border-gray-50 dark:border-slate-800" : ""
+                      } ${isActive
                         ? "font-bold text-emerald-700 dark:text-emerald-400"
                         : "font-medium text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white"
-                    }`}
+                      }`}
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     {link.name}
                   </Link>
                 );
               })}
+
+              <Link
+                href="/registrationProcess/register"
+                className="text-[15px] font-bold text-emerald-700 dark:text-emerald-400 py-2 border-t border-gray-50 dark:border-slate-800 mt-2"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Sign Up
+              </Link>
             </div>
           </motion.div>
         )}
