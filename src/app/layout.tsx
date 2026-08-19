@@ -32,7 +32,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <main className="flex-1">
             {children}
           </main>
+<<<<<<< HEAD
+          <Footer />
+=======
           <Footer/>
+>>>>>>> 352a206239df04bd49266497447b35a94a166671
         </div>
       </body>
     </html>
