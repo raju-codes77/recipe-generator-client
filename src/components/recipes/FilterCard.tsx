@@ -80,7 +80,7 @@ export default function FilterCard({
 
       </div>
 
-      {/* ================= SEARCH & SINGLE ROW FILTER BAR ================= */}
+      {/*  SEARCH & SINGLE ROW FILTER BAR */}
       <div className="mt-8 pt-6 border-t border-gray-100 dark:border-white/10 flex flex-wrap items-center gap-3">
         
         {/* Search Input */}
