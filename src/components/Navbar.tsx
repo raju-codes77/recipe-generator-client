@@ -110,6 +110,14 @@ export default function Navbar() {
             {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
           </button>
 
+          {/* Sign Up Button */}
+          <Link 
+            href="/registrationProcess/register"
+            className="hidden sm:block px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-full transition-colors shadow-sm shadow-emerald-600/20"
+          >
+            Sign Up
+          </Link>
+
           {/* Notifications */}
           <button className="p-2 text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors relative">
             <Bell size={20} />
@@ -177,6 +185,14 @@ export default function Navbar() {
                   </Link>
                 );
               })}
+
+              <Link
+                href="/registrationProcess/register"
+                className="text-[15px] font-bold text-emerald-700 dark:text-emerald-400 py-2 border-t border-gray-50 dark:border-slate-800 mt-2"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Sign Up
+              </Link>
             </div>
           </motion.div>
         )}
