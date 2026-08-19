@@ -1,36 +1,40 @@
 import Image from "next/image";
 import { Refrigerator, BarChart3, Camera, Sparkles, Smile, ArrowRight } from "lucide-react";
+import Link from "next/link";
 
 export default function AvailableTools() {
   return (
     <div className="mb-10">
       <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-6">Available AI Tools</h3>
-      
+
       {/* Tools Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        
+
         {/* 1. Pantry-to-Plate AI */}
         <div className="bg-green-50/50 dark:bg-slate-800/50 rounded-3xl p-6 border border-green-100 dark:border-slate-700 relative overflow-hidden group hover:shadow-md transition-shadow">
           <div className="w-12 h-12 bg-green-600 rounded-xl flex items-center justify-center text-white mb-6 shadow-sm shadow-green-600/30">
             <Refrigerator size={24} />
           </div>
-          
+
           <div className="flex items-center gap-2 mb-2">
             <h4 className="font-bold text-slate-900 dark:text-white text-lg">Pantry-to-Plate AI</h4>
             <span className="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-green-200">Popular</span>
           </div>
-          
+
           <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed mb-6 max-w-[200px]">
             Turn your available ingredients into delicious recipes. Reduce food waste and get smart recipe suggestions.
           </p>
-          
-          <button className="text-green-700 dark:text-green-500 font-semibold text-sm flex items-center gap-1.5 group-hover:gap-2 transition-all">
+
+          <Link
+            href="/ai-tools/pantry-to-plate"
+            className="text-green-700 dark:text-green-500 font-semibold text-sm flex items-center gap-1.5 group-hover:gap-2 transition-all"
+          >
             Generate recipes <ArrowRight size={16} />
-          </button>
-          
+          </Link>
+
           {/* Decorative Image */}
           <div className="absolute right-[-20px] top-1/2 -translate-y-1/2 w-40 h-40 rounded-full border-4 border-white dark:border-slate-800 overflow-hidden shadow-lg transform group-hover:scale-105 transition-transform duration-500">
-             <Image
+            <Image
               src="https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=400&auto=format&fit=crop&q=80"
               alt="Pantry Salad"
               fill
@@ -44,20 +48,20 @@ export default function AvailableTools() {
           <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white mb-6 shadow-sm shadow-blue-600/30">
             <BarChart3 size={24} />
           </div>
-          
+
           <h4 className="font-bold text-slate-900 dark:text-white text-lg mb-2">Nutrition Analyzer</h4>
-          
+
           <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed mb-6 max-w-[200px]">
             Analyze the nutritional value of any recipe. Get detailed insights on calories, macros, vitamins, and minerals.
           </p>
-          
-          <button className="text-blue-700 dark:text-blue-500 font-semibold text-sm flex items-center gap-1.5 group-hover:gap-2 transition-all">
+
+          <Link href="/ai-tools/nutrition-analyzer" className="text-blue-700 dark:text-blue-500 font-semibold text-sm flex items-center gap-1.5 group-hover:gap-2 transition-all">
             Analyze nutrition <ArrowRight size={16} />
-          </button>
-          
+          </Link>
+
           {/* Decorative Graphic */}
           <div className="absolute right-[-10px] top-1/2 -translate-y-1/2 w-36 h-36 rounded-full border-4 border-white dark:border-slate-800 overflow-hidden shadow-lg transform group-hover:scale-105 transition-transform duration-500">
-             <Image
+            <Image
               src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=400&auto=format&fit=crop&q=80"
               alt="Healthy Food"
               fill
@@ -78,35 +82,35 @@ export default function AvailableTools() {
           <div className="w-12 h-12 bg-orange-500 rounded-xl flex items-center justify-center text-white mb-6 shadow-sm shadow-orange-500/30">
             <Camera size={24} />
           </div>
-          
+
           <div className="flex items-center gap-2 mb-2">
             <h4 className="font-bold text-slate-900 dark:text-white text-lg">Food Photo Analyzer</h4>
             <span className="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-green-200">Popular</span>
           </div>
-          
+
           <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed mb-6 max-w-[200px]">
             Upload a food photo to detect the dish and get estimated nutrition information instantly.
           </p>
-          
+
           <button className="text-orange-600 dark:text-orange-500 font-semibold text-sm flex items-center gap-1.5 group-hover:gap-2 transition-all">
             Analyze photo <ArrowRight size={16} />
           </button>
-          
+
           {/* Decorative Photo Frame */}
           <div className="absolute right-4 top-1/2 -translate-y-1/2 w-28 h-28 lg:w-32 lg:h-32 rounded-2xl bg-white dark:bg-slate-700 p-2 shadow-lg border border-orange-200 dark:border-slate-600 transform group-hover:scale-105 transition-transform duration-500">
-             <div className="relative w-full h-full rounded-xl overflow-hidden">
-                <Image
-                  src="https://images.unsplash.com/photo-1565299507177-b0ac66763828?w=400&auto=format&fit=crop&q=80"
-                  alt="Pancakes"
-                  fill
-                  className="object-cover"
-                />
-                {/* Camera Focus Brackets */}
-                <div className="absolute inset-2 border-2 border-dashed border-white/70 rounded-lg"></div>
-             </div>
-             <div className="absolute -bottom-3 -right-3 bg-white dark:bg-slate-800 border-2 border-orange-100 dark:border-slate-600 rounded-full p-2 text-orange-500">
-                <Camera size={16} />
-             </div>
+            <div className="relative w-full h-full rounded-xl overflow-hidden">
+              <Image
+                src="https://images.unsplash.com/photo-1565299507177-b0ac66763828?w=400&auto=format&fit=crop&q=80"
+                alt="Pancakes"
+                fill
+                className="object-cover"
+              />
+              {/* Camera Focus Brackets */}
+              <div className="absolute inset-2 border-2 border-dashed border-white/70 rounded-lg"></div>
+            </div>
+            <div className="absolute -bottom-3 -right-3 bg-white dark:bg-slate-800 border-2 border-orange-100 dark:border-slate-600 rounded-full p-2 text-orange-500">
+              <Camera size={16} />
+            </div>
           </div>
         </div>
 
@@ -115,31 +119,31 @@ export default function AvailableTools() {
           <div className="w-12 h-12 bg-purple-600 rounded-xl flex items-center justify-center text-white mb-6 shadow-sm shadow-purple-600/30">
             <Sparkles size={24} />
           </div>
-          
+
           <h4 className="font-bold text-slate-900 dark:text-white text-lg mb-2">Flavor Pairing</h4>
-          
+
           <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed mb-6 max-w-[280px]">
             Discover perfect ingredient and flavor combinations. Get AI-powered pairing suggestions to elevate your dishes.
           </p>
-          
+
           <button className="text-purple-700 dark:text-purple-500 font-semibold text-sm flex items-center gap-1.5 group-hover:gap-2 transition-all">
             Explore pairings <ArrowRight size={16} />
           </button>
-          
+
           {/* Decorative Ingredients Circle */}
           <div className="absolute right-0 md:right-10 top-1/2 -translate-y-1/2 w-48 h-48 rounded-full border border-dashed border-purple-300 dark:border-purple-900/50 flex items-center justify-center hidden sm:flex">
-             <div className="relative w-32 h-32 rounded-full border-4 border-white dark:border-slate-800 overflow-hidden shadow-lg z-10 transform group-hover:scale-105 transition-transform duration-500">
-               <Image
-                  src="https://images.unsplash.com/photo-1506368249639-73a05d6f6488?w=400&auto=format&fit=crop&q=80"
-                  alt="Spices"
-                  fill
-                  className="object-cover"
-                />
-             </div>
-             {/* Small floating ingredients */}
-             <div className="absolute -top-2 right-6 w-8 h-8 rounded-full bg-white dark:bg-slate-700 shadow-md flex items-center justify-center text-xs border border-slate-100 z-20">🍅</div>
-             <div className="absolute bottom-8 -left-3 w-8 h-8 rounded-full bg-white dark:bg-slate-700 shadow-md flex items-center justify-center text-xs border border-slate-100 z-20">🌿</div>
-             <div className="absolute bottom-2 right-2 w-8 h-8 rounded-full bg-white dark:bg-slate-700 shadow-md flex items-center justify-center text-xs border border-slate-100 z-20">🍋</div>
+            <div className="relative w-32 h-32 rounded-full border-4 border-white dark:border-slate-800 overflow-hidden shadow-lg z-10 transform group-hover:scale-105 transition-transform duration-500">
+              <Image
+                src="https://images.unsplash.com/photo-1506368249639-73a05d6f6488?w=400&auto=format&fit=crop&q=80"
+                alt="Spices"
+                fill
+                className="object-cover"
+              />
+            </div>
+            {/* Small floating ingredients */}
+            <div className="absolute -top-2 right-6 w-8 h-8 rounded-full bg-white dark:bg-slate-700 shadow-md flex items-center justify-center text-xs border border-slate-100 z-20">🍅</div>
+            <div className="absolute bottom-8 -left-3 w-8 h-8 rounded-full bg-white dark:bg-slate-700 shadow-md flex items-center justify-center text-xs border border-slate-100 z-20">🌿</div>
+            <div className="absolute bottom-2 right-2 w-8 h-8 rounded-full bg-white dark:bg-slate-700 shadow-md flex items-center justify-center text-xs border border-slate-100 z-20">🍋</div>
           </div>
         </div>
 
@@ -148,33 +152,33 @@ export default function AvailableTools() {
           <div className="w-12 h-12 bg-green-600 rounded-xl flex items-center justify-center text-white mb-6 shadow-sm shadow-green-600/30">
             <Smile size={24} />
           </div>
-          
+
           <h4 className="font-bold text-slate-900 dark:text-white text-lg mb-2">Taste Matcher</h4>
-          
+
           <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed mb-6 max-w-[200px]">
             Find recipes that match your taste preferences. Our AI learns what you like and suggests recipes you&apos;ll love.
           </p>
-          
-          <button className="text-green-700 dark:text-green-500 font-semibold text-sm flex items-center gap-1.5 group-hover:gap-2 transition-all">
+
+          <Link href="/ai-tools/taste-matcher" className="text-green-700 dark:text-green-500 font-semibold text-sm flex items-center gap-1.5 group-hover:gap-2 transition-all">
             Find my match <ArrowRight size={16} />
-          </button>
-          
+          </Link>
+
           {/* Decorative Matcher Graphic */}
           <div className="absolute right-[-10px] top-1/2 -translate-y-1/2 w-48 h-48 rounded-full border border-dashed border-green-300 dark:border-green-900/50 flex items-center justify-center hidden xl:flex">
-             {/* Center icon */}
-             <div className="w-14 h-14 rounded-full bg-green-600 text-white flex items-center justify-center shadow-lg z-10">
-               <Smile size={24} />
-             </div>
-             {/* Surrounding food bubbles */}
-             <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-12 h-12 rounded-full border-2 border-white dark:border-slate-800 overflow-hidden z-20">
-               <Image src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=100&auto=format&fit=crop&q=60" alt="Food" fill className="object-cover"/>
-             </div>
-             <div className="absolute bottom-6 -left-4 w-12 h-12 rounded-full border-2 border-white dark:border-slate-800 overflow-hidden z-20">
-               <Image src="https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=100&auto=format&fit=crop&q=60" alt="Food" fill className="object-cover"/>
-             </div>
-             <div className="absolute bottom-6 -right-4 w-12 h-12 rounded-full border-2 border-white dark:border-slate-800 overflow-hidden z-20">
-               <Image src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=100&auto=format&fit=crop&q=60" alt="Food" fill className="object-cover"/>
-             </div>
+            {/* Center icon */}
+            <div className="w-14 h-14 rounded-full bg-green-600 text-white flex items-center justify-center shadow-lg z-10">
+              <Smile size={24} />
+            </div>
+            {/* Surrounding food bubbles */}
+            <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-12 h-12 rounded-full border-2 border-white dark:border-slate-800 overflow-hidden z-20">
+              <Image src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=100&auto=format&fit=crop&q=60" alt="Food" fill className="object-cover" />
+            </div>
+            <div className="absolute bottom-6 -left-4 w-12 h-12 rounded-full border-2 border-white dark:border-slate-800 overflow-hidden z-20">
+              <Image src="https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=100&auto=format&fit=crop&q=60" alt="Food" fill className="object-cover" />
+            </div>
+            <div className="absolute bottom-6 -right-4 w-12 h-12 rounded-full border-2 border-white dark:border-slate-800 overflow-hidden z-20">
+              <Image src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=100&auto=format&fit=crop&q=60" alt="Food" fill className="object-cover" />
+            </div>
           </div>
         </div>
 
