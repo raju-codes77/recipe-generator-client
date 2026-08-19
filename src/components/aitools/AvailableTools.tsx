@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { Refrigerator, BarChart3, Camera, Sparkles, Smile, ArrowRight } from "lucide-react";
+import Link from "next/link";
 
 export default function AvailableTools() {
   return (
@@ -24,9 +25,12 @@ export default function AvailableTools() {
             Turn your available ingredients into delicious recipes. Reduce food waste and get smart recipe suggestions.
           </p>
           
-          <button className="text-green-700 dark:text-green-500 font-semibold text-sm flex items-center gap-1.5 group-hover:gap-2 transition-all">
-            Generate recipes <ArrowRight size={16} />
-          </button>
+          <Link
+  href="/ai-tools/pantry-to-plate"
+  className="text-green-700 dark:text-green-500 font-semibold text-sm flex items-center gap-1.5 group-hover:gap-2 transition-all"
+>
+  Generate recipes <ArrowRight size={16} />
+</Link>
           
           {/* Decorative Image */}
           <div className="absolute right-[-20px] top-1/2 -translate-y-1/2 w-40 h-40 rounded-full border-4 border-white dark:border-slate-800 overflow-hidden shadow-lg transform group-hover:scale-105 transition-transform duration-500">
@@ -51,9 +55,9 @@ export default function AvailableTools() {
             Analyze the nutritional value of any recipe. Get detailed insights on calories, macros, vitamins, and minerals.
           </p>
           
-          <button className="text-blue-700 dark:text-blue-500 font-semibold text-sm flex items-center gap-1.5 group-hover:gap-2 transition-all">
+          <Link href="/ai-tools/nutrition-analyzer" className="text-blue-700 dark:text-blue-500 font-semibold text-sm flex items-center gap-1.5 group-hover:gap-2 transition-all">
             Analyze nutrition <ArrowRight size={16} />
-          </button>
+          </Link>
           
           {/* Decorative Graphic */}
           <div className="absolute right-[-10px] top-1/2 -translate-y-1/2 w-36 h-36 rounded-full border-4 border-white dark:border-slate-800 overflow-hidden shadow-lg transform group-hover:scale-105 transition-transform duration-500">

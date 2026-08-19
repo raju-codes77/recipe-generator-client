@@ -13,6 +13,14 @@ const nextConfig: NextConfig = {
         protocol: "http",
         hostname: "**", 
       },
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'png.pngtree.com',
+      },
     ],
   },
 };
