@@ -3,26 +3,45 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Search, Bell, Menu, X, Sun, Moon, LogOut, LogIn } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { Search, Bell, Menu, X, Sun, Moon, LogOut } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 
-export default function Navbar() {
+interface NavbarProps {
+  initialUser?: {
+    name: string;
+    email: string;
+    image?: string;
+  } | null;
+}
+
+export default function Navbar({ initialUser }: NavbarProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
   
-  // TODO: Replace this mock state with your actual auth check (e.g., useSession() or useUser())
-  const [isLoggedIn, setIsLoggedIn] = useState(true); 
+  // Test korar jonno by default true rakha holo
+  const [user, setUser] = useState(initialUser || {
+    name: "John Doe",
+    email: "john@example.com",
+    image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
+  });
   
   const pathname = usePathname();
+  const router = useRouter();
 
-  const navLinks = [
+  // Base nav links
+  const baseNavLinks = [
     { name: "Home", href: "/" },
     { name: "Recipes", href: "/recipes" },
     { name: "AI Tools", href: "/ai-tools" },
     { name: "Community", href: "/community" },
     { name: "Challenges", href: "/challenges" },
   ];
+
+  // Jodi user login thake, tahole navLinks er sathe "Dashboard" add hobe
+  const navLinks = user 
+    ? [...baseNavLinks, { name: "Dashboard", href: "/dashboard/users" }] 
+    : baseNavLinks;
 
   useEffect(() => {
     if (
@@ -50,33 +69,52 @@ export default function Navbar() {
     }
   };
 
-  const handleLogout = () => {
-    // Perform your logout logic here (e.g., clearing tokens, signOut())
-    setIsLoggedIn(false);
+  const handleLogout = async () => {
+    setUser(null);
+    setIsMobileMenuOpen(false);
+    router.push("/");
+    router.refresh();
   };
 
   return (
     <div className="w-full sticky top-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-gray-100 dark:border-slate-800 transition-colors duration-300">
       <header className="flex items-center justify-between px-6 lg:px-10 py-3 lg:py-4">
 
-        {/* Left Section: Logo & Nav */}
-        <div className="flex items-center gap-12 lg:gap-16">
-          {/* Logo Section */}
+        {/* Left Section: Logo & Nav Links */}
+        <div className="flex items-center gap-10 lg:gap-12">
           <div className="flex items-center gap-2">
-            <Link href="/" className="flex items-center gap-2 group">
-              <Image
-                src="/logo3.png"
-                alt="FoodCanvas Logo"
-                width={240}
-                height={80}
-                className="h-10 sm:h-12 lg:h-[52px] w-auto object-contain transition-transform duration-300 group-hover:scale-105"
-                priority
-              />
-            </Link>
+          <Link 
+  href="/" 
+  className="flex items-center gap-2.5 group"
+  aria-label="FoodCanvas - Go to homepage"
+>
+  {/* Logo Image */}
+  <div className="relative w-12 h-12 lg:w-14 lg:h-14 shrink-0 transition-transform duration-200 group-hover:scale-105">
+    <Image
+      src="/logohere.png"
+      alt="FoodCanvas Logo"
+      fill
+      className="object-contain"
+      priority
+      sizes="(max-width: 1024px) 48px, 56px"
+    />
+  </div>
+
+  {/* Brand Name */}
+  <div className="flex flex-col leading-none">
+    <span className="text-xl lg:text-2xl font-extrabold tracking-tight">
+      <span className="text-[#2F8F46] dark:text-[#4ADE80]">Food</span>
+      <span className="text-[#FF6B35]">Canvas</span>
+    </span>
+    <span className="text-[10px] tracking-[0.15em] uppercase font-semibold text-slate-400 dark:text-slate-500 mt-1">
+      Ignite Your Taste
+    </span>
+  </div>
+</Link>
           </div>
 
-          {/* Desktop Navigation Links */}
-          <nav className="hidden md:flex items-center gap-8">
+          {/* Desktop Navigation Links (Dashboard ekhane automatically add hobe login thakle) */}
+          <nav className="hidden md:flex items-center gap-6 lg:gap-8">
             {navLinks.map((link) => {
               const isActive = pathname === link.href;
               return (
@@ -99,7 +137,6 @@ export default function Navbar() {
         {/* Right Section (Search & Actions) */}
         <div className="flex items-center gap-4 sm:gap-6">
 
-          {/* Search Bar (Desktop) */}
           <div className="hidden lg:flex items-center relative">
             <div className="absolute left-3 text-gray-400">
               <Search size={18} />
@@ -111,7 +148,6 @@ export default function Navbar() {
             />
           </div>
 
-          {/* Theme Toggle */}
           <button
             onClick={toggleTheme}
             className="p-2 text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors relative"
@@ -120,43 +156,40 @@ export default function Navbar() {
             {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
           </button>
 
-          {/* Conditional Authentication Actions */}
-          {isLoggedIn ? (
+          {/* Conditional Rendering for Desktop (User profile & Logout) */}
+          {user ? (
             <>
-              {/* Notifications */}
               <button className="p-2 text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors relative">
                 <Bell size={20} />
                 <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
               </button>
 
-              {/* User Profile & Logout Button Container */}
               <div className="hidden sm:flex items-center gap-3">
-                <button className="h-9 w-9 rounded-full overflow-hidden border border-gray-200">
-                  <Image
-                    src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-                    alt="User profile"
-                    width={36}
-                    height={36}
-                    className="object-cover w-full h-full"
-                  />
-                </button>
+                <div className="flex items-center gap-2">
+                  <div className="h-9 w-9 rounded-full overflow-hidden border border-gray-200 flex-shrink-0">
+                    <Image
+                      src={user.image || "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"}
+                      alt="User profile"
+                      width={36}
+                      height={36}
+                      className="object-cover w-full h-full"
+                    />
+                  </div>
+                  <span className="text-sm font-semibold text-gray-700 dark:text-slate-200 max-w-[100px] truncate">
+                    {user.name}
+                  </span>
+                </div>
+
                 <button
                   onClick={handleLogout}
-                  title="Logout"
-                  className="p-2 text-gray-600 dark:text-slate-300 hover:bg-red-50 hover:text-red-600 dark:hover:bg-slate-800 dark:hover:text-red-400 rounded-full transition-colors"
+                  className="flex items-center gap-1.5 px-3.5 py-2 bg-red-50 hover:bg-red-100 text-red-600 dark:bg-slate-800 dark:text-red-400 dark:hover:bg-slate-700 text-sm font-semibold rounded-full transition-colors shadow-sm"
                 >
-                  <LogOut size={20} />
+                  <LogOut size={16} /> Logout
                 </button>
               </div>
             </>
           ) : (
             <div className="hidden sm:flex items-center gap-3">
-              <Link 
-                href="/registrationProcess/signin"
-                className="px-4 py-2 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-slate-800 text-sm font-semibold rounded-full transition-colors"
-              >
-                Sign In
-              </Link>
               <Link 
                 href="/registrationProcess/register"
                 className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-full transition-colors shadow-sm shadow-emerald-600/20"
@@ -166,12 +199,11 @@ export default function Navbar() {
             </div>
           )}
 
-          {/* Mobile Menu Toggle Button */}
           <button
             className="md:hidden p-2 text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           >
-            {isMobileMenuOpen ? <X size={24} /> : <Menu size5={24} />}
+            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
       </header>
@@ -198,6 +230,7 @@ export default function Navbar() {
                 />
               </div>
 
+              {/* Mobile Nav Links (Dashboard included here automatically if logged in) */}
               {navLinks.map((link, index) => {
                 const isActive = pathname === link.href;
                 return (
@@ -218,35 +251,39 @@ export default function Navbar() {
                 );
               })}
 
-              {/* Mobile Auth Options */}
-              <div className="pt-2 border-t border-gray-100 dark:border-slate-800 flex flex-col gap-2">
-                {isLoggedIn ? (
-                  <button
-                    onClick={() => {
-                      handleLogout();
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className="flex items-center gap-2 text-[15px] font-bold text-red-600 dark:text-red-400 py-2"
-                  >
-                    <LogOut size={18} /> Logout
-                  </button>
+              <div className="pt-3 border-t border-gray-100 dark:border-slate-800 flex flex-col gap-3">
+                {user ? (
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-center gap-3 py-1">
+                      <div className="h-9 w-9 rounded-full overflow-hidden border border-gray-200 flex-shrink-0">
+                        <Image
+                          src={user.image || "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"}
+                          alt="User profile"
+                          width={36}
+                          height={36}
+                          className="object-cover w-full h-full"
+                        />
+                      </div>
+                      <span className="text-sm font-bold text-gray-800 dark:text-slate-100 truncate">
+                        {user.name}
+                      </span>
+                    </div>
+
+                    <button
+                      onClick={handleLogout}
+                      className="flex items-center justify-center gap-2 w-full py-2.5 bg-red-50 hover:bg-red-100 text-red-600 dark:bg-slate-800 dark:text-red-400 dark:hover:bg-slate-700 text-sm font-semibold rounded-full transition-colors"
+                    >
+                      <LogOut size={16} /> Logout
+                    </button>
+                  </div>
                 ) : (
-                  <>
-                    <Link
-                      href="/registrationProcess/signin"
-                      className="text-[15px] font-bold text-gray-700 dark:text-slate-200 py-2"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      Sign In
-                    </Link>
-                    <Link
-                      href="/registrationProcess/register"
-                      className="text-[15px] font-bold text-emerald-700 dark:text-emerald-400 py-2"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      Sign Up
-                    </Link>
-                  </>
+                  <Link
+                    href="/registrationProcess/register"
+                    className="flex items-center justify-center w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-full transition-colors"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    Sign Up
+                  </Link>
                 )}
               </div>
             </div>
