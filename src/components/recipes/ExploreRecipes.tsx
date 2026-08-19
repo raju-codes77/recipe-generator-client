@@ -17,7 +17,7 @@ import { authClient } from "@/lib/auth-client";
 import Sidebar from "./Sidebar";
 
 interface Recipe {
-  id: number | string;
+  id:  string;
   title: string;
   image: string;
   rating: number;
