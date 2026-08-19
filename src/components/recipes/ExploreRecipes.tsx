@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import RecipeCard from "@/components/recipes/RecipeCard";
 import FilterCard from "@/components/recipes/FilterCard"; 
-import Pagination from "@/components/recipes/Pagination"; // Pagination কম্পোনেন্ট ইমপোর্ট করা হলো
+import Pagination from "@/components/recipes/Pagination"; 
 import { SlidersHorizontal, LayoutGrid, List, Clock, Flame, ArrowUpRight } from "lucide-react";
+import Image from "next/image";
 
 interface Recipe {
   id: number | string;
@@ -17,62 +18,15 @@ interface Recipe {
   category?: string;
   diet?: string;
   difficulty?: string;
-  ingredients?: string[];
+  ingredients?: any[];
   tabType?: "All Recipes" | "My Recipes" | "Saved Recipes" | "My Collections";
 }
 
-const DUMMY_RECIPES: Recipe[] = [
-  {
-    id: 1,
-    title: "Mango Chicken Bowl",
-    image: "https://images.unsplash.com/photo-1565299585323-38d6b0865b47",
-    rating: 4.8,
-    time: 30,
-    calories: 510,
-    cuisine: "Asian",
-    category: "Dinner",
-    tabType: "All Recipes",
-    ingredients: ["chicken", "mango", "rice"]
-  },
-  {
-    id: 2,
-    title: "Veggie Buddha Bowl",
-    image: "https://images.unsplash.com/photo-1540420773420-3366772f4999",
-    rating: 4.7,
-    time: 25,
-    calories: 420,
-    cuisine: "Healthy",
-    category: "Lunch",
-    tabType: "My Recipes",
-    ingredients: ["quinoa", "avocado", "chickpeas"]
-  },
-  {
-    id: 3,
-    title: "Spicy Lentil Soup",
-    image: "https://images.unsplash.com/photo-1645112411341-6c4fd023714a",
-    rating: 4.6,
-    time: 40,
-    calories: 310,
-    cuisine: "Soup",
-    category: "Dinner",
-    tabType: "Saved Recipes",
-    ingredients: ["lentil", "garlic", "broth"]
-  },
-  {
-    id: 4,
-    title: "Avocado Toast Deluxe",
-    image: "https://images.unsplash.com/photo-1525351484163-7529414344d8",
-    rating: 4.9,
-    time: 15,
-    calories: 380,
-    cuisine: "Breakfast",
-    category: "Breakfast",
-    tabType: "My Collections",
-    ingredients: ["avocado", "bread", "egg"]
-  }
-];
-
 export default function ExploreRecipes() {
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
   const [activeTab, setActiveTab] = useState("All Recipes");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
@@ -89,46 +43,56 @@ export default function ExploreRecipes() {
 
   // Pagination States
   const [currentPage, setCurrentPage] = useState(1);
-  const recipesPerPage = 2; 
+  const recipesPerPage = 12; 
 
+  // ব্যাকএন্ড থেকে কুয়েরি প্যারামিটার সহ ডাটা ফেচ করা
+  useEffect(() => {
+    async function fetchRecipes() {
+      try {
+        setLoading(true);
+        
+        // ডাইনামিক কুয়েরি প্যারামিটার তৈরি
+        const params = new URLSearchParams();
+        if (searchQuery.trim()) params.append("search", searchQuery.trim());
+        if (selectedCategory !== "All") params.append("category", selectedCategory);
+        if (selectedCuisine !== "All") params.append("cuisine", selectedCuisine);
+        if (maxTime < 60) params.append("maxTime", String(maxTime));
+        if (maxCalories < 1000) params.append("maxCalories", String(maxCalories));
+        if (minRating > 0) params.append("minRating", String(minRating));
+        if (sortBy !== "Latest") params.append("sortBy", sortBy);
+
+        const response = await fetch(`http://localhost:5000/api/recipes?${params.toString()}`);
+        if (!response.ok) {
+          throw new Error("Failed to fetch recipes");
+        }
+        const data = await response.json();
+        if (data.success && Array.isArray(data.recipes)) {
+          setRecipes(data.recipes);
+        } else {
+          setRecipes([]);
+        }
+      } catch (err: any) {
+        setError(err.message || "An error occurred");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    // ডিবাউন্স (Debounce) ব্যবহার করে রিকোয়েস্ট অপ্টিমাইজ করা হয়েছে
+    const timer = setTimeout(() => {
+      fetchRecipes();
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery, selectedCategory, selectedCuisine, maxTime, maxCalories, minRating, sortBy]);
+
+  // ট্যাবের ওপর ভিত্তি করে ফিল্টার
   const filteredRecipes = useMemo(() => {
-    return DUMMY_RECIPES.filter((recipe) => {
+    return recipes.filter((recipe) => {
       const matchesTab = activeTab === "All Recipes" || recipe.tabType === activeTab;
-
-      const matchesSearch =
-        recipe.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        recipe.ingredients?.some((ing) =>
-          ing.toLowerCase().includes(searchQuery.toLowerCase())
-        );
-
-      const matchesCuisine =
-        selectedCuisine === "All" || recipe.cuisine === selectedCuisine;
-      const matchesCategory =
-        selectedCategory === "All" || recipe.category === selectedCategory;
-
-      const matchesTime = recipe.time <= maxTime;
-      const matchesCalories = recipe.calories <= maxCalories;
-      const matchesRating = recipe.rating >= minRating;
-
-      return (
-        matchesTab &&
-        matchesSearch &&
-        matchesCuisine &&
-        matchesCategory &&
-        matchesTime &&
-        matchesCalories &&
-        matchesRating
-      );
+      return matchesTab;
     });
-  }, [
-    activeTab,
-    searchQuery,
-    selectedCuisine,
-    selectedCategory,
-    maxTime,
-    maxCalories,
-    minRating,
-  ]);
+  }, [recipes, activeTab]);
 
   // পেজিনেশনের জন্য রেসিপি স্লাইস করা
   const totalPages = Math.ceil(filteredRecipes.length / recipesPerPage);
@@ -157,8 +121,25 @@ export default function ExploreRecipes() {
     selectedCategory !== "All" ||
     maxTime < 60 ||
     maxCalories < 1000 ||
-    minRating > 0
+    minRating > 0 ||
+    sortBy !== "Latest"
   );
+
+  if (loading && recipes.length === 0) {
+    return (
+      <div className="min-h-screen bg-white dark:bg-black text-gray-900 dark:text-white flex items-center justify-center">
+        <p className="text-lg font-medium">Loading recipes...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-white dark:bg-black text-gray-900 dark:text-white flex flex-col items-center justify-center gap-4">
+        <p className="text-lg font-medium text-red-500">Error: {error}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white dark:bg-black text-gray-900 dark:text-white transition-colors duration-200">
@@ -173,7 +154,7 @@ export default function ExploreRecipes() {
           selectedCuisine={selectedCuisine}
           setSelectedCuisine={(c) => { setSelectedCuisine(c); setCurrentPage(1); }}
           sortBy={sortBy}
-          setSortBy={setSortBy}
+          setSortBy={(s) => { setSortBy(s); setCurrentPage(1); }}
           showAdvancedFilters={showAdvancedFilters}
           setShowAdvancedFilters={setShowAdvancedFilters}
           maxTime={maxTime}
@@ -191,7 +172,7 @@ export default function ExploreRecipes() {
           
           {/* Tabs */}
           <div className="flex items-center gap-6 overflow-x-auto no-scrollbar">
-            {["All Recipes", "My Recipes", "Saved Recipes", "My Collections"].map((tab) => (
+            {["All Recipes", "My Recipes", "Favorite Recipes", "My Collections"].map((tab) => (
               <button
                 key={tab}
                 onClick={() => { setActiveTab(tab); setCurrentPage(1); }}
@@ -236,7 +217,7 @@ export default function ExploreRecipes() {
 
         </div>
 
-        {/* ================= RECIPES CONTAINER (GRID OR BALANCED LIST VIEW) ================= */}
+        {/* RECIPES CONTAINER */}
         {currentRecipes.length > 0 ? (
           viewMode === "grid" ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -245,28 +226,24 @@ export default function ExploreRecipes() {
               ))}
             </div>
           ) : (
-            /* Balanced List / Collection View to avoid breaking layout */
             <div className="flex flex-col gap-4 max-w-4xl mx-auto">
               {currentRecipes.map((recipe: Recipe) => (
                 <div 
                   key={recipe.id}
                   className="bg-white dark:bg-[#131B2E] rounded-[24px] border border-[#E2EBE4] dark:border-white/10 p-5 shadow-sm hover:shadow-md transition-all flex flex-col md:flex-row items-center gap-6"
                 >
-                  {/* Image */}
                   <div className="relative w-full md:w-56 h-40 rounded-2xl overflow-hidden shrink-0 bg-gray-100 dark:bg-black">
-                    <img src={recipe.image} alt={recipe.title} className="w-full h-full object-cover" />
+                    <Image src={recipe.image} alt={recipe.title} fill className="object-cover" />
                     <div className="absolute top-3 left-3 bg-white/90 dark:bg-[#131B2E]/90 backdrop-blur-md px-2.5 py-1 rounded-full text-xs font-bold text-gray-800 dark:text-white flex items-center gap-1 shadow-sm border border-white/10">
                       ⭐ {recipe.rating}
                     </div>
                   </div>
 
-                  {/* Content */}
                   <div className="flex-1 w-full flex flex-col justify-between">
                     <div>
                       <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">{recipe.title}</h3>
                       <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">Homemade • Delicious • Easy to make</p>
                       
-                      {/* Meta Info */}
                       <div className="flex flex-wrap items-center gap-6 bg-[#FAFAFA] dark:bg-black px-4 py-3 rounded-xl border border-gray-100 dark:border-white/10 mb-4 text-xs w-fit">
                         <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
                           <Clock className="w-4 h-4 text-[#24733E] dark:text-[#10B981]" />
@@ -279,7 +256,6 @@ export default function ExploreRecipes() {
                       </div>
                     </div>
 
-                    {/* Action Button */}
                     <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-white/10">
                       <span className="text-xs font-semibold px-3 py-1 bg-[#EAF4EB] dark:bg-[#132A26] text-[#24733E] dark:text-[#10B981] rounded-full">
                         {recipe.cuisine || "Recipe"}
@@ -298,7 +274,7 @@ export default function ExploreRecipes() {
           <div className="rounded-[24px] border border-[#E2EBE4] dark:border-white/10 bg-white dark:bg-[#131B2E] py-16 text-center shadow-sm">
             <SlidersHorizontal className="mx-auto mb-3 h-12 w-12 text-gray-300 dark:text-gray-500" />
             <h3 className="mb-1 text-lg font-bold text-gray-800 dark:text-white">No recipes found</h3>
-            <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">Try adjusting your search or selecting a different tab.</p>
+            <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">Try adjusting your search or selecting a different filter.</p>
             <button
               onClick={resetFilters}
               className="cursor-pointer rounded-[12px] bg-[#24733E] dark:bg-[#10B981] px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-[#1e5d32] dark:hover:bg-[#059669]"

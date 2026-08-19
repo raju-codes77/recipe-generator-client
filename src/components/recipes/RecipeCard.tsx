@@ -6,7 +6,6 @@ import {
   Flame,
   Leaf,
   Star,
-  Bookmark,
   Heart,
 } from "lucide-react";
 import Image from "next/image";
@@ -28,7 +27,6 @@ interface RecipeCardProps {
 }
 
 export default function RecipeCard({ recipe, index = 0 }: RecipeCardProps) {
-  const [isSaved, setIsSaved] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
 
   return (
@@ -66,17 +64,7 @@ export default function RecipeCard({ recipe, index = 0 }: RecipeCardProps) {
           </span>
         </div>
 
-        {/* 2. Top-Right: Bookmark Icon Button */}
-        <motion.button
-          whileTap={{ scale: 0.85 }}
-          onClick={() => setIsSaved(!isSaved)}
-          className={`absolute right-3.5 top-3.5 flex h-8 w-8 items-center justify-center rounded-full border border-white/80 bg-white/95 shadow-[0_4px_16px_rgba(0,0,0,0.1)] backdrop-blur-md transition-colors cursor-pointer dark:border-white/10 dark:bg-[#131B2E]/90 dark:shadow-[0_4px_16px_rgba(0,0,0,0.3)] ${
-            isSaved ? "text-[#24733E] dark:text-[#10B981]" : "text-gray-600 hover:text-[#24733E] dark:text-gray-300 dark:hover:text-[#10B981]"
-          }`}
-          title="Save Recipe"
-        >
-          <Bookmark className={`h-4 w-4 ${isSaved ? "fill-[#24733E] dark:fill-[#10B981]" : ""}`} />
-        </motion.button>
+        {/* 2. Top-Right: Reserved space or empty (Bookmark removed) */}
 
         {/* 3. Bottom-Left: Rating */}
         <div className="absolute bottom-3.5 left-3.5 flex items-center gap-1.5 rounded-full border border-white/80 bg-white/95 px-3 py-1.5 shadow-[0_4px_16px_rgba(0,0,0,0.12)] backdrop-blur-md dark:border-white/10 dark:bg-[#131B2E]/90 dark:shadow-[0_4px_16px_rgba(0,0,0,0.3)]">
@@ -86,14 +74,14 @@ export default function RecipeCard({ recipe, index = 0 }: RecipeCardProps) {
           </span>
         </div>
 
-        {/* 4. Bottom-Right: Love/Like Icon Button */}
+        {/* 4. Bottom-Right: Love/Like Icon Button (Used for Save/Favorite) */}
         <motion.button
           whileTap={{ scale: 0.85 }}
           onClick={() => setIsLiked(!isLiked)}
           className={`absolute bottom-3.5 right-3.5 flex h-8 w-8 items-center justify-center rounded-full border border-white/80 bg-white/95 shadow-[0_4px_16px_rgba(0,0,0,0.12)] backdrop-blur-md transition-colors cursor-pointer dark:border-white/10 dark:bg-[#131B2E]/90 dark:shadow-[0_4px_16px_rgba(0,0,0,0.3)] ${
             isLiked ? "text-red-500" : "text-gray-600 hover:text-red-500 dark:text-gray-300 dark:hover:text-red-500"
           }`}
-          title="Like Recipe"
+          title="Save Recipe"
         >
           <Heart className={`h-4 w-4 ${isLiked ? "fill-red-500 text-red-500" : ""}`} />
         </motion.button>
