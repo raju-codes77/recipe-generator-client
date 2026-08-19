@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+<<<<<<< HEAD
     "@better-auth/prisma-adapter": "^1.6.29",
     "@prisma/adapter-pg": "^7.9.1",
     "@prisma/client": "^7.9.1",
@@ -16,6 +17,12 @@
     "animate.css": "^4.1.1",
     "better-auth": "^1.6.29",
     "dotenv": "^17.4.2",
+=======
+    "@better-auth/prisma-adapter": "^1.7.1",
+    "@shadcn/ui": "^0.0.4",
+    "animate.css": "^4.1.1",
+    "better-auth": "^1.7.1",
+>>>>>>> bf93a751168b94635df09ec30735a31cd9465345
     "framer-motion": "^13.1.0",
     "lucide-react": "^1.31.0",
     "motion": "^13.1.0",
