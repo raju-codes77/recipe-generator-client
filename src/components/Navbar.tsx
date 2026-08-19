@@ -20,7 +20,7 @@ export default function Navbar({ initialUser }: NavbarProps) {
   const [isDarkMode, setIsDarkMode] = useState(false);
   
   // Test korar jonno by default true rakha holo
-  const [user, setUser] = useState(initialUser || {
+  const [user, setUser] = useState<{ name: string; email: string; image?: string } | null>(initialUser || {
     name: "John Doe",
     email: "john@example.com",
     image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"

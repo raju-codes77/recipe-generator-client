@@ -15,7 +15,7 @@ export default function Banner() {
 
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0, transition: { type: "spring", duration: 0.6 } }
+    show: { opacity: 1, y: 0, transition: { type: "spring" as const, duration: 0.6 } }
   };
 
   return (

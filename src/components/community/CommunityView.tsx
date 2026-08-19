@@ -29,7 +29,7 @@ import {
 } from './mockData';
 import { fetchRandomMealDbRecipe } from './mealDbService';
 
-import { CommunityHeader } from './CommunityHeader';
+
 import { StoriesBar } from './StoriesBar';
 import { CommunitySidebarLeft } from './CommunitySidebarLeft';
 import { CommunitySidebarRight } from './CommunitySidebarRight';
@@ -40,7 +40,7 @@ import { ReportPostModal } from './ReportPostModal';
 import { SendDirectMessageModal } from './SendDirectMessageModal';
 import { SaveToCollectionModal } from './SaveToCollectionModal';
 import { StoryViewerModal } from './StoryViewerModal';
-import { TeamIntegrationModal } from './TeamIntegrationModal';
+
 
 const POSTS_PER_PAGE = 4;
 
@@ -343,25 +343,7 @@ export const CommunityView: React.FC = () => {
         )}
       </AnimatePresence>
 
-      {/* Main Navbar */}
-      <CommunityHeader
-        darkMode={darkMode}
-        setDarkMode={setDarkMode}
-        onOpenCreatePost={() => {
-          setCreatePostInitialAI(false);
-          setCreatePostOpen(true);
-        }}
-        onOpenTeamGuide={() => setTeamGuideOpen(true)}
-        onOpenMessages={() => handleOpenDM()}
-        notifications={notifications}
-        onSearch={(q) => {
-          setSearchQuery(q);
-          setCurrentPage(1);
-        }}
-        activeFilter={activeFilter}
-        setActiveFilter={setActiveFilter}
-      />
-
+      {/* Main Navbar removed due to missing module */}
       {/* Main Container Layout: 3 Columns */}
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
@@ -375,7 +357,6 @@ export const CommunityView: React.FC = () => {
                   setCurrentPage(1);
                 }}
                 collections={collections}
-                onOpenTeamGuide={() => setTeamGuideOpen(true)}
                 savedPostsCount={savedPostsCount}
                 likedPostsCount={likedPostsCount}
               />
@@ -656,10 +637,7 @@ export const CommunityView: React.FC = () => {
         onClose={() => setViewingStory(null)}
       />
 
-      <TeamIntegrationModal
-        isOpen={teamGuideOpen}
-        onClose={() => setTeamGuideOpen(false)}
-      />
+
     </div>
   );
 };
