@@ -104,7 +104,7 @@ export default function RegisterPage() {
 
       // Small delay so user can see success message
       setTimeout(() => {
-        router.push("/registrationProcess/login");
+        router.push("/dashboard/users");
         router.refresh();
       }, 1000);
     } catch (error) {
@@ -359,7 +359,7 @@ export default function RegisterPage() {
         <p className="text-center text-xs text-gray-500 dark:text-[#F6F0D7]/60 mt-6">
           Already have an account?{" "}
           <Link
-            href="/login"
+            href="/registrationProcess/login"
             className="text-[#2F8F46] dark:text-[#B7E35F] font-bold hover:underline"
           >
             Log in
