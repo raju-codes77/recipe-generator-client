@@ -11,13 +11,15 @@ import {
   Clock,
   Flame,
   ArrowUpRight,
+  Folder,
+  ArrowLeft, 
 } from "lucide-react";
 import Image from "next/image";
 import { authClient } from "@/lib/auth-client";
 import Sidebar from "./Sidebar";
 
 interface Recipe {
-  id:  string;
+  id: string;
   title: string;
   image: string;
   rating: number;
@@ -28,20 +30,33 @@ interface Recipe {
   diet?: string;
   difficulty?: string;
   ingredients?: any[];
-  tabType?: "All Recipes" | "My Recipes" | "Favorite Recipes" | "My Collections";
+}
+
+interface Collection {
+  id: string;
+  name: string;
+  recipes?: { recipe: Recipe }[];
+  createdAt?: string;
 }
 
 export default function ExploreRecipes() {
   // ================= SESSION =================
   const { data: session } = authClient.useSession();
 
-  // ================= RECIPES =================
+  // ================= RECIPES & COLLECTIONS =================
   const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [collections, setCollections] = useState<Collection[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  // ================= TABS =================
+  // ================= DYNAMIC DROPDOWN OPTIONS =================
+  const [availableCategories, setAvailableCategories] = useState<string[]>([]);
+  const [availableCuisines, setAvailableCuisines] = useState<string[]>([]);
+
+  // ================= TABS & COLLECTION SELECTION =================
   const [activeTab, setActiveTab] = useState("All Recipes");
+  const [selectedCollectionId, setSelectedCollectionId] = useState<string | null>(null);
+  const [selectedCollectionName, setSelectedCollectionName] = useState<string | null>(null);
 
   // ================= VIEW MODE =================
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
@@ -62,16 +77,43 @@ export default function ExploreRecipes() {
   const [currentPage, setCurrentPage] = useState(1);
   const recipesPerPage = 12;
 
-  // =========================================================
-  // FETCH RECIPES
-  // =========================================================
+  // FETCH DATA
 
   useEffect(() => {
-    async function fetchRecipes() {
+    async function fetchData() {
       try {
         setLoading(true);
         setError(null);
 
+        // ১. যদি My Collections ট্যাবে থাকে এবং কোনো নির্দিষ্ট কালেকশন সিলেক্ট করা না থাকে
+        if (activeTab === "My Collections" && !selectedCollectionId) {
+          if (!session?.user?.id) {
+            setCollections([]);
+            setLoading(false);
+            return;
+          }
+
+          const response = await fetch(
+            `http://localhost:5000/api/collections?userId=${session.user.id}`,
+            { credentials: "include" }
+          );
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data.message || "Failed to fetch collections");
+          }
+
+          if (data.success && Array.isArray(data.collections)) {
+            setCollections(data.collections);
+          } else {
+            setCollections([]);
+          }
+          setRecipes([]);
+          setLoading(false);
+          return;
+        }
+
+        // ২. নির্দিষ্ট কালেকশন সিলেক্ট করা থাকলে তার ভেতরের রেসিপি ফিল্টার করা বা নরমাল রেসিপি ফেচ করা
         const params = new URLSearchParams();
 
         if (searchQuery.trim()) {
@@ -106,7 +148,7 @@ export default function ExploreRecipes() {
           if (session?.user?.id) {
             params.append("userId", session.user.id);
           }
-        } else if (activeTab === "My Collections") {
+        } else if (activeTab === "My Collections" && selectedCollectionId) {
           params.append("tab", "collections");
           if (session?.user?.id) {
             params.append("userId", session.user.id);
@@ -115,9 +157,7 @@ export default function ExploreRecipes() {
 
         const response = await fetch(
           `http://localhost:5000/api/recipes?${params.toString()}`,
-          {
-            credentials: "include",
-          }
+          { credentials: "include" }
         );
 
         const data = await response.json();
@@ -127,14 +167,39 @@ export default function ExploreRecipes() {
         }
 
         if (data.success && Array.isArray(data.recipes)) {
-          setRecipes(data.recipes);
+          let fetchedRecipes = data.recipes;
+
+          // যদি নির্দিষ্ট কোনো কালেকশন ফোল্ডারের ভেতর থাকে, তবে শুধু সেই কালেকশনের রেসিপিগুলো ফিল্টার করব
+          if (activeTab === "My Collections" && selectedCollectionId) {
+            const currentCollection = collections.find((c) => c.id === selectedCollectionId);
+            if (currentCollection && currentCollection.recipes) {
+              const allowedRecipeIds = currentCollection.recipes.map((r) => r.recipe.id);
+              fetchedRecipes = fetchedRecipes.filter((r: Recipe) => allowedRecipeIds.includes(r.id));
+            }
+          }
+
+          setRecipes(fetchedRecipes);
+
+          if (selectedCategory === "All" && selectedCuisine === "All" && !searchQuery) {
+            const uniqueCategories = Array.from(
+              new Set(fetchedRecipes.map((recipe: any) => recipe.category).filter(Boolean))
+            ) as string[];
+
+            const uniqueCuisines = Array.from(
+              new Set(fetchedRecipes.map((recipe: any) => recipe.cuisine).filter(Boolean))
+            ) as string[];
+
+            if (uniqueCategories.length > 0) setAvailableCategories(uniqueCategories);
+            if (uniqueCuisines.length > 0) setAvailableCuisines(uniqueCuisines);
+          }
         } else {
           setRecipes([]);
         }
       } catch (err: any) {
-        console.error("Fetch recipes error:", err);
-        setError(err.message || "An error occurred while fetching recipes");
+        console.error("Fetch error:", err);
+        setError(err.message || "An error occurred while fetching data");
         setRecipes([]);
+        setCollections([]);
       } finally {
         setLoading(false);
       }
@@ -147,17 +212,19 @@ export default function ExploreRecipes() {
       !session?.user?.id
     ) {
       setRecipes([]);
+      setCollections([]);
       setLoading(false);
       return;
     }
 
     const timer = setTimeout(() => {
-      fetchRecipes();
+      fetchData();
     }, 300);
 
     return () => clearTimeout(timer);
   }, [
     activeTab,
+    selectedCollectionId,
     session?.user?.id,
     searchQuery,
     selectedCategory,
@@ -168,9 +235,7 @@ export default function ExploreRecipes() {
     sortBy,
   ]);
 
-  // =========================================================
   // PAGINATION
-  // =========================================================
 
   const totalPages = Math.ceil(recipes.length / recipesPerPage);
 
@@ -179,9 +244,9 @@ export default function ExploreRecipes() {
     return recipes.slice(startIndex, startIndex + recipesPerPage);
   }, [recipes, currentPage]);
 
-  // =========================================================
+  // 
   // RESET FILTERS
-  // =========================================================
+  // 
 
   const resetFilters = () => {
     setSearchQuery("");
@@ -206,10 +271,10 @@ export default function ExploreRecipes() {
       sortBy !== "Latest"
   );
 
-  if (loading && recipes.length === 0) {
+  if (loading && recipes.length === 0 && collections.length === 0) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-white text-gray-900 dark:bg-black dark:text-white">
-        <p className="text-lg font-medium">Loading recipes...</p>
+        <p className="text-lg font-medium">Loading...</p>
       </div>
     );
   }
@@ -231,7 +296,6 @@ export default function ExploreRecipes() {
   return (
     <div className="min-h-screen bg-white text-gray-900 transition-colors duration-200 dark:bg-black dark:text-white">
       <div className="mx-auto max-w-7xl px-4 py-8">
-        
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
           {/* ================= LEFT MAIN CONTENT (Span 8) ================= */}
@@ -279,6 +343,8 @@ export default function ExploreRecipes() {
                 }}
                 resetFilters={resetFilters}
                 isFiltered={isFiltered}
+                availableCategories={availableCategories}
+                availableCuisines={availableCuisines}
               />
             </div>
 
@@ -297,6 +363,10 @@ export default function ExploreRecipes() {
                     key={tab}
                     onClick={() => {
                       setActiveTab(tab);
+                      if (tab !== "My Collections") {
+                        setSelectedCollectionId(null);
+                        setSelectedCollectionName(null);
+                      }
                       setCurrentPage(1);
                     }}
                     className={`relative cursor-pointer whitespace-nowrap pb-3 text-sm font-semibold transition-colors ${
@@ -305,7 +375,9 @@ export default function ExploreRecipes() {
                         : "text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
                     }`}
                   >
-                    {tab}
+                    {tab === "My Collections" && selectedCollectionName
+                      ? `Collection: ${selectedCollectionName}`
+                      : tab}
                     {activeTab === tab && (
                       <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#24733E] dark:bg-[#10B981]" />
                     )}
@@ -316,136 +388,201 @@ export default function ExploreRecipes() {
               {/* COUNT + VIEW */}
               <div className="flex items-center justify-between gap-4 pb-3 sm:justify-end">
                 <span className="text-xs font-bold text-gray-500 dark:text-gray-400">
-                  {recipes.length} Recipes
+                  {activeTab === "My Collections" && !selectedCollectionId
+                    ? `${collections.length} Folders`
+                    : `${recipes.length} Recipes`}
                 </span>
 
-                <div className="flex items-center gap-1 rounded-xl border border-[#E2EBE4] bg-white p-1 dark:border-white/10 dark:bg-[#131B2E]">
-                  <button
-                    onClick={() => setViewMode("grid")}
-                    className={`cursor-pointer rounded-lg p-1.5 transition-colors ${
-                      viewMode === "grid"
-                        ? "bg-[#EAF4EB] text-[#24733E] dark:bg-[#10B981]/20 dark:text-[#10B981]"
-                        : "text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
-                    }`}
-                  >
-                    <LayoutGrid className="h-4 w-4" />
-                  </button>
+                {!(activeTab === "My Collections" && !selectedCollectionId) && (
+                  <div className="flex items-center gap-1 rounded-xl border border-[#E2EBE4] bg-white p-1 dark:border-white/10 dark:bg-[#131B2E]">
+                    <button
+                      onClick={() => setViewMode("grid")}
+                      className={`cursor-pointer rounded-lg p-1.5 transition-colors ${
+                        viewMode === "grid"
+                          ? "bg-[#EAF4EB] text-[#24733E] dark:bg-[#10B981]/20 dark:text-[#10B981]"
+                          : "text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                      }`}
+                    >
+                      <LayoutGrid className="h-4 w-4" />
+                    </button>
 
-                  <button
-                    onClick={() => setViewMode("list")}
-                    className={`cursor-pointer rounded-lg p-1.5 transition-colors ${
-                      viewMode === "list"
-                        ? "bg-[#EAF4EB] text-[#24733E] dark:bg-[#10B981]/20 dark:text-[#10B981]"
-                        : "text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
-                    }`}
-                  >
-                    <List className="h-4 w-4" />
-                  </button>
-                </div>
+                    <button
+                      onClick={() => setViewMode("list")}
+                      className={`cursor-pointer rounded-lg p-1.5 transition-colors ${
+                        viewMode === "list"
+                          ? "bg-[#EAF4EB] text-[#24733E] dark:bg-[#10B981]/20 dark:text-[#10B981]"
+                          : "text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                      }`}
+                    >
+                      <List className="h-4 w-4" />
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* RECIPES DISPLAY AREA */}
-            {currentRecipes.length > 0 ? (
-              viewMode === "grid" ? (
-                // 4 columns setup for lg screens (lg:grid-cols-4)
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                  {currentRecipes.map((recipe) => (
-                    <div key={recipe.id} className="w-full min-w-0">
-                      <RecipeCard recipe={recipe} />
+            {/* MAIN CONTENT AREA (FOLDERS OR RECIPES) */}
+            {activeTab === "My Collections" && !selectedCollectionId ? (
+              // কালেকশন ফোল্ডার গ্রিড ভিউ
+              collections.length > 0 ? (
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {collections.map((col) => (
+                    <div
+                      key={col.id}
+                      onClick={() => {
+                        setSelectedCollectionId(col.id);
+                        setSelectedCollectionName(col.name);
+                        setCurrentPage(1);
+                      }}
+                      className="group flex cursor-pointer items-center justify-between rounded-[20px] border border-[#E2EBE4] bg-white p-5 shadow-sm transition-all hover:border-[#24733E] hover:shadow-md dark:border-white/10 dark:bg-[#131B2E] dark:hover:border-[#10B981]"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#EAF4EB] text-[#24733E] dark:bg-[#10B981]/20 dark:text-[#10B981]">
+                          <Folder className="h-6 w-6" />
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-gray-900 group-hover:text-[#24733E] dark:text-white dark:group-hover:text-[#10B981]">
+                            {col.name}
+                          </h4>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            {col.recipes?.length || 0} recipes
+                          </p>
+                        </div>
+                      </div>
+                      <ArrowUpRight className="h-5 w-5 text-gray-400 group-hover:text-[#24733E] dark:group-hover:text-[#10B981]" />
                     </div>
                   ))}
                 </div>
               ) : (
-                // LIST VIEW
-                <div className="flex flex-col gap-4">
-                  {currentRecipes.map((recipe) => (
-                    <div
-                      key={recipe.id}
-                      className="flex flex-col items-center gap-6 rounded-[24px] border border-[#E2EBE4] bg-white p-5 shadow-sm transition-all hover:shadow-md dark:border-white/10 dark:bg-[#131B2E] md:flex-row"
-                    >
-                      <div className="relative h-40 w-full shrink-0 overflow-hidden rounded-2xl bg-gray-100 dark:bg-black md:w-56">
-                        <Image
-                          src={recipe.image}
-                          alt={recipe.title}
-                          fill
-                          className="object-cover"
-                        />
-                        <div className="absolute left-3 top-3 flex items-center gap-1 rounded-full border border-white/10 bg-white/90 px-2.5 py-1 text-xs font-bold text-gray-800 shadow-sm backdrop-blur-md dark:bg-[#131B2E]/90 dark:text-white">
-                          ⭐ {recipe.rating}
-                        </div>
-                      </div>
-
-                      <div className="flex w-full flex-1 flex-col justify-between">
-                        <div>
-                          <h3 className="mb-1 text-lg font-bold text-gray-900 dark:text-white">
-                            {recipe.title}
-                          </h3>
-                          <p className="mb-4 text-xs text-gray-500 dark:text-gray-400">
-                            Homemade • Delicious • Easy to make
-                          </p>
-
-                          <div className="mb-4 flex w-fit flex-wrap items-center gap-6 rounded-xl border border-gray-100 bg-[#FAFAFA] px-4 py-3 text-xs dark:border-white/10 dark:bg-black">
-                            <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
-                              <Clock className="h-4 w-4 text-[#24733E] dark:text-[#10B981]" />
-                              <span>{recipe.time} mins</span>
-                            </div>
-
-                            <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
-                              <Flame className="h-4 w-4 text-orange-500" />
-                              <span>{recipe.calories} kcal</span>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center justify-between border-t border-gray-100 pt-2 dark:border-white/10">
-                          <span className="rounded-full bg-[#EAF4EB] px-3 py-1 text-xs font-semibold text-[#24733E] dark:bg-[#132A26] dark:text-[#10B981]">
-                            {recipe.cuisine || "Recipe"}
-                          </span>
-
-                          <button className="flex cursor-pointer items-center gap-1.5 text-xs font-bold text-[#24733E] hover:underline dark:text-[#10B981]">
-                            <span>View Recipe</span>
-                            <ArrowUpRight className="h-4 w-4" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                <div className="rounded-[24px] border border-[#E2EBE4] bg-white py-16 text-center shadow-sm dark:border-white/10 dark:bg-[#131B2E]">
+                  <Folder className="mx-auto mb-3 h-12 w-12 text-gray-300 dark:text-gray-500" />
+                  <h3 className="mb-1 text-lg font-bold text-gray-800 dark:text-white">
+                    No collection folders found
+                  </h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Create a collection folder to start organizing your recipes.
+                  </p>
                 </div>
               )
             ) : (
-              // NO RECIPES STATE
-              <div className="rounded-[24px] border border-[#E2EBE4] bg-white py-16 text-center shadow-sm dark:border-white/10 dark:bg-[#131B2E]">
-                <SlidersHorizontal className="mx-auto mb-3 h-12 w-12 text-gray-300 dark:text-gray-500" />
-                <h3 className="mb-1 text-lg font-bold text-gray-800 dark:text-white">
-                  {activeTab === "My Recipes"
-                    ? "You haven't created any recipes yet"
-                    : activeTab === "Favorite Recipes"
-                    ? "No favorite recipes yet"
-                    : activeTab === "My Collections"
-                    ? "No recipes in your collections yet"
-                    : "No recipes found"}
-                </h3>
-                <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
-                  {activeTab === "Favorite Recipes"
-                    ? "Love a recipe to save it here."
-                    : activeTab === "My Collections"
-                    ? "Add recipes to your collections to see them here."
-                    : "Try adjusting your search or selecting a different filter."}
-                </p>
-                {activeTab === "All Recipes" && (
+              // রেসিপি গ্রিড/লিস্ট ভিউ এবং ব্যাক বাটন
+              <div className="flex flex-col w-full">
+                
+                {/* ====== BACK BUTTON ====== */}
+                {activeTab === "My Collections" && selectedCollectionId && (
                   <button
-                    onClick={resetFilters}
-                    className="cursor-pointer rounded-[12px] bg-[#24733E] px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-[#1e5d32] dark:bg-[#10B981] dark:hover:bg-[#059669]"
+                    onClick={() => {
+                      setSelectedCollectionId(null);
+                      setSelectedCollectionName(null);
+                      setCurrentPage(1);
+                    }}
+                    className="group mb-6 flex w-fit cursor-pointer items-center gap-2 rounded-[12px] border border-[#E2EBE4] bg-white px-4 py-2 text-sm font-bold text-gray-600 shadow-sm transition-all hover:border-[#24733E] hover:text-[#24733E] dark:border-white/10 dark:bg-[#131B2E] dark:text-gray-300 dark:hover:border-[#10B981] dark:hover:text-[#10B981]"
                   >
-                    Clear all filters
+                    <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
+                    Back to Folders
                   </button>
+                )}
+                {/* ========================= */}
+
+                {currentRecipes.length > 0 ? (
+                  viewMode === "grid" ? (
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                      {currentRecipes.map((recipe) => (
+                        <div key={recipe.id} className="w-full min-w-0">
+                          <RecipeCard recipe={recipe} />
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-4">
+                      {currentRecipes.map((recipe) => (
+                        <div
+                          key={recipe.id}
+                          className="flex flex-col items-center gap-6 rounded-[24px] border border-[#E2EBE4] bg-white p-5 shadow-sm transition-all hover:shadow-md dark:border-white/10 dark:bg-[#131B2E] md:flex-row"
+                        >
+                          <div className="relative h-40 w-full shrink-0 overflow-hidden rounded-2xl bg-gray-100 dark:bg-black md:w-56">
+                            <Image
+                              src={recipe.image}
+                              alt={recipe.title}
+                              fill
+                              className="object-cover"
+                            />
+                            <div className="absolute left-3 top-3 flex items-center gap-1 rounded-full border border-white/10 bg-white/90 px-2.5 py-1 text-xs font-bold text-gray-800 shadow-sm backdrop-blur-md dark:bg-[#131B2E]/90 dark:text-white">
+                              ⭐ {recipe.rating}
+                            </div>
+                          </div>
+
+                          <div className="flex w-full flex-1 flex-col justify-between">
+                            <div>
+                              <h3 className="mb-1 text-lg font-bold text-gray-900 dark:text-white">
+                                {recipe.title}
+                              </h3>
+                              <p className="mb-4 text-xs text-gray-500 dark:text-gray-400">
+                                Homemade • Delicious • Easy to make
+                              </p>
+
+                              <div className="mb-4 flex w-fit flex-wrap items-center gap-6 rounded-xl border border-gray-100 bg-[#FAFAFA] px-4 py-3 text-xs dark:border-white/10 dark:bg-black">
+                                <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
+                                  <Clock className="h-4 w-4 text-[#24733E] dark:text-[#10B981]" />
+                                  <span>{recipe.time} mins</span>
+                                </div>
+
+                                <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
+                                  <Flame className="h-4 w-4 text-orange-500" />
+                                  <span>{recipe.calories} kcal</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center justify-between border-t border-gray-100 pt-2 dark:border-white/10">
+                              <span className="rounded-full bg-[#EAF4EB] px-3 py-1 text-xs font-semibold text-[#24733E] dark:bg-[#132A26] dark:text-[#10B981]">
+                                {recipe.cuisine || "Recipe"}
+                              </span>
+
+                              <button className="flex cursor-pointer items-center gap-1.5 text-xs font-bold text-[#24733E] hover:underline dark:text-[#10B981]">
+                                <span>View Recipe</span>
+                                <ArrowUpRight className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )
+                ) : (
+                  <div className="rounded-[24px] border border-[#E2EBE4] bg-white py-16 text-center shadow-sm dark:border-white/10 dark:bg-[#131B2E]">
+                    <SlidersHorizontal className="mx-auto mb-3 h-12 w-12 text-gray-300 dark:text-gray-500" />
+                    <h3 className="mb-1 text-lg font-bold text-gray-800 dark:text-white">
+                      {activeTab === "My Recipes"
+                        ? "You haven't created any recipes yet"
+                        : activeTab === "Favorite Recipes"
+                        ? "No favorite recipes yet"
+                        : activeTab === "My Collections"
+                        ? "No recipes in this collection yet"
+                        : "No recipes found"}
+                    </h3>
+                    <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+                      {activeTab === "Favorite Recipes"
+                        ? "Love a recipe to save it here."
+                        : activeTab === "My Collections"
+                        ? "Add recipes to this collection to see them here."
+                        : "Try adjusting your search or selecting a different filter."}
+                    </p>
+                    {activeTab === "All Recipes" && (
+                      <button
+                        onClick={resetFilters}
+                        className="cursor-pointer rounded-[12px] bg-[#24733E] px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-[#1e5d32] dark:bg-[#10B981] dark:hover:bg-[#059669]"
+                      >
+                        Clear all filters
+                      </button>
+                    )}
+                  </div>
                 )}
               </div>
             )}
 
             {/* PAGINATION */}
-            {totalPages > 1 && (
+            {totalPages > 1 && !(activeTab === "My Collections" && !selectedCollectionId) && (
               <div className="mt-8">
                 <Pagination
                   currentPage={currentPage}
@@ -456,9 +593,17 @@ export default function ExploreRecipes() {
             )}
           </div>
 
-          {/* ================= RIGHT SIDEBAR (Span 4) ================= */}
+          {/* RIGHT SIDEBAR (Span 4) = */}
           <div className="lg:col-span-4 w-full">
-            <Sidebar />
+            <Sidebar
+              selectedCollectionId={selectedCollectionId}
+              onSelectCollection={(colId, colName) => {
+                setActiveTab("My Collections");
+                setSelectedCollectionId(colId || null);
+                setSelectedCollectionName(colName || null);
+                setCurrentPage(1);
+              }}
+            />
           </div>
 
         </div>
