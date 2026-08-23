@@ -1,5 +1,6 @@
 import ExploreRecipes from "@/components/recipes/ExploreRecipes";
 
+
 export default function RecipesPage() {
   return (
     <main className="relative min-h-screen bg-white dark:bg-black py-8 transition-colors duration-300 overflow-hidden text-gray-900 dark:text-white">

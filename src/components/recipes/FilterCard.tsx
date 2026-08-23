@@ -21,6 +21,9 @@ interface FilterCardProps {
   setMinRating: (rating: number) => void;
   resetFilters: () => void;
   isFiltered: boolean;
+  // 👈 নতুন প্রপস টাইপ যুক্ত করা হলো
+  availableCategories: string[];
+  availableCuisines: string[];
 }
 
 export default function FilterCard({
@@ -42,6 +45,8 @@ export default function FilterCard({
   setMinRating,
   resetFilters,
   isFiltered,
+  availableCategories = [],
+  availableCuisines = [],
 }: FilterCardProps) {
   
   // Active check conditions
@@ -95,7 +100,7 @@ export default function FilterCard({
           />
         </div>
 
-        {/* All Categories Dropdown */}
+        {/* Dynamic Categories Dropdown */}
         <div className="relative">
           <div className={`absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none ${isCategoryActive ? "text-[#24733E] dark:text-[#10B981]" : "text-gray-500 dark:text-gray-400"}`}>
             <LayoutGrid className="w-4 h-4" />
@@ -110,13 +115,15 @@ export default function FilterCard({
             }`}
           >
             <option value="All" className="bg-white dark:bg-[#131B2E]">All Categories</option>
-            <option value="Breakfast" className="bg-white dark:bg-[#131B2E]">Breakfast</option>
-            <option value="Lunch" className="bg-white dark:bg-[#131B2E]">Lunch</option>
-            <option value="Dinner" className="bg-white dark:bg-[#131B2E]">Dinner</option>
+            {availableCategories.map((cat) => (
+              <option key={cat} value={cat} className="bg-white dark:bg-[#131B2E]">
+                {cat}
+              </option>
+            ))}
           </select>
         </div>
 
-        {/* All Cuisines Dropdown */}
+        {/* Dynamic Cuisines Dropdown */}
         <div className="relative">
           <div className={`absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none ${isCuisineActive ? "text-[#24733E] dark:text-[#10B981]" : "text-gray-500 dark:text-gray-400"}`}>
             <Globe className="w-4 h-4" />
@@ -131,10 +138,11 @@ export default function FilterCard({
             }`}
           >
             <option value="All" className="bg-white dark:bg-[#131B2E]">All Cuisines</option>
-            <option value="Mexican" className="bg-white dark:bg-[#131B2E]">Mexican</option>
-            <option value="Mediterranean" className="bg-white dark:bg-[#131B2E]">Mediterranean</option>
-            <option value="Italian" className="bg-white dark:bg-[#131B2E]">Italian</option>
-            <option value="American" className="bg-white dark:bg-[#131B2E]">American</option>
+            {availableCuisines.map((cuisine) => (
+              <option key={cuisine} value={cuisine} className="bg-white dark:bg-[#131B2E]">
+                {cuisine}
+              </option>
+            ))}
           </select>
         </div>
 
