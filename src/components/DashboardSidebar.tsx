@@ -22,10 +22,11 @@ export default function DashboardSidebar() {
     }
   }, []);
 
+
   const isAdmin = pathname?.includes("/admin");
   const role = isAdmin ? "admin" : "user";
 
-  // Admin Navigation Items
+  // Admin Navigation  Items
   const adminNavItems = [
     { name: "Dashboard", icon: <FiHome />, href: "/dashboard/admin" },
     { name: "Users", icon: <FiUsers />, href: "/dashboard/admin/users" },
