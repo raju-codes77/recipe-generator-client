@@ -19,6 +19,7 @@ export const metadata: Metadata = {
 
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { Toaster } from "react-hot-toast";
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
@@ -31,6 +32,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <Navbar />
           <main className="flex-1">
             {children}
+            <Toaster position="top-right" reverseOrder={false} />
           </main>
           <Footer />
         </div>
