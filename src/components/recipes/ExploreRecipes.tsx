@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect } from "react";
 import RecipeCard from "@/components/recipes/RecipeCard";
 import FilterCard from "@/components/recipes/FilterCard";
 import Pagination from "@/components/recipes/Pagination";
+
 import {
   SlidersHorizontal,
   LayoutGrid,
@@ -12,11 +13,14 @@ import {
   Flame,
   ArrowUpRight,
   Folder,
-  ArrowLeft, 
+  ArrowLeft,
+  Trash2,
 } from "lucide-react";
 import Image from "next/image";
 import { authClient } from "@/lib/auth-client";
 import Sidebar from "./Sidebar";
+import toast from "react-hot-toast";
+import RecipeSkeleton from "./RecipeSkeleton";
 
 interface Recipe {
   id: string;
@@ -73,19 +77,17 @@ export default function ExploreRecipes() {
   const [sortBy, setSortBy] = useState("Latest");
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
-  // ================= PAGINATION =================
+  //  PAGINATION 
   const [currentPage, setCurrentPage] = useState(1);
   const recipesPerPage = 12;
 
   // FETCH DATA
-
   useEffect(() => {
     async function fetchData() {
       try {
         setLoading(true);
         setError(null);
 
-        // ১. যদি My Collections ট্যাবে থাকে এবং কোনো নির্দিষ্ট কালেকশন সিলেক্ট করা না থাকে
         if (activeTab === "My Collections" && !selectedCollectionId) {
           if (!session?.user?.id) {
             setCollections([]);
@@ -113,7 +115,6 @@ export default function ExploreRecipes() {
           return;
         }
 
-        // ২. নির্দিষ্ট কালেকশন সিলেক্ট করা থাকলে তার ভেতরের রেসিপি ফিল্টার করা বা নরমাল রেসিপি ফেচ করা
         const params = new URLSearchParams();
 
         if (searchQuery.trim()) {
@@ -169,7 +170,6 @@ export default function ExploreRecipes() {
         if (data.success && Array.isArray(data.recipes)) {
           let fetchedRecipes = data.recipes;
 
-          // যদি নির্দিষ্ট কোনো কালেকশন ফোল্ডারের ভেতর থাকে, তবে শুধু সেই কালেকশনের রেসিপিগুলো ফিল্টার করব
           if (activeTab === "My Collections" && selectedCollectionId) {
             const currentCollection = collections.find((c) => c.id === selectedCollectionId);
             if (currentCollection && currentCollection.recipes) {
@@ -235,18 +235,70 @@ export default function ExploreRecipes() {
     sortBy,
   ]);
 
-  // PAGINATION
+  // ================= COLLECTION UPDATED EVENT LISTENER =================
+  useEffect(() => {
+    const handleCollectionUpdate = async () => {
+      if (activeTab === "My Collections" && !selectedCollectionId && session?.user?.id) {
+        try {
+          const response = await fetch(
+            `http://localhost:5000/api/collections?userId=${session.user.id}`,
+            { credentials: "include" }
+          );
+          const data = await response.json();
+          if (response.ok && data.success && Array.isArray(data.collections)) {
+            setCollections(data.collections);
+          }
+        } catch (err) {
+          console.error("Failed to fetch collections on update:", err);
+        }
+      }
+    };
 
+    window.addEventListener("collectionUpdated", handleCollectionUpdate);
+    return () => {
+      window.removeEventListener("collectionUpdated", handleCollectionUpdate);
+    };
+  }, [activeTab, selectedCollectionId, session?.user?.id]);
+
+  // ================= DELETE COLLECTION HANDLER =================
+  const handleDeleteCollection = async (e: React.MouseEvent, collectionId: string) => {
+    e.stopPropagation();
+
+    try {
+      const response = await fetch(`http://localhost:5000/api/collections`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          collectionId,
+          userId: session?.user?.id,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to delete collection");
+      }
+
+      setCollections((prev) => prev.filter((col) => col.id !== collectionId));
+      window.dispatchEvent(new Event("collectionUpdated"));
+      toast.success("Collection deleted successfully!");
+    } catch (err: any) {
+      console.error("Delete error:", err);
+      toast.error(err.message || "Something went wrong while deleting");
+    }
+  };
+
+  // PAGINATION
   const totalPages = Math.ceil(recipes.length / recipesPerPage);
 
   const currentRecipes = useMemo(() => {
     const startIndex = (currentPage - 1) * recipesPerPage;
     return recipes.slice(startIndex, startIndex + recipesPerPage);
   }, [recipes, currentPage]);
-
-  // 
-  // RESET FILTERS
-  // 
 
   const resetFilters = () => {
     setSearchQuery("");
@@ -271,14 +323,6 @@ export default function ExploreRecipes() {
       sortBy !== "Latest"
   );
 
-  if (loading && recipes.length === 0 && collections.length === 0) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-white text-gray-900 dark:bg-black dark:text-white">
-        <p className="text-lg font-medium">Loading...</p>
-      </div>
-    );
-  }
-
   if (error) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-white text-gray-900 dark:bg-black dark:text-white">
@@ -296,59 +340,58 @@ export default function ExploreRecipes() {
   return (
     <div className="min-h-screen bg-white text-gray-900 transition-colors duration-200 dark:bg-black dark:text-white">
       <div className="mx-auto max-w-7xl px-4 py-8">
+        
+        {/* TOP BIG FILTER CARD  */}
+        <div className="mb-8 w-full">
+          <FilterCard
+            searchQuery={searchQuery}
+            setSearchQuery={(q) => {
+              setSearchQuery(q);
+              setCurrentPage(1);
+            }}
+            selectedCategory={selectedCategory}
+            setSelectedCategory={(c) => {
+              setSelectedCategory(c);
+              setCurrentPage(1);
+            }}
+            selectedCuisine={selectedCuisine}
+            setSelectedCuisine={(c) => {
+              setSelectedCuisine(c);
+              setCurrentPage(1);
+            }}
+            sortBy={sortBy}
+            setSortBy={(s) => {
+              setSortBy(s);
+              setCurrentPage(1);
+            }}
+            showAdvancedFilters={showAdvancedFilters}
+            setShowAdvancedFilters={setShowAdvancedFilters}
+            maxTime={maxTime}
+            setMaxTime={(t) => {
+              setMaxTime(t);
+              setCurrentPage(1);
+            }}
+            maxCalories={maxCalories}
+            setMaxCalories={(c) => {
+              setMaxCalories(c);
+              setCurrentPage(1);
+            }}
+            minRating={minRating}
+            setMinRating={(r) => {
+              setMinRating(r);
+              setCurrentPage(1);
+            }}
+            resetFilters={resetFilters}
+            isFiltered={isFiltered}
+            availableCategories={availableCategories}
+            availableCuisines={availableCuisines}
+          />
+        </div>
+
+        {/* { MAIN CONTENT + SIDEBAR LAYOUT /} */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          
-          {/* ================= LEFT MAIN CONTENT (Span 8) ================= */}
           <div className="lg:col-span-8 flex flex-col w-full min-w-0">
 
-            {/* SEARCH & FILTER */}
-            <div className="mb-6">
-              <FilterCard
-                searchQuery={searchQuery}
-                setSearchQuery={(q) => {
-                  setSearchQuery(q);
-                  setCurrentPage(1);
-                }}
-                selectedCategory={selectedCategory}
-                setSelectedCategory={(c) => {
-                  setSelectedCategory(c);
-                  setCurrentPage(1);
-                }}
-                selectedCuisine={selectedCuisine}
-                setSelectedCuisine={(c) => {
-                  setSelectedCuisine(c);
-                  setCurrentPage(1);
-                }}
-                sortBy={sortBy}
-                setSortBy={(s) => {
-                  setSortBy(s);
-                  setCurrentPage(1);
-                }}
-                showAdvancedFilters={showAdvancedFilters}
-                setShowAdvancedFilters={setShowAdvancedFilters}
-                maxTime={maxTime}
-                setMaxTime={(t) => {
-                  setMaxTime(t);
-                  setCurrentPage(1);
-                }}
-                maxCalories={maxCalories}
-                setMaxCalories={(c) => {
-                  setMaxCalories(c);
-                  setCurrentPage(1);
-                }}
-                minRating={minRating}
-                setMinRating={(r) => {
-                  setMinRating(r);
-                  setCurrentPage(1);
-                }}
-                resetFilters={resetFilters}
-                isFiltered={isFiltered}
-                availableCategories={availableCategories}
-                availableCuisines={availableCuisines}
-              />
-            </div>
-
-            {/* TABS + VIEW SWITCHER */}
             <div className="mb-6 flex flex-col gap-4 border-b border-gray-200 dark:border-white/10 sm:flex-row sm:items-center sm:justify-between">
               
               {/* TABS */}
@@ -421,11 +464,16 @@ export default function ExploreRecipes() {
               </div>
             </div>
 
-            {/* MAIN CONTENT AREA (FOLDERS OR RECIPES) */}
-            {activeTab === "My Collections" && !selectedCollectionId ? (
-              // কালেকশন ফোল্ডার গ্রিড ভিউ
+            {/* MAIN CONTENT AREA (LOADING SKELETON, FOLDERS OR RECIPES) */}
+            {loading ? (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                {[...Array(6)].map((_, i) => (
+                  <RecipeSkeleton key={i} />
+                ))}
+              </div>
+            ) : activeTab === "My Collections" && !selectedCollectionId ? (
               collections.length > 0 ? (
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   {collections.map((col) => (
                     <div
                       key={col.id}
@@ -436,12 +484,12 @@ export default function ExploreRecipes() {
                       }}
                       className="group flex cursor-pointer items-center justify-between rounded-[20px] border border-[#E2EBE4] bg-white p-5 shadow-sm transition-all hover:border-[#24733E] hover:shadow-md dark:border-white/10 dark:bg-[#131B2E] dark:hover:border-[#10B981]"
                     >
-                      <div className="flex items-center gap-4">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#EAF4EB] text-[#24733E] dark:bg-[#10B981]/20 dark:text-[#10B981]">
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#EAF4EB] text-[#24733E] dark:bg-[#10B981]/20 dark:text-[#10B981]">
                           <Folder className="h-6 w-6" />
                         </div>
-                        <div>
-                          <h4 className="font-bold text-gray-900 group-hover:text-[#24733E] dark:text-white dark:group-hover:text-[#10B981]">
+                        <div className="min-w-0 flex-1">
+                          <h4 className="truncate font-bold text-gray-900 group-hover:text-[#24733E] dark:text-white dark:group-hover:text-[#10B981]">
                             {col.name}
                           </h4>
                           <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -449,7 +497,17 @@ export default function ExploreRecipes() {
                           </p>
                         </div>
                       </div>
-                      <ArrowUpRight className="h-5 w-5 text-gray-400 group-hover:text-[#24733E] dark:group-hover:text-[#10B981]" />
+
+                      <div className="flex items-center gap-1 shrink-0 ml-2">
+                        <button
+                          onClick={(e) => handleDeleteCollection(e, col.id)}
+                          title="Delete Collection"
+                          className="rounded-lg p-2 text-gray-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30 dark:hover:text-red-400 transition-colors"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                        <ArrowUpRight className="h-5 w-5 text-gray-400 group-hover:text-[#24733E] dark:group-hover:text-[#10B981]" />
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -465,7 +523,6 @@ export default function ExploreRecipes() {
                 </div>
               )
             ) : (
-              // রেসিপি গ্রিড/লিস্ট ভিউ এবং ব্যাক বাটন
               <div className="flex flex-col w-full">
                 
                 {/* ====== BACK BUTTON ====== */}
@@ -486,10 +543,16 @@ export default function ExploreRecipes() {
 
                 {currentRecipes.length > 0 ? (
                   viewMode === "grid" ? (
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                      {currentRecipes.map((recipe) => (
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                      {currentRecipes.map((recipe, index) => (
                         <div key={recipe.id} className="w-full min-w-0">
-                          <RecipeCard recipe={recipe} />
+                          <RecipeCard 
+                            recipe={recipe} 
+                            index={index}
+                            onFavoriteRemoved={(removedId) => {
+                              setRecipes((prev) => prev.filter((r) => r.id !== removedId));
+                            }}
+                          />
                         </div>
                       ))}
                     </div>
@@ -593,8 +656,8 @@ export default function ExploreRecipes() {
             )}
           </div>
 
-          {/* RIGHT SIDEBAR (Span 4) = */}
-          <div className="lg:col-span-4 w-full">
+          {/* ================= RIGHT SIDEBAR (Span 4) ================= */}
+          <div className="lg:col-span-4 flex flex-col gap-6 w-full">
             <Sidebar
               selectedCollectionId={selectedCollectionId}
               onSelectCollection={(colId, colName) => {
