@@ -10,6 +10,7 @@ import {
   X,
 } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { authClient } from "@/lib/auth-client";
@@ -28,25 +29,26 @@ interface Recipe {
 interface RecipeCardProps {
   recipe: Recipe;
   index?: number;
+  onFavoriteRemoved?: (recipeId: string) => void;
 }
 
 export default function RecipeCard({
   recipe,
   index = 0,
+  onFavoriteRemoved,
 }: RecipeCardProps) {
-  // ================= SESSION =================
   const { data: session } = authClient.useSession();
 
-  // ================= FAVORITE STATE =================
+  //  FAVORITE STATE 
   const [isLiked, setIsLiked] = useState(false);
   const [isFavoriteLoading, setIsFavoriteLoading] = useState(false);
 
-  // ================= COLLECTION MODAL STATE =================
+  //  COLLECTION MODAL STATE 
   const [isCollectionModalOpen, setIsCollectionModalOpen] = useState(false);
   const [collections, setCollections] = useState<any[]>([]);
   const [loadingCollections, setLoadingCollections] = useState(false);
 
-  // ================= CHECK FAVORITE =================
+  //  CHECK FAVORITE 
   useEffect(() => {
     if (!session?.user?.id) {
       setIsLiked(false);
@@ -85,8 +87,10 @@ export default function RecipeCard({
     checkFavorite();
   }, [session?.user?.id, recipe.id]);
 
-  // ================= ADD / REMOVE FAVORITE =================
-  const handleFavorite = async () => {
+  //  ADD / REMOVE FAVORITE 
+  const handleFavorite = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+
     if (!session?.user?.id) {
       toast.error("Please login to save recipes.");
       return;
@@ -129,6 +133,12 @@ export default function RecipeCard({
 
         setIsLiked(false);
         toast.success("Removed from favorites");
+
+        if (onFavoriteRemoved) {
+          onFavoriteRemoved(recipe.id);
+        }
+        
+        window.dispatchEvent(new Event("recipeUpdated"));
       } else {
         const response = await fetch(
           "http://localhost:5000/api/favorites",
@@ -161,6 +171,7 @@ export default function RecipeCard({
 
         setIsLiked(true);
         toast.success("Added to favorites");
+        window.dispatchEvent(new Event("recipeUpdated"));
       }
     } catch (error) {
       console.error("Favorite error:", error);
@@ -170,8 +181,10 @@ export default function RecipeCard({
     }
   };
 
-  // ================= OPEN COLLECTION MODAL =================
-  const handleOpenCollectionModal = async () => {
+  //  OPEN COLLECTION MODAL 
+  const handleOpenCollectionModal = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+
     if (!session?.user?.id) {
       toast.error("Please login first to save recipes to collections.");
       return;
@@ -196,7 +209,7 @@ export default function RecipeCard({
     }
   };
 
-  // ================= SAVE TO SPECIFIC COLLECTION WITH TOAST =================
+  //  SAVE TO SPECIFIC COLLECTION WITH TOAST 
   const handleAddToCollection = async (collectionId: string) => {
     try {
       const res = await fetch("http://localhost:5000/api/collections/add-recipe", {
@@ -208,9 +221,7 @@ export default function RecipeCard({
       
       if (data.success) {
         toast.success("Recipe added to collection successfully!");
-        setIsCollectionModalOpen(false); // সাকসেস হলে মোডাল বন্ধ হয়ে যাবে
-        
-        // **সাইডবার সাথে সাথে আপডেট করার জন্য ইভেন্ট ডিসপ্যাচ করা হলো**
+        setIsCollectionModalOpen(false);
         window.dispatchEvent(new Event("collectionUpdated"));
       } else {
         toast.error(data.message || "Recipe already exists in this collection");
@@ -237,7 +248,7 @@ export default function RecipeCard({
         }}
         className="group relative flex h-full w-full flex-col overflow-hidden rounded-[24px] border border-[#E2EBE4] bg-white p-3 shadow-sm transition-all duration-300 hover:border-[#C5DED0] hover:shadow-md dark:border-white/10 dark:bg-[#131B2E]"
       >
-        {/* ================= IMAGE CONTAINER ================= */}
+        {/*  IMAGE CONTAINER  */}
         <div className="relative h-[200px] w-full shrink-0 overflow-hidden rounded-[18px] bg-[#EEF4EF] dark:bg-[#1A233A]">
           <motion.div
             whileHover={{ scale: 1.05 }}
@@ -253,7 +264,7 @@ export default function RecipeCard({
             />
           </motion.div>
 
-          {/* ================= RATING BADGE ================= */}
+          {/*  RATING BADGE  */}
           <div className="absolute left-3 top-3 flex items-center gap-1 rounded-full border border-white/80 bg-white/90 px-2.5 py-1 shadow-sm backdrop-blur-md dark:border-white/10 dark:bg-[#131B2E]/90">
             <Star className="h-3 w-3 fill-[#F6A51A] text-[#F6A51A]" />
             <span className="text-[11px] font-bold text-gray-900 dark:text-white">
@@ -296,15 +307,15 @@ export default function RecipeCard({
           </div>
         </div>
 
-        {/* ================= CONTENT AREA ================= */}
+        {/*  CONTENT AREA  */}
         <div className="flex flex-1 flex-col justify-between pt-3.5 px-1 pb-1">
           <div>
-            {/* ================= TITLE ================= */}
-            <h3 className="line-clamp-1 text-[16px] font-bold tracking-tight text-gray-900 transition-colors duration-200 group-hover:text-[#24733E] dark:text-white dark:group-hover:text-[#10B981]">
+            {/*  TITLE  */}
+            <h3 className="line-clamp-1 text-[16px] font-bold tracking-tight text-gray-900 transition-colors duration-200 dark:text-white">
               {recipe.title}
             </h3>
 
-            {/* ================= TIME & CALORIES ================= */}
+            {/*  TIME & CALORIES  */}
             <div className="mt-2 flex items-center justify-between text-xs font-medium text-gray-500 dark:text-gray-400">
               <div className="flex items-center gap-1.5">
                 <Clock3 className="h-3.5 w-3.5 text-[#24733E] dark:text-[#10B981]" />
@@ -317,27 +328,31 @@ export default function RecipeCard({
             </div>
           </div>
 
-          {/* ================= BOTTOM TAG & COMPACT CTA ================= */}
+          {/* BOTTOM TAG & COMPACT CTA */}
           <div className="mt-4 flex items-center justify-between border-t border-gray-100 pt-3 dark:border-white/10">
             <span className="rounded-full bg-[#EAF4EB] px-2.5 py-0.5 text-[11px] font-semibold text-[#24733E] dark:bg-[#132A26] dark:text-[#10B981]">
               {recipe.cuisine || "Healthy"}
             </span>
 
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              type="button"
-              className="flex cursor-pointer items-center gap-1 rounded-xl bg-[#24733E]/10 px-3 py-1.5 text-xs font-bold text-[#24733E] transition-colors hover:bg-[#24733E] hover:text-white dark:bg-[#10B981]/10 dark:text-[#10B981] dark:hover:bg-[#10B981] dark:hover:text-white"
-            >
-              <span>View</span>
-              <ArrowUpRight className="h-3.5 w-3.5" />
-            </motion.button>
+            <Link href={`/recipes/${recipe.id}`}>
+              <motion.div
+                whileTap={{ scale: 0.95 }}
+                className="flex cursor-pointer items-center gap-1 rounded-xl bg-[#24733E]/10 px-3 py-1.5 text-xs font-bold text-[#24733E] transition-colors hover:bg-[#24733E] hover:text-white dark:bg-[#10B981]/10 dark:text-[#10B981] dark:hover:bg-[#10B981] dark:hover:text-white"
+              >
+                <span>View</span>
+                <ArrowUpRight className="h-3.5 w-3.5" />
+              </motion.div>
+            </Link>
           </div>
         </div>
       </motion.article>
 
       {/* ================= ADD TO COLLECTION MODAL ================= */}
       {isCollectionModalOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+        <div 
+          onClick={(e) => e.stopPropagation()} 
+          className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 backdrop-blur-sm"
+        >
           <div className="bg-white dark:bg-[#131B2E] border border-gray-200 dark:border-white/10 rounded-2xl p-6 w-full max-w-sm shadow-2xl">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-base font-bold text-gray-900 dark:text-white">Save to Collection</h3>
