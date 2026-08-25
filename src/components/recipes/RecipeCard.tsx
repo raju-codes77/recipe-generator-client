@@ -62,7 +62,13 @@ export default function RecipeCard({
           }
         );
 
-        const data = await response.json();
+        const contentType = response.headers.get("content-type");
+        let data;
+        if (contentType && contentType.includes("application/json")) {
+          data = await response.json();
+        } else {
+          throw new Error("Received non-JSON response from server");
+        }
 
         if (!response.ok) {
           throw new Error(
@@ -107,7 +113,13 @@ export default function RecipeCard({
           }
         );
 
-        const data = await response.json();
+        const contentType = response.headers.get("content-type");
+        let data;
+        if (contentType && contentType.includes("application/json")) {
+          data = await response.json();
+        } else {
+          throw new Error("Received non-JSON response from server");
+        }
 
         if (!response.ok) {
           throw new Error(
@@ -133,7 +145,13 @@ export default function RecipeCard({
           }
         );
 
-        const data = await response.json();
+        const contentType = response.headers.get("content-type");
+        let data;
+        if (contentType && contentType.includes("application/json")) {
+          data = await response.json();
+        } else {
+          throw new Error("Received non-JSON response from server");
+        }
 
         if (!response.ok) {
           throw new Error(

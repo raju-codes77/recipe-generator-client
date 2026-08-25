@@ -77,42 +77,46 @@ export default function AvailableTools() {
           </div>
         </div>
 
-        {/* 3. Food Photo Analyzer */}
-        <div className="bg-orange-50/50 dark:bg-slate-800/50 rounded-3xl p-6 border border-orange-100 dark:border-slate-700 relative overflow-hidden group hover:shadow-md transition-shadow">
+        {/* 3. AI Meal Tracker */}
+        <Link href="/ai-tools/meal-tracker" className="block bg-orange-50/50 dark:bg-slate-800/50 rounded-3xl p-6 border border-orange-100 dark:border-slate-700 relative overflow-hidden group hover:shadow-md transition-shadow">
           <div className="w-12 h-12 bg-orange-500 rounded-xl flex items-center justify-center text-white mb-6 shadow-sm shadow-orange-500/30">
             <Camera size={24} />
           </div>
 
           <div className="flex items-center gap-2 mb-2">
-            <h4 className="font-bold text-slate-900 dark:text-white text-lg">Food Photo Analyzer</h4>
-            <span className="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-green-200">Popular</span>
+            <h4 className="font-bold text-slate-900 dark:text-white text-lg">AI Meal Tracker</h4>
+            <span className="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-green-200">New</span>
           </div>
 
           <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed mb-6 max-w-[200px]">
-            Upload a food photo to detect the dish and get estimated nutrition information instantly.
+            Snap a photo of your meal and let AI instantly log your calories, macros, and daily nutrition goals.
           </p>
 
-          <button className="text-orange-600 dark:text-orange-500 font-semibold text-sm flex items-center gap-1.5 group-hover:gap-2 transition-all">
-            Analyze photo <ArrowRight size={16} />
-          </button>
+          <span className="text-orange-600 dark:text-orange-500 font-semibold text-sm flex items-center gap-1.5 group-hover:gap-2 transition-all">
+            Track Meal <ArrowRight size={16} />
+          </span>
 
-          {/* Decorative Photo Frame */}
-          <div className="absolute right-4 top-1/2 -translate-y-1/2 w-28 h-28 lg:w-32 lg:h-32 rounded-2xl bg-white dark:bg-slate-700 p-2 shadow-lg border border-orange-200 dark:border-slate-600 transform group-hover:scale-105 transition-transform duration-500">
-            <div className="relative w-full h-full rounded-xl overflow-hidden">
+          {/* Decorative Tracker Graphic */}
+          <div className="absolute right-4 top-1/2 -translate-y-1/2 w-28 h-28 lg:w-32 lg:h-32 rounded-2xl bg-white dark:bg-slate-700 p-2 shadow-lg border border-orange-200 dark:border-slate-600 transform group-hover:scale-105 transition-transform duration-500 flex flex-col gap-2">
+            <div className="relative w-full h-16 rounded-lg overflow-hidden">
               <Image
-                src="https://images.unsplash.com/photo-1565299507177-b0ac66763828?w=400&auto=format&fit=crop&q=80"
-                alt="Pancakes"
+                src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&auto=format&fit=crop&q=80"
+                alt="Healthy Bowl"
                 fill
                 className="object-cover"
               />
-              {/* Camera Focus Brackets */}
-              <div className="absolute inset-2 border-2 border-dashed border-white/70 rounded-lg"></div>
             </div>
-            <div className="absolute -bottom-3 -right-3 bg-white dark:bg-slate-800 border-2 border-orange-100 dark:border-slate-600 rounded-full p-2 text-orange-500">
-              <Camera size={16} />
+            <div className="flex flex-col gap-1 px-1">
+              <div className="w-full bg-slate-100 dark:bg-slate-600 h-1.5 rounded-full overflow-hidden">
+                <div className="bg-orange-500 w-3/4 h-full"></div>
+              </div>
+              <div className="flex justify-between text-[8px] text-slate-400 font-bold">
+                <span>450 kcal</span>
+                <span>75%</span>
+              </div>
             </div>
           </div>
-        </div>
+        </Link>
 
         {/* 4. Flavor Pairing */}
         <div className="md:col-span-1 lg:col-span-2 bg-purple-50/50 dark:bg-slate-800/50 rounded-3xl p-6 border border-purple-100 dark:border-slate-700 relative overflow-hidden group hover:shadow-md transition-shadow flex flex-col justify-center">

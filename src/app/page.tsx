@@ -11,10 +11,10 @@ export default function Home() {
   return (
     <div>
       <Banner />
+      <PantryToPlateSection />
       <RecipeCollectionSection />
       <PersonalizationSection />
       <CounterProps />
-      <PantryToPlateSection/>
       <HowItWorksSection />
       <CommunitySection />
     </div>
