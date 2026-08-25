@@ -286,7 +286,10 @@ export default function DashboardSidebar() {
           )}
         </div>
 
+
+
         {/* Bottom User Profile Preview */}
+        
         <div className="space-y-3 pt-4 border-t border-gray-200 dark:border-[#89986D]/20">
           <div className="flex items-center justify-between px-2 pt-1">
             <div className="flex items-center space-x-2">
@@ -305,6 +308,7 @@ export default function DashboardSidebar() {
             <Link href="/login" className="text-red-500 hover:text-red-600 p-1">
               <FiLogOut size={16} />
             </Link>
+
           </div>
         </div>
       </aside>
