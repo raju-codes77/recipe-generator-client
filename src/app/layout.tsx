@@ -18,6 +18,8 @@ export const metadata: Metadata = {
 };
 
 import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
+import { Toaster } from "react-hot-toast";
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
@@ -25,12 +27,14 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-slate-100 dark:bg-slate-950 p-2 sm:p-4 lg:p-6 transition-colors duration-300">
+      <body className="min-h-full flex flex-col bg-slate-100 dark:bg-slate-950 transition-colors duration-300">
         <div className="">
           <Navbar />
           <main className="flex-1">
             {children}
+            <Toaster position="top-right" reverseOrder={false} />
           </main>
+          <Footer />
         </div>
       </body>
     </html>

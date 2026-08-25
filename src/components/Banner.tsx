@@ -15,7 +15,7 @@ export default function Banner() {
 
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0, transition: { type: "spring", duration: 0.6 } }
+    show: { opacity: 1, y: 0, transition: { type: "spring" as const, duration: 0.6 } }
   };
 
   return (
@@ -92,7 +92,7 @@ export default function Banner() {
           <div className="relative w-full max-w-[540px] aspect-square flex items-center justify-center">
 
             {/* Hero Bowl Image (with overflow-hidden) */}
-            <motion.div 
+            <motion.div
               className="absolute inset-0 bg-slate-100 dark:bg-slate-800 rounded-3xl lg:rounded-[2.5rem] overflow-hidden"
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -108,11 +108,11 @@ export default function Banner() {
             </motion.div>
 
             {/* Floating Badge 1: AI Recipe Generator (Top Left) */}
-            <motion.div 
+            <motion.div
               className="absolute top-4 sm:top-8 -left-2 sm:-left-8 lg:-left-12 z-20 bg-white dark:bg-slate-800 shadow-xl border border-gray-100 dark:border-slate-700/60 rounded-2xl p-2.5 px-3.5 flex items-center gap-3"
               initial={{ opacity: 0, x: -30 }}
               animate={{ opacity: 1, x: 0, y: [-4, 4, -4], scale: [1, 1.02, 1] }}
-              transition={{ 
+              transition={{
                 opacity: { delay: 0.6, duration: 0.5 },
                 x: { delay: 0.6, duration: 0.5, ease: "easeOut" },
                 y: { repeat: Infinity, duration: 3.5, ease: "easeInOut", delay: 1.1 },
@@ -130,11 +130,11 @@ export default function Banner() {
             </motion.div>
 
             {/* Floating Badge 2: Nutrition Analyzer (Bottom Left) */}
-            <motion.div 
+            <motion.div
               className="absolute bottom-12 sm:bottom-16 -left-2 sm:-left-6 lg:-left-10 z-20 bg-white dark:bg-slate-800 shadow-xl border border-gray-100 dark:border-slate-700/60 rounded-2xl p-2.5 px-3.5 flex items-center gap-3"
               initial={{ opacity: 0, x: -30 }}
               animate={{ opacity: 1, x: 0, y: [4, -4, 4] }}
-              transition={{ 
+              transition={{
                 opacity: { delay: 0.8, duration: 0.5 },
                 x: { delay: 0.8, duration: 0.5, ease: "easeOut" },
                 y: { repeat: Infinity, duration: 4.2, ease: "easeInOut", delay: 1.3 }
@@ -151,11 +151,11 @@ export default function Banner() {
             </motion.div>
 
             {/* Floating Badge 3: Smart Flavor Pairing (Middle Right) */}
-            <motion.div 
+            <motion.div
               className="absolute top-1/2 -translate-y-1/2 -right-2 sm:-right-8 lg:-right-12 z-20 bg-white dark:bg-slate-800 shadow-xl border border-gray-100 dark:border-slate-700/60 rounded-2xl p-2.5 px-3.5 flex items-center gap-3"
               initial={{ opacity: 0, x: 30 }}
               animate={{ opacity: 1, x: 0, y: [-5, 3, -5] }}
-              transition={{ 
+              transition={{
                 opacity: { delay: 0.7, duration: 0.5 },
                 x: { delay: 0.7, duration: 0.5, ease: "easeOut" },
                 y: { repeat: Infinity, duration: 3.8, ease: "easeInOut", delay: 1.2 }
@@ -177,57 +177,7 @@ export default function Banner() {
       </div>
 
       {/* Bottom Floating Stats Card Bar */}
-      <div className="mt-14 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-3xl shadow-xl shadow-slate-200/50 dark:shadow-none p-6 sm:p-8">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-4 divide-y sm:divide-y-0 sm:divide-x divide-gray-100 dark:divide-slate-800">
 
-          {/* Stat 1: Recipes Created */}
-          <div className="flex items-center gap-4 pt-4 sm:pt-0 sm:px-4 first:pt-0 first:px-0">
-            <div className="w-12 h-12 rounded-full bg-emerald-100/70 dark:bg-emerald-950/60 flex items-center justify-center text-emerald-600 shrink-0">
-              <ChefHatIcon className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
-            </div>
-            <div>
-              <h3 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white">10K+</h3>
-              <p className="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400">Recipes Created</p>
-            </div>
-          </div>
-
-          {/* Stat 2: Happy Users */}
-          <div className="flex items-center gap-4 pt-4 sm:pt-0 sm:px-4">
-            <div className="w-12 h-12 rounded-full bg-emerald-100/70 dark:bg-emerald-950/60 flex items-center justify-center text-emerald-600 shrink-0">
-              <Users size={22} className="text-emerald-600 dark:text-emerald-400" />
-            </div>
-            <div>
-              <h3 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white">50K+</h3>
-              <p className="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400">Happy Users</p>
-            </div>
-          </div>
-
-          {/* Stat 3: Meals Cooked */}
-          <div className="flex items-center gap-4 pt-4 sm:pt-0 sm:px-4">
-            <div className="w-12 h-12 rounded-full bg-orange-100/70 dark:bg-orange-950/60 flex items-center justify-center text-orange-500 shrink-0">
-              <SoupIcon className="w-6 h-6 text-orange-500 dark:text-orange-400" />
-            </div>
-            <div>
-              <h3 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white">250K+</h3>
-              <p className="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400">Meals Cooked</p>
-            </div>
-          </div>
-
-          {/* Stat 4: Ingredients Saved from Waste */}
-          <div className="flex items-center gap-4 pt-4 sm:pt-0 sm:px-4">
-            <div className="w-12 h-12 rounded-full bg-emerald-100/70 dark:bg-emerald-950/60 flex items-center justify-center text-emerald-600 shrink-0">
-              <Leaf size={22} className="text-emerald-600 dark:text-emerald-400" />
-            </div>
-            <div>
-              <h3 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white">1M+</h3>
-              <p className="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400">
-                Ingredients Saved <br className="hidden lg:block" />from Waste
-              </p>
-            </div>
-          </div>
-
-        </div>
-      </div>
 
     </section>
   );
