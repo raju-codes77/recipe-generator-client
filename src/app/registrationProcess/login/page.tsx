@@ -1,14 +1,17 @@
-
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 import {
   FiMail,
   FiLock,
   FiArrowRight,
   FiCheckCircle,
+  FiEye,
+  FiEyeOff,
+  FiAlertTriangle,
 } from "react-icons/fi";
 import { FcGoogle } from "react-icons/fc";
 import { authClient } from "@/lib/auth-client";
@@ -18,10 +21,26 @@ export default function LoginPage() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  // নতুন স্টেট: ভুলAttempts এবং ব্লক টাইমার ম্যানেজ করার জন্য
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [lockoutTime, setLockoutTime] = useState(0); // সেকেন্ডে হিসাব হবে
+
+  // টাইমার কাউন্টডাউন ইফেক্ট (৫ মিনিট = ৩০০ সেকেন্ড)
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (lockoutTime > 0) {
+      timer = setInterval(() => {
+        setLockoutTime((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [lockoutTime]);
 
   const passwordSteps = [
     {
@@ -45,6 +64,9 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
+    // যদি ব্লকড থাকে তাহলে সাবমিট করতে দেবে না
+    if (lockoutTime > 0) return;
+
     setError("");
     setSuccess("");
     setLoading(true);
@@ -57,15 +79,28 @@ export default function LoginPage() {
       });
 
       if (error) {
-        setError(error.message || "Invalid email or password.");
+        // পাসওয়ার্ড বা ইমেইল ভুল হলে কাউন্ট বাড়াতে হবে
+        const newAttempts = failedAttempts + 1;
+        setFailedAttempts(newAttempts);
+
+        if (newAttempts >= 3) {
+          setLockoutTime(300); // ৫ মিনিট (৩০০ সেকেন্ড) লক করে দেওয়া হলো
+          setError("Too many failed attempts. Account suspended for 5 minutes.");
+          setFailedAttempts(0); // কাউন্ট রিসেট
+        } else {
+          setError(
+            error.message ||
+              `Invalid email or password. Attempt ${newAttempts} of 3.`
+          );
+        }
         return;
       }
 
+      // সফলভাবে লগইন হলে কাউন্ট রিসেট
+      setFailedAttempts(0);
       console.log("Login successful:", data);
-
       setSuccess("Login successful! Redirecting...");
 
-      // Login successful
       router.push("/");
       router.refresh();
     } catch (err) {
@@ -77,6 +112,8 @@ export default function LoginPage() {
   };
 
   const handleGoogleLogin = async () => {
+    if (lockoutTime > 0) return;
+
     setError("");
     setSuccess("");
     setLoading(true);
@@ -93,194 +130,209 @@ export default function LoginPage() {
     }
   };
 
+  // মিনিট এবং সেকেন্ড ফরম্যাট করার ফাংশন
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-black p-4 relative overflow-hidden transition-colors duration-300">
-      {/* Background Decorative Shapes */}
-      <div className="absolute -top-24 -left-24 w-96 h-96 bg-[#2F8F46]/10 dark:bg-[#2F8F46]/20 rounded-full blur-3xl pointer-events-none" />
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#89986D]/20 via-white to-white dark:from-black dark:via-gray-950 dark:to-black p-4 transition-colors duration-500 overflow-hidden">
+      
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        className="w-full max-w-5xl bg-white dark:bg-[#141414] rounded-3xl shadow-[0_20px_50px_-15px_rgba(137,152,109,0.2)] overflow-hidden flex border border-gray-100 dark:border-[#333]"
+      >
 
-      <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-[#FF9F43]/10 dark:bg-[#FF9F43]/15 rounded-full blur-3xl pointer-events-none" />
-
-      <div className="w-full max-w-md bg-white dark:bg-black/60 border border-gray-200 dark:border-[#89986D]/20 backdrop-blur-xl p-8 rounded-3xl shadow-2xl relative z-10">
-
-        {/* Brand Header */}
-        <div className="text-center mb-8">
-          <div className="w-12 h-12 mx-auto rounded-2xl bg-[#2F8F46] flex items-center justify-center text-white font-bold text-2xl shadow-lg shadow-[#2F8F46]/30 mb-3">
-            F
+        {/* LEFT COLUMN: Image / Branding Section */}
+        <div className="hidden lg:flex lg:w-1/2 bg-[#89986D]/5 dark:bg-[#1a1a1a] p-12 flex-col justify-between relative">
+          <div className="absolute -top-20 -left-20 w-60 h-60 bg-[#2F8F46]/10 rounded-full blur-2xl" />
+          
+          <div className="relative z-10 flex items-center gap-3">
+             <div className="w-10 h-10 rounded-xl bg-[#2F8F46] flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-[#2F8F46]/30">
+              FC
+            </div>
+            <span className="font-bold text-lg text-gray-900 dark:text-white">Food Canvas</span>
           </div>
 
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-[#F6F0D7]">
-            Welcome Back!
-          </h1>
+          <div className="relative z-10 flex-grow flex items-center justify-center">
+             <div className="text-center p-10 bg-white/50 dark:bg-black/30 rounded-3xl border border-gray-100 dark:border-gray-800 backdrop-blur-sm">
+                <FiCheckCircle className="w-16 h-16 text-[#2F8F46] mx-auto mb-6" strokeWidth={1.5}/>
+                <h3 className="text-2xl font-semibold text-gray-900 dark:text-white mb-3">Welcome Back to Food Canvas!</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Access your personalized AI meal plans and recipes instantly.</p>
+             </div>
+          </div>
 
-          <p className="text-xs text-gray-500 dark:text-[#F6F0D7]/60 mt-1">
-            Log in to your FlavorAI account to continue
+          <div className="relative z-10 text-sm text-gray-600 dark:text-gray-400 border-t border-gray-200 dark:border-gray-800 pt-6">
+            <p className="italic">"Food Canvas revolutionized how I cook. The recipes are fantastic and the AI suggestions are spot on!"</p>
+            <p className="font-semibold text-gray-900 dark:text-white mt-3">- Sarah J, Home Chef</p>
+          </div>
+        </div>
+
+        {/* RIGHT COLUMN: Login Form Section */}
+        <div className="w-full lg:w-1/2 p-8 sm:p-12 flex flex-col justify-center">
+          
+          <div className="text-center mb-8">
+            <div className="w-12 h-12 mx-auto rounded-2xl bg-[#2F8F46] flex items-center justify-center text-white font-bold text-2xl shadow-lg shadow-[#2F8F46]/30 mb-3 lg:hidden">
+              FC
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Welcome Back!</h1>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Log in to your Food Canvas account</p>
+          </div>
+
+          {/* Lockout Warning Banner */}
+          {lockoutTime > 0 && (
+            <div className="mb-5 p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400 text-xs font-medium flex items-center gap-2.5">
+              <FiAlertTriangle size={18} className="shrink-0" />
+              <span>
+                Too many incorrect attempts. Please try again in{" "}
+                <strong className="font-bold underline">{formatTime(lockoutTime)}</strong>.
+              </span>
+            </div>
+          )}
+
+          {error && lockoutTime === 0 && (
+            <div className="mb-5 p-4 rounded-2xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-xs font-medium flex items-center gap-2">
+                <FiMail size={16}/> {error}
+            </div>
+          )}
+
+          {success && (
+            <div className="mb-5 p-4 rounded-2xl bg-green-50 dark:bg-green-950/40 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 text-xs font-medium flex items-center gap-2">
+                <FiCheckCircle size={16}/> {success}
+            </div>
+          )}
+
+          {/* Login Form */}
+          <form onSubmit={handleSubmit} className="space-y-4">
+
+            {/* Email Input */}
+            <div>
+              <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1.5 pl-1">
+                Email Address
+              </label>
+              <div className="relative">
+                <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-gray-400 dark:text-gray-500">
+                  <FiMail size={18} />
+                </span>
+                <input
+                  type="email"
+                  value={email}
+                  disabled={lockoutTime > 0}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="chef@foodcanvas.com"
+                  required
+                  className="w-full pl-11 pr-4 py-3.5 rounded-2xl bg-gray-50 dark:bg-[#1a1a1a] border border-gray-100 dark:border-gray-800 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#2F8F46]/30 focus:border-[#2F8F46] transition-all disabled:opacity-50"
+                />
+              </div>
+            </div>
+
+            {/* Password Input with Show/Hide Toggle */}
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                 <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 pl-1">
+                    Password
+                 </label>
+                 <Link href="/forgot-password" className="text-xs text-[#2F8F46] dark:text-[#89986D] hover:underline font-medium pr-1">
+                    Forgot Password?
+                 </Link>
+              </div>
+              
+              <div className="relative">
+                <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-gray-400 dark:text-gray-500">
+                  <FiLock size={18} />
+                </span>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  disabled={lockoutTime > 0}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                  className="w-full pl-11 pr-12 py-3.5 rounded-2xl bg-gray-50 dark:bg-[#1a1a1a] border border-gray-100 dark:border-gray-800 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#2F8F46]/30 focus:border-[#2F8F46] transition-all disabled:opacity-50"
+                />
+                <button
+                  type="button"
+                  disabled={lockoutTime > 0}
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+                >
+                  {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                </button>
+              </div>
+            </div>
+
+            {/* Password Requirements Box */}
+            <div className="p-4 rounded-2xl bg-gray-50 dark:bg-[#1a1a1a] border border-gray-100 dark:border-gray-800 space-y-2.5">
+              <p className="text-[10px] font-bold text-gray-500 dark:text-gray-500 uppercase tracking-wider">
+                Password must meet:
+              </p>
+              <div className="grid grid-cols-2 gap-x-2 gap-y-1.5">
+                {passwordSteps.map((step, idx) => (
+                  <div key={idx} className="flex items-center gap-2.5 text-xs">
+                    <FiCheckCircle
+                      className={step.met ? "text-[#2F8F46]" : "text-gray-300 dark:text-gray-600"}
+                      size={14}
+                      strokeWidth={2.5}
+                    />
+                    <span className={step.met ? "text-gray-700 dark:text-gray-200" : "text-gray-400 dark:text-gray-500"}>
+                      {step.label}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Remember Me Checkbox */}
+            <div className="flex items-center justify-between pt-1">
+              <label className="flex items-center gap-2.5 text-sm text-gray-600 dark:text-gray-300 cursor-pointer group">
+                <input type="checkbox" disabled={lockoutTime > 0} className="w-5 h-5 rounded border-gray-300 dark:border-gray-600 text-[#2F8F46] focus:ring-[#2F8F46] bg-white dark:bg-[#1a1a1a]" />
+                <span className="group-hover:text-gray-900 dark:group-hover:text-white transition-colors">Remember me</span>
+              </label>
+            </div>
+
+            {/* Sign In Button */}
+            <button
+              type="submit"
+              disabled={loading || lockoutTime > 0}
+              className="w-full py-4 bg-[#2F8F46] hover:bg-[#287a3b] text-white font-semibold rounded-2xl shadow-lg shadow-[#2F8F46]/20 transition-all flex items-center justify-center gap-2.5 text-sm disabled:opacity-60 disabled:cursor-not-allowed transform hover:-translate-y-0.5 active:translate-y-0"
+            >
+              <span>{loading ? "Signing in..." : lockoutTime > 0 ? `Locked (${formatTime(lockoutTime)})` : "Sign In to Food Canvas"}</span>
+              {!loading && lockoutTime === 0 && <FiArrowRight size={18} />}
+            </button>
+          </form>
+
+          <div className="flex items-center my-5">
+            <div className="flex-grow border-t border-gray-100 dark:border-gray-800" />
+            <span className="px-4 text-[11px] uppercase font-medium text-gray-400 dark:text-gray-600">or</span>
+            <div className="flex-grow border-t border-gray-100 dark:border-gray-800" />
+          </div>
+
+          {/* Google Login Button */}
+          <button
+            type="button"
+            onClick={handleGoogleLogin}
+            disabled={loading || lockoutTime > 0}
+            className="w-full flex items-center justify-center gap-3 py-3.5 px-4 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#1a1a1a] hover:bg-gray-50 dark:hover:bg-[#262626] text-sm font-medium text-gray-700 dark:text-gray-200 transition shadow-sm disabled:opacity-50"
+          >
+            <FcGoogle size={22} />
+            <span>Continue with Google</span>
+          </button>
+
+          {/* Register Link */}
+          <p className="text-center text-sm text-gray-600 dark:text-gray-400 mt-6">
+            Don't have an account?{" "}
+            <Link href="/register" className="text-[#2F8F46] dark:text-[#89986D] font-semibold hover:underline">
+              Create an account
+            </Link>
           </p>
         </div>
+      </motion.div>
 
-        {/* Error Message */}
-        {error && (
-          <div className="mb-4 p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-xs">
-            {error}
-          </div>
-        )}
-
-        {/* Success Message */}
-        {success && (
-          <div className="mb-4 p-3 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-600 dark:text-green-400 text-xs">
-            {success}
-          </div>
-        )}
-
-        {/* Google Login */}
-        <button
-          type="button"
-          onClick={handleGoogleLogin}
-          disabled={loading}
-          className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl border border-gray-200 dark:border-[#89986D]/20 bg-gray-50 dark:bg-[#89986D]/5 hover:bg-gray-100 dark:hover:bg-[#89986D]/15 text-xs font-semibold text-gray-800 dark:text-[#F6F0D7] transition shadow-sm disabled:opacity-50"
-        >
-          <FcGoogle size={20} />
-          <span>Continue with Google</span>
-        </button>
-
-        <div className="flex items-center my-6">
-          <div className="flex-grow border-t border-gray-200 dark:border-[#89986D]/20" />
-
-          <span className="px-3 text-[10px] uppercase font-semibold text-gray-400 dark:text-[#F6F0D7]/40">
-            or email
-          </span>
-
-          <div className="flex-grow border-t border-gray-200 dark:border-[#89986D]/20" />
-        </div>
-
-        {/* Login Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
-
-          {/* Email */}
-          <div>
-            <label className="block text-xs font-semibold text-gray-700 dark:text-[#F6F0D7]/80 mb-1">
-              Email Address
-            </label>
-
-            <div className="relative">
-              <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-gray-400">
-                <FiMail />
-              </span>
-
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="chef@flavorai.com"
-                required
-                className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/50 dark:bg-[#89986D]/10 border border-gray-200 dark:border-[#89986D]/20 text-xs text-gray-900 dark:text-[#F6F0D7] focus:outline-none focus:border-[#2F8F46] backdrop-blur-md"
-              />
-            </div>
-          </div>
-
-          {/* Password */}
-          <div>
-            <label className="block text-xs font-semibold text-gray-700 dark:text-[#F6F0D7]/80 mb-1">
-              Password
-            </label>
-
-            <div className="relative">
-              <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-gray-400">
-                <FiLock />
-              </span>
-
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-                className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/50 dark:bg-[#89986D]/10 border border-gray-200 dark:border-[#89986D]/20 text-xs text-gray-900 dark:text-[#F6F0D7] focus:outline-none focus:border-[#2F8F46] backdrop-blur-md"
-              />
-            </div>
-          </div>
-
-          {/* Password Requirements */}
-          <div className="p-3 rounded-xl bg-gray-50 dark:bg-[#89986D]/5 border border-gray-100 dark:border-[#89986D]/10 space-y-1.5">
-
-            <p className="text-[10px] font-bold text-gray-500 dark:text-[#F6F0D7]/60 uppercase tracking-wide">
-              Password Requirements:
-            </p>
-
-            {passwordSteps.map((step, idx) => (
-              <div
-                key={idx}
-                className="flex items-center gap-2 text-[11px]"
-              >
-                <FiCheckCircle
-                  className={
-                    step.met
-                      ? "text-[#2F8F46]"
-                      : "text-gray-300 dark:text-gray-600"
-                  }
-                  size={13}
-                />
-
-                <span
-                  className={
-                    step.met
-                      ? "text-gray-900 dark:text-[#F6F0D7] font-medium"
-                      : "text-gray-400 dark:text-[#F6F0D7]/40"
-                  }
-                >
-                  {step.label}
-                </span>
-              </div>
-            ))}
-          </div>
-
-          {/* Remember + Forgot Password */}
-          <div className="flex items-center justify-between text-xs pt-1">
-
-            <label className="flex items-center gap-2 text-gray-600 dark:text-[#F6F0D7]/70 cursor-pointer">
-              <input
-                type="checkbox"
-                className="rounded border-gray-300 accent-[#2F8F46]"
-              />
-
-              <span>Remember me</span>
-            </label>
-
-            <Link
-              href="/forgot-password"
-              className="text-[#2F8F46] dark:text-[#B7E35F] hover:underline font-semibold"
-            >
-              Forgot Password?
-            </Link>
-          </div>
-
-          {/* Submit */}
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3 bg-[#2F8F46] hover:bg-[#2F8F46]/90 text-white font-bold rounded-xl shadow-lg shadow-[#2F8F46]/30 transition flex items-center justify-center gap-2 text-xs disabled:opacity-60 disabled:cursor-not-allowed"
-          >
-            <span>
-              {loading ? "Signing in..." : "Sign In"}
-            </span>
-
-            {!loading && <FiArrowRight size={16} />}
-          </button>
-        </form>
-
-        {/* Register */}
-        <p className="text-center text-xs text-gray-500 dark:text-[#F6F0D7]/60 mt-6">
-          Don't have an account?{" "}
-
-          <Link
-            href="/register"
-            className="text-[#2F8F46] dark:text-[#B7E35F] font-bold hover:underline"
-          >
-            Register here
-          </Link>
-        </p>
-
-      </div>
+       <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-[#FF9F43]/10 dark:bg-[#FF9F43]/5 rounded-full blur-3xl pointer-events-none" />
     </div>
   );
 }
-
