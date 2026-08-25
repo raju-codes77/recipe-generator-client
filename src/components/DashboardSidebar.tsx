@@ -74,6 +74,8 @@ export default function DashboardSidebar() {
   ];
 
   return (
+
+    
     <>
       {/* Mobile Header with Hamburger Button */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between p-4 bg-white dark:bg-black border-b border-gray-200 dark:border-[#89986D]/20 shadow-sm">
