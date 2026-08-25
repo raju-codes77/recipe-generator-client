@@ -161,6 +161,7 @@ const { data, error } = await authClient.signUp.email({
         {/* Brand Header */}
         <div className="text-center mb-6">
           <div className="w-12 h-12 lg:w-14 lg:h-14 shrink-0 flex items-center justify-center mx-auto mb-3">
+            
             <Image
               src="/logohere.png"
               alt="FoodCanvas Logo"
