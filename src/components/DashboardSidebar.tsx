@@ -20,7 +20,7 @@ export default function DashboardSidebar() {
       setDarkMode(true);
     }
   }, []);
-
+           
   const toggleTheme = () => {
     if (darkMode) {
       document.documentElement.classList.remove("dark");

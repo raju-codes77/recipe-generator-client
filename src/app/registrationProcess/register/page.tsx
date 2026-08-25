@@ -11,9 +11,11 @@ import {
   FiArrowRight,
   FiCheckCircle,
   FiLoader,
+  FiShield,
 } from "react-icons/fi";
 import { FcGoogle } from "react-icons/fc";
 import { authClient } from "@/lib/auth-client";
+import Image from "next/image";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -22,6 +24,7 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [photo, setPhoto] = useState("");
+  const [role, setRole] = useState("user"); // Default role
 
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -75,15 +78,18 @@ export default function RegisterPage() {
 
     try {
       setLoading(true);
-
-      const { data, error } = await authClient.signUp.email({
-        name: name.trim(),
-        email: email.trim(),
-        password,
-      });
+const { data, error } = await authClient.signUp.email({
+  name: name.trim(),
+  email: email.trim(),
+  password,
+  image: photo.trim() || undefined,
+});
 
       if (error) {
         console.error("Signup error:", error);
+  console.error("Error message:", error.message);
+  console.error("Error code:", error.code);
+  console.error("Full error:", JSON.stringify(error, null, 2));
 
         setErrorMessage(
           error.message || "Unable to create your account. Please try again."
@@ -98,13 +104,16 @@ export default function RegisterPage() {
         "Account created successfully! Redirecting..."
       );
 
-      // photo is currently collected from the form,
-      // but it is not sent to Better Auth's default signup endpoint.
-      console.log("Profile photo URL:", photo);
-
-      // Small delay so user can see success message
+      // Role onujayi redirect kora (Admin -> /dashboard/admin, User -> /dashboard/users)
       setTimeout(() => {
-        router.push("/dashboard/users");
+        const userRole = (data as any)?.user?.role || role;
+
+        if (userRole === "admin") {
+          router.push("/dashboard/admin");
+        } else {
+          router.push("/dashboard/users");
+        }
+        
         router.refresh();
       }, 1000);
     } catch (error) {
@@ -151,8 +160,15 @@ export default function RegisterPage() {
 
         {/* Brand Header */}
         <div className="text-center mb-6">
-          <div className="w-12 h-12 mx-auto rounded-2xl bg-[#2F8F46] flex items-center justify-center text-white font-bold text-2xl shadow-lg shadow-[#2F8F46]/30 mb-3">
-            F
+          <div className="w-12 h-12 lg:w-14 lg:h-14 shrink-0 flex items-center justify-center mx-auto mb-3">
+            <Image
+              src="/logohere.png"
+              alt="FoodCanvas Logo"
+              width={56}
+              height={56}
+              className="object-contain w-full h-full"
+              priority
+            />
           </div>
 
           <h1 className="text-2xl font-bold text-gray-900 dark:text-[#F6F0D7]">
@@ -162,28 +178,6 @@ export default function RegisterPage() {
           <p className="text-xs text-gray-500 dark:text-[#F6F0D7]/60 mt-1">
             Join FlavorAI and start generating smart recipes
           </p>
-        </div>
-
-        {/* Google Signup Button */}
-        <button
-          type="button"
-          onClick={handleGoogleSignup}
-          disabled={loading}
-          className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl border border-gray-200 dark:border-[#89986D]/20 bg-gray-50 dark:bg-[#89986D]/5 hover:bg-gray-100 dark:hover:bg-[#89986D]/15 text-xs font-semibold text-gray-800 dark:text-[#F6F0D7] transition shadow-sm mb-4 disabled:opacity-60 disabled:cursor-not-allowed"
-        >
-          <FcGoogle size={20} />
-          <span>Sign up with Google</span>
-        </button>
-
-        {/* Divider */}
-        <div className="flex items-center mb-5">
-          <div className="flex-grow border-t border-gray-200 dark:border-[#89986D]/20" />
-
-          <span className="px-3 text-[10px] uppercase font-semibold text-gray-400 dark:text-[#F6F0D7]/40">
-            or with details
-          </span>
-
-          <div className="flex-grow border-t border-gray-200 dark:border-[#89986D]/20" />
         </div>
 
         {/* Error Message */}
@@ -278,7 +272,6 @@ export default function RegisterPage() {
 
           {/* Password Requirements */}
           <div className="p-3 rounded-xl bg-gray-50 dark:bg-[#89986D]/5 border border-gray-100 dark:border-[#89986D]/10 space-y-1.5">
-
             <p className="text-[10px] font-bold text-gray-500 dark:text-[#F6F0D7]/60 uppercase tracking-wide">
               Password Requirements:
             </p>
@@ -335,6 +328,29 @@ export default function RegisterPage() {
             </div>
           </div>
 
+          {/* Role Selection */}
+          <div>
+            <label className="block text-xs font-semibold text-gray-700 dark:text-[#F6F0D7]/80 mb-1">
+              Select Role
+            </label>
+
+            <div className="relative">
+              <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-gray-400">
+                <FiShield />
+              </span>
+
+              <select
+                value={role}
+                onChange={(e) => setRole(e.target.value)}
+                disabled={loading}
+                className="w-full pl-10 pr-4 py-3 rounded-xl bg-gray-50 dark:bg-[#89986D]/10 border border-gray-200 dark:border-[#89986D]/20 text-xs text-gray-900 dark:text-[#F6F0D7] focus:outline-none focus:border-[#2F8F46] disabled:opacity-60"
+              >
+                <option value="user" className="bg-white dark:bg-slate-900">User (Standard)</option>
+                <option value="admin" className="bg-white dark:bg-slate-900">Admin</option>
+              </select>
+            </div>
+          </div>
+
           {/* Submit Button */}
           <button
             type="submit"
@@ -355,8 +371,28 @@ export default function RegisterPage() {
           </button>
         </form>
 
+        {/* Divider */}
+        <div className="flex items-center my-5">
+          <div className="flex-grow border-t border-gray-200 dark:border-[#89986D]/20" />
+          <span className="px-3 text-[10px] uppercase font-semibold text-gray-400 dark:text-[#F6F0D7]/40">
+            or continue with
+          </span>
+          <div className="flex-grow border-t border-gray-200 dark:border-[#89986D]/20" />
+        </div>
+
+        {/* Google Signup Button */}
+        <button
+          type="button"
+          onClick={handleGoogleSignup}
+          disabled={loading}
+          className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl border border-gray-200 dark:border-[#89986D]/20 bg-gray-50 dark:bg-[#89986D]/5 hover:bg-gray-100 dark:hover:bg-[#89986D]/15 text-xs font-semibold text-gray-800 dark:text-[#F6F0D7] transition shadow-sm mb-6 disabled:opacity-60 disabled:cursor-not-allowed"
+        >
+          <FcGoogle size={20} />
+          <span>Sign up with Google</span>
+        </button>
+
         {/* Login Link */}
-        <p className="text-center text-xs text-gray-500 dark:text-[#F6F0D7]/60 mt-6">
+        <p className="text-center text-xs text-gray-500 dark:text-[#F6F0D7]/60">
           Already have an account?{" "}
           <Link
             href="/registrationProcess/login"
