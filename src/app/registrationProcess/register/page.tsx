@@ -18,8 +18,13 @@ import {
   FiEyeOff,
 } from "react-icons/fi";
 import { FcGoogle } from "react-icons/fc";
-import { authClient } from "@/lib/auth-client";
-import toast from "react-hot-toast"; // ১. react-hot-toast ইমপোর্ট করা হলো
+import { createAuthClient } from "better-auth/react";
+import toast from "react-hot-toast";
+
+// ব্যাকএন্ড এক্সপ্র্রেস সার্ভারের পোর্ট 5000 পয়েন্ট করার জন্য ক্লায়েন্ট কনফিগারেশন
+export const authClient = createAuthClient({
+  baseURL: "http://localhost:5000",
+});
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -66,27 +71,27 @@ export default function RegisterPage() {
     if (!name.trim()) {
       const msg = "Please enter your full name.";
       setErrorMessage(msg);
-      toast.error(msg); // টোস্ট নোটিফিকেশন
+      toast.error(msg);
       return;
     }
 
     if (!email.trim()) {
       const msg = "Please enter your email address.";
       setErrorMessage(msg);
-      toast.error(msg); // টোস্ট নোটিফিকেশন
+      toast.error(msg);
       return;
     }
 
     if (!isPasswordValid) {
       const msg = "Please fulfill all password requirements before creating your account.";
       setErrorMessage(msg);
-      toast.error(msg); // টোস্ট নোটিফিকেশন
+      toast.error(msg);
       return;
     }
 
     try {
       setLoading(true);
-      toast.loading("Creating your account...", { id: "signup" }); // লোডিং টোস্ট
+      toast.loading("Creating your account...", { id: "signup" });
 
       const { data, error } = await authClient.signUp.email({
         name: name.trim(),
@@ -101,7 +106,7 @@ export default function RegisterPage() {
         const msg = error.message || "Unable to create your account. Please try again.";
         setErrorMessage(msg);
         toast.dismiss("signup");
-        toast.error(msg); // এরর টোস্ট
+        toast.error(msg);
         setLoading(false);
         return;
       }
@@ -111,7 +116,7 @@ export default function RegisterPage() {
       
       const successMsg = "Account created successfully! Redirecting...";
       setSuccessMessage(successMsg);
-      toast.success(successMsg); // সাকসেস টোস্ট
+      toast.success(successMsg);
 
       const currentRole = role ? role.toLowerCase() : "";
 
@@ -129,7 +134,7 @@ export default function RegisterPage() {
       toast.dismiss("signup");
       const msg = "Something went wrong. Please check your connection and try again.";
       setErrorMessage(msg);
-      toast.error(msg); // এরর টোস্ট
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -145,65 +150,47 @@ export default function RegisterPage() {
       
       await authClient.signIn.social({
         provider: "google",
-        callbackURL: "/dashboard/users",
+        callbackURL: "http://localhost:3000/dashboard/users", // সফল লগইনের পর ফ্রন্টএন্ড ড্যাশবোর্ডে আসবে
       });
     } catch (error) {
       console.error("Google signup error:", error);
       toast.dismiss("google-signup");
-      const msg = "Google signup is not configured yet.";
+      const msg = "Google signup failed. Please try again.";
       setErrorMessage(msg);
-      toast.error(msg); // এরর টোস্ট
+      toast.error(msg);
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#89986D]/20 via-white to-white dark:from-black dark:via-gray-950 dark:to-black p-4 transition-colors duration-500">
+    <div className="min-h-screen flex items-center justify-center bg-[#F9F6F0] dark:bg-black p-4 sm:p-6 lg:p-8 font-sans transition-colors duration-500">
       
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
-        className="w-full max-w-5xl h-[650px] bg-white dark:bg-[#141414] rounded-3xl shadow-[0_20px_50px_-15px_rgba(137,152,109,0.2)] overflow-hidden flex border border-gray-100 dark:border-[#333]"
+        className="w-full max-w-5xl bg-[#F4EFE6] dark:bg-[#141414] rounded-[32px] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.07)] overflow-hidden flex flex-col lg:flex-row border border-[#EBE5D8] dark:border-[#262626]"
       >
 
-        {/* LEFT COLUMN: Branding & Image Section */}
-        <div className="hidden lg:flex lg:w-1/2 bg-[#89986D]/5 dark:bg-[#1a1a1a] p-8 xl:p-12 flex-col justify-between relative overflow-hidden">
-          <div className="absolute -top-20 -left-20 w-60 h-60 bg-[#2F8F46]/10 rounded-full blur-2xl" />
+        {/* LEFT COLUMN: Image with overlay text and features */}
+        <div className="lg:w-1/2 p-8 sm:p-12 flex flex-col justify-between relative overflow-hidden">
           
-          <div className="relative z-10 flex items-center gap-3 shrink-0">
-             <div className="relative w-10 h-10 shrink-0">
-              <Image
-                src="/logohere.png"
-                alt="FoodCanvas Logo"
-                fill
-                className="object-contain"
-                priority
-              />
-            </div>
-            <span className="font-bold text-lg text-gray-900 dark:text-white">Food Canvas</span>
+          {/* Background Image with Dark Overlay */}
+          <div className="absolute inset-0 z-0">
+            <Image
+              src="/brooke-lark-4J059aGa5s4-unsplash.jpg"
+              alt="Food Background"
+              fill
+              className="object-cover object-center"
+              priority
+            />
+            <div className="absolute inset-0 bg-black/20 dark:bg-black/70 backdrop-blur-[2px]" />
           </div>
 
-          <div className="relative z-10 flex-grow flex items-center justify-center my-auto">
-             <div className="text-center p-8 bg-white/50 dark:bg-black/30 rounded-3xl border border-gray-100 dark:border-gray-800 backdrop-blur-sm">
-                <FiCheckCircle className="w-14 h-14 text-[#2F8F46] mx-auto mb-4" strokeWidth={1.5}/>
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Join FlavorAI Today!</h3>
-                <p className="text-xs text-gray-600 dark:text-gray-400">Discover personalized recipes, smart meal planning, and culinary inspiration.</p>
-             </div>
-          </div>
-
-          <div className="relative z-10 text-xs text-gray-600 dark:text-gray-400 border-t border-gray-200 dark:border-gray-800 pt-4 shrink-0">
-            <p className="italic">&quot;Creating an account took seconds, and the recipe suggestions have completely changed how I plan my weekly meals.&quot;</p>
-            <p className="font-semibold text-gray-900 dark:text-white mt-2">- Michael R, Food Enthusiast</p>
-          </div>
-        </div>
-
-        {/* RIGHT COLUMN: Register Form Section with Custom Thin Scrollbar */}
-        <div className="w-full lg:w-1/2 p-6 sm:p-8 lg:p-10 flex flex-col justify-between overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:bg-gray-200 dark:[&::-webkit-scrollbar-thumb]:bg-gray-800 [&::-webkit-scrollbar-thumb]:rounded-full">
-          
-          <div>
-            <div className="text-center mb-5">
-              <div className="relative w-12 h-12 mx-auto mb-2 lg:hidden">
+          {/* Top Logo & Slogan */}
+          <div className="relative z-10">
+            <div className="flex items-center gap-3 mb-8">
+              <div className="relative w-9 h-9">
                 <Image
                   src="/logohere.png"
                   alt="FoodCanvas Logo"
@@ -212,13 +199,92 @@ export default function RegisterPage() {
                   priority
                 />
               </div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Create Account</h1>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Join FlavorAI and start generating smart recipes</p>
+              <div>
+                <h2 className="font-bold text-xl tracking-tight text-white leading-none">FoodCanvas</h2>
+                <p className="text-[11px] text-gray-300 mt-1">Cook. Share. Nourish.</p>
+              </div>
+            </div>
+
+            {/* Heading */}
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight leading-[1.1] mb-4">
+              Good Food, <br />
+              <span className="text-[#8cd184]">Better You.</span>
+            </h1>
+            <p className="text-xs sm:text-sm text-gray-200 max-w-md leading-relaxed mb-8">
+              Join FoodCanvas and discover AI-powered recipes, nutrition insights, and a community that loves good food as much as you do.
+            </p>
+
+            {/* Features List */}
+            <div className="space-y-4 mb-8">
+              <div className="flex items-start gap-4">
+                <div className="w-9 h-9 rounded-xl bg-white/10 backdrop-blur-md shadow-sm flex items-center justify-center shrink-0 border border-white/10">
+                  <FiCheckCircle className="text-[#8cd184]" size={18} />
+                </div>
+                <div>
+                  <h4 className="text-xs sm:text-sm font-bold text-white">AI Recipe Generator</h4>
+                  <p className="text-[11px] text-gray-300">Create delicious recipes with ingredients you have.</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-4">
+                <div className="w-9 h-9 rounded-xl bg-white/10 backdrop-blur-md shadow-sm flex items-center justify-center shrink-0 border border-white/10">
+                  <div className="w-4 h-4 bg-[#8cd184]/20 rounded flex items-center justify-center text-[#8cd184] font-bold text-[10px]">📊</div>
+                </div>
+                <div>
+                  <h4 className="text-xs sm:text-sm font-bold text-white">Nutrition Insights</h4>
+                  <p className="text-[11px] text-gray-300">Analyze your meals and track what matters.</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-4">
+                <div className="w-9 h-9 rounded-xl bg-white/10 backdrop-blur-md shadow-sm flex items-center justify-center shrink-0 border border-white/10">
+                  <div className="w-4 h-4 bg-[#8cd184]/20 rounded flex items-center justify-center text-[#8cd184] font-bold text-[10px]">👥</div>
+                </div>
+                <div>
+                  <h4 className="text-xs sm:text-sm font-bold text-white">Foodie Community</h4>
+                  <p className="text-[11px] text-gray-300">Share, inspire, and connect with food lovers.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Quote Box */}
+          <div className="relative z-10 bg-black/40 backdrop-blur-md p-4 rounded-2xl border border-white/10 shadow-sm">
+            <span className="text-xl font-serif text-[#8cd184] absolute top-2 left-3 leading-none">“</span>
+            <p className="text-[11px] italic text-gray-200 pl-3 pr-2">
+              Let food be your medicine and medicine be your food.
+            </p>
+            <p className="text-[10px] font-semibold text-[#8cd184] mt-1.5 pl-3">
+              - Hippocrates
+            </p>
+          </div>
+        </div>
+
+        {/* RIGHT COLUMN: Register Form Section */}
+        <div className="w-full lg:w-1/2 bg-white dark:bg-[#121212] p-8 sm:p-10 flex flex-col justify-between overflow-y-auto max-h-[900px] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-gray-200 dark:[&::-webkit-scrollbar-thumb]:bg-gray-800 [&::-webkit-scrollbar-thumb]:rounded-full">
+          
+          <div>
+            {/* Top Log in link header */}
+            <div className="flex justify-end items-center mb-6">
+              <span className="text-xs text-gray-500 dark:text-gray-400 mr-1.5">Already have an account?</span>
+              <Link
+                href="/registrationProcess/login"
+                className="text-xs font-bold text-[#3A6B35] hover:underline"
+              >
+                Log in
+              </Link>
+            </div>
+
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                Create Your Account <span className="text-lg">🌱</span>
+              </h2>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Start your healthy journey with FoodCanvas</p>
             </div>
 
             {/* Error Message */}
             {errorMessage && (
-              <div className="mb-4 rounded-2xl border border-red-200 bg-red-50 dark:bg-red-950/40 dark:border-red-900 px-4 py-3">
+              <div className="mb-4 rounded-xl border border-red-200 bg-red-50 dark:bg-red-950/40 dark:border-red-900 px-4 py-3">
                 <p className="text-xs text-red-600 dark:text-red-400 font-medium">
                   {errorMessage}
                 </p>
@@ -227,7 +293,7 @@ export default function RegisterPage() {
 
             {/* Success Message */}
             {successMessage && (
-              <div className="mb-4 rounded-2xl border border-green-200 bg-green-50 dark:bg-green-950/40 dark:border-green-900 px-4 py-3">
+              <div className="mb-4 rounded-xl border border-green-200 bg-green-50 dark:bg-green-950/40 dark:border-green-900 px-4 py-3">
                 <p className="text-xs text-green-600 dark:text-green-400 font-medium">
                   {successMessage}
                 </p>
@@ -235,64 +301,55 @@ export default function RegisterPage() {
             )}
 
             {/* Register Form */}
-            <form onSubmit={handleSubmit} className="space-y-3">
+            <form onSubmit={handleSubmit} className="space-y-4">
 
               {/* Full Name */}
               <div>
-                <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1 pl-1">
-                  Full Name
-                </label>
                 <div className="relative">
                   <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-gray-400">
-                    <FiUser size={16} />
+                    <FiUser size={15} />
                   </span>
                   <input
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="Chef Alex"
+                    placeholder="Full Name"
                     required
                     disabled={loading}
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#1a1a1a] border border-gray-100 dark:border-gray-800 text-xs text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#2F8F46]/30 focus:border-[#2F8F46] transition-all disabled:opacity-50"
+                    className="w-full pl-10 pr-4 py-3 rounded-xl bg-gray-50/50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 text-xs text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#3A6B35]/30 focus:border-[#3A6B35] transition-all disabled:opacity-50 placeholder:text-gray-400"
                   />
                 </div>
               </div>
 
               {/* Email */}
               <div>
-                <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1 pl-1">
-                  Email Address
-                </label>
                 <div className="relative">
                   <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-gray-400">
-                    <FiMail size={16} />
+                    <FiMail size={15} />
                   </span>
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="chef@flavorai.com"
+                    placeholder="Email Address"
                     required
                     disabled={loading}
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#1a1a1a] border border-gray-100 dark:border-gray-800 text-xs text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#2F8F46]/30 focus:border-[#2F8F46] transition-all disabled:opacity-50"
+                    className="w-full pl-10 pr-4 py-3 rounded-xl bg-gray-50/50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 text-xs text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#3A6B35]/30 focus:border-[#3A6B35] transition-all disabled:opacity-50 placeholder:text-gray-400"
                   />
                 </div>
               </div>
 
               {/* Role Selection Dropdown */}
               <div>
-                <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1 pl-1">
-                  Account Role
-                </label>
                 <div className="relative">
                   <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-gray-400">
-                    <FiShield size={16} />
+                    <FiShield size={15} />
                   </span>
                   <select
                     value={role}
                     onChange={(e) => setRole(e.target.value)}
                     disabled={loading}
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#1a1a1a] border border-gray-100 dark:border-gray-800 text-xs text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#2F8F46]/30 focus:border-[#2F8F46] transition-all disabled:opacity-50 appearance-none"
+                    className="w-full pl-10 pr-4 py-3 rounded-xl bg-gray-50/50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 text-xs text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#3A6B35]/30 focus:border-[#3A6B35] transition-all disabled:opacity-50 appearance-none"
                   >
                     <option value="USER" className="bg-white dark:bg-gray-900">User (Standard)</option>
                     <option value="ADMIN" className="bg-white dark:bg-gray-900">Admin</option>
@@ -300,35 +357,32 @@ export default function RegisterPage() {
                 </div>
               </div>
 
-              {/* Password with Show/Hide Toggle */}
+              {/* Password */}
               <div>
-                <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1 pl-1">
-                  Password
-                </label>
                 <div className="relative">
                   <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-gray-400">
-                    <FiLock size={16} />
+                    <FiLock size={15} />
                   </span>
                   <input
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
+                    placeholder="Password"
                     required
                     disabled={loading}
-                    className="w-full pl-10 pr-10 py-2.5 rounded-xl bg-gray-50 dark:bg-[#1a1a1a] border border-gray-100 dark:border-gray-800 text-xs text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#2F8F46]/30 focus:border-[#2F8F46] transition-all disabled:opacity-50"
+                    className="w-full pl-10 pr-10 py-3 rounded-xl bg-gray-50/50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 text-xs text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#3A6B35]/30 focus:border-[#3A6B35] transition-all disabled:opacity-50 placeholder:text-gray-400"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
                   >
-                    {showPassword ? <FiEyeOff size={16} /> : <FiEye size={16} />}
+                    {showPassword ? <FiEyeOff size={15} /> : <FiEye size={15} />}
                   </button>
                 </div>
               </div>
 
-              {/* Password Requirements */}
+              {/* Password Requirements Checklist */}
               <div className="p-3 rounded-xl bg-gray-50 dark:bg-[#1a1a1a] border border-gray-100 dark:border-gray-800 space-y-1.5">
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
                   Password must meet:
@@ -337,7 +391,7 @@ export default function RegisterPage() {
                   {passwordSteps.map((step, idx) => (
                     <div key={idx} className="flex items-center gap-2 text-[11px]">
                       <FiCheckCircle
-                        className={step.met ? "text-[#2F8F46]" : "text-gray-300 dark:text-gray-600"}
+                        className={step.met ? "text-[#3A6B35]" : "text-gray-300 dark:text-gray-600"}
                         size={13}
                         strokeWidth={2.5}
                       />
@@ -349,22 +403,19 @@ export default function RegisterPage() {
                 </div>
               </div>
 
-              {/* Profile Photo URL */}
+              {/* Profile Photo URL Optional */}
               <div>
-                <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1 pl-1">
-                  Profile Photo URL <span className="text-[10px] text-gray-400">(Optional)</span>
-                </label>
                 <div className="relative">
                   <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-gray-400">
-                    <FiImage size={16} />
+                    <FiImage size={15} />
                   </span>
                   <input
                     type="url"
                     value={photo}
                     onChange={(e) => setPhoto(e.target.value)}
-                    placeholder="https://example.com/photo.jpg"
+                    placeholder="Profile Photo URL (Optional)"
                     disabled={loading}
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#1a1a1a] border border-gray-100 dark:border-gray-800 text-xs text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#2F8F46]/30 focus:border-[#2F8F46] transition-all disabled:opacity-50"
+                    className="w-full pl-10 pr-4 py-3 rounded-xl bg-gray-50/50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 text-xs text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#3A6B35]/30 focus:border-[#3A6B35] transition-all disabled:opacity-50 placeholder:text-gray-400"
                   />
                 </div>
               </div>
@@ -373,7 +424,7 @@ export default function RegisterPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 bg-[#2F8F46] hover:bg-[#287a3b] text-white font-semibold rounded-xl shadow-lg shadow-[#2F8F46]/20 transition-all flex items-center justify-center gap-2 text-xs mt-1 disabled:opacity-60 disabled:cursor-not-allowed transform hover:-translate-y-0.5 active:translate-y-0"
+                className="w-full py-3.5 bg-[#3A6B35] hover:bg-[#30592c] text-white font-semibold rounded-xl shadow-lg shadow-[#3A6B35]/20 transition-all flex items-center justify-center gap-2 text-xs mt-2 disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {loading ? (
                   <>
@@ -382,41 +433,37 @@ export default function RegisterPage() {
                   </>
                 ) : (
                   <>
-                    <span>Create Account</span>
+                    <span>Sign Up</span>
                     <FiArrowRight size={16} />
                   </>
                 )}
               </button>
             </form>
 
-            {/* Divider */}
-            <div className="flex items-center my-4">
-              <div className="flex-grow border-t border-gray-100 dark:border-gray-800" />
-              <span className="px-3 text-[10px] uppercase font-medium text-gray-400 dark:text-gray-600">or</span>
-              <div className="flex-grow border-t border-gray-100 dark:border-gray-800" />
+            {/* Divider: or continue with */}
+            <div className="flex items-center my-6">
+              <div className="flex-grow border-t border-gray-200 dark:border-gray-800" />
+              <span className="px-3 text-[11px] font-medium text-gray-400 dark:text-gray-500">or continue with</span>
+              <div className="flex-grow border-t border-gray-200 dark:border-gray-800" />
             </div>
 
-            {/* Google Signup Button */}
-            <button
-              type="button"
-              onClick={handleGoogleSignup}
-              disabled={loading}
-              className="w-full flex items-center justify-center gap-2.5 py-2.5 px-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#1a1a1a] hover:bg-gray-50 dark:hover:bg-[#262626] text-xs font-medium text-gray-700 dark:text-gray-200 transition shadow-sm disabled:opacity-50"
-            >
-              <FcGoogle size={18} />
-              <span>Sign up with Google</span>
-            </button>
+            {/* Google Login Only */}
+            <div>
+              <button
+                type="button"
+                onClick={handleGoogleSignup}
+                disabled={loading}
+                className="w-full flex items-center justify-center gap-2.5 py-3 px-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#1a1a1a] hover:bg-gray-50 dark:hover:bg-[#262626] text-xs font-semibold text-gray-700 dark:text-gray-200 transition shadow-sm disabled:opacity-50"
+              >
+                <FcGoogle size={18} />
+                <span>Continue with Google</span>
+              </button>
+            </div>
           </div>
 
-          {/* Login Link */}
-          <p className="text-center text-xs text-gray-600 dark:text-gray-400 mt-4 shrink-0">
-            Already have an account?{" "}
-            <Link
-              href="/registrationProcess/login"
-              className="text-[#2F8F46] dark:text-[#89986D] font-semibold hover:underline"
-            >
-              Log in
-            </Link>
+          {/* Bottom Footer Notice */}
+          <p className="text-center text-[10px] text-gray-400 dark:text-gray-500 mt-8">
+            By signing up, you agree to the Terms and acknowledge our <span className="underline">Privacy Policy</span>.
           </p>
         </div>
       </motion.div>
