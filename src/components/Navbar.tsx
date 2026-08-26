@@ -7,6 +7,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { Bell, Menu, X, Sun, Moon, LogOut } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { authClient } from "@/lib/auth-client";
+import toast from "react-hot-toast";
 
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -18,12 +19,10 @@ export default function Navbar() {
   const { data: session, isPending } = authClient.useSession();
   const user = session?.user;
 
-  // 1. Prothome role-ti safe vabe ber kore nite hobe (Age declare korbo)
   const userRole = user && typeof user === 'object' && 'role' in user 
     ? String((user as any).role).toLowerCase() 
     : "user";
 
-  // Base nav links
   const baseNavLinks = [
     { name: "Home", href: "/" },
     { name: "Recipes", href: "/recipes" },
@@ -32,12 +31,22 @@ export default function Navbar() {
     { name: "Challenges", href: "/challenges" },
   ];
 
-  // 2. Ekhon userRole define ache, tai ekhane error hobe na
   const dashboardHref = userRole === "admin" ? "/dashboard/admin" : "/dashboard/users";
 
   const navLinks = user 
     ? [...baseNavLinks, { name: "Dashboard", href: dashboardHref }] 
     : baseNavLinks;
+
+  // ইউজার নেম থেকে প্রথম অক্ষর বের করার ফাংশন (রিয়েল ইমেজ না থাকলে এটি দেখাবে)
+  const getInitials = (name?: string) => {
+    if (!name) return "FC";
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .substring(0, 2);
+  };
 
   useEffect(() => {
     if (
@@ -58,23 +67,30 @@ export default function Navbar() {
       document.documentElement.classList.remove("dark");
       localStorage.theme = "light";
       setIsDarkMode(false);
+      toast("Light mode activated ☀️", { icon: '🔆' });
     } else {
       document.documentElement.classList.add("dark");
       localStorage.theme = "dark";
       setIsDarkMode(true);
+      toast("Dark mode activated 🌙", { icon: '🌙' });
     }
   };
 
   const handleLogout = async () => {
-    await authClient.signOut({
-      fetchOptions: {
-        onSuccess: () => {
-          setIsMobileMenuOpen(false);
-          router.push("/");
-          router.refresh();
+    try {
+      await authClient.signOut({
+        fetchOptions: {
+          onSuccess: () => {
+            setIsMobileMenuOpen(false);
+            toast.success("Successfully logged out!");
+            router.push("/");
+            router.refresh();
+          },
         },
-      },
-    });
+      });
+    } catch (error) {
+      toast.error("Failed to log out. Please try again.");
+    }
   };
 
   return (
@@ -112,20 +128,26 @@ export default function Navbar() {
             </Link>
           </div>
 
-          <nav className="hidden md:flex items-center gap-6 lg:gap-8">
+          <nav className="hidden md:flex items-center gap-2 lg:gap-3">
             {navLinks.map((link) => {
               const isActive = pathname === link.href;
               return (
                 <Link
                   key={link.name}
                   href={link.href}
-                  className={`text-[15px] whitespace-nowrap transition-colors ${
+                  className={`relative px-4 py-2 text-[15px] rounded-xl font-medium transition-all duration-200 ${
                     isActive
-                      ? "font-bold text-emerald-700 dark:text-emerald-400"
-                      : "font-medium text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white"
+                      ? "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-slate-800 font-semibold shadow-sm"
+                      : "text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-slate-800/50"
                   }`}
                 >
                   {link.name}
+                  {isActive && (
+                    <motion.div
+                      layoutId="activeIndicator"
+                      className="absolute bottom-0 left-3 right-3 h-0.5 bg-emerald-600 dark:bg-emerald-400 rounded-full"
+                    />
+                  )}
                 </Link>
               );
             })}
@@ -146,22 +168,32 @@ export default function Navbar() {
             <div className="w-24 h-9 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-full" />
           ) : user ? (
             <>
-              <button className="p-2 text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors relative">
+              <button 
+                onClick={() => toast("You have no new notifications", { icon: '🔔' })}
+                className="p-2 text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors relative"
+              >
                 <Bell size={20} />
                 <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
               </button>
 
               <div className="hidden sm:flex items-center gap-3">
-                <div className="flex items-center gap-2">
-                  <div className="h-9 w-9 rounded-full overflow-hidden border border-gray-200 flex-shrink-0 relative">
-                    <Image
-                      src={user.image || "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"}
-                      alt="User profile"
-                      fill
-                      sizes="36px"
-                      className="object-cover"
-                    />
+                <div className="flex items-center gap-2.5 bg-gray-50 dark:bg-slate-800/60 py-1.5 px-3 rounded-full border border-gray-100 dark:border-slate-800">
+                  
+                  {/* রিয়েল ইমেজ হ্যান্ডলিং (ডামি ইমেজ বাদ) */}
+                  <div className="h-8 w-8 rounded-full overflow-hidden border border-emerald-500/30 flex-shrink-0 relative bg-emerald-600 text-white font-bold flex items-center justify-center text-xs">
+                    {user.image ? (
+                      <Image
+                        src={user.image}
+                        alt={user.name || "User profile"}
+                        fill
+                        sizes="32px"
+                        className="object-cover"
+                      />
+                    ) : (
+                      <span>{getInitials(user.name)}</span>
+                    )}
                   </div>
+
                   <span className="text-sm font-semibold text-gray-700 dark:text-slate-200 max-w-[100px] truncate">
                     {user.name}
                   </span>
@@ -209,21 +241,19 @@ export default function Navbar() {
             animate={{ opacity: 1, y: 0, height: "auto" }}
             exit={{ opacity: 0, y: -10, height: 0 }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
-            className="md:hidden absolute top-full left-0 w-full bg-white dark:bg-slate-900 shadow-lg px-6 z-50 rounded-b-2xl overflow-hidden border-b border-gray-100 dark:border-slate-800"
+            className="md:hidden absolute top-full left-0 w-full bg-white dark:bg-slate-900 shadow-xl px-6 z-50 rounded-b-2xl overflow-hidden border-b border-gray-100 dark:border-slate-800"
           >
-            <div className="flex flex-col gap-4 py-4">
-              {navLinks.map((link, index) => {
+            <div className="flex flex-col gap-2 py-4">
+              {navLinks.map((link) => {
                 const isActive = pathname === link.href;
                 return (
                   <Link
                     key={link.name}
                     href={link.href}
-                    className={`text-[15px] py-2 transition-colors ${
-                      index !== navLinks.length - 1 ? "border-b border-gray-50 dark:border-slate-800" : ""
-                    } ${
+                    className={`text-[15px] px-4 py-2.5 rounded-xl transition-colors ${
                       isActive
-                        ? "font-bold text-emerald-700 dark:text-emerald-400"
-                        : "font-medium text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white"
+                        ? "font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-slate-800"
+                        : "font-medium text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800/50"
                     }`}
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
@@ -232,18 +262,22 @@ export default function Navbar() {
                 );
               })}
 
-              <div className="pt-3 border-t border-gray-100 dark:border-slate-800 flex flex-col gap-3">
+              <div className="pt-3 mt-2 border-t border-gray-100 dark:border-slate-800 flex flex-col gap-3">
                 {user ? (
                   <div className="flex flex-col gap-3">
                     <div className="flex items-center gap-3 py-1">
-                      <div className="h-9 w-9 rounded-full overflow-hidden border border-gray-200 flex-shrink-0 relative">
-                        <Image
-                          src={user.image || "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"}
-                          alt="User profile"
-                          fill
-                          sizes="36px"
-                          className="object-cover"
-                        />
+                      <div className="h-9 w-9 rounded-full overflow-hidden border border-emerald-500/30 flex-shrink-0 relative bg-emerald-600 text-white font-bold flex items-center justify-center text-xs">
+                        {user.image ? (
+                          <Image
+                            src={user.image}
+                            alt={user.name || "User profile"}
+                            fill
+                            sizes="36px"
+                            className="object-cover"
+                          />
+                        ) : (
+                          <span>{getInitials(user.name)}</span>
+                        )}
                       </div>
                       <span className="text-sm font-bold text-gray-800 dark:text-slate-100 truncate">
                         {user.name}

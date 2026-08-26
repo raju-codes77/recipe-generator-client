@@ -52,13 +52,13 @@ export default function DashboardSidebar() {
 
   // User Navigation Items (Screenshot onujayi grouped sections)
   const mainNavItems = [
-    { name: "Dashboard", icon: <FiHome />, href: "/dashboard/user" },
-    { name: "My Recipes", icon: <FiBookOpen />, href: "/dashboard/user/recipes" },
-    { name: "Generate Recipe", icon: <FiCpu />, href: "/dashboard/user/generate-recipe", badge: "AI" },
-    { name: "Collections", icon: <FiFolder />, href: "/dashboard/user/collections" },
-    { name: "Challenges", icon: <FiAward />, href: "/dashboard/user/challenges" },
-    { name: "AI Tools", icon: <FiCpu />, href: "/dashboard/user/ai-tools" },
-    { name: "Nutrition", icon: <FiActivity />, href: "/dashboard/user/nutrition" },
+    { name: "Dashboard", icon: <FiHome />, href: "/dashboard/users" },
+    { name: "My Recipes", icon: <FiBookOpen />, href: "/dashboard/users/myRecipes" },
+    { name: "Generate Recipe", icon: <FiCpu />, href: "/dashboard/users/ai-generate", badge: "AI" },
+    { name: "Collections", icon: <FiFolder />, href: "/dashboard/users/collectionsDs" },
+    { name: "Challenges", icon: <FiAward />, href: "/dashboard/users/challenges" },
+    { name: "AI Tools", icon: <FiCpu />, href: "/dashboard/users/ai-tools" },
+    { name: "Nutrition", icon: <FiActivity />, href: "/dashboard/users/nutrition" },
   ];
 
   const kitchenNavItems = [

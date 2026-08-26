@@ -15,6 +15,7 @@ import {
 } from "react-icons/fi";
 import { FcGoogle } from "react-icons/fc";
 import { authClient } from "@/lib/auth-client";
+import toast from "react-hot-toast"; // ১. react-hot-toast ইমপোর্ট করা হলো
 
 export default function LoginPage() {
   const router = useRouter();
@@ -27,7 +28,7 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  // নতুন স্টেট: ভুলAttempts এবং ব্লক টাইমার ম্যানেজ করার জন্য
+  // ভুলAttempts এবং ব্লক টাইমার ম্যানেজ করার জন্য স্টেট
   const [failedAttempts, setFailedAttempts] = useState(0);
   const [lockoutTime, setLockoutTime] = useState(0); // সেকেন্ডে হিসাব হবে
 
@@ -65,11 +66,15 @@ export default function LoginPage() {
     e.preventDefault();
 
     // যদি ব্লকড থাকে তাহলে সাবমিট করতে দেবে না
-    if (lockoutTime > 0) return;
+    if (lockoutTime > 0) {
+      toast.error("Your account is temporarily locked. Please wait.");
+      return;
+    }
 
     setError("");
     setSuccess("");
     setLoading(true);
+    toast.loading("Signing in to your account...", { id: "login" }); // লোডিং টোস্ট
 
     try {
       const { data, error } = await authClient.signIn.email({
@@ -79,44 +84,59 @@ export default function LoginPage() {
       });
 
       if (error) {
-        // পাসওয়ার্ড বা ইমেইল ভুল হলে কাউন্ট বাড়াতে হবে
+        toast.dismiss("login");
+        // পাসওয়ার্ড বা ইমেইল ভুল হলে কাউন্ট বাড়াতে হবে
         const newAttempts = failedAttempts + 1;
         setFailedAttempts(newAttempts);
 
         if (newAttempts >= 3) {
-          setLockoutTime(300); // ৫ মিনিট (৩০০ সেকেন্ড) লক করে দেওয়া হলো
-          setError("Too many failed attempts. Account suspended for 5 minutes.");
+          setLockoutTime(300); // ৫ মিনিট (৩০০ সেকেন্ড) লক করে দেওয়া হলো
+          const msg = "Too many failed attempts. Account suspended for 5 minutes.";
+          setError(msg);
+          toast.error(msg); // লকআউট টোস্ট
           setFailedAttempts(0); // কাউন্ট রিসেট
         } else {
-          setError(
+          const msg =
             error.message ||
-              `Invalid email or password. Attempt ${newAttempts} of 3.`
-          );
+            `Invalid email or password. Attempt ${newAttempts} of 3.`;
+          setError(msg);
+          toast.error(msg); // ভুল পাসওয়ার্ডের এরর টোস্ট
         }
+        setLoading(false);
         return;
       }
 
       // সফলভাবে লগইন হলে কাউন্ট রিসেট
+      toast.dismiss("login");
       setFailedAttempts(0);
       console.log("Login successful:", data);
-      setSuccess("Login successful! Redirecting...");
+      
+      const successMsg = "Login successful! Redirecting...";
+      setSuccess(successMsg);
+      toast.success(successMsg); // সাকসেস টোস্ট
 
       router.push("/");
       router.refresh();
     } catch (err) {
       console.error("Login error:", err);
-      setError("Something went wrong. Please try again.");
-    } finally {
+      toast.dismiss("login");
+      const msg = "Something went wrong. Please try again.";
+      setError(msg);
+      toast.error(msg); // অপ্রত্যাশিত এরর টোস্ট
       setLoading(false);
     }
   };
 
   const handleGoogleLogin = async () => {
-    if (lockoutTime > 0) return;
+    if (lockoutTime > 0) {
+      toast.error("Your account is temporarily locked. Please wait.");
+      return;
+    }
 
     setError("");
     setSuccess("");
     setLoading(true);
+    toast.loading("Connecting with Google...", { id: "google-login" });
 
     try {
       await authClient.signIn.social({
@@ -125,7 +145,10 @@ export default function LoginPage() {
       });
     } catch (err) {
       console.error("Google login error:", err);
-      setError("Google login failed. Please try again.");
+      toast.dismiss("google-login");
+      const msg = "Google login failed. Please try again.";
+      setError(msg);
+      toast.error(msg); // এরর টোস্ট
       setLoading(false);
     }
   };
@@ -154,7 +177,7 @@ export default function LoginPage() {
           <div className="relative z-10 flex items-center gap-3">
              <div className="w-10 h-10 rounded-xl bg-[#2F8F46] flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-[#2F8F46]/30">
               FC
-            </div>
+             </div>
             <span className="font-bold text-lg text-gray-900 dark:text-white">Food Canvas</span>
           </div>
 
@@ -167,7 +190,7 @@ export default function LoginPage() {
           </div>
 
           <div className="relative z-10 text-sm text-gray-600 dark:text-gray-400 border-t border-gray-200 dark:border-gray-800 pt-6">
-            <p className="italic">"Food Canvas revolutionized how I cook. The recipes are fantastic and the AI suggestions are spot on!"</p>
+            <p className="italic">&quot;Food Canvas revolutionized how I cook. The recipes are fantastic and the AI suggestions are spot on!&quot;</p>
             <p className="font-semibold text-gray-900 dark:text-white mt-3">- Sarah J, Home Chef</p>
           </div>
         </div>
@@ -234,10 +257,10 @@ export default function LoginPage() {
             <div>
               <div className="flex items-center justify-between mb-1.5">
                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 pl-1">
-                    Password
+                   Password
                  </label>
                  <Link href="/forgot-password" className="text-xs text-[#2F8F46] dark:text-[#89986D] hover:underline font-medium pr-1">
-                    Forgot Password?
+                   Forgot Password?
                  </Link>
               </div>
               
@@ -324,7 +347,7 @@ export default function LoginPage() {
 
           {/* Register Link */}
           <p className="text-center text-sm text-gray-600 dark:text-gray-400 mt-6">
-            Don't have an account?{" "}
+            Don&apos;t have an account?{" "}
             <Link href="/register" className="text-[#2F8F46] dark:text-[#89986D] font-semibold hover:underline">
               Create an account
             </Link>

@@ -19,6 +19,7 @@ import {
 } from "react-icons/fi";
 import { FcGoogle } from "react-icons/fc";
 import { authClient } from "@/lib/auth-client";
+import toast from "react-hot-toast"; // ১. react-hot-toast ইমপোর্ট করা হলো
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -63,24 +64,29 @@ export default function RegisterPage() {
     setSuccessMessage("");
 
     if (!name.trim()) {
-      setErrorMessage("Please enter your full name.");
+      const msg = "Please enter your full name.";
+      setErrorMessage(msg);
+      toast.error(msg); // টোস্ট নোটিফিকেশন
       return;
     }
 
     if (!email.trim()) {
-      setErrorMessage("Please enter your email address.");
+      const msg = "Please enter your email address.";
+      setErrorMessage(msg);
+      toast.error(msg); // টোস্ট নোটিফিকেশন
       return;
     }
 
     if (!isPasswordValid) {
-      setErrorMessage(
-        "Please fulfill all password requirements before creating your account."
-      );
+      const msg = "Please fulfill all password requirements before creating your account.";
+      setErrorMessage(msg);
+      toast.error(msg); // টোস্ট নোটিফিকেশন
       return;
     }
 
     try {
       setLoading(true);
+      toast.loading("Creating your account...", { id: "signup" }); // লোডিং টোস্ট
 
       const { data, error } = await authClient.signUp.email({
         name: name.trim(),
@@ -92,17 +98,20 @@ export default function RegisterPage() {
 
       if (error) {
         console.error("Signup error:", error);
-        setErrorMessage(
-          error.message || "Unable to create your account. Please try again."
-        );
+        const msg = error.message || "Unable to create your account. Please try again.";
+        setErrorMessage(msg);
+        toast.dismiss("signup");
+        toast.error(msg); // এরর টোস্ট
+        setLoading(false);
         return;
       }
 
       console.log("Signup successful:", data);
-
-      setSuccessMessage(
-        "Account created successfully! Redirecting..."
-      );
+      toast.dismiss("signup");
+      
+      const successMsg = "Account created successfully! Redirecting...";
+      setSuccessMessage(successMsg);
+      toast.success(successMsg); // সাকসেস টোস্ট
 
       const currentRole = role ? role.toLowerCase() : "";
 
@@ -117,9 +126,10 @@ export default function RegisterPage() {
 
     } catch (error) {
       console.error("Unexpected signup error:", error);
-      setErrorMessage(
-        "Something went wrong. Please check your connection and try again."
-      );
+      toast.dismiss("signup");
+      const msg = "Something went wrong. Please check your connection and try again.";
+      setErrorMessage(msg);
+      toast.error(msg); // এরর টোস্ট
     } finally {
       setLoading(false);
     }
@@ -131,15 +141,18 @@ export default function RegisterPage() {
 
     try {
       setLoading(true);
+      toast.loading("Connecting with Google...", { id: "google-signup" });
+      
       await authClient.signIn.social({
         provider: "google",
         callbackURL: "/dashboard/users",
       });
     } catch (error) {
       console.error("Google signup error:", error);
-      setErrorMessage(
-        "Google signup is not configured yet."
-      );
+      toast.dismiss("google-signup");
+      const msg = "Google signup is not configured yet.";
+      setErrorMessage(msg);
+      toast.error(msg); // এরর টোস্ট
       setLoading(false);
     }
   };
@@ -180,7 +193,7 @@ export default function RegisterPage() {
           </div>
 
           <div className="relative z-10 text-xs text-gray-600 dark:text-gray-400 border-t border-gray-200 dark:border-gray-800 pt-4 shrink-0">
-            <p className="italic">"Creating an account took seconds, and the recipe suggestions have completely changed how I plan my weekly meals."</p>
+            <p className="italic">&quot;Creating an account took seconds, and the recipe suggestions have completely changed how I plan my weekly meals.&quot;</p>
             <p className="font-semibold text-gray-900 dark:text-white mt-2">- Michael R, Food Enthusiast</p>
           </div>
         </div>
