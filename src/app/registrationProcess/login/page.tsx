@@ -342,6 +342,7 @@ export default function LoginPage() {
             <FcGoogle size={22} />
             <span>Google</span>
           </button>
+          
 
           {/* Register Link */}
           <p className="text-center text-sm text-gray-600 dark:text-gray-400 mt-6">
