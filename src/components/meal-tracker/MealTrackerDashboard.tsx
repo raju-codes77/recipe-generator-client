@@ -28,7 +28,9 @@ import TipsInsights from "./TipsInsights";
 // Inner component that consumes context
 function DashboardInner() {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const { insightHeading, insightMessage } = useMealTracker();
+  const { analysisResult } = useMealTracker();
+  const insightHeading = analysisResult?.insightHeading ?? null;
+  const insightMessage = analysisResult?.insightMessage ?? null;
 
   const formatDate = (date: Date) =>
     date.toLocaleDateString("en-US", {
