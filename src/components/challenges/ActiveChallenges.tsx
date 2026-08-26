@@ -53,7 +53,7 @@ export default function ActiveChallenges() {
               <Image
                 src={c.img}
                 alt={c.title}
-                fill
+                fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 className="object-cover group-hover:scale-105 transition-transform duration-500"
               />
               <div className="absolute top-3 left-3 bg-green-600 text-white text-[10px] font-bold px-2 py-1 rounded-full flex items-center gap-1 shadow-sm">

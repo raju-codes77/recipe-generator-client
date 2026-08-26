@@ -90,7 +90,7 @@ export default function HealthyWorldSection() {
             <Image
               src="https://static.vecteezy.com/system/resources/previews/044/771/696/non_2x/a-basket-brimming-with-vegetables-free-png.png"
               alt="Healthy salad bowl"
-              fill
+              fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               className="object-contain"
               priority
             />

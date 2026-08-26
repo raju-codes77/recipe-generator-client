@@ -5,7 +5,8 @@ import { ChevronRight } from "lucide-react";
 import { useMealTracker } from "./MealTrackerContext";
 
 export default function NutritionFacts() {
-  const { nutritionFacts } = useMealTracker();
+  const { analysisResult } = useMealTracker();
+  const nutritionFacts = analysisResult?.nutritionFacts ?? null;
 
   const val = (v: number | null | undefined, unit = "") =>
     v !== null && v !== undefined ? `${v}${unit}` : "--";

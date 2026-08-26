@@ -6,7 +6,8 @@ import Image from "next/image";
 import { useMealTracker } from "./MealTrackerContext";
 
 export default function AIPreviewCard() {
-  const { analysisImage, setAnalysisImage } = useMealTracker();
+  const { analysisImage, setAnalysisImage, analysisResult } = useMealTracker();
+  const displayImage = analysisResult?.imageUrl || analysisImage;
 
   return (
     <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 flex flex-col gap-3">
@@ -25,10 +26,10 @@ export default function AIPreviewCard() {
       </div>
 
       <div className="relative flex-1 min-h-[180px] rounded-xl overflow-hidden bg-gray-50 border border-dashed border-gray-200">
-        {analysisImage ? (
+        {displayImage ? (
           <>
             <Image
-              src={analysisImage}
+              src={displayImage}
               alt="Uploaded meal"
               fill
               className="object-cover"

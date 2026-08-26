@@ -5,7 +5,7 @@ import React, { createContext, useContext, useState } from "react";
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface FoodItem {
-  color: string;
+  color?: string;
   emoji: string;
   name: string;
   portion: string;
@@ -73,6 +73,28 @@ export interface TipItem {
   tip: string;
 }
 
+// ─── AI Analysis Result ───────────────────────────────────────────────────────
+
+export interface MealAnalysisResult {
+  success: boolean;
+  isFood: boolean;
+  imageUrl: string;
+  message: string;
+  confidenceScore: number;
+
+  detectedFoods: FoodItem[];
+
+  nutritionFacts: NutritionFactsData;
+
+  mealName: string;
+  category: string;
+
+  insightHeading: string;
+  insightMessage: string;
+
+  tips: TipItem[];
+}
+
 // ─── Context Shape ────────────────────────────────────────────────────────────
 
 interface MealTrackerContextValue {
@@ -81,12 +103,19 @@ interface MealTrackerContextValue {
   setAnalysisImage: (url: string | null) => void;
 
   // AI Analysis
+  analysisResult: MealAnalysisResult | null;
+  setAnalysisResult: (result: MealAnalysisResult | null) => void;
+
+  isAnalyzing: boolean;
+  setIsAnalyzing: (val: boolean) => void;
+
   analysisSteps: AnalysisStep[];
   analysisProgress: number;
   analysisComplete: boolean;
 
   // Daily Goal
   dailyGoalKcal: number | null;
+  setDailyGoalKcal: (val: number | null) => void;
   consumedKcal: number | null;
   remainingKcal: number | null;
   goalPercent: number | null;
@@ -107,6 +136,7 @@ interface MealTrackerContextValue {
 
   // Meal Log
   mealLog: Meal[];
+  setMealLog: (meals: Meal[]) => void;
 
   // Calorie Trend
   calorieTrend: CaloriePoint[];
@@ -118,21 +148,29 @@ interface MealTrackerContextValue {
   tips: TipItem[];
 }
 
-// ─── Default (empty) state ────────────────────────────────────────────────────
+// ─── Default State ────────────────────────────────────────────────────────────
 
 const defaultValue: MealTrackerContextValue = {
   analysisImage: null,
-  setAnalysisImage: () => {},
+  setAnalysisImage: () => { },
+
+  analysisResult: null,
+  setAnalysisResult: () => { },
+
+  isAnalyzing: false,
+  setIsAnalyzing: () => { },
 
   analysisSteps: [
     { label: "Detecting food items", done: false },
     { label: "Estimating portion sizes", done: false },
     { label: "Calculating nutrition facts", done: false },
   ],
+
   analysisProgress: 0,
   analysisComplete: false,
 
-  dailyGoalKcal: null,
+  dailyGoalKcal: 2000,
+  setDailyGoalKcal: () => { },
   consumedKcal: null,
   remainingKcal: null,
   goalPercent: null,
@@ -148,6 +186,7 @@ const defaultValue: MealTrackerContextValue = {
   nutrientLegend: [],
 
   mealLog: [],
+  setMealLog: () => { },
 
   calorieTrend: [],
   mealDistribution: [],
@@ -159,7 +198,8 @@ const defaultValue: MealTrackerContextValue = {
 
 // ─── Context ──────────────────────────────────────────────────────────────────
 
-const MealTrackerContext = createContext<MealTrackerContextValue>(defaultValue);
+const MealTrackerContext =
+  createContext<MealTrackerContextValue>(defaultValue);
 
 export function useMealTracker() {
   return useContext(MealTrackerContext);
@@ -172,12 +212,49 @@ export function MealTrackerProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const [analysisImage, setAnalysisImage] = useState<string | null>(null);
+  const [analysisImage, setAnalysisImage] =
+    useState<string | null>(null);
+
+  const [analysisResult, setAnalysisResult] =
+    useState<MealAnalysisResult | null>(null);
+
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+
+  const [dailyGoalKcal, setDailyGoalKcal] = useState<number | null>(2000);
+  const [mealLog, setMealLog] = useState<Meal[]>([]);
+
+  React.useEffect(() => {
+    import("@/app/api/meal-tracker/meal-tracker").then(({ getUserGoal, getMealLog }) => {
+      getUserGoal().then((goal) => {
+        if (goal && typeof goal === "number") {
+          setDailyGoalKcal(goal);
+        }
+      });
+      getMealLog().then((logs) => {
+        if (logs && Array.isArray(logs)) {
+          setMealLog(logs);
+        }
+      });
+    });
+  }, []);
 
   const value: MealTrackerContextValue = {
     ...defaultValue,
+
     analysisImage,
     setAnalysisImage,
+
+    analysisResult,
+    setAnalysisResult,
+
+    isAnalyzing,
+    setIsAnalyzing,
+
+    dailyGoalKcal,
+    setDailyGoalKcal,
+
+    mealLog,
+    setMealLog,
   };
 
   return (
