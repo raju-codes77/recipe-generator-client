@@ -1,55 +1,53 @@
-import React, { useState } from 'react';
-import { motion } from 'motion/react';
-import { X, ShieldAlert, CheckCircle2 } from 'lucide-react';
-import { Post } from './types';
+import React, { useState } from "react";
+import { motion } from "motion/react";
+import { X, ShieldAlert, CheckCircle2 } from "lucide-react";
+import { Post } from "./types";
 
 interface ReportPostModalProps {
   post: Post | null;
   isOpen: boolean;
   onClose: () => void;
+  onSubmitReport?: (postId: string, reason: string, details: string) => Promise<void> | void;
 }
 
 const REPORT_REASONS = [
   {
-    id: 'food_safety',
-    title: 'Food Safety & Hazardous Instructions',
-    description: 'Contains harmful ingredient pairings, toxic items, or unsafe temperatures.',
+    id: "food_safety",
+    title: "Food Safety & Hazardous Instructions",
+    description: "Contains harmful ingredient pairings, toxic items, or unsafe temperatures.",
   },
   {
-    id: 'inappropriate',
-    title: 'Inappropriate or Offensive Content',
-    description: 'Violates community guidelines, hateful speech, or inappropriate imagery.',
+    id: "inappropriate",
+    title: "Inappropriate or Offensive Content",
+    description: "Violates community guidelines, hateful speech, or inappropriate imagery.",
   },
   {
-    id: 'misleading',
-    title: 'Misleading Recipe / Deceptive Photos',
-    description: 'Recipe produces completely different results or impossible culinary proportions.',
+    id: "misleading",
+    title: "Misleading Recipe / Deceptive Photos",
+    description: "Recipe produces completely different results or impossible culinary proportions.",
   },
   {
-    id: 'copyright',
-    title: 'Plagiarism & Copyright Infringement',
-    description: 'Copied verbatim from another chef or cookbook without proper credit.',
+    id: "copyright",
+    title: "Plagiarism & Copyright Infringement",
+    description: "Copied verbatim from another chef or cookbook without proper credit.",
   },
   {
-    id: 'spam',
-    title: 'Spam or Commercial Ads',
-    description: 'Promoting unverified products, affiliate marketing, or automated bot posts.',
+    id: "spam",
+    title: "Spam or Commercial Ads",
+    description: "Promoting unverified products, affiliate marketing, or automated bot posts.",
   },
 ];
 
-export const ReportPostModal: React.FC<ReportPostModalProps> = ({
-  post,
-  isOpen,
-  onClose,
-}) => {
+export const ReportPostModal: React.FC<ReportPostModalProps> = ({ post, isOpen, onClose, onSubmitReport }) => {
   const [selectedReason, setSelectedReason] = useState(REPORT_REASONS[0].id);
-  const [details, setDetails] = useState('');
+  const [details, setDetails] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
 
   if (!isOpen || !post) return null;
 
-  const handleSubmitReport = (e: React.FormEvent) => {
+  const handleSubmitReport = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (onSubmitReport) await onSubmitReport(post.id, selectedReason, details);
     setIsSubmitted(true);
     setTimeout(() => {
       setIsSubmitted(false);
@@ -77,9 +75,7 @@ export const ReportPostModal: React.FC<ReportPostModalProps> = ({
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-[#2F8F46] dark:bg-emerald-950 dark:text-[#B7E35F]">
               <CheckCircle2 className="h-8 w-8" />
             </div>
-            <h3 className="font-extrabold text-lg text-neutral-900 dark:text-white">
-              Report Submitted for Moderation
-            </h3>
+            <h3 className="font-extrabold text-lg text-neutral-900 dark:text-white">Report Submitted for Moderation</h3>
             <p className="text-xs text-neutral-500 max-w-xs mx-auto leading-relaxed">
               Thank you for keeping FoodCanvas safe. Our community moderation team will review this recipe promptly.
             </p>
@@ -91,9 +87,7 @@ export const ReportPostModal: React.FC<ReportPostModalProps> = ({
                 <ShieldAlert className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="font-bold text-base text-neutral-900 dark:text-white">
-                  Report Community Content
-                </h3>
+                <h3 className="font-bold text-base text-neutral-900 dark:text-white">Report Community Content</h3>
                 <p className="text-xs text-neutral-500">
                   Help maintain safety and quality across the FoodCanvas kitchen
                 </p>
@@ -101,7 +95,11 @@ export const ReportPostModal: React.FC<ReportPostModalProps> = ({
             </div>
 
             <div className="rounded-xl bg-neutral-50 p-3 text-xs text-neutral-600 dark:bg-neutral-900 dark:text-neutral-300">
-              Reporting: <span className="font-bold text-neutral-900 dark:text-white">{post.recipe?.title || post.caption.slice(0, 40)}</span> by @{post.author.username}
+              Reporting:{" "}
+              <span className="font-bold text-neutral-900 dark:text-white">
+                {post.recipe?.title || post.caption.slice(0, 40)}
+              </span>{" "}
+              by @{post.author.username}
             </div>
 
             {/* Reasons List */}
@@ -111,8 +109,8 @@ export const ReportPostModal: React.FC<ReportPostModalProps> = ({
                   key={r.id}
                   className={`flex items-start gap-3 rounded-xl border p-3 transition cursor-pointer ${
                     selectedReason === r.id
-                      ? 'border-rose-300 bg-rose-50/50 dark:border-rose-900 dark:bg-rose-950/20'
-                      : 'border-slate-200 hover:bg-neutral-50 dark:border-neutral-800 dark:hover:bg-neutral-900'
+                      ? "border-rose-300 bg-rose-50/50 dark:border-rose-900 dark:bg-rose-950/20"
+                      : "border-slate-200 hover:bg-neutral-50 dark:border-neutral-800 dark:hover:bg-neutral-900"
                   }`}
                 >
                   <input
@@ -124,12 +122,8 @@ export const ReportPostModal: React.FC<ReportPostModalProps> = ({
                     className="mt-0.5 text-rose-600 focus:ring-rose-500"
                   />
                   <div>
-                    <span className="block font-bold text-xs text-neutral-800 dark:text-neutral-200">
-                      {r.title}
-                    </span>
-                    <span className="text-[11px] text-neutral-500 leading-tight">
-                      {r.description}
-                    </span>
+                    <span className="block font-bold text-xs text-neutral-800 dark:text-neutral-200">{r.title}</span>
+                    <span className="text-[11px] text-neutral-500 leading-tight">{r.description}</span>
                   </div>
                 </label>
               ))}
