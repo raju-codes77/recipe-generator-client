@@ -23,7 +23,7 @@ import toast from "react-hot-toast";
 
 // ব্যাকএন্ড এক্সপ্র্রেস সার্ভারের পোর্ট 5000 পয়েন্ট করার জন্য ক্লায়েন্ট কনফিগারেশন
 export const authClient = createAuthClient({
-  baseURL: "http://localhost:5000",
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000",
 });
 
 export default function RegisterPage() {
@@ -140,7 +140,7 @@ export default function RegisterPage() {
       
       await authClient.signIn.social({
         provider: "google",
-        callbackURL: "http://localhost:3000/dashboard/users", // সফল লগইনের পর ফ্রন্টএন্ড ড্যাশবোর্ডে আসবে
+        callbackURL: `${process.env.NEXT_PUBLIC_LOCAL_URL || "http://localhost:3000"}/dashboard/users`, // সফল লগইনের পর ফ্রন্টএন্ড ড্যাশবোর্ডে আসবে
       });
     } catch (error) {
       console.error("Google signup error:", error);

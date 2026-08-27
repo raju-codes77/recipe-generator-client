@@ -96,7 +96,7 @@ export default function ExploreRecipes() {
           }
 
           const response = await fetch(
-            `http://localhost:5000/api/collections?userId=${session.user.id}`,
+            `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/collections?userId=${session.user.id}`,
             { credentials: "include" }
           );
           const data = await response.json();
@@ -157,7 +157,7 @@ export default function ExploreRecipes() {
         }
 
         const response = await fetch(
-          `http://localhost:5000/api/recipes?${params.toString()}`,
+          `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/recipes?${params.toString()}`,
           { credentials: "include" }
         );
 
@@ -249,7 +249,7 @@ export default function ExploreRecipes() {
       if (activeTab === "My Collections" && !selectedCollectionId && session?.user?.id) {
         try {
           const response = await fetch(
-            `http://localhost:5000/api/collections?userId=${session.user.id}`,
+            `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/collections?userId=${session.user.id}`,
             { credentials: "include" }
           );
           const data = await response.json();
@@ -273,7 +273,7 @@ export default function ExploreRecipes() {
     e.stopPropagation();
 
     try {
-      const response = await fetch(`http://localhost:5000/api/collections`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/collections`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",

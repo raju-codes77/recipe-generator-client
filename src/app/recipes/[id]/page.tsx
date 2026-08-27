@@ -64,7 +64,7 @@ export default function RecipeDetailsPage() {
     async function fetchRecipeDetails() {
       try {
         setLoading(true);
-        const response = await fetch(`http://localhost:5000/api/recipes/${id}`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/recipes/${id}`, {
           credentials: "include",
         });
         const data = await response.json();

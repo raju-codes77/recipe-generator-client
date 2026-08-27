@@ -61,9 +61,9 @@ export const updateUserGoal = async (goal: number) => {
     return await res.json();
 };
 
-export const getMealLog = async (userId: string = "default_user") => {
+export const getMealLog = async (userId: string) => {
     try {
-        if (typeof window !== "undefined") {
+        if (typeof window !== "undefined" && userId) {
             const saved = localStorage.getItem(`meal_log_${userId}`);
             if (saved) {
                 return JSON.parse(saved);
@@ -76,9 +76,9 @@ export const getMealLog = async (userId: string = "default_user") => {
     }
 };
 
-export const saveMealLog = async (meals: any[], userId: string = "default_user") => {
+export const saveMealLog = async (meals: any[], userId: string) => {
     try {
-        if (typeof window !== "undefined") {
+        if (typeof window !== "undefined" && userId) {
             localStorage.setItem(`meal_log_${userId}`, JSON.stringify(meals));
         }
         return meals;
@@ -88,7 +88,7 @@ export const saveMealLog = async (meals: any[], userId: string = "default_user")
     }
 };
 
-// ─── Daily Calendar History ───────────────────────────────────────────────────
+// ─── Daily Calendar History──────────
 
 export interface DayEntry {
     date: string;   // "YYYY-MM-DD"

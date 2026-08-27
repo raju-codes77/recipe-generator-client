@@ -13,7 +13,9 @@ export default function UploadCard() {
     setIsAnalyzing,
     setMealLog,
     mealLog,
+    userId,
   } = useMealTracker();
+
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
@@ -99,7 +101,11 @@ export default function UploadCard() {
 
       // Persist meal log and daily history to server
       import("@/app/api/meal-tracker/meal-tracker").then(({ saveMealLog, saveDayEntry }) => {
-        saveMealLog(updated);
+        // saveMealLog requires the authenticated userId to write to the correct
+        // localStorage key (meal_log_<userId>), isolating each user's data.
+        if (userId) {
+          saveMealLog(updated, userId);
+        }
         const todayKcal = updated.reduce((sum: number, m: any) => sum + (m.kcal || 0), 0);
         const todayProtein = updated.reduce((sum: number, m: any) => sum + (m.protein || 0), 0);
         const todayDate = new Date().toISOString().split("T")[0];
