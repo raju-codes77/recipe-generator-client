@@ -78,50 +78,45 @@ export default function RegisterPage() {
       return;
     }
 
-    try {
-      setLoading(true);
+   try {
+  setLoading(true);
 
-      const { data, error } = await authClient.signUp.email({
-        name: name.trim(),
-        email: email.trim(),
-        password,
-        image: photo.trim() || undefined,
-        role: role,
-      });
+  const { data, error } = await authClient.signUp.email({
+    name: name.trim(),
+    email: email.trim(),
+    password,
+    image: photo.trim() || undefined,
+  });
 
-      if (error) {
-        console.error("Signup error:", error);
-        setErrorMessage(
-          error.message || "Unable to create your account. Please try again."
-        );
-        return;
-      }
+  if (error) {
+    console.error("Signup error:", error);
 
-      console.log("Signup successful:", data);
+    setErrorMessage(
+      error.message || "Unable to create your account. Please try again."
+    );
 
-      setSuccessMessage(
-        "Account created successfully! Redirecting..."
-      );
+    return;
+  }
 
-      const currentRole = role ? role.toLowerCase() : "";
+  console.log("Signup successful:", data);
 
-      setTimeout(() => {
-        if (currentRole === "admin") {
-          router.push("/dashboard/admin");
-        } else {
-          router.push("/dashboard/users");
-        }
-        router.refresh();
-      }, 1000);
+  setSuccessMessage(
+    "Account created successfully! Redirecting..."
+  );
 
-    } catch (error) {
-      console.error("Unexpected signup error:", error);
-      setErrorMessage(
-        "Something went wrong. Please check your connection and try again."
-      );
-    } finally {
-      setLoading(false);
-    }
+  setTimeout(() => {
+    router.push("/dashboard/users");
+    router.refresh();
+  }, 1000);
+} catch (error) {
+  console.error("Unexpected signup error:", error);
+
+  setErrorMessage(
+    "Something went wrong. Please check your connection and try again."
+  );
+} finally {
+  setLoading(false);
+}
   };
 
   const handleGoogleSignup = async () => {
