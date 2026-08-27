@@ -12,10 +12,12 @@ export default function UploadCard() {
     setAnalysisResult,
     setIsAnalyzing,
     setMealLog,
+    mealLog,
   } = useMealTracker();
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string>("");
 
   const handleFile = (file: File) => {
     if (!file.type.startsWith("image/")) {
@@ -30,8 +32,9 @@ export default function UploadCard() {
 
     setSelectedFile(file);
 
-    const previewUrl = URL.createObjectURL(file);
-    setAnalysisImage(previewUrl);
+    const url = URL.createObjectURL(file);
+    setPreviewUrl(url);
+    setAnalysisImage(url);
 
     // Clear previous result when new image is selected
     setAnalysisResult(null);
@@ -91,18 +94,16 @@ export default function UploadCard() {
         img: result.imageUrl || previewUrl || "",
       };
 
-      // Import saveMealLog dynamically since it's an async action and we want to use the latest state
+      const updated = [...mealLog, newMeal];
+      setMealLog(updated);
+
+      // Persist meal log and daily history to server
       import("@/app/api/meal-tracker/meal-tracker").then(({ saveMealLog, saveDayEntry }) => {
-        setMealLog((prev: any) => {
-          const updated = [...prev, newMeal];
-          saveMealLog(updated);
-          // Update daily history entry with totals for today
-          const todayKcal = updated.reduce((sum: number, m: any) => sum + (m.kcal || 0), 0);
-          const todayProtein = updated.reduce((sum: number, m: any) => sum + (m.protein || 0), 0);
-          const todayDate = new Date().toISOString().split("T")[0];
-          saveDayEntry({ date: todayDate, kcal: todayKcal, protein: todayProtein });
-          return updated;
-        });
+        saveMealLog(updated);
+        const todayKcal = updated.reduce((sum: number, m: any) => sum + (m.kcal || 0), 0);
+        const todayProtein = updated.reduce((sum: number, m: any) => sum + (m.protein || 0), 0);
+        const todayDate = new Date().toISOString().split("T")[0];
+        saveDayEntry({ date: todayDate, kcal: todayKcal, protein: todayProtein });
       });
 
       console.log("Meal name:", result.mealName);
