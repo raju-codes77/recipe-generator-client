@@ -137,7 +137,7 @@ export default function ProgressSidebar() {
            <Image
             src="https://cdn-icons-png.flaticon.com/512/4213/4213958.png"
             alt="Gift"
-            fill
+            fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             className="object-contain drop-shadow-lg"
           />
         </div>

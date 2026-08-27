@@ -578,7 +578,7 @@ export default function ExploreRecipes() {
                             <Image
                               src={recipe.image}
                               alt={recipe.title}
-                              fill
+                              fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                               className="object-cover"
                             />
                             <div className="absolute left-3 top-3 flex items-center gap-1 rounded-full border border-white/10 bg-white/90 px-2.5 py-1 text-xs font-bold text-gray-800 shadow-sm backdrop-blur-md dark:bg-[#131B2E]/90 dark:text-white">

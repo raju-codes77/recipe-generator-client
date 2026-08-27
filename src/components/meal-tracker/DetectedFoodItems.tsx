@@ -4,7 +4,9 @@ import React from "react";
 import { useMealTracker } from "./MealTrackerContext";
 
 export default function DetectedFoodItems() {
-  const { detectedFoods, confidenceScore } = useMealTracker();
+  const { analysisResult } = useMealTracker();
+  const detectedFoods = analysisResult?.detectedFoods ?? [];
+  const confidenceScore = analysisResult?.confidenceScore ?? null;
 
   return (
     <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 flex flex-col gap-3">

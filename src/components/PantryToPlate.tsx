@@ -160,7 +160,7 @@ export default function PantryToPlateSection() {
                   <Image 
                     src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRY5JZ7Cbp7XWghSEZip8dxrpJTyyM4lOUqCvbDuGRPdg&s=10" 
                     alt="Open Fridge with Fresh Vegetables"
-                    fill
+                    fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     className="object-cover"
                   />
                 </motion.div>
@@ -237,7 +237,7 @@ export default function PantryToPlateSection() {
                 <Image 
                   src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQi1qGNSVM4nNIFprertZHCEuenjks5T4q5CGjO3-ngBA&s=10" 
                   alt="Spicy Tomato Egg Skillet"
-                  fill
+                  fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                   className="object-cover"
                 />
               </motion.div>

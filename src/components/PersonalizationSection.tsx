@@ -98,7 +98,7 @@ export default function PersonalizationSection() {
                     </div>
                   </div>
                   <div className="w-20 h-20 rounded-xl overflow-hidden relative shrink-0">
-                    <Image src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=200&auto=format&fit=crop&q=80" alt="Recipe" fill className="object-cover" />
+                    <Image src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=200&auto=format&fit=crop&q=80" alt="Recipe" fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" className="object-cover" />
                   </div>
                 </div>
                 {/* Progress bar mock */}
@@ -209,7 +209,7 @@ export default function PersonalizationSection() {
                     <Image 
                       src={tip.image} 
                       alt={tip.title} 
-                      fill 
+                      fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" 
                       className="object-cover group-hover:scale-110 transition-transform duration-500"
                     />
                   </div>
