@@ -138,10 +138,10 @@ export default function RegisterPage() {
       setLoading(true);
       toast.loading("Connecting with Google...", { id: "google-signup" });
       
-      await authClient.signIn.social({
-        provider: "google",
-        callbackURL: "http://localhost:3000/dashboard/users", // সফল লগইনের পর ফ্রন্টএন্ড ড্যাশবোর্ডে আসবে
-      });
+await authClient.signIn.social({
+  provider: "google",
+  callbackURL: `${window.location.origin}/dashboard/users`, // Production ebong localhost dutor jonnoi 100% safe
+});
     } catch (error) {
       console.error("Google signup error:", error);
       toast.dismiss("google-signup");
