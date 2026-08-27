@@ -1,63 +1,60 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import {
-  PlusCircle,
-  RefreshCw,
-  Check,
-  Utensils,
-  ChevronLeft,
-  ChevronRight,
-  Sparkles,
-} from 'lucide-react';
-import {
-  Post,
-  Review,
-  StoryItem,
-  RecipeCollection,
-  NotificationItem,
-  Author,
-} from './types';
-import {
-  INITIAL_COMMUNITY_POSTS,
-  INITIAL_STORIES,
-  INITIAL_COLLECTIONS,
-  TOP_CHEFS_TO_FOLLOW,
-  INITIAL_NOTIFICATIONS,
-  CURRENT_USER,
-} from './mockData';
-import { fetchRandomMealDbRecipe } from './mealDbService';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { motion, AnimatePresence } from "motion/react";
+import { PlusCircle, RefreshCw, Check, Utensils, Sparkles, Search, X } from "lucide-react";
+import { Post, Review, StoryItem, RecipeCollection, NotificationItem, Author } from "./types";
+import { fetchRandomMealDbRecipe } from "./mealDbService";
 
-import { StoriesBar } from './StoriesBar';
-import { CommunitySidebarLeft } from './CommunitySidebarLeft';
-import { CommunitySidebarRight } from './CommunitySidebarRight';
-import { PostCard } from './PostCard';
-import { CreatePostModal } from './CreatePostModal';
-import { RecipeReviewModal } from './RecipeReviewModal';
-import { ReportPostModal } from './ReportPostModal';
-import { SendDirectMessageModal } from './SendDirectMessageModal';
-import { SaveToCollectionModal } from './SaveToCollectionModal';
-import { StoryViewerModal } from './StoryViewerModal';
+import { StoriesBar } from "./StoriesBar";
+import { CommunitySidebarLeft } from "./CommunitySidebarLeft";
+import { CommunitySidebarRight } from "./CommunitySidebarRight";
+import { PostCard } from "./PostCard";
+import { CreatePostModal } from "./CreatePostModal";
+import { RecipeReviewModal } from "./RecipeReviewModal";
+import { ReportPostModal } from "./ReportPostModal";
+import { SendDirectMessageModal } from "./SendDirectMessageModal";
+import { SaveToCollectionModal } from "./SaveToCollectionModal";
+import { StoryViewerModal } from "./StoryViewerModal";
+import { StoryEditorModal } from "./StoryEditorModal";
+import { CommunityAvatar } from "./CommunityAvatar";
+import { communityApi } from "@/app/api/community/community-api";
+import { authClient } from "@/lib/auth-client";
+import Link from "next/link";
 
 const POSTS_PER_PAGE = 4;
 
+interface CommunityCache {
+  posts: Post[];
+  stories: StoryItem[];
+}
+
+let communityCache: CommunityCache | null = null;
+
+const getCommunityChefs = (communityPosts: Post[], viewerId?: string) => {
+  const uniqueChefs = Array.from(new Map(communityPosts.map((post) => [post.author.id, post.author])).values());
+  return uniqueChefs.filter((chef) => chef.id !== viewerId).slice(0, 8);
+};
+
 export const CommunityFeed: React.FC = () => {
-  // Theme state
-  const [darkMode, setDarkMode] = useState(false);
+  const { data: session, isPending: isSessionPending } = authClient.useSession();
+  const isAuthenticated = Boolean(session?.user);
 
   // Community data state
-  const [posts, setPosts] = useState<Post[]>(INITIAL_COMMUNITY_POSTS);
-  const [stories, setStories] = useState<StoryItem[]>(INITIAL_STORIES);
-  const [collections, setCollections] = useState<RecipeCollection[]>(INITIAL_COLLECTIONS);
-  const [chefs, setChefs] = useState<Author[]>(TOP_CHEFS_TO_FOLLOW);
-  const [notifications, setNotifications] = useState<NotificationItem[]>(INITIAL_NOTIFICATIONS);
+  const [posts, setPosts] = useState<Post[]>(() => communityCache?.posts ?? []);
+  const [stories, setStories] = useState<StoryItem[]>(() => communityCache?.stories ?? []);
+  const [collections, setCollections] = useState<RecipeCollection[]>([]);
+  const [chefs, setChefs] = useState<Author[]>(() => getCommunityChefs(communityCache?.posts ?? []));
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [isInitialLoading, setIsInitialLoading] = useState(() => !communityCache);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   // Navigation & Filtering
-  const [activeFilter, setActiveFilter] = useState<string>('all');
-  const [searchQuery, setSearchQuery] = useState<string>('');
-  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [activeFilter, setActiveFilter] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [visiblePostCount, setVisiblePostCount] = useState<number>(POSTS_PER_PAGE);
   const [isLoadingApi, setIsLoadingApi] = useState<boolean>(false);
+  const feedEndRef = useRef<HTMLDivElement>(null);
 
   // Modals state
   const [createPostOpen, setCreatePostOpen] = useState(false);
@@ -69,40 +66,82 @@ export const CommunityFeed: React.FC = () => {
   const [dmRecipientId, setDmRecipientId] = useState<string | undefined>(undefined);
   const [dmAttachedPost, setDmAttachedPost] = useState<Post | null>(null);
   const [viewingStory, setViewingStory] = useState<StoryItem | null>(null);
+  const [storyEditorFile, setStoryEditorFile] = useState<File | null>(null);
 
   // Toast alert
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  const showToast = (msg: string) => {
+  const showToast = useCallback((msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
-  };
+  }, []);
 
-  // Dark mode HTML class sync
-  useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
+  const currentUserPost = posts.find((post) => post.author.id === session?.user?.id);
+  const currentUser: Author | null = session?.user
+    ? {
+        id: session.user.id,
+        name: session.user.name,
+        username: session.user.email.split("@")[0],
+        avatar: session.user.image || "",
+        role: "user",
+        followersCount: currentUserPost?.author.followersCount || 0,
+        recipesCount: posts.filter((post) => post.author.id === session.user.id).length,
+      }
+    : null;
+
+  const loadCommunity = useCallback(async () => {
+    setLoadError(null);
+    try {
+      const [loadedPosts, loadedStories] = await Promise.all([communityApi.listPosts(), communityApi.listStories()]);
+      setPosts(loadedPosts);
+      setStories(loadedStories);
+      setChefs(getCommunityChefs(loadedPosts, session?.user.id));
+      communityCache = { posts: loadedPosts, stories: loadedStories };
+      if (session?.user) {
+        const [loadedCollections, loadedNotifications] = await Promise.all([
+          communityApi.listCollections(),
+          communityApi.listNotifications(),
+        ]);
+        setCollections(loadedCollections);
+        setNotifications(loadedNotifications);
+      } else {
+        setCollections([]);
+        setNotifications([]);
+      }
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : "Unable to load the Community feed");
+    } finally {
+      setIsInitialLoading(false);
     }
-  }, [darkMode]);
+  }, [session?.user?.id]);
+
+  useEffect(() => {
+    void loadCommunity();
+  }, [loadCommunity]);
+
+  const runMutation = useCallback(
+    async (mutation: () => Promise<unknown>, success: string) => {
+      try {
+        await mutation();
+        await loadCommunity();
+        showToast(success);
+      } catch (error) {
+        showToast(error instanceof Error ? error.message : "Community action failed");
+      }
+    },
+    [loadCommunity, showToast],
+  );
+
+  const requireAuthentication = useCallback(
+    (action: string) => {
+      showToast(`Log in to ${action}.`);
+    },
+    [showToast],
+  );
 
   // Handle Likes
-  const handleToggleLike = (postId: string) => {
-    setPosts((prev) =>
-      prev.map((p) => {
-        if (p.id === postId) {
-          const isLiked = !p.isLiked;
-          return {
-            ...p,
-            isLiked,
-            likesCount: isLiked ? p.likesCount + 1 : Math.max(0, p.likesCount - 1),
-          };
-        }
-        return p;
-      })
-    );
-  };
+  const handleToggleLike = (postId: string) =>
+    void runMutation(() => communityApi.toggleLike(postId), "Updated recipe like");
 
   // Handle Save / Bookmark
   const handleToggleSave = (postId: string) => {
@@ -111,132 +150,32 @@ export const CommunityFeed: React.FC = () => {
     setSaveModalPost(post);
   };
 
-  const handleSaveToCollection = (collectionId: string, postId: string) => {
-    setPosts((prev) =>
-      prev.map((p) => (p.id === postId ? { ...p, isSaved: true, savesCount: p.savesCount + 1 } : p))
-    );
-    setCollections((prev) =>
-      prev.map((col) =>
-        col.id === collectionId ? { ...col, recipeCount: col.recipeCount + 1 } : col
-      )
-    );
-    showToast('Saved recipe to your collection!');
-  };
+  const handleSaveToCollection = (collectionId: string, postId: string) =>
+    void runMutation(() => communityApi.savePost(postId, collectionId), "Saved recipe to your collection!");
 
-  const handleCreateCollection = (name: string, description: string) => {
-    const newCol: RecipeCollection = {
-      id: `col_${Date.now()}`,
-      name,
-      description,
-      coverImage: 'https://images.unsplash.com/photo-1498837167922-ddd27525d352?w=600&auto=format&fit=crop&q=80',
-      recipeCount: 1,
-    };
-    setCollections([...collections, newCol]);
-    showToast(`Created collection "${name}"`);
-  };
+  const handleCreateCollection = (name: string, description: string) =>
+    void runMutation(() => communityApi.createCollection(name, description), `Created collection "${name}"`);
 
   // Handle Comments
-  const handleAddComment = (postId: string, content: string) => {
-    setPosts((prev) =>
-      prev.map((p) => {
-        if (p.id === postId) {
-          const newComment = {
-            id: `c_${Date.now()}`,
-            userId: CURRENT_USER.id,
-            userName: CURRENT_USER.name,
-            userAvatar: CURRENT_USER.avatar,
-            content,
-            createdAt: 'Just now',
-            likesCount: 0,
-            isLiked: false,
-          };
-          return {
-            ...p,
-            comments: [newComment, ...p.comments],
-            commentsCount: p.commentsCount + 1,
-          };
-        }
-        return p;
-      })
-    );
-    showToast('Comment posted!');
-  };
+  const handleAddComment = (postId: string, content: string) =>
+    void runMutation(() => communityApi.addComment(postId, content), "Comment posted!");
 
   // Handle Reviews & Ratings
-  const handleSubmitReview = (postId: string, review: Review) => {
-    setPosts((prev) =>
-      prev.map((p) => {
-        if (p.id === postId) {
-          const totalReviews = p.rating.totalReviews + 1;
-          const newOverall = Number(
-            ((p.rating.overall * p.rating.totalReviews + review.rating) / totalReviews).toFixed(1)
-          );
-          return {
-            ...p,
-            reviews: [review, ...p.reviews],
-            rating: {
-              ...p.rating,
-              overall: newOverall,
-              totalReviews,
-            },
-          };
-        }
-        return p;
-      })
-    );
-    showToast('Recipe review submitted! Thank you for rating.');
-  };
+  const handleSubmitReview = (postId: string, review: Review) =>
+    void runMutation(() => communityApi.saveReview(postId, review), "Recipe review submitted!");
 
   // Handle "I Made This!"
-  const handleMadeIt = (postId: string) => {
-    setPosts((prev) =>
-      prev.map((p) => {
-        if (p.id === postId) {
-          const hasMadeIt = !p.hasMadeIt;
-          return {
-            ...p,
-            hasMadeIt,
-            madeItCount: hasMadeIt ? p.madeItCount + 1 : Math.max(0, p.madeItCount - 1),
-          };
-        }
-        return p;
-      })
-    );
-    showToast('Marked as cooked! Added to your cooking history.');
-  };
+  const handleMadeIt = (postId: string) =>
+    void runMutation(() => communityApi.toggleMadeIt(postId), "Updated your cooking history");
 
   // Handle Follow / Unfollow
-  const handleToggleFollow = (authorId: string) => {
-    setChefs((prev) =>
-      prev.map((chef) =>
-        chef.id === authorId ? { ...chef, isFollowing: !chef.isFollowing } : chef
-      )
-    );
-    setPosts((prev) =>
-      prev.map((p) =>
-        p.author.id === authorId
-          ? {
-              ...p,
-              author: {
-                ...p.author,
-                isFollowing: !p.author.isFollowing,
-                followersCount: p.author.isFollowing
-                  ? p.author.followersCount - 1
-                  : p.author.followersCount + 1,
-              },
-            }
-          : p
-      )
-    );
-    showToast('Updated chef following status');
-  };
+  const handleToggleFollow = (authorId: string) =>
+    void runMutation(() => communityApi.toggleFollow(authorId), "Updated chef following status");
 
   // Handle Share (link copy)
   const handleShare = (post: Post) => {
-    navigator.clipboard.writeText(
-      `https://foodcanvas.app/community/recipe/${post.id}`
-    );
-    showToast('Recipe link copied to clipboard! Ready to share.');
+    navigator.clipboard.writeText(`https://foodcanvas.app/community/recipe/${post.id}`);
+    showToast("Recipe link copied to clipboard! Ready to share.");
   };
 
   // Handle Direct Message open
@@ -272,9 +211,7 @@ export const CommunityFeed: React.FC = () => {
         const matchesCaption = post.caption.toLowerCase().includes(q);
         const matchesAuthor = post.author.name.toLowerCase().includes(q);
         const matchesTag = post.tags.some((t) => t.toLowerCase().includes(q));
-        const matchesIngredient = post.recipe?.ingredients.some((i) =>
-          i.name.toLowerCase().includes(q)
-        );
+        const matchesIngredient = post.recipe?.ingredients.some((i) => i.name.toLowerCase().includes(q));
         if (!matchesTitle && !matchesCaption && !matchesAuthor && !matchesTag && !matchesIngredient) {
           return false;
         }
@@ -282,30 +219,27 @@ export const CommunityFeed: React.FC = () => {
 
       // Category / Tab filter
       switch (activeFilter) {
-        case 'trending':
+        case "trending":
           return post.rating.overall >= 4.8 || post.likesCount > 300;
-        case 'following':
+        case "following":
           return post.author.isFollowing;
-        case 'quick':
+        case "quick":
+          return post.recipe && post.recipe.prepTimeMinutes + post.recipe.cookTimeMinutes <= 25;
+        case "wellness":
           return (
             post.recipe &&
-            post.recipe.prepTimeMinutes + post.recipe.cookTimeMinutes <= 25
-          );
-        case 'wellness':
-          return (
-            post.recipe &&
-            (post.recipe.dietaryTags.includes('High Protein') ||
-              post.recipe.dietaryTags.includes('Gluten-Free') ||
-              post.recipe.dietaryTags.includes('Vegan') ||
+            (post.recipe.dietaryTags.includes("High Protein") ||
+              post.recipe.dietaryTags.includes("Gluten-Free") ||
+              post.recipe.dietaryTags.includes("Vegan") ||
               post.recipe.nutrition.protein >= 25)
           );
-        case 'challenge':
+        case "challenge":
           return post.isChallengeEntry;
-        case 'ai_sparks':
-          return post.recipe?.sourceType === 'ai_generated' || post.recipe?.sourceType === 'mealdb';
-        case 'saved':
+        case "ai_sparks":
+          return post.recipe?.sourceType === "ai_generated" || post.recipe?.sourceType === "mealdb";
+        case "saved":
           return post.isSaved;
-        case 'liked':
+        case "liked":
           return post.isLiked;
         default:
           return true;
@@ -313,12 +247,44 @@ export const CommunityFeed: React.FC = () => {
     });
   }, [posts, activeFilter, searchQuery]);
 
-  // Pagination calculations
-  const totalPages = Math.ceil(filteredPosts.length / POSTS_PER_PAGE) || 1;
-  const paginatedPosts = useMemo(() => {
-    const start = (currentPage - 1) * POSTS_PER_PAGE;
-    return filteredPosts.slice(start, start + POSTS_PER_PAGE);
-  }, [filteredPosts, currentPage]);
+  const matchingAuthors = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return [];
+
+    return Array.from(new Map(posts.map((post) => [post.author.id, post.author])).values())
+      .filter((author) => author.name.toLowerCase().includes(query) || author.username.toLowerCase().includes(query))
+      .slice(0, 4);
+  }, [posts, searchQuery]);
+
+  const matchingRecipes = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return [];
+
+    return posts
+      .filter((post) => post.recipe?.title.toLowerCase().includes(query) || post.caption.toLowerCase().includes(query))
+      .slice(0, 4);
+  }, [posts, searchQuery]);
+
+  const visiblePosts = useMemo(() => filteredPosts.slice(0, visiblePostCount), [filteredPosts, visiblePostCount]);
+  const hasMorePosts = visiblePostCount < filteredPosts.length;
+
+  useEffect(() => {
+    setVisiblePostCount(POSTS_PER_PAGE);
+  }, [activeFilter, searchQuery]);
+
+  useEffect(() => {
+    const feedEnd = feedEndRef.current;
+    if (!feedEnd || !hasMorePosts) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) setVisiblePostCount((count) => count + POSTS_PER_PAGE);
+      },
+      { rootMargin: "360px 0px" },
+    );
+    observer.observe(feedEnd);
+    return () => observer.disconnect();
+  }, [hasMorePosts]);
 
   const savedPostsCount = posts.filter((p) => p.isSaved).length;
   const likedPostsCount = posts.filter((p) => p.isLiked).length;
@@ -350,11 +316,13 @@ export const CommunityFeed: React.FC = () => {
                 activeFilter={activeFilter}
                 setActiveFilter={(f) => {
                   setActiveFilter(f);
-                  setCurrentPage(1);
                 }}
                 collections={collections}
                 savedPostsCount={savedPostsCount}
                 likedPostsCount={likedPostsCount}
+                currentUser={currentUser}
+                isAuthenticated={isAuthenticated}
+                onRequireAuthentication={requireAuthentication}
               />
             </div>
           </div>
@@ -365,102 +333,194 @@ export const CommunityFeed: React.FC = () => {
             <StoriesBar
               stories={stories}
               onSelectStory={(s) => setViewingStory(s)}
-              onAddStory={() => {
-                setCreatePostInitialAI(false);
-                setCreatePostOpen(true);
-              }}
+              onAddStory={(file) => setStoryEditorFile(file)}
+              isAuthenticated={isAuthenticated}
+              onRequireAuthentication={requireAuthentication}
             />
 
             {/* Quick Share / Post Creator Bar */}
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-neutral-800 dark:bg-[#121212]"
-            >
-              <div className="flex items-center gap-3.5">
-                <img
-                  src={CURRENT_USER.avatar}
-                  alt={CURRENT_USER.name}
-                  className="h-11 w-11 rounded-full object-cover ring-2 ring-[#2F8F46]"
-                />
+            {isSessionPending ? (
+              <div className="h-28 animate-pulse rounded-3xl border border-slate-200 bg-white dark:border-neutral-800 dark:bg-[#121212]" />
+            ) : isAuthenticated && currentUser ? (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-neutral-800 dark:bg-[#121212]"
+              >
+                <div className="flex items-center gap-3.5">
+                  <CommunityAvatar
+                    src={currentUser.avatar}
+                    alt={currentUser.name}
+                    className="h-11 w-11 shrink-0 rounded-full object-cover ring-2 ring-[#2F8F46]"
+                  />
+                  <button
+                    onClick={() => {
+                      setCreatePostInitialAI(false);
+                      setCreatePostOpen(true);
+                    }}
+                    className="flex-1 rounded-2xl border border-slate-200 bg-neutral-50 px-5 py-3 text-left text-xs sm:text-sm text-neutral-400 hover:border-[#2F8F46] hover:bg-[#EAF7E8]/40 transition dark:border-neutral-700 dark:bg-neutral-900/70 dark:text-neutral-400"
+                  >
+                    Share your recipe, culinary photo, or technique...
+                  </button>
+                </div>
+
+                {/* Action shortcuts */}
+                <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3.5 text-xs dark:border-neutral-800">
+                  <motion.button
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => {
+                      setCreatePostInitialAI(false);
+                      setCreatePostOpen(true);
+                    }}
+                    className="flex items-center gap-2 font-bold text-neutral-600 hover:text-[#2F8F46] transition dark:text-neutral-300 dark:hover:text-[#B7E35F]"
+                  >
+                    <PlusCircle className="h-4 w-4 text-[#2F8F46]" />
+                    <span>Post Recipe</span>
+                  </motion.button>
+
+                  <motion.button
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => {
+                      setCreatePostInitialAI(true);
+                      setCreatePostOpen(true);
+                    }}
+                    className="flex items-center gap-2 font-bold text-neutral-600 hover:text-[#FF9F43] transition dark:text-neutral-300"
+                  >
+                    <Sparkles className="h-4 w-4 text-[#FF9F43]" />
+                    <span>TheMealDB & AI Import</span>
+                  </motion.button>
+
+                  <motion.button
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={handleFetchRandomMealDb}
+                    disabled={isLoadingApi}
+                    className="flex items-center gap-2 font-bold text-[#176B35] hover:underline transition dark:text-[#B7E35F]"
+                  >
+                    <RefreshCw className={`h-4 w-4 ${isLoadingApi ? "animate-spin" : ""}`} />
+                    <span>Random Spark</span>
+                  </motion.button>
+                </div>
+              </motion.div>
+            ) : (
+              <div className="rounded-3xl border border-emerald-200 bg-gradient-to-r from-[#EAF7E8] to-white p-5 shadow-xs dark:border-emerald-900/60 dark:from-emerald-950/30 dark:to-[#121212]">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-sm font-extrabold text-neutral-900 dark:text-white">
+                      Share your kitchen creativity
+                    </p>
+                    <p className="mt-1 text-xs text-neutral-600 dark:text-neutral-300">
+                      Log in to publish recipes, photos, cooking tips, and AI recipe ideas.
+                    </p>
+                  </div>
+                  <Link
+                    href="/registrationProcess/login"
+                    className="inline-flex shrink-0 items-center justify-center rounded-xl bg-[#2F8F46] px-4 py-2.5 text-xs font-bold text-white transition hover:bg-[#176B35]"
+                  >
+                    Log in to post
+                  </Link>
+                </div>
+              </div>
+            )}
+
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+              <input
+                type="search"
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder="Search recipes, ingredients, cooks, or chefs"
+                aria-label="Search Community"
+                className="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-11 pr-10 text-xs text-neutral-900 outline-none transition focus:border-[#2F8F46] focus:ring-2 focus:ring-[#2F8F46]/15 dark:border-neutral-800 dark:bg-[#121212] dark:text-white"
+              />
+              {searchQuery && (
                 <button
-                  onClick={() => {
-                    setCreatePostInitialAI(false);
-                    setCreatePostOpen(true);
-                  }}
-                  className="flex-1 rounded-2xl border border-slate-200 bg-neutral-50 px-5 py-3 text-left text-xs sm:text-sm text-neutral-400 hover:border-[#2F8F46] hover:bg-[#EAF7E8]/40 transition dark:border-neutral-700 dark:bg-neutral-900/70 dark:text-neutral-400"
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-neutral-400 transition hover:bg-neutral-100 hover:text-neutral-700 dark:hover:bg-neutral-800"
+                  aria-label="Clear Community search"
                 >
-                  Share your recipe, culinary photo, or technique...
+                  <X className="h-4 w-4" />
                 </button>
-              </div>
-
-              {/* Action shortcuts */}
-              <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3.5 text-xs dark:border-neutral-800">
-                <motion.button
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={() => {
-                    setCreatePostInitialAI(false);
-                    setCreatePostOpen(true);
-                  }}
-                  className="flex items-center gap-2 font-bold text-neutral-600 hover:text-[#2F8F46] transition dark:text-neutral-300 dark:hover:text-[#B7E35F]"
-                >
-                  <PlusCircle className="h-4 w-4 text-[#2F8F46]" />
-                  <span>Post Recipe</span>
-                </motion.button>
-
-                <motion.button
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={() => {
-                    setCreatePostInitialAI(true);
-                    setCreatePostOpen(true);
-                  }}
-                  className="flex items-center gap-2 font-bold text-neutral-600 hover:text-[#FF9F43] transition dark:text-neutral-300"
-                >
-                  <Sparkles className="h-4 w-4 text-[#FF9F43]" />
-                  <span>TheMealDB & AI Import</span>
-                </motion.button>
-
-                <motion.button
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={handleFetchRandomMealDb}
-                  disabled={isLoadingApi}
-                  className="flex items-center gap-2 font-bold text-[#176B35] hover:underline transition dark:text-[#B7E35F]"
-                >
-                  <RefreshCw className={`h-4 w-4 ${isLoadingApi ? 'animate-spin' : ''}`} />
-                  <span>Random Spark</span>
-                </motion.button>
-              </div>
-            </motion.div>
+              )}
+              {searchQuery && (matchingAuthors.length > 0 || matchingRecipes.length > 0) && (
+                <div className="absolute z-30 mt-2 w-full overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 shadow-xl dark:border-neutral-800 dark:bg-[#18181b]">
+                  {matchingAuthors.length > 0 && (
+                    <div className="p-2">
+                      <p className="px-2 pb-1 text-[10px] font-bold uppercase tracking-wider text-neutral-400">
+                        People
+                      </p>
+                      {matchingAuthors.map((author) => (
+                        <button
+                          key={author.id}
+                          onClick={() => {
+                            setActiveFilter("all");
+                            setSearchQuery(author.name);
+                          }}
+                          className="flex w-full items-center gap-2.5 rounded-xl px-2 py-2 text-left transition hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                        >
+                          <CommunityAvatar
+                            src={author.avatar}
+                            alt={author.name}
+                            className="h-8 w-8 shrink-0 rounded-full object-cover"
+                          />
+                          <span className="truncate text-xs font-bold text-neutral-800 dark:text-neutral-100">
+                            {author.name}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {matchingRecipes.length > 0 && (
+                    <div className="border-t border-slate-100 p-2 dark:border-neutral-800">
+                      <p className="px-2 pb-1 text-[10px] font-bold uppercase tracking-wider text-neutral-400">
+                        Recipes and posts
+                      </p>
+                      {matchingRecipes.map((post) => (
+                        <button
+                          key={post.id}
+                          onClick={() => {
+                            setActiveFilter("all");
+                            setSearchQuery(post.recipe?.title || post.caption);
+                          }}
+                          className="flex w-full items-center gap-2.5 rounded-xl px-2 py-2 text-left transition hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                        >
+                          <img src={post.imageUrl} alt="" className="h-8 w-8 shrink-0 rounded-lg object-cover" />
+                          <span className="truncate text-xs font-bold text-neutral-800 dark:text-neutral-100">
+                            {post.recipe?.title || post.caption}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
 
             {/* Filter Status & Active Tabs */}
             <div className="flex items-center justify-between px-1">
               <div className="flex items-center gap-2.5">
                 <h2 className="font-extrabold text-sm uppercase tracking-wider text-neutral-800 dark:text-neutral-200">
-                  {activeFilter === 'all'
-                    ? 'Community Cooking Feed'
-                    : activeFilter === 'trending'
-                    ? '🌟 Trending Recipes'
-                    : activeFilter === 'following'
-                    ? '👥 Recipes by Chefs You Follow'
-                    : activeFilter === 'challenge'
-                    ? '🏆 Challenge Submissions'
-                    : activeFilter === 'saved'
-                    ? '🔖 My Saved Recipes'
-                    : activeFilter === 'liked'
-                    ? '❤️ Liked Recipes'
-                    : `${activeFilter.toUpperCase()} Recipes`}
+                  {activeFilter === "all"
+                    ? "Community Cooking Feed"
+                    : activeFilter === "trending"
+                      ? "🌟 Trending Recipes"
+                      : activeFilter === "following"
+                        ? "👥 Recipes by Chefs You Follow"
+                        : activeFilter === "challenge"
+                          ? "🏆 Challenge Submissions"
+                          : activeFilter === "saved"
+                            ? "🔖 My Saved Recipes"
+                            : activeFilter === "liked"
+                              ? "❤️ Liked Recipes"
+                              : `${activeFilter.toUpperCase()} Recipes`}
                 </h2>
-                <span className="rounded-full bg-[#EAF7E8] px-2.5 py-0.5 text-xs font-bold text-[#176B35] dark:bg-emerald-950/60 dark:text-[#B7E35F]">
-                  {filteredPosts.length}
-                </span>
               </div>
 
-              {activeFilter !== 'all' && (
+              {activeFilter !== "all" && (
                 <button
-                  onClick={() => setActiveFilter('all')}
+                  onClick={() => setActiveFilter("all")}
                   className="text-xs font-bold text-[#2F8F46] hover:underline dark:text-[#B7E35F]"
                 >
                   Reset Filter
@@ -469,7 +529,21 @@ export const CommunityFeed: React.FC = () => {
             </div>
 
             {/* Posts Stream */}
-            {paginatedPosts.length === 0 ? (
+            {isInitialLoading ? (
+              <div className="rounded-3xl border border-slate-200 bg-white p-12 text-center text-sm text-neutral-500 dark:border-neutral-800 dark:bg-[#121212]">
+                Loading the Community feed...
+              </div>
+            ) : loadError ? (
+              <div className="rounded-3xl border border-rose-200 bg-white p-8 text-center dark:border-rose-900 dark:bg-[#121212]">
+                <p className="text-sm font-bold text-rose-600">{loadError}</p>
+                <button
+                  onClick={() => void loadCommunity()}
+                  className="mt-3 rounded-xl bg-[#2F8F46] px-4 py-2 text-xs font-bold text-white"
+                >
+                  Try Again
+                </button>
+              </div>
+            ) : visiblePosts.length === 0 ? (
               <div className="rounded-3xl border border-dashed border-emerald-200 p-12 text-center bg-white dark:border-neutral-800 dark:bg-[#121212]">
                 <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-[#EAF7E8] text-[#2F8F46] dark:bg-emerald-950 dark:text-[#B7E35F] mb-4">
                   <Utensils className="h-8 w-8" />
@@ -478,13 +552,15 @@ export const CommunityFeed: React.FC = () => {
                   No recipes found in this filter
                 </h3>
                 <p className="text-xs text-neutral-500 mt-1.5 max-w-sm mx-auto">
-                  Try clearing your search or publish the very first recipe in this category!
+                  {isAuthenticated
+                    ? "Try clearing your search or publish the very first recipe in this category!"
+                    : "Be the first to join FoodCanvas and share a recipe with the Community!"}
                 </p>
                 <div className="mt-5 flex items-center justify-center gap-3">
                   <button
                     onClick={() => {
-                      setActiveFilter('all');
-                      setSearchQuery('');
+                      setActiveFilter("all");
+                      setSearchQuery("");
                     }}
                     className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-bold text-neutral-700 hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300"
                   >
@@ -492,18 +568,22 @@ export const CommunityFeed: React.FC = () => {
                   </button>
                   <button
                     onClick={() => {
+                      if (!isAuthenticated) {
+                        requireAuthentication("share a recipe");
+                        return;
+                      }
                       setCreatePostInitialAI(false);
                       setCreatePostOpen(true);
                     }}
                     className="rounded-xl bg-[#2F8F46] px-5 py-2 text-xs font-bold text-white transition hover:bg-[#176B35]"
                   >
-                    + Share a Recipe
+                    {isAuthenticated ? "+ Share a Recipe" : "Log in to share a recipe"}
                   </button>
                 </div>
               </div>
             ) : (
               <div className="space-y-7">
-                {paginatedPosts.map((post) => (
+                {visiblePosts.map((post) => (
                   <PostCard
                     key={post.id}
                     post={post}
@@ -516,53 +596,25 @@ export const CommunityFeed: React.FC = () => {
                     onToggleFollow={handleToggleFollow}
                     onAddComment={handleAddComment}
                     onMadeIt={handleMadeIt}
+                    currentUserId={currentUser?.id}
+                    isAuthenticated={isAuthenticated}
+                    onRequireAuthentication={requireAuthentication}
                   />
                 ))}
               </div>
             )}
 
-            {/* Pagination Controls */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-4 shadow-xs dark:border-neutral-800 dark:bg-[#121212]">
-                <button
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                  className="flex items-center gap-1.5 rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-bold text-neutral-700 hover:bg-neutral-50 disabled:opacity-40 dark:border-neutral-700 dark:text-neutral-300"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                  <span>Previous</span>
-                </button>
-
-                <div className="flex items-center gap-2">
-                  {Array.from({ length: totalPages }).map((_, idx) => {
-                    const pageNum = idx + 1;
-                    const isActive = pageNum === currentPage;
-                    return (
-                      <button
-                        key={pageNum}
-                        onClick={() => setCurrentPage(pageNum)}
-                        className={`h-8 w-8 rounded-xl text-xs font-bold transition ${
-                          isActive
-                            ? 'bg-[#2F8F46] text-white shadow-xs'
-                            : 'text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800'
-                        }`}
-                      >
-                        {pageNum}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <button
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages}
-                  className="flex items-center gap-1.5 rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-bold text-neutral-700 hover:bg-neutral-50 disabled:opacity-40 dark:border-neutral-700 dark:text-neutral-300"
-                >
-                  <span>Next</span>
-                  <ChevronRight className="h-4 w-4" />
-                </button>
-              </div>
-            )}
+            <div ref={feedEndRef} className="flex min-h-12 items-center justify-center" aria-live="polite">
+              {hasMorePosts ? (
+                <span className="text-xs font-semibold text-neutral-400 dark:text-neutral-500">
+                  Loading more recipes...
+                </span>
+              ) : filteredPosts.length > POSTS_PER_PAGE ? (
+                <span className="text-xs font-semibold text-neutral-400 dark:text-neutral-500">
+                  You have reached the latest Community recipes.
+                </span>
+              ) : null}
+            </div>
           </div>
 
           {/* Column 3: Right Sidebar */}
@@ -572,11 +624,23 @@ export const CommunityFeed: React.FC = () => {
                 chefs={chefs}
                 onToggleFollow={handleToggleFollow}
                 trendingPosts={posts}
-                onSelectRecipe={(p) => setReviewModalPost(p)}
+                onSelectRecipe={(p) => {
+                  if (!isAuthenticated) {
+                    requireAuthentication("rate and review recipes");
+                    return;
+                  }
+                  setReviewModalPost(p);
+                }}
                 onOpenCreatePostWithAI={() => {
+                  if (!isAuthenticated) {
+                    requireAuthentication("create an AI recipe");
+                    return;
+                  }
                   setCreatePostInitialAI(true);
                   setCreatePostOpen(true);
                 }}
+                isAuthenticated={isAuthenticated}
+                onRequireAuthentication={requireAuthentication}
               />
             </div>
           </div>
@@ -588,9 +652,11 @@ export const CommunityFeed: React.FC = () => {
         isOpen={createPostOpen}
         onClose={() => setCreatePostOpen(false)}
         initialUseAI={createPostInitialAI}
-        onPublishPost={(newPost) => {
-          setPosts([newPost, ...posts]);
-          showToast('Recipe published to FoodCanvas Community!');
+        onPublishPost={async (newPost, imageFile) => {
+          const imageUrl = imageFile ? await communityApi.uploadImage(imageFile, "posts") : newPost.imageUrl;
+          await communityApi.createPost({ ...newPost, imageUrl });
+          await loadCommunity();
+          showToast("Recipe published to FoodCanvas Community!");
         }}
       />
 
@@ -605,6 +671,10 @@ export const CommunityFeed: React.FC = () => {
         post={reportModalPost}
         isOpen={!!reportModalPost}
         onClose={() => setReportModalPost(null)}
+        onSubmitReport={async (postId, reason, details) => {
+          await communityApi.reportPost(postId, reason, details);
+          showToast("Report submitted for moderation");
+        }}
       />
 
       <SaveToCollectionModal
@@ -627,10 +697,18 @@ export const CommunityFeed: React.FC = () => {
         attachedPost={dmAttachedPost}
       />
 
-      <StoryViewerModal
-        story={viewingStory}
-        isOpen={!!viewingStory}
-        onClose={() => setViewingStory(null)}
+      <StoryViewerModal story={viewingStory} isOpen={!!viewingStory} onClose={() => setViewingStory(null)} />
+
+      <StoryEditorModal
+        file={storyEditorFile}
+        isOpen={!!storyEditorFile}
+        onClose={() => setStoryEditorFile(null)}
+        onShare={async (editedFile, caption) => {
+          const imageUrl = await communityApi.uploadImage(editedFile, "stories");
+          await communityApi.createStory(imageUrl, caption);
+          await loadCommunity();
+          showToast("Story published for 24 hours");
+        }}
       />
     </div>
   );
