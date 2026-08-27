@@ -135,7 +135,7 @@ export default function RecipeDetailsPage() {
                   <Image
                     src={recipe.image || "/placeholder.png"}
                     alt={recipe.title}
-                    fill
+                    fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     className="object-cover"
                     priority
                   />
@@ -153,7 +153,7 @@ export default function RecipeDetailsPage() {
                 <div className="grid grid-cols-5 gap-2">
                   {[1, 2, 3, 4, 5].map((_, i) => (
                     <div key={i} className="relative h-14 rounded-xl overflow-hidden border border-gray-200 dark:border-white/10 hover:border-[#24733E] cursor-pointer">
-                      <Image src={recipe.image} alt="thumb" fill className="object-cover" />
+                      <Image src={recipe.image} alt="thumb" fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" className="object-cover" />
                     </div>
                   ))}
                 </div>
@@ -177,7 +177,7 @@ export default function RecipeDetailsPage() {
                   {/* Author Info */}
                   <div className="mb-3 flex items-center gap-2.5">
                     <div className="relative h-7 w-7 rounded-full overflow-hidden bg-gray-200">
-                      <Image src={recipe.user?.image || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80"} alt="Author" fill className="object-cover" />
+                      <Image src={recipe.user?.image || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80"} alt="Author" fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" className="object-cover" />
                     </div>
                     <span className="text-xs font-bold text-gray-800 dark:text-gray-200">{recipe.user?.name || "Sarah Ahmed"}</span>
                   </div>
@@ -391,7 +391,7 @@ export default function RecipeDetailsPage() {
               {/* Single Review Item */}
               <div className="pt-4 flex gap-3">
                 <div className="relative h-8 w-8 rounded-full overflow-hidden shrink-0">
-                  <Image src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=100&q=80" alt="Reviewer" fill className="object-cover" />
+                  <Image src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=100&q=80" alt="Reviewer" fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" className="object-cover" />
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center justify-between">

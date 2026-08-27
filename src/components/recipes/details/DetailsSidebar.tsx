@@ -22,7 +22,7 @@ const DetailsSidebar = ({ recipeImage }: DetailsSidebarProps) => {
               <Image 
                 src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80" 
                 alt="Sarah Ahmed" 
-                fill 
+                fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" 
                 className="object-cover" 
               />
             </div>
@@ -70,7 +70,7 @@ const DetailsSidebar = ({ recipeImage }: DetailsSidebarProps) => {
           ].map((item, i) => (
             <div key={i} className="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 transition-colors cursor-pointer">
               <div className="relative h-12 w-12 rounded-xl overflow-hidden shrink-0">
-                <Image src={defaultImage} alt={item.title} fill className="object-cover" />
+                <Image src={defaultImage} alt={item.title} fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" className="object-cover" />
               </div>
               <div className="flex-1 min-w-0">
                 <h4 className="text-xs font-bold text-gray-800 dark:text-white truncate">{item.title}</h4>

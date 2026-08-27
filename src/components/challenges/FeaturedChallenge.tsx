@@ -8,7 +8,7 @@ export default function FeaturedChallenge() {
       <Image
         src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=1200&auto=format&fit=crop&q=80"
         alt="Healthy Eating Challenge"
-        fill
+        fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
         className="object-cover transition-transform duration-700 group-hover:scale-105"
       />
       

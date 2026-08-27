@@ -28,7 +28,7 @@ export default function AIToolsHeader() {
           <Image
             src="/aiHeader2.png"
             alt="AI Cooking Assistant Graphic"
-            fill
+            fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             className="object-contain object-right"
             priority
           />

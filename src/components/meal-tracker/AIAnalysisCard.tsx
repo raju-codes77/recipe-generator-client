@@ -5,7 +5,15 @@ import { CheckCircle2, Circle, Sparkles } from "lucide-react";
 import { useMealTracker } from "./MealTrackerContext";
 
 export default function AIAnalysisCard() {
-  const { analysisSteps, analysisProgress, analysisComplete } = useMealTracker();
+  const { analysisResult, isAnalyzing } = useMealTracker();
+
+  const analysisComplete = !!analysisResult && analysisResult.success;
+  const analysisProgress = analysisComplete ? 100 : isAnalyzing ? 50 : 0;
+  const analysisSteps = [
+    { label: "Detecting food items", done: analysisProgress >= 50 },
+    { label: "Estimating portion sizes", done: analysisProgress >= 50 },
+    { label: "Calculating nutrition facts", done: analysisComplete },
+  ];
 
   return (
     <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 flex flex-col gap-4">
