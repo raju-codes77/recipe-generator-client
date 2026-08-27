@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   LineChart,
   Line,
@@ -11,31 +11,16 @@ import {
   ResponsiveContainer,
   ReferenceDot,
 } from "recharts";
+import { useMealTracker } from "./MealTrackerContext";
+import { getDailyHistory, DayEntry } from "@/app/api/meal-tracker/meal-tracker";
 
-const data = [
-  { day: "Mon", kcal: 980 },
-  { day: "Tue", kcal: 1150 },
-  { day: "Wed", kcal: 870 },
-  { day: "Thu", kcal: 1050 },
-  { day: "Fri", kcal: 1200 },
-  { day: "Sat", kcal: 950 },
-  { day: "Sun", kcal: 820 },
-];
-
-const distribution = [
-  { label: "Breakfast", color: "#a78bfa", kcal: 320, pct: "25%" },
-  { label: "Lunch", color: "#16a34a", kcal: 420, pct: "34%" },
-  { label: "Snack", color: "#3b82f6", kcal: 180, pct: "13%" },
-  { label: "Dinner", color: "#f59e0b", kcal: 350, pct: "28%" },
-];
-
-// Custom tooltip for "Today 820 kcal"
+// Custom tooltip
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const CustomTooltip = ({ active, payload, label }: any) => {
+const CustomTooltip = ({ active, payload, label, todayName }: any) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-white border border-gray-200 rounded-xl shadow-md px-3 py-2 text-xs">
-        <p className="font-semibold text-gray-700">{label === "Sun" ? "Today" : label}</p>
+        <p className="font-semibold text-gray-700">{label === todayName ? "Today" : label}</p>
         <p className="text-green-600 font-bold">{payload[0].value} kcal</p>
       </div>
     );
@@ -45,6 +30,88 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 
 export default function CalorieTrend() {
   const [range] = useState("7 Days");
+  const { mealLog } = useMealTracker();
+  const [history, setHistory] = useState<Record<string, DayEntry>>({});
+
+  useEffect(() => {
+    getDailyHistory().then(setHistory);
+  }, [mealLog]); // Refetch when mealLog changes so today's total is accurate
+
+  // 1. Calculate dynamic 7-day trend
+  const todayTotalKcal = mealLog.reduce((acc, m) => acc + m.kcal, 0);
+  
+  const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const todayIdx = new Date().getDay();
+  const todayName = days[todayIdx];
+  
+  const last7Days = Array.from({ length: 7 }).map((_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (6 - i));
+    const dateStr = d.toISOString().split("T")[0];
+    return {
+        day: days[d.getDay()],
+        dateStr
+    };
+  });
+  
+  const dynamicData = last7Days.map((d, i) => {
+    // For today (the last item), use the live calculated todayTotalKcal from mealLog
+    if (i === 6) {
+        return { day: d.day, kcal: todayTotalKcal };
+    }
+    // For past days, use the real history from the database
+    return {
+        day: d.day,
+        kcal: history[d.dateStr]?.kcal || 0
+    };
+  });
+
+  // 2. Calculate dynamic meal distribution
+  const colorMap: Record<string, string> = {
+    Breakfast: "#a78bfa",
+    Lunch: "#16a34a",
+    Snack: "#3b82f6",
+    Dinner: "#f59e0b",
+  };
+
+  const getMealCategory = (timeStr: string) => {
+    const match = timeStr.match(/(\d+):(\d+)\s*(AM|PM)?/i);
+    if (!match) return "Snack";
+    let h = parseInt(match[1]);
+    const ampm = match[3]?.toUpperCase();
+    if (ampm === "PM" && h < 12) h += 12;
+    if (ampm === "AM" && h === 12) h = 0;
+    
+    if (h >= 5 && h < 11) return "Breakfast";
+    if (h >= 11 && h < 15) return "Lunch";
+    if (h >= 15 && h < 18) return "Snack";
+    return "Dinner";
+  };
+
+  const distributionMap: Record<string, number> = {};
+  mealLog.forEach((meal) => {
+    const cat = getMealCategory(meal.time);
+    if (!distributionMap[cat]) distributionMap[cat] = 0;
+    distributionMap[cat] += meal.kcal;
+  });
+
+  if (mealLog.length === 0) {
+    distributionMap["Breakfast"] = 0;
+    distributionMap["Lunch"] = 0;
+    distributionMap["Snack"] = 0;
+    distributionMap["Dinner"] = 0;
+  }
+
+  const dynamicDistribution = Object.entries(distributionMap).map(([label, kcal]) => ({
+    label,
+    color: colorMap[label] || "#ec4899",
+    kcal,
+    pct: todayTotalKcal > 0 ? Math.round((kcal / todayTotalKcal) * 100) + "%" : "0%"
+  })).sort((a, b) => {
+    const order = ["Breakfast", "Lunch", "Snack", "Dinner"];
+    return (order.indexOf(a.label) !== -1 ? order.indexOf(a.label) : 99) - 
+           (order.indexOf(b.label) !== -1 ? order.indexOf(b.label) : 99);
+  });
 
   return (
     <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 flex flex-col gap-4">
@@ -61,7 +128,7 @@ export default function CalorieTrend() {
       </div>
 
       <ResponsiveContainer width="100%" height={180}>
-        <LineChart data={data} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
+        <LineChart data={dynamicData} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" vertical={false} />
           <XAxis
             dataKey="day"
@@ -76,7 +143,7 @@ export default function CalorieTrend() {
             domain={[0, 1250]}
             ticks={[0, 250, 500, 750, 1000, 1250]}
           />
-          <Tooltip content={<CustomTooltip />} />
+          <Tooltip content={<CustomTooltip todayName={todayName} />} />
           <Line
             type="monotone"
             dataKey="kcal"
@@ -87,8 +154,8 @@ export default function CalorieTrend() {
           />
           {/* Highlight today */}
           <ReferenceDot
-            x="Sun"
-            y={820}
+            x={todayName}
+            y={todayTotalKcal}
             r={6}
             fill="#16a34a"
             stroke="white"
@@ -103,7 +170,7 @@ export default function CalorieTrend() {
           Meal Distribution
         </p>
         <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
-          {distribution.map((d) => (
+          {dynamicDistribution.map((d) => (
             <div key={d.label} className="flex items-center gap-2">
               <span
                 className="w-2.5 h-2.5 rounded-full shrink-0"

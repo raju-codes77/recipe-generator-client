@@ -35,7 +35,12 @@ export default function NutrientDistribution() {
                 fillOpacity={0.2}
               />
               <Tooltip
-                formatter={(value) => [`${value ?? 0}%`]}
+                formatter={(v: any) => [`${v}%`]}
+                contentStyle={{
+                  borderRadius: "8px",
+                  border: "1px solid #e5e7eb",
+                  fontSize: "11px",
+                }}
               />
             </RadarChart>
           </ResponsiveContainer>

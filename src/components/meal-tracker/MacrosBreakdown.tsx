@@ -5,9 +5,21 @@ import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import { useMealTracker } from "./MealTrackerContext";
 
 export default function MacrosBreakdown() {
-  const { macros, nutritionFacts } = useMealTracker();
+  const { analysisResult } = useMealTracker();
 
+  const nutritionFacts = analysisResult?.nutritionFacts ?? null;
   const totalKcal = nutritionFacts?.kcal ?? null;
+
+  const protein = nutritionFacts?.protein ?? 0;
+  const carbs = nutritionFacts?.carbs ?? 0;
+  const fat = nutritionFacts?.fat ?? 0;
+  const totalMacros = protein + carbs + fat;
+
+  const macros = totalMacros > 0 ? [
+    { name: "Protein", value: protein, color: "#f87171", pct: `${Math.round((protein/totalMacros)*100)}%` },
+    { name: "Carbs", value: carbs, color: "#60a5fa", pct: `${Math.round((carbs/totalMacros)*100)}%` },
+    { name: "Fat", value: fat, color: "#fbbf24", pct: `${Math.round((fat/totalMacros)*100)}%` },
+  ] : [];
 
   return (
     <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 flex flex-col gap-4">
@@ -34,10 +46,12 @@ export default function MacrosBreakdown() {
                   ))}
                 </Pie>
                 <Tooltip
-                  formatter={(value, name) => [
-                    `${value ?? 0}g`,
-                    String(name),
-                  ]}
+                  formatter={(v: any, name: any) => [`${v}g`, name]}
+                  contentStyle={{
+                    borderRadius: "8px",
+                    border: "1px solid #e5e7eb",
+                    fontSize: "11px",
+                  }}
                 />
               </PieChart>
             </ResponsiveContainer>

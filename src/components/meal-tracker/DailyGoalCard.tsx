@@ -1,11 +1,45 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { toast } from "react-hot-toast";
+import { updateUserGoal } from "@/app/api/meal-tracker/meal-tracker";
 import { useMealTracker } from "./MealTrackerContext";
 
 export default function DailyGoalCard() {
-  const { dailyGoalKcal, consumedKcal, remainingKcal, goalPercent } =
-    useMealTracker();
+  const { dailyGoalKcal, setDailyGoalKcal, mealLog } = useMealTracker();
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [tempGoal, setTempGoal] = useState<string | number>(dailyGoalKcal ?? 2000);
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    if (dailyGoalKcal !== null) setTempGoal(dailyGoalKcal);
+  }, [dailyGoalKcal]);
+
+  const consumedKcal = mealLog.reduce((acc, meal) => acc + meal.kcal, 0);
+
+  const remainingKcal = dailyGoalKcal ? Math.max(dailyGoalKcal - consumedKcal, 0) : null;
+  const goalPercent = dailyGoalKcal ? Math.min(Math.round((consumedKcal / dailyGoalKcal) * 100), 100) : 0;
+
+  const handleSaveGoal = async () => {
+    const parsed = parseInt(tempGoal as string, 10);
+    if (isNaN(parsed) || parsed <= 0) {
+      toast.error("Please enter a valid number");
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+      await updateUserGoal(parsed);
+      setDailyGoalKcal(parsed);
+      toast.success("Goal updated!");
+      setIsEditing(false);
+    } catch (err) {
+      toast.error("Failed to save goal");
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const RADIUS = 64;
   const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
@@ -16,11 +50,33 @@ export default function DailyGoalCard() {
 
   return (
     <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 flex flex-col gap-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between h-5">
         <h3 className="text-sm font-bold text-gray-900">Daily Goal</h3>
-        <button className="text-xs text-green-600 font-semibold hover:underline">
-          Edit Goal
-        </button>
+        {isEditing ? (
+          <div className="flex items-center gap-2">
+            <input
+              type="number"
+              value={tempGoal}
+              onChange={(e) => setTempGoal(e.target.value)}
+              className="w-16 px-1 py-0.5 text-xs border border-gray-300 rounded focus:outline-none focus:border-green-500"
+              autoFocus
+            />
+            <button
+              onClick={handleSaveGoal}
+              disabled={isSaving}
+              className="text-xs text-green-600 font-semibold hover:underline disabled:opacity-50"
+            >
+              {isSaving ? "Saving..." : "Save"}
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={() => setIsEditing(true)}
+            className="text-xs text-green-600 font-semibold hover:underline"
+          >
+            Edit Goal
+          </button>
+        )}
       </div>
 
       {/* Circular progress ring */}

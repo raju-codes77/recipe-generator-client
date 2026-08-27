@@ -25,8 +25,8 @@ export default function TodaysMealLog() {
       {mealLog.length > 0 ? (
         <>
           <div className="flex flex-col gap-3">
-            {mealLog.map((meal) => (
-              <div key={`${meal.type}-${meal.time}`} className="flex items-center gap-3 group">
+            {mealLog.map((meal, index) => (
+              <div key={`${meal.type}-${meal.time}-${index}`} className="flex items-center gap-3 group">
                 <div className="relative w-10 h-10 rounded-full overflow-hidden shrink-0 border border-gray-200">
                   <Image
                     src={meal.img}
