@@ -1,63 +1,46 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Star, Bookmark, Heart, Clock, Flame, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
+import Link from "next/link";
+import RecipeCard from "./recipes/RecipeCard";
 
 interface Recipe {
-  id: number;
+  id: string;
   title: string;
   image: string;
   rating: number;
-  chef: string;
-  time: string;
-  category: string;
-  calories: string;
+  time: number;
+  calories: number;
+  cuisine?: string;
 }
 
 export default function RecipeCollectionSection() {
-  const recipes: Recipe[] = [
-    {
-      id: 1,
-      title: "Mango Chicken Bowl",
-      image: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80",
-      rating: 4.8,
-      chef: "Sarah Ahmed",
-      time: "30 min",
-      category: "Asian",
-      calories: "510 kcal",
-    },
-    {
-      id: 2,
-      title: "Veggie Buddha Bowl",
-      image: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=600&q=80",
-      rating: 4.7,
-      chef: "Riya's Kitchen",
-      time: "25 min",
-      category: "Healthy",
-      calories: "420 kcal",
-    },
-    {
-      id: 3,
-      title: "Spicy Lentil Soup",
-      image: "https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=600&q=80",
-      rating: 4.6,
-      chef: "Healthy Bites",
-      time: "40 min",
-      category: "Soup",
-      calories: "310 kcal",
-    },
-    {
-      id: 4,
-      title: "Avocado Toast Deluxe",
-      image: "https://images.unsplash.com/photo-1588137378633-dea1336ce1e2?auto=format&fit=crop&w=600&q=80",
-      rating: 4.9,
-      chef: "Quinoa Salad",
-      time: "15 min",
-      category: "Breakfast",
-      calories: "380 kcal",
-    },
-  ];
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  // Fetch latest 4 recipes from backend
+  useEffect(() => {
+    const fetchLatestRecipes = async () => {
+      try {
+        const response = await fetch("http://localhost:5000/api/recipes");
+        const data = await response.json();
+
+        // Jodi data array hoy ba object er vetor array thake (e.g. data.recipes)
+        const recipeList = Array.isArray(data) ? data : data.recipes || [];
+        
+        // Sesh 4ta latest recipe slice kore nilam
+        setRecipes(recipeList.slice(0, 4));
+      } catch (error) {
+        console.error("Failed to fetch latest recipes:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLatestRecipes();
+  }, []);
 
   return (
     <section className="w-full py-24 px-4 md:px-8 bg-gradient-to-b from-gray-50/50 via-white to-gray-50/50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 text-gray-900 dark:text-white transition-colors duration-300">
@@ -76,75 +59,24 @@ export default function RecipeCollectionSection() {
           </p>
         </div>
 
-        {/* 4 Cards Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 w-full mb-16">
-          {recipes.map((recipe, idx) => (
-            <motion.div
-              key={recipe.id}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: idx * 0.1 }}
-              whileHover={{ y: -8 }}
-              className="bg-white dark:bg-gray-900 rounded-3xl overflow-hidden border border-gray-100 dark:border-gray-800 shadow-md hover:shadow-2xl hover:border-emerald-500/30 transition-all duration-300 flex flex-col group cursor-pointer"
-            >
-              {/* Image & Badges Container */}
-              <div className="relative h-52 w-full overflow-hidden bg-gray-100 dark:bg-gray-800">
-                <img
-                  src={recipe.image}
-                  alt={recipe.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-                
-                {/* Rating Badge */}
-                <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-md text-white text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1 shadow-md">
-                  <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-                  <span>{recipe.rating}</span>
-                </div>
+        {/* Dynamic Cards Grid */}
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 w-full mb-16">
+            {[1, 2, 3, 4].map((n) => (
+              <div key={n} className="h-80 w-full bg-gray-100 dark:bg-gray-800/50 rounded-[24px] animate-pulse" />
+            ))}
+          </div>
+        ) : recipes.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 w-full mb-16">
+            {recipes.map((recipe, idx) => (
+              <RecipeCard key={recipe.id} recipe={recipe} index={idx} />
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-gray-400 mb-16">No recipes found.</p>
+        )}
 
-                {/* Bookmark Icon */}
-                <button className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-md flex items-center justify-center text-gray-700 dark:text-gray-200 hover:bg-emerald-600 hover:text-white transition-colors shadow-md">
-                  <Bookmark className="w-4 h-4" />
-                </button>
-              </div>
-
-              {/* Content Area */}
-              <div className="p-5 flex flex-col flex-grow">
-                {/* Title and Heart */}
-                <div className="flex items-start justify-between gap-2 mb-3">
-                  <h3 className="text-base font-bold text-gray-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors line-clamp-1">
-                    {recipe.title}
-                  </h3>
-                  <button className="text-gray-400 hover:text-red-500 transition-colors mt-0.5">
-                    <Heart className="w-4 h-4" />
-                  </button>
-                </div>
-
-                {/* Chef & Time */}
-                <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-4 pb-4 border-b border-gray-100 dark:border-gray-800">
-                  <span className="font-medium text-gray-700 dark:text-gray-300">{recipe.chef}</span>
-                  <div className="flex items-center gap-1">
-                    <Clock className="w-3.5 h-3.5 text-gray-400" />
-                    <span>{recipe.time}</span>
-                  </div>
-                </div>
-
-                {/* Tag & Calories */}
-                <div className="flex items-center justify-between mt-auto">
-                  <span className="text-[11px] font-semibold px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800/40">
-                    {recipe.category}
-                  </span>
-                  <div className="flex items-center gap-1 text-xs font-semibold text-gray-600 dark:text-gray-300">
-                    <Flame className="w-3.5 h-3.5 text-orange-500" />
-                    <span>{recipe.calories}</span>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* Browse All Recipes Button with Floating/Up-Down Animation */}
+        {/* Browse All Recipes Button with Floating Animation */}
         <motion.div
           animate={{ y: [0, -8, 0] }}
           transition={{
@@ -155,13 +87,13 @@ export default function RecipeCollectionSection() {
           whileHover={{ scale: 1.08, y: -4 }}
           whileTap={{ scale: 0.95 }}
         >
-          <a
+          <Link
             href="/recipes"
             className="inline-flex items-center gap-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 px-8 rounded-full shadow-lg shadow-emerald-600/30 transition-all duration-300 text-sm md:text-base group"
           >
             <span>Browse All Recipes</span>
             <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
-          </a>
+          </Link>
         </motion.div>
 
       </div>

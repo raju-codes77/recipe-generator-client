@@ -558,7 +558,10 @@ export default function ExploreRecipes() {
                             recipe={recipe} 
                             index={index}
                             onFavoriteRemoved={(removedId) => {
-                              setRecipes((prev) => prev.filter((r) => r.id !== removedId));
+                              // Only remove instantly if we are on the Favorite Recipes tab
+                              if (activeTab === "Favorite Recipes") {
+                                setRecipes((prev) => prev.filter((r) => r.id !== removedId));
+                              }
                             }}
                           />
                         </div>
