@@ -4,11 +4,12 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { 
-  Clock, Flame, Star, ArrowLeft, Heart, Bookmark, Share2, 
-  ChefHat, Users, Award, ThumbsUp, ThumbsDown 
+  Clock, Flame, Star, ArrowLeft, Heart, Folder, Share2, 
+  ChefHat, Users, Award, ThumbsUp, ThumbsDown, X 
 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import DetailsSidebar from "@/components/recipes/details/DetailsSidebar";
+import toast from "react-hot-toast";
 
 interface Ingredient {
   id?: number;
@@ -44,10 +45,19 @@ export default function RecipeDetailsPage() {
   const [recipe, setRecipe] = useState<RecipeDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // FAVORITE STATES
   const [isFavorite, setIsFavorite] = useState(false);
-  const [isSaved, setIsSaved] = useState(false);
+  const [isFavoriteLoading, setIsFavoriteLoading] = useState(false);
+
+  // COLLECTION MODAL STATES
+  const [isCollectionModalOpen, setIsCollectionModalOpen] = useState(false);
+  const [collections, setCollections] = useState<any[]>([]);
+  const [loadingCollections, setLoadingCollections] = useState(false);
+
   const [activeTab, setActiveTab] = useState("Overview");
 
+  // FETCH RECIPE DETAILS
   useEffect(() => {
     if (!id) return;
 
@@ -78,6 +88,158 @@ export default function RecipeDetailsPage() {
 
     fetchRecipeDetails();
   }, [id]);
+
+  // CHECK FAVORITE STATUS & LISTEN TO SYNC EVENTS
+  useEffect(() => {
+    if (!session?.user?.id || !id) {
+      setIsFavorite(false);
+      return;
+    }
+
+    const checkStatuses = async () => {
+      try {
+        const favResponse = await fetch(
+          `http://localhost:5000/api/favorites/check?userId=${session.user.id}&recipeId=${id}`,
+          { credentials: "include" }
+        );
+        const favContentType = favResponse.headers.get("content-type");
+        if (favContentType && favContentType.includes("application/json")) {
+          const favData = await favResponse.json();
+          if (favResponse.ok && favData.success) {
+            setIsFavorite(favData.isFavorite);
+          }
+        }
+      } catch (error) {
+        console.error("Status check error:", error);
+      }
+    };
+
+    checkStatuses();
+
+    const handleRecipeUpdate = () => {
+      checkStatuses();
+    };
+
+    window.addEventListener("recipeUpdated", handleRecipeUpdate);
+    window.addEventListener("collectionUpdated", handleRecipeUpdate);
+    return () => {
+      window.removeEventListener("recipeUpdated", handleRecipeUpdate);
+      window.removeEventListener("collectionUpdated", handleRecipeUpdate);
+    };
+  }, [session?.user?.id, id]);
+
+  // OPTIMISTIC FAVORITE TOGGLE HANDLER
+  const handleFavoriteToggle = async () => {
+    if (!session?.user?.id) {
+      toast.error("Please login to save recipes.");
+      return;
+    }
+
+    if (!recipe?.id || isFavoriteLoading) return;
+
+    const previousState = isFavorite;
+    const nextState = !previousState;
+
+    setIsFavorite(nextState);
+    setIsFavoriteLoading(true);
+
+    try {
+      const method = previousState ? "DELETE" : "POST";
+      const response = await fetch("http://localhost:5000/api/favorites", {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          userId: session.user.id,
+          recipeId: recipe.id,
+        }),
+      });
+
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        const textResponse = await response.text();
+        console.error("Non-JSON response:", textResponse);
+        throw new Error("Server returned an invalid response.");
+      }
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to update favorites");
+      }
+
+      if (nextState) {
+        toast.success("Added to favorites!");
+      } else {
+        toast.success("Removed from favorites!");
+      }
+
+      window.dispatchEvent(new Event("recipeUpdated"));
+    } catch (err: any) {
+      console.error("Favorite toggle error:", err);
+      setIsFavorite(previousState);
+      toast.error(err.message || "Something went wrong");
+    } finally {
+      setIsFavoriteLoading(false);
+    }
+  };
+
+  // OPEN COLLECTION MODAL
+  const handleOpenCollectionModal = () => {
+    if (!session?.user?.id) {
+      toast.error("Please login first to save recipes to collections.");
+      return;
+    }
+
+    if (!recipe?.id) return;
+
+    setIsCollectionModalOpen(true);
+    setLoadingCollections(true);
+
+    fetch(`http://localhost:5000/api/collections?userId=${session.user.id}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          setCollections(data.collections);
+        } else {
+          setCollections([]);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to fetch collections:", err);
+        toast.error("Failed to load collections");
+      })
+      .finally(() => {
+        setLoadingCollections(false);
+      });
+  };
+
+  // SAVE TO SPECIFIC COLLECTION WITH TOAST
+  const handleAddToCollection = async (collectionId: string) => {
+    if (!recipe?.id) return;
+
+    try {
+      const res = await fetch("http://localhost:5000/api/collections/add-recipe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ collectionId, recipeId: recipe.id }),
+      });
+      const data = await res.json();
+      
+      if (data.success) {
+        toast.success("Recipe added to collection successfully!");
+        setIsCollectionModalOpen(false);
+        window.dispatchEvent(new Event("collectionUpdated"));
+      } else {
+        toast.error(data.message || "Recipe already exists in this collection");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Something went wrong");
+    }
+  };
 
   if (loading) {
     return (
@@ -120,18 +282,18 @@ export default function RecipeDetailsPage() {
           <span className="font-semibold text-gray-800 dark:text-white">{recipe.title}</span>
         </div>
 
-        {/* TWO-COLUMN LAYOUT (Main Content + Sidebar) */}
+        {/* TWO-COLUMN LAYOUT */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
-          {/* LEFT MAIN CONTENT AREA (lg:col-span-8) */}
+          {/* LEFT MAIN CONTENT AREA */}
           <div className="lg:col-span-8 flex flex-col gap-6">
             
             {/* HERO SECTION / OVERVIEW */}
             <div id="overview" className="grid grid-cols-1 md:grid-cols-12 items-center bg-white dark:bg-[#131B2E] p-6 rounded-[28px] border border-gray-100 dark:border-white/15 shadow-sm gap-6">
               
-              {/* Big Image & Thumbnails */}
+              {/* Big Image */}
               <div className="md:col-span-6 flex flex-col gap-3">
-                <div className="relative h-[280px] w-full overflow-hidden rounded-[20px] shadow-sm">
+                <div className="relative h-[320px] w-full overflow-hidden rounded-[20px] shadow-sm">
                   <Image
                     src={recipe.image || "/placeholder.png"}
                     alt={recipe.title}
@@ -139,23 +301,17 @@ export default function RecipeDetailsPage() {
                     className="object-cover"
                     priority
                   />
+                  {/* FAVORITE BUTTON */}
                   <button
-                    onClick={() => setIsFavorite(!isFavorite)}
-                    className={`absolute top-3 right-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/80 backdrop-blur-md transition-colors shadow-md ${
-                      isFavorite ? "text-red-500" : "text-gray-700 dark:text-gray-300"
+                    onClick={handleFavoriteToggle}
+                    disabled={isFavoriteLoading}
+                    className={`absolute top-3 right-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/80 backdrop-blur-md transition-all shadow-md cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 dark:bg-[#131B2E]/80 ${
+                      isFavorite ? "text-red-500 bg-red-50 dark:bg-red-950/50" : "text-gray-700 hover:text-red-500 dark:text-gray-300 dark:hover:text-red-500"
                     }`}
+                    title={isFavorite ? "Remove from favorites" : "Save to favorites"}
                   >
-                    <Heart className={`h-4 w-4 ${isFavorite ? "fill-current" : ""}`} />
+                    <Heart className={`h-4 w-4 transition-transform ${isFavorite ? "fill-red-500 text-red-500 scale-110" : ""}`} />
                   </button>
-                </div>
-
-                {/* Small Thumbnails */}
-                <div className="grid grid-cols-5 gap-2">
-                  {[1, 2, 3, 4, 5].map((_, i) => (
-                    <div key={i} className="relative h-14 rounded-xl overflow-hidden border border-gray-200 dark:border-white/10 hover:border-[#24733E] cursor-pointer">
-                      <Image src={recipe.image} alt="thumb" fill className="object-cover" />
-                    </div>
-                  ))}
                 </div>
               </div>
 
@@ -214,13 +370,11 @@ export default function RecipeDetailsPage() {
                 {/* ACTION BUTTONS */}
                 <div className="flex items-center gap-2">
                   <button 
-                    onClick={() => setIsSaved(!isSaved)}
-                    className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl font-bold text-xs transition-all shadow-sm cursor-pointer ${
-                      isSaved ? "bg-[#1e5d32] text-white" : "bg-[#24733E] text-white hover:bg-[#1e5d32]"
-                    }`}
+                    onClick={handleOpenCollectionModal}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl font-bold text-xs transition-all shadow-sm cursor-pointer bg-[#24733E] text-white hover:bg-[#1e5d32]"
                   >
-                    <Bookmark className="h-3.5 w-3.5 fill-current" />
-                    <span>{isSaved ? "Saved" : "Save Recipe"}</span>
+                    <Folder className="h-3.5 w-3.5" />
+                    <span>Save Recipe</span>
                   </button>
 
                   <button className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#1C2538] text-xs font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 cursor-pointer">
@@ -232,7 +386,7 @@ export default function RecipeDetailsPage() {
               </div>
             </div>
 
-            {/* NAVIGATION TABS BAR WITH SMOOTH SCROLL */}
+            {/* NAVIGATION TABS BAR */}
             <div className="sticky top-0 z-20 bg-[#F9FAFB] dark:bg-black py-2 flex items-center gap-6 border-b border-gray-200 dark:border-white/10 overflow-x-auto">
               {["Overview", "Ingredients", "Instructions", "Nutrition", "Reviews"].map((tab) => (
                 <button
@@ -426,6 +580,52 @@ export default function RecipeDetailsPage() {
         </div>
 
       </div>
+
+      {/* ================= ADD TO COLLECTION MODAL ================= */}
+      {isCollectionModalOpen && (
+        <div 
+          onClick={(e) => e.stopPropagation()} 
+          className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 backdrop-blur-sm"
+        >
+          <div className="bg-white dark:bg-[#131B2E] border border-gray-200 dark:border-white/10 rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-base font-bold text-gray-900 dark:text-white">Save to Collection</h3>
+              <button 
+                onClick={() => setIsCollectionModalOpen(false)} 
+                className="p-1 hover:bg-gray-100 dark:hover:bg-white/10 rounded-full cursor-pointer"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+
+            <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+              {loadingCollections ? (
+                <p className="text-xs text-gray-400 text-center py-4">Loading your collections...</p>
+              ) : collections.length > 0 ? (
+                collections.map((col) => (
+                  <div
+                    key={col.id}
+                    onClick={() => handleAddToCollection(col.id)}
+                    className="flex justify-between items-center p-3 border border-gray-100 dark:border-white/10 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 cursor-pointer transition-colors group"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Folder className="w-4 h-4 text-[#24733E] dark:text-[#10B981]" />
+                      <span className="font-medium text-xs text-gray-800 dark:text-gray-200">{col.name}</span>
+                    </div>
+                    <span className="text-[10px] bg-[#EAF4EB] text-[#24733E] dark:bg-[#10B981]/20 dark:text-[#10B981] px-2.5 py-1 rounded-lg font-bold group-hover:bg-[#24733E] group-hover:text-white transition-colors">
+                      Save
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <p className="text-xs text-gray-400 text-center py-4">
+                  No collections found. Create one from the sidebar first!
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
