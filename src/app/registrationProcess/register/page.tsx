@@ -21,7 +21,7 @@ import { FcGoogle } from "react-icons/fc";
 import { createAuthClient } from "better-auth/react";
 import toast from "react-hot-toast";
 
-// ব্যাকএন্ড এক্সপ্র্রেস সার্ভারের পোর্ট 5000 পয়েন্ট করার জন্য ক্লায়েন্ট কনফিগারেশন
+// ব্যাকএন্ড এক্সপ্রেস সার্ভারের পোর্ট 5000 পয়েন্ট করার জন্য ক্লায়েন্ট কনফিগারেশন
 export const authClient = createAuthClient({
   baseURL: "http://localhost:5000",
 });
@@ -89,45 +89,47 @@ export default function RegisterPage() {
       return;
     }
 
-   try {
-  setLoading(true);
+    try {
+      setLoading(true);
 
-  const { data, error } = await authClient.signUp.email({
-    name: name.trim(),
-    email: email.trim(),
-    password,
-    image: photo.trim() || undefined,
-  });
+   const { data, error } = await authClient.signUp.email({
+  name: name.trim(),
+  email: email.trim(),
+  password,
+  image: photo.trim() || undefined,
+  role: role, 
+} as any); // Type error এড়ানোর জন্য 'as any' ব্যবহার করা হলো
 
-  if (error) {
-    console.error("Signup error:", error);
+      if (error) {
+        console.error("Signup error:", error);
+        setErrorMessage(
+          error.message || "Unable to create your account. Please try again."
+        );
+        setLoading(false);
+        return;
+      }
 
-    setErrorMessage(
-      error.message || "Unable to create your account. Please try again."
-    );
+      console.log("Signup successful:", data);
+      setSuccessMessage("Account created successfully! Redirecting...");
+      toast.success("Account created successfully!");
 
-    return;
-  }
 
-  console.log("Signup successful:", data);
+      setTimeout(() => {
+        if (role === "ADMIN") {
+          window.location.href = "/dashboard/admin";
+        } else {
+          window.location.href = "/dashboard/users";
+        }
+      }, 1000);
 
-  setSuccessMessage(
-    "Account created successfully! Redirecting..."
-  );
-
-  setTimeout(() => {
-    router.push("/dashboard/users");
-    router.refresh();
-  }, 1000);
-} catch (error) {
-  console.error("Unexpected signup error:", error);
-
-  setErrorMessage(
-    "Something went wrong. Please check your connection and try again."
-  );
-} finally {
-  setLoading(false);
-}
+    } catch (error) {
+      console.error("Unexpected signup error:", error);
+      setErrorMessage(
+        "Something went wrong. Please check your connection and try again."
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleGoogleSignup = async () => {
@@ -138,7 +140,8 @@ export default function RegisterPage() {
       setLoading(true);
       toast.loading("Connecting with Google...", { id: "google-signup" });
       
-await authClient.signIn.social({
+     
+    await authClient.signIn.social({
   provider: "google",
   callbackURL: `${window.location.origin}/dashboard/users`, // Production ebong localhost dutor jonnoi 100% safe
 });
