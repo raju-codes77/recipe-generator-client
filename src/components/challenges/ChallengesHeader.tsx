@@ -25,7 +25,7 @@ export default function ChallengesHeader() {
            <Image
             src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=500&auto=format&fit=crop&q=80"
             alt="Healthy ingredients"
-            fill
+            fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             className="object-cover object-left"
             style={{ WebkitMaskImage: 'radial-gradient(ellipse at right, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 80%)' }}
           />

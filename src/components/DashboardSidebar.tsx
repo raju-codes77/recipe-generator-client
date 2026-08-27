@@ -7,7 +7,8 @@ import Link from "next/link";
 import { 
   FiHome, FiUsers, FiBookOpen, FiFolder, FiAward, FiMessageSquare, 
   FiAlertCircle, FiCpu, FiShield, FiSliders, FiSettings, FiLock, 
-  FiServer, FiHeadphones, FiMenu, FiX, FiSun, FiMoon, FiLogOut 
+  FiServer, FiHeadphones, FiMenu, FiX, FiLogOut, FiActivity,
+  FiBox, FiCalendar, FiShoppingCart, FiList, FiGrid
 } from "react-icons/fi";
 
 export default function DashboardSidebar() {
@@ -21,20 +22,11 @@ export default function DashboardSidebar() {
     }
   }, []);
 
-  const toggleTheme = () => {
-    if (darkMode) {
-      document.documentElement.classList.remove("dark");
-      setDarkMode(false);
-    } else {
-      document.documentElement.classList.add("dark");
-      setDarkMode(true);
-    }
-  };
 
   const isAdmin = pathname?.includes("/admin");
   const role = isAdmin ? "admin" : "user";
 
-  // Reference image onujayi complete navigation items
+  // Admin Navigation  Items
   const adminNavItems = [
     { name: "Dashboard", icon: <FiHome />, href: "/dashboard/admin" },
     { name: "Users", icon: <FiUsers />, href: "/dashboard/admin/users" },
@@ -58,16 +50,32 @@ export default function DashboardSidebar() {
     { name: "Support Tickets", icon: <FiHeadphones />, href: "/dashboard/admin/support" },
   ];
 
-  const userNavItems = [
-    { name: "Dashboard", icon: <FiHome />, href: "/dashboard/user" },
-    { name: "My Recipes", icon: <FiBookOpen />, href: "/dashboard/user/recipes" },
-    { name: "Collections", icon: <FiFolder />, href: "/dashboard/user/collections" },
-    { name: "Challenges", icon: <FiAward />, href: "/dashboard/user/challenges" },
-    { name: "AI Tools", icon: <FiCpu />, href: "/dashboard/user/ai-tools" },
-    { name: "Settings", icon: <FiSettings />, href: "/dashboard/user/settings" },
+  // User Navigation Items (Screenshot onujayi grouped sections)
+  const mainNavItems = [
+    { name: "Dashboard", icon: <FiHome />, href: "/dashboard/users" },
+    { name: "My Recipes", icon: <FiBookOpen />, href: "/dashboard/users/myRecipes" },
+    { name: "Generate Recipe", icon: <FiCpu />, href: "/dashboard/users/ai-generate", badge: "AI" },
+    { name: "Collections", icon: <FiFolder />, href: "/dashboard/users/collectionsDs" },
+    { name: "Challenges", icon: <FiAward />, href: "/dashboard/users/challenges" },
+    { name: "AI Tools", icon: <FiCpu />, href: "/dashboard/users/ai-tools" },
+    { name: "Nutrition", icon: <FiActivity />, href: "/dashboard/users/nutrition" },
+  ];
+
+  const kitchenNavItems = [
+    { name: "Pantry", icon: <FiBox />, href: "/dashboard/user/pantry" },
+    { name: "Meal Plan", icon: <FiCalendar />, href: "/dashboard/user/meal-plan" },
+    { name: "Shopping List", icon: <FiShoppingCart />, href: "/dashboard/user/shopping-list" },
+  ];
+
+  const communityNavItems = [
+    { name: "Feed", icon: <FiList />, href: "/dashboard/user/feed" },
+    { name: "All Recipes", icon: <FiGrid />, href: "/dashboard/user/all-recipes" },
+    { name: "Community", icon: <FiUsers />, href: "/dashboard/user/community" },
   ];
 
   return (
+
+    
     <>
       {/* Mobile Header with Hamburger Button */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between p-4 bg-white dark:bg-black border-b border-gray-200 dark:border-[#89986D]/20 shadow-sm">
@@ -106,6 +114,7 @@ export default function DashboardSidebar() {
         ${mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
       `}>
         <div className="overflow-y-auto space-y-6 pt-14 lg:pt-0">
+          
           {/* Logo & Brand */}
           <div className="flex items-center space-x-3 px-2">
             <div className="w-9 h-9 rounded-xl bg-[#2F8F46] flex items-center justify-center text-white font-bold text-lg shadow-md shadow-[#2F8F46]/30">
@@ -192,47 +201,117 @@ export default function DashboardSidebar() {
               </div>
             </>
           ) : (
-            <div className="space-y-1">
-              <p className="px-2 text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-[#F6F0D7]/40 mb-2">User Menu</p>
-              {userNavItems.map((item, idx) => {
-                const isActive = pathname === item.href;
-                return (
-                  <Link
-                    key={idx}
-                    href={item.href}
-                    onClick={() => setMobileOpen(false)}
-                    className={`flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-medium transition-all ${
-                      isActive 
-                        ? "bg-[#2F8F46] text-white shadow-md shadow-[#2F8F46]/20 font-semibold" 
-                        : "text-gray-600 dark:text-[#F6F0D7]/70 hover:bg-[#EAF7E8] dark:hover:bg-[#89986D]/15 hover:text-[#2F8F46] dark:hover:text-[#F6F0D7]"
-                    }`}
-                  >
-                    <span className="text-base">{item.icon}</span>
-                    <span>{item.name}</span>
-                  </Link>
-                );
-              })}
+            <div className="space-y-6">
+              
+              {/* MAIN Section */}
+              <div>
+                <p className="px-3 text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">Main</p>
+                <div className="space-y-1">
+                  {mainNavItems.map((item, idx) => {
+                    const isActive = pathname === item.href;
+                    return (
+                      <Link
+                        key={idx}
+                        href={item.href}
+                        onClick={() => setMobileOpen(false)}
+                        className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-xs transition-all ${
+                          isActive 
+                            ? "bg-[#EAF7E8] dark:bg-[#2F8F46]/20 font-bold text-[#176B35] dark:text-[#B7E35F]" 
+                            : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-[#89986D]/10 font-medium"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className="text-base">{item.icon}</span>
+                          <span>{item.name}</span>
+                        </div>
+                        {item.badge && (
+                          <span className="px-2 py-0.5 text-[9px] font-bold rounded-full bg-emerald-50 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 border border-emerald-200/50">
+                            ✨ {item.badge}
+                          </span>
+                        )}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* MY KITCHEN Section */}
+              <div>
+                <p className="px-3 text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">My Kitchen</p>
+                <div className="space-y-1">
+                  {kitchenNavItems.map((item, idx) => {
+                    const isActive = pathname === item.href;
+                    return (
+                      <Link
+                        key={idx}
+                        href={item.href}
+                        onClick={() => setMobileOpen(false)}
+                        className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium transition-all ${
+                          isActive 
+                            ? "bg-[#EAF7E8] dark:bg-[#2F8F46]/20 font-bold text-[#176B35] dark:text-[#B7E35F]" 
+                            : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-[#89986D]/10"
+                        }`}
+                      >
+                        <span className="text-base">{item.icon}</span>
+                        <span>{item.name}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* COMMUNITY Section */}
+              <div>
+                <p className="px-3 text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">Community</p>
+                <div className="space-y-1">
+                  {communityNavItems.map((item, idx) => {
+                    const isActive = pathname === item.href;
+                    return (
+                      <Link
+                        key={idx}
+                        href={item.href}
+                        onClick={() => setMobileOpen(false)}
+                        className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium transition-all ${
+                          isActive 
+                            ? "bg-[#EAF7E8] dark:bg-[#2F8F46]/20 font-bold text-[#176B35] dark:text-[#B7E35F]" 
+                            : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-[#89986D]/10"
+                        }`}
+                      >
+                        <span className="text-base">{item.icon}</span>
+                        <span>{item.name}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+
             </div>
           )}
         </div>
 
-        {/* Bottom Theme Toggle & User Profile Preview */}
-        <div className="space-y-3 pt-4 border-t border-gray-200 dark:border-[#89986D]/20">
-        
 
+
+        {/* Bottom User Profile Preview */}
+        
+        <div className="space-y-3 pt-4 border-t border-gray-200 dark:border-[#89986D]/20">
           <div className="flex items-center justify-between px-2 pt-1">
             <div className="flex items-center space-x-2">
               <div className="w-8 h-8 rounded-full bg-[#2F8F46]/20 text-[#2F8F46] dark:text-[#B7E35F] flex items-center justify-center font-bold text-xs">
-                A
+                {isAdmin ? "A" : "N"}
               </div>
               <div className="overflow-hidden">
-                <h4 className="text-xs font-bold text-gray-900 dark:text-[#F6F0D7] truncate">Admin User</h4>
-                <p className="text-[10px] text-gray-400 dark:text-[#F6F0D7]/60 truncate">admin@flavorai.com</p>
+                <h4 className="text-xs font-bold text-gray-900 dark:text-[#F6F0D7] truncate">
+                  {isAdmin ? "Admin User" : "Nazmul Hossain"}
+                </h4>
+                <p className="text-[10px] text-gray-400 dark:text-[#F6F0D7]/60 truncate">
+                  {isAdmin ? "admin@flavorai.com" : "nazmul@flavorai.com"}
+                </p>
               </div>
             </div>
             <Link href="/login" className="text-red-500 hover:text-red-600 p-1">
               <FiLogOut size={16} />
             </Link>
+
           </div>
         </div>
       </aside>
