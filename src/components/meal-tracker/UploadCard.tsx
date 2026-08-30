@@ -133,20 +133,20 @@ export default function UploadCard() {
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 flex flex-col gap-3">
+    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm p-5 flex flex-col gap-3">
       {/* Header */}
       <div className="flex items-center gap-2">
         <span className="flex items-center justify-center w-6 h-6 rounded-full bg-green-600 text-white text-xs font-bold shrink-0">
           1
         </span>
 
-        <h3 className="text-sm font-bold text-gray-900">
+        <h3 className="text-sm font-bold text-gray-900 dark:text-white">
           Upload Your Meal
         </h3>
       </div>
 
       {/* Description */}
-      <div className="flex items-center gap-2 text-xs text-gray-600">
+      <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
         <CheckSquare className="w-4 h-4 text-green-600 shrink-0" />
 
         <span>Upload a clear photo of your meal</span>
@@ -156,11 +156,11 @@ export default function UploadCard() {
       <div
         onDragOver={(e) => e.preventDefault()}
         onDrop={handleDrop}
-        className="flex-1 flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-xl py-8 px-4 transition cursor-pointer border-gray-300 hover:border-green-400 hover:bg-gray-50"
+        className="flex-1 flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-xl py-8 px-4 transition cursor-pointer border-gray-300 hover:border-green-400 hover:bg-gray-50 dark:bg-slate-700/50"
       >
         <CloudUpload className="w-10 h-10 text-gray-400" />
 
-        <p className="text-xs text-gray-500 text-center">
+        <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
           Drag &amp; drop an image here
         </p>
 

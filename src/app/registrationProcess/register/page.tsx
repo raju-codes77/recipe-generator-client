@@ -18,13 +18,8 @@ import {
   FiEyeOff,
 } from "react-icons/fi";
 import { FcGoogle } from "react-icons/fc";
-import { createAuthClient } from "better-auth/react";
 import toast from "react-hot-toast";
-
-// ব্যাকএন্ড এক্সপ্র্রেস সার্ভারের পোর্ট 5000 পয়েন্ট করার জন্য ক্লায়েন্ট কনফিগারেশন
-export const authClient = createAuthClient({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000",
-});
+import { authClient } from "@/lib/auth-client";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -116,8 +111,8 @@ export default function RegisterPage() {
   );
 
   setTimeout(() => {
-    router.push("/dashboard/users");
     router.refresh();
+    router.push("/");
   }, 1000);
 } catch (error) {
   console.error("Unexpected signup error:", error);
@@ -140,7 +135,7 @@ export default function RegisterPage() {
       
       await authClient.signIn.social({
         provider: "google",
-        callbackURL: `${process.env.NEXT_PUBLIC_LOCAL_URL || "http://localhost:3000"}/dashboard/users`, // সফল লগইনের পর ফ্রন্টএন্ড ড্যাশবোর্ডে আসবে
+        callbackURL: `${process.env.NEXT_PUBLIC_LOCAL_URL || "http://localhost:3000"}/`, // সফল লগইনের পর ফ্রন্টএন্ড হোমপেজে আসবে
       });
     } catch (error) {
       console.error("Google signup error:", error);

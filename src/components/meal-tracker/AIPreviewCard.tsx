@@ -10,13 +10,13 @@ export default function AIPreviewCard() {
   const displayImage = analysisResult?.imageUrl || analysisImage;
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 flex flex-col gap-3">
+    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm p-5 flex flex-col gap-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="flex items-center justify-center w-6 h-6 rounded-full bg-green-600 text-white text-xs font-bold shrink-0">
             2
           </span>
-          <h3 className="text-sm font-bold text-gray-900">
+          <h3 className="text-sm font-bold text-gray-900 dark:text-white">
             AI Analysis Preview
           </h3>
         </div>
@@ -25,7 +25,7 @@ export default function AIPreviewCard() {
         </span>
       </div>
 
-      <div className="relative flex-1 min-h-[180px] rounded-xl overflow-hidden bg-gray-50 border border-dashed border-gray-200">
+      <div className="relative flex-1 min-h-[180px] rounded-xl overflow-hidden bg-gray-50 dark:bg-slate-700/50 border border-dashed border-gray-200 dark:border-slate-700">
         {displayImage ? (
           <>
             <Image
@@ -37,9 +37,9 @@ export default function AIPreviewCard() {
             />
             <button
               onClick={() => setAnalysisImage(null)}
-              className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center bg-white/80 hover:bg-white rounded-full shadow transition z-10"
+              className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center bg-white dark:bg-slate-800/80 hover:bg-white dark:bg-slate-800 rounded-full shadow transition z-10"
             >
-              <X className="w-3.5 h-3.5 text-gray-700" />
+              <X className="w-3.5 h-3.5 text-gray-700 dark:text-gray-300" />
             </button>
           </>
         ) : (

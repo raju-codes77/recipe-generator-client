@@ -99,7 +99,7 @@ export default function RecipeDetailsPage() {
     const checkStatuses = async () => {
       try {
         const favResponse = await fetch(
-          `http://localhost:5000/api/favorites/check?userId=${session.user.id}&recipeId=${id}`,
+          `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/favorites/check?userId=${session.user.id}&recipeId=${id}`,
           { credentials: "include" }
         );
         const favContentType = favResponse.headers.get("content-type");
@@ -145,7 +145,7 @@ export default function RecipeDetailsPage() {
 
     try {
       const method = previousState ? "DELETE" : "POST";
-      const response = await fetch("http://localhost:5000/api/favorites", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/favorites`, {
         method,
         headers: {
           "Content-Type": "application/json",
@@ -198,7 +198,7 @@ export default function RecipeDetailsPage() {
     setIsCollectionModalOpen(true);
     setLoadingCollections(true);
 
-    fetch(`http://localhost:5000/api/collections?userId=${session.user.id}`)
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/collections?userId=${session.user.id}`)
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {
@@ -221,7 +221,7 @@ export default function RecipeDetailsPage() {
     if (!recipe?.id) return;
 
     try {
-      const res = await fetch("http://localhost:5000/api/collections/add-recipe", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/collections/add-recipe`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ collectionId, recipeId: recipe.id }),

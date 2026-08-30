@@ -15,13 +15,8 @@ import {
   FiAlertTriangle,
 } from "react-icons/fi";
 import { FcGoogle } from "react-icons/fc";
-import { createAuthClient } from "better-auth/react";
 import toast from "react-hot-toast";
-
-
-export const authClient = createAuthClient({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000",
-});
+import { authClient } from "@/lib/auth-client";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -96,14 +91,15 @@ export default function LoginPage() {
       setSuccess(successMsg);
       toast.success(successMsg);
 
-      router.push("/dashboard/users");
       router.refresh();
+      router.push("/");
     } catch (err) {
       console.error("Login error:", err);
       toast.dismiss("login");
       const msg = "Something went wrong. Please try again.";
       setError(msg);
       toast.error(msg);
+    } finally {
       setLoading(false);
     }
   };
@@ -123,7 +119,7 @@ export default function LoginPage() {
 
       await authClient.signIn.social({
         provider: "google",
-        callbackURL: `${process.env.NEXT_PUBLIC_LOCAL_URL || "http://localhost:3000"}/dashboard/users`,
+        callbackURL: `${process.env.NEXT_PUBLIC_LOCAL_URL || "http://localhost:3000"}/`,
       });
     } catch (err) {
       console.error("Google login error:", err);
