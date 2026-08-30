@@ -30,7 +30,7 @@ export default function Sidebar({ selectedCollectionId, onSelectCollection }: Si
   const fetchCollections = async () => {
     if (!userId) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/collections?userId=${userId}`);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/collections?userId=${userId}`);
       const data = await res.json();
       if (data.success) {
         setCollections(data.collections || []);
@@ -73,7 +73,7 @@ export default function Sidebar({ selectedCollectionId, onSelectCollection }: Si
 
     try {
       setCreating(true);
-      const res = await fetch("http://localhost:5000/api/collections", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/collections`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId, name: newCollectionName }),

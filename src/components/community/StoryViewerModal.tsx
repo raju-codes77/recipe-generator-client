@@ -66,7 +66,7 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
         <div className="absolute top-6 left-4 right-4 z-20 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <img
-              src={story.author.avatar}
+              src={story.author.avatar || undefined}
               alt={story.author.name}
               className="h-9 w-9 rounded-full object-cover ring-2 ring-[#2F8F46]"
             />
@@ -88,7 +88,7 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
         {/* Story Image */}
         <div className="relative flex-1 bg-black">
           <img
-            src={story.imageUrl}
+            src={story.imageUrl || undefined}
             alt={story.caption}
             className="h-full w-full object-cover"
           />
