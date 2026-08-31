@@ -20,6 +20,10 @@ import {
 import { ItemIcon } from "./icon-map";
 import { NutritionResult } from "@/types/nutrition";
 
+import { useState } from "react";
+
+const FALLBACK_FOOD_IMAGE = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=1000&q=80";
+
 const macroColor: Record<string, string> = {
   success: "#10b981",
   warning: "#f59e0b",
@@ -37,13 +41,19 @@ function macroGradient(macros: NutritionResult["macros"]) {
 }
 
 export default function AnalysisResult({ result }: { result: NutritionResult }) {
+  const [imgSrc, setImgSrc] = useState(
+    result.imageUrl && !result.imageUrl.includes("source.unsplash.com")
+      ? result.imageUrl
+      : FALLBACK_FOOD_IMAGE
+  );
+
   return (
-    <div className="space-y-3.5">
-      <div className="grid gap-3.5 md:grid-cols-2">
+    <div className="space-y-6">
+      <div className="grid gap-6 md:grid-cols-2">
         {/* Detected food card */}
-        <div className="rounded-xl bg-neutral-50 p-3.5 dark:bg-neutral-900">
-          <div className="mb-2.5 flex items-center justify-between">
-            <span className="flex items-center gap-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+        <div className="rounded-2xl border border-neutral-200 bg-white p-5 sm:p-6 shadow-xs dark:border-neutral-800 dark:bg-neutral-900">
+          <div className="mb-3 flex items-center justify-between">
+            <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
               <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-950">
                 <CircleCheck className="h-3 w-3" />
               </span>
@@ -55,13 +65,14 @@ export default function AnalysisResult({ result }: { result: NutritionResult }) 
             </span>
           </div>
 
-          <div className="relative mb-2.5 h-36 w-full overflow-hidden rounded-lg bg-neutral-200 dark:bg-neutral-800">
+          <div className="relative mb-4 h-48 sm:h-56 w-full overflow-hidden rounded-xl bg-neutral-100 dark:bg-neutral-800">
             <Image
-              src={result.imageUrl}
+              src={imgSrc}
               alt={result.foodName}
               fill
               className="object-cover"
               unoptimized
+              onError={() => setImgSrc(FALLBACK_FOOD_IMAGE)}
             />
             <button
               type="button"
@@ -112,20 +123,20 @@ export default function AnalysisResult({ result }: { result: NutritionResult }) 
         </div>
 
         {/* Nutrition facts card */}
-        <div className="rounded-xl bg-neutral-50 p-3.5 dark:bg-neutral-900">
-          <p className="mb-3 flex items-center gap-1.5 text-sm font-medium text-neutral-900 dark:text-neutral-50">
+        <div className="rounded-2xl border border-neutral-200 bg-white p-5 sm:p-6 shadow-xs dark:border-neutral-800 dark:bg-neutral-900">
+          <p className="mb-4 flex items-center gap-1.5 text-sm font-semibold text-neutral-900 dark:text-neutral-50">
             <Flame className="h-4 w-4 text-amber-500" />
             Nutrition facts
             <span className="text-[11px] font-normal text-neutral-400">· per serving</span>
           </p>
 
-          <div className="mb-3.5 flex items-center gap-4">
+          <div className="mb-4 flex items-center gap-4">
             <div
               className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full"
               style={{ background: macroGradient(result.macros) }}
             >
-              <div className="flex h-[66px] w-[66px] flex-col items-center justify-center rounded-full bg-neutral-50 dark:bg-neutral-900">
-                <span className="text-base font-medium text-neutral-900 dark:text-neutral-50">
+              <div className="flex h-[66px] w-[66px] flex-col items-center justify-center rounded-full bg-white dark:bg-neutral-900">
+                <span className="text-base font-bold text-neutral-900 dark:text-neutral-50">
                   {result.calories}
                 </span>
                 <span className="text-[10px] text-neutral-400">kcal</span>
@@ -148,23 +159,23 @@ export default function AnalysisResult({ result }: { result: NutritionResult }) 
             {result.micros.map((m) => (
               <div
                 key={m.label}
-                className="rounded-lg bg-white p-2 text-center dark:bg-neutral-800"
+                className="rounded-xl bg-neutral-50 p-2 text-center dark:bg-neutral-800/60"
               >
                 {m.label === "Fiber" && <Sprout className="mx-auto h-3.5 w-3.5 text-emerald-500" />}
                 {m.label === "Sugar" && <Candy className="mx-auto h-3.5 w-3.5 text-amber-500" />}
                 {m.label === "Sodium" && <Droplet className="mx-auto h-3.5 w-3.5 text-blue-500" />}
                 <p className="mt-0.5 text-[10px] text-neutral-500 dark:text-neutral-400">{m.label}</p>
-                <p className="text-sm font-medium text-neutral-900 dark:text-neutral-50">{m.value}</p>
+                <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-50">{m.value}</p>
               </div>
             ))}
           </div>
         </div>
       </div>
 
-      <div className="grid gap-3.5 md:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-3">
         {/* Insights */}
-        <div className="rounded-xl bg-neutral-50 p-3.5 dark:bg-neutral-900">
-          <p className="mb-3 flex items-center gap-1.5 text-xs font-medium text-neutral-900 dark:text-neutral-50">
+        <div className="rounded-2xl border border-neutral-200 bg-white p-5 sm:p-6 shadow-xs dark:border-neutral-800 dark:bg-neutral-900">
+          <p className="mb-4 flex items-center gap-1.5 text-xs font-semibold text-neutral-900 dark:text-neutral-50">
             <Sparkles className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
             AI health insights
           </p>
@@ -188,8 +199,8 @@ export default function AnalysisResult({ result }: { result: NutritionResult }) 
         </div>
 
         {/* Health score */}
-        <div className="rounded-xl bg-neutral-50 p-3.5 dark:bg-neutral-900">
-          <p className="mb-3 flex items-center gap-1.5 text-xs font-medium text-neutral-900 dark:text-neutral-50">
+        <div className="rounded-2xl border border-neutral-200 bg-white p-5 sm:p-6 shadow-xs dark:border-neutral-800 dark:bg-neutral-900">
+          <p className="mb-4 flex items-center gap-1.5 text-xs font-semibold text-neutral-900 dark:text-neutral-50">
             <ShieldCheck className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
             Health score
           </p>
@@ -202,13 +213,13 @@ export default function AnalysisResult({ result }: { result: NutritionResult }) 
                 }% 100%)`,
               }}
             >
-              <div className="flex h-[46px] w-[46px] items-center justify-center rounded-full bg-neutral-50 dark:bg-neutral-900">
-                <span className="text-sm font-medium text-neutral-900 dark:text-neutral-50">
+              <div className="flex h-[46px] w-[46px] items-center justify-center rounded-full bg-white dark:bg-neutral-900">
+                <span className="text-sm font-bold text-neutral-900 dark:text-neutral-50">
                   {result.healthScore}
                 </span>
               </div>
             </div>
-            <span className="flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400">
+            <span className="flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
               <SmilePlus className="h-3.5 w-3.5" />
               {result.healthScoreLabel}
             </span>
@@ -217,14 +228,14 @@ export default function AnalysisResult({ result }: { result: NutritionResult }) 
             {result.scoreBreakdown.map((s) => (
               <div key={s.label} className="flex justify-between text-[11px] text-neutral-500 dark:text-neutral-400">
                 <span>{s.label}</span>
-                <span className="font-medium text-neutral-900 dark:text-neutral-50">{s.value}/10</span>
+                <span className="font-semibold text-neutral-900 dark:text-neutral-50">{s.value}/10</span>
               </div>
             ))}
           </div>
         </div>
 
         {/* Recommendations */}
-        <div className="rounded-xl bg-neutral-50 p-3.5 dark:bg-neutral-900">
+        <div className="rounded-2xl border border-neutral-200 bg-white p-5 sm:p-6 shadow-xs dark:border-neutral-800 dark:bg-neutral-900">
           <p className="mb-3 flex items-center gap-1.5 text-xs font-medium text-neutral-900 dark:text-neutral-50">
             <Lightbulb className="h-3.5 w-3.5 text-blue-500" />
             AI recommendations

@@ -34,7 +34,7 @@ export default function MacrosBreakdown() {
                   ))}
                 </Pie>
                 <Tooltip
-                  formatter={(v: number, name: string) => [`${v}g`, name]}
+                  formatter={(v: any, name: any) => [`${v}g`, name]}
                   contentStyle={{
                     borderRadius: "8px",
                     border: "1px solid #e5e7eb",

@@ -2,22 +2,25 @@
 
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { RotateCcw } from "lucide-react";
-import type { AnalyzerStatus, NutritionResult } from "@/types/nutrition";
 import UploadCard from "./UploadCard";
 import AnalysisResult from "./AnalysisResult";
+import type { NutritionResult } from "@/types/nutrition";
+import { Loader2, RefreshCw } from "lucide-react";
 
 export default function NutritionAnalyzer() {
-  const [status, setStatus] = useState<AnalyzerStatus>("idle");
   const [result, setResult] = useState<NutritionResult | null>(null);
+  const [isBusy, setIsBusy] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<string>("Analyzing image...");
 
   async function handleFileSelected(file: File) {
-    setStatus("analyzing");
-    const toastId = toast.loading("Analyzing your food photo...");
+    setIsBusy(true);
+    setStatusMessage("Uploading image...");
 
     try {
       const formData = new FormData();
       formData.append("image", file);
+
+      setStatusMessage("Analyzing nutritional content with AI...");
 
       const res = await fetch("/api/nutrition/analyze", {
         method: "POST",
@@ -27,53 +30,62 @@ export default function NutritionAnalyzer() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data?.error ?? "Analysis failed.");
+        throw new Error(data.error || data.message || "Failed to analyze image");
       }
 
-      // Show the actual uploaded photo instead of the mock placeholder path.
-      const objectUrl = URL.createObjectURL(file);
-      setResult({ ...data, imageUrl: objectUrl } as NutritionResult);
-      setStatus("done");
-      toast.success("Analysis complete", { id: toastId });
-    } catch (err) {
-      setStatus("error");
-      toast.error(err instanceof Error ? err.message : "Something went wrong.", {
-        id: toastId,
-      });
+      // Ensure imageUrl fallback if server returned relative path or missing
+      const localPreviewUrl = URL.createObjectURL(file);
+      const finalResult: NutritionResult = {
+        ...data,
+        imageUrl: data.imageUrl || localPreviewUrl,
+      };
+
+      setResult(finalResult);
+      toast.success("Analysis complete!");
+    } catch (err: any) {
+      console.error("Analysis error:", err);
+      toast.error(err.message || "Something went wrong during analysis.");
+    } finally {
+      setIsBusy(false);
     }
   }
 
   function handleReset() {
     setResult(null);
-    setStatus("idle");
   }
 
   return (
-    <div className="mx-auto w-full max-w-5xl p-4 sm:p-6">
-      {status === "done" && result ? (
-        <>
-          <div className="mb-3.5 flex items-center justify-between">
-            <div>
-              <h1 className="text-lg font-medium text-neutral-900 dark:text-neutral-50">
-                Nutrition analyzer
-              </h1>
-              <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                Here&apos;s what our AI found in your photo.
-              </p>
-            </div>
+    <div className="w-full space-y-6">
+      {result ? (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl sm:text-2xl font-bold text-neutral-900 dark:text-neutral-50">
+              Nutritional Breakdown
+            </h2>
             <button
-              type="button"
               onClick={handleReset}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-neutral-200 px-3 py-1.5 text-xs font-medium text-neutral-700 transition hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-neutral-200 bg-white px-3.5 py-1.5 text-xs font-medium text-neutral-700 shadow-xs transition hover:bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800"
             >
-              <RotateCcw className="h-3.5 w-3.5" />
-              Analyze another photo
+              <RefreshCw className="h-3.5 w-3.5" />
+              Analyze Another Image
             </button>
           </div>
           <AnalysisResult result={result} />
-        </>
+        </div>
+      ) : isBusy ? (
+        <div className="flex flex-col items-center justify-center rounded-xl border border-neutral-200 bg-white p-12 text-center dark:border-neutral-800 dark:bg-neutral-900">
+          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400">
+            <Loader2 className="h-7 w-7 animate-spin" />
+          </div>
+          <h3 className="text-base font-semibold text-neutral-900 dark:text-neutral-50">
+            Analyzing Food Photo
+          </h3>
+          <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+            {statusMessage}
+          </p>
+        </div>
       ) : (
-        <UploadCard onFileSelected={handleFileSelected} isBusy={status === "analyzing"} />
+        <UploadCard onFileSelected={handleFileSelected} isBusy={isBusy} />
       )}
     </div>
   );

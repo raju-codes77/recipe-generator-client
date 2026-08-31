@@ -35,7 +35,7 @@ export default function NutrientDistribution() {
                 fillOpacity={0.2}
               />
               <Tooltip
-                formatter={(v: number) => [`${v}%`]}
+                formatter={(v: any) => [`${v}%`]}
                 contentStyle={{
                   borderRadius: "8px",
                   border: "1px solid #e5e7eb",

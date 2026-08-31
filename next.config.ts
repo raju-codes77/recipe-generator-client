@@ -25,7 +25,8 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'encrypted-tbn0.gstatic.com',
       },
-    ],
+      { protocol: "https", hostname: "source.unsplash.com" }]
+     
   },
 };
 

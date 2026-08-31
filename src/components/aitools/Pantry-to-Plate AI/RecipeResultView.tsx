@@ -1,19 +1,38 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import toast from "react-hot-toast";
 import { ArrowLeft, Sparkles, Bookmark, Share2, RotateCcw } from "lucide-react";
 import { Recipe } from "./types";
 import RefineChips from "./RefineChips";
-// import RefineChips from "./RefineChips";
-// import { Recipe } from "./types";
+
+const DEFAULT_FOOD_IMAGE =
+  "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=1200&q=80";
+
+function sanitizeImageUrl(url?: string): string {
+  if (!url || typeof url !== "string" || !url.trim() || url.includes("source.unsplash.com")) {
+    return DEFAULT_FOOD_IMAGE;
+  }
+  return url;
+}
 
 interface RecipeResultViewProps {
   recipe: Recipe;
   onBack: () => void;
+  onRefine: (refinement: string) => void;      // NEW
+  refiningOption: string | null;                     // NEW
 }
 
-export default function RecipeResultView({ recipe, onBack }: RecipeResultViewProps) {
+export default function RecipeResultView({ recipe, onBack, onRefine, refiningOption }: RecipeResultViewProps) {
+  const [imgSrc, setImgSrc] = useState<string>(() => sanitizeImageUrl(recipe?.image));
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    setImgSrc(sanitizeImageUrl(recipe?.image));
+    setIsLoading(true);
+  }, [recipe?.image]);
+
   return (
     <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6 animate-in fade-in duration-300">
       <button
@@ -25,8 +44,25 @@ export default function RecipeResultView({ recipe, onBack }: RecipeResultViewPro
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
         <div className="space-y-5">
-          <div className="relative w-full h-64 sm:h-80 rounded-2xl overflow-hidden shadow-md border border-zinc-200/60 dark:border-zinc-800">
-            <Image src={recipe.image} alt={recipe.title} fill className="object-cover" priority />
+          <div className="relative w-full h-64 sm:h-80 md:h-96 rounded-2xl overflow-hidden shadow-md border border-zinc-200/60 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-800">
+            {isLoading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 animate-pulse">
+                <Sparkles className="w-8 h-8 text-emerald-500/50 animate-bounce" />
+              </div>
+            )}
+            <Image
+              src={imgSrc}
+              alt={recipe.title}
+              fill
+              className={`object-cover transition-opacity duration-300 ${isLoading ? "opacity-0" : "opacity-100"}`}
+              priority
+              unoptimized
+              onLoad={() => setIsLoading(false)}
+              onError={() => {
+                setImgSrc(DEFAULT_FOOD_IMAGE);
+                setIsLoading(false);
+              }}
+            />
           </div>
 
           <div className="space-y-2">
@@ -84,7 +120,7 @@ export default function RecipeResultView({ recipe, onBack }: RecipeResultViewPro
             </ol>
           </div>
 
-          <RefineChips />
+          <RefineChips onRefine={onRefine} refiningOption={refiningOption} />
 
           <div className="pt-2 space-y-3">
             <div className="grid grid-cols-2 gap-3">
