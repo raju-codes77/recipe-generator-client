@@ -68,6 +68,62 @@ export const CommunityFeed: React.FC = () => {
   const [viewingStory, setViewingStory] = useState<StoryItem | null>(null);
   const [storyEditorFile, setStoryEditorFile] = useState<File | null>(null);
 
+  const storyGroups = useMemo(() => {
+    const groups = new Map<string, StoryItem[]>();
+
+    stories.forEach((story) => {
+      const authorStories = groups.get(story.author.id) ?? [];
+      authorStories.push(story);
+      groups.set(story.author.id, authorStories);
+    });
+
+    return Array.from(groups.values()).map((group) => [...group].reverse());
+  }, [stories]);
+
+  const handleNextStory = useCallback(() => {
+    if (!viewingStory) return;
+
+    const currentGroupIndex = storyGroups.findIndex((group) => group.some((story) => story.id === viewingStory.id));
+    if (currentGroupIndex < 0) {
+      setViewingStory(null);
+      return;
+    }
+
+    const currentGroup = storyGroups[currentGroupIndex];
+    const currentStoryIndex = currentGroup.findIndex((story) => story.id === viewingStory.id);
+
+    if (currentStoryIndex < currentGroup.length - 1) {
+      setViewingStory(currentGroup[currentStoryIndex + 1]);
+      return;
+    }
+
+    const nextGroup = storyGroups[currentGroupIndex + 1];
+    setViewingStory(nextGroup?.[0] ?? null);
+  }, [storyGroups, viewingStory]);
+
+  const handlePreviousStory = useCallback(() => {
+    if (!viewingStory) return;
+
+    const currentGroupIndex = storyGroups.findIndex((group) => group.some((story) => story.id === viewingStory.id));
+    if (currentGroupIndex < 0) return;
+
+    const currentGroup = storyGroups[currentGroupIndex];
+    const currentStoryIndex = currentGroup.findIndex((story) => story.id === viewingStory.id);
+
+    if (currentStoryIndex > 0) {
+      setViewingStory(currentGroup[currentStoryIndex - 1]);
+      return;
+    }
+
+    const previousGroup = storyGroups[currentGroupIndex - 1];
+    setViewingStory(previousGroup?.[previousGroup.length - 1] ?? viewingStory);
+  }, [storyGroups, viewingStory]);
+
+  const viewingStoryGroup = viewingStory
+    ? storyGroups.find((group) => group.some((story) => story.id === viewingStory.id))
+    : undefined;
+  const viewingStoryIndex = viewingStoryGroup?.findIndex((story) => story.id === viewingStory?.id) ?? 0;
+
   // Toast alert
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -332,7 +388,10 @@ export const CommunityFeed: React.FC = () => {
             {/* Cooking Stories Carousel */}
             <StoriesBar
               stories={stories}
-              onSelectStory={(s) => setViewingStory(s)}
+              onSelectStory={(story) => {
+                const group = storyGroups.find((items) => items.some((item) => item.id === story.id));
+                setViewingStory(group?.[0] ?? story);
+              }}
               onAddStory={(file) => setStoryEditorFile(file)}
               isAuthenticated={isAuthenticated}
               onRequireAuthentication={requireAuthentication}
@@ -697,7 +756,15 @@ export const CommunityFeed: React.FC = () => {
         attachedPost={dmAttachedPost}
       />
 
-      <StoryViewerModal story={viewingStory} isOpen={!!viewingStory} onClose={() => setViewingStory(null)} />
+      <StoryViewerModal
+        story={viewingStory}
+        isOpen={!!viewingStory}
+        onClose={() => setViewingStory(null)}
+        onNextStory={handleNextStory}
+        onPreviousStory={handlePreviousStory}
+        storyCount={viewingStoryGroup?.length ?? 1}
+        storyIndex={viewingStoryIndex}
+      />
 
       <StoryEditorModal
         file={storyEditorFile}

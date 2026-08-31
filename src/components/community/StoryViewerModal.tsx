@@ -2,18 +2,26 @@ import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import { X, Heart, Flame } from 'lucide-react';
 import { StoryItem } from './types';
+import { CommunityAvatar } from './CommunityAvatar';
 
 interface StoryViewerModalProps {
   story: StoryItem | null;
   isOpen: boolean;
   onClose: () => void;
   onNextStory?: () => void;
+  onPreviousStory?: () => void;
+  storyCount?: number;
+  storyIndex?: number;
 }
 
 export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
   story,
   isOpen,
   onClose,
+  onNextStory,
+  onPreviousStory,
+  storyCount = 1,
+  storyIndex = 0,
 }) => {
   const [progress, setProgress] = useState(0);
   const [replyText, setReplyText] = useState('');
@@ -38,9 +46,13 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
   // Handle auto-closing safely in an effect when progress reaches 100
   useEffect(() => {
     if (progress >= 100 && isOpen) {
-      onClose();
+      if (onNextStory) {
+        onNextStory();
+      } else {
+        onClose();
+      }
     }
-  }, [progress, isOpen, onClose]);
+  }, [progress, isOpen, onClose, onNextStory]);
 
   if (!isOpen || !story) return null;
 
@@ -54,18 +66,20 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
       >
         {/* Story Progress Bar */}
         <div className="absolute top-3 left-3 right-3 z-20 flex gap-1">
-          <div className="h-1 flex-1 rounded-full bg-white/30 overflow-hidden">
-            <div
-              className="h-full bg-white transition-all duration-100 ease-linear"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
+          {Array.from({ length: storyCount }, (_, index) => (
+            <div key={index} className="h-1 flex-1 overflow-hidden rounded-full bg-white/30">
+              <div
+                className="h-full bg-white transition-all duration-100 ease-linear"
+                style={{ width: index < storyIndex ? '100%' : index === storyIndex ? `${progress}%` : '0%' }}
+              />
+            </div>
+          ))}
         </div>
 
         {/* Top Author Info */}
         <div className="absolute top-6 left-4 right-4 z-20 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <img
+            <CommunityAvatar
               src={story.author.avatar}
               alt={story.author.name}
               className="h-9 w-9 rounded-full object-cover ring-2 ring-[#2F8F46]"
@@ -87,12 +101,35 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
 
         {/* Story Image */}
         <div className="relative flex-1 bg-black">
-          <img
-            src={story.imageUrl}
-            alt={story.caption}
-            className="h-full w-full object-cover"
-          />
+          {story.imageUrl ? (
+            <img
+              src={story.imageUrl}
+              alt={story.caption}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <div className="flex h-full items-center justify-center text-sm text-white/70">
+              Story image unavailable
+            </div>
+          )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/40" />
+
+          {onPreviousStory && (
+            <button
+              type="button"
+              onClick={onPreviousStory}
+              aria-label="Previous story"
+              className="absolute inset-y-12 left-0 z-10 w-1/2 cursor-pointer"
+            />
+          )}
+          {onNextStory && (
+            <button
+              type="button"
+              onClick={onNextStory}
+              aria-label="Next story"
+              className="absolute inset-y-12 right-0 z-10 w-1/2 cursor-pointer"
+            />
+          )}
 
           {/* Caption & Tag */}
           <div className="absolute bottom-16 left-4 right-4 text-white space-y-1">
