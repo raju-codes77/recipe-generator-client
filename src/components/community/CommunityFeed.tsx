@@ -658,6 +658,15 @@ export const CommunityFeed: React.FC = () => {
                     currentUserId={currentUser?.id}
                     isAuthenticated={isAuthenticated}
                     onRequireAuthentication={requireAuthentication}
+                    hasActiveStory={stories.some((story) => story.author.id === post.author.id)}
+                    onAuthorAvatarClick={
+                      stories.some((story) => story.author.id === post.author.id)
+                        ? () => {
+                            const group = storyGroups.find((items) => items.some((item) => item.author.id === post.author.id));
+                            setViewingStory(group?.[0] ?? null);
+                          }
+                        : undefined
+                    }
                   />
                 ))}
               </div>

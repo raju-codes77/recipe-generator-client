@@ -2,6 +2,7 @@ import type {
   DirectMessageUser,
   NotificationItem,
   Post,
+  PublicCommunityProfile,
   RecipeCollection,
   Review,
   StoryItem,
@@ -100,6 +101,11 @@ export const communityApi = {
 
   toggleFollow(userId: string) {
     return request<{ active: boolean }>(`/users/${userId}/follow`, { method: "POST" });
+  },
+
+  async getPublicProfile(userId: string): Promise<PublicCommunityProfile> {
+    const response = await request<{ profile: PublicCommunityProfile }>(`/users/${userId}/profile`);
+    return response.profile;
   },
 
   async listCollections(): Promise<RecipeCollection[]> {

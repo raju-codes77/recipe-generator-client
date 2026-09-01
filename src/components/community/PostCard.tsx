@@ -19,6 +19,7 @@ import {
 import { Post } from "./types";
 import { RecipeDetailsModal } from "./RecipeDetailsModal";
 import { CommunityAvatar } from "./CommunityAvatar";
+import Link from "next/link";
 
 interface PostCardProps {
   post: Post;
@@ -34,6 +35,8 @@ interface PostCardProps {
   currentUserId?: string;
   isAuthenticated?: boolean;
   onRequireAuthentication?: (action: string) => void;
+  hasActiveStory?: boolean;
+  onAuthorAvatarClick?: () => void;
 }
 
 export const PostCard: React.FC<PostCardProps> = ({
@@ -50,6 +53,8 @@ export const PostCard: React.FC<PostCardProps> = ({
   currentUserId,
   isAuthenticated = true,
   onRequireAuthentication = () => undefined,
+    hasActiveStory = false,
+    onAuthorAvatarClick,
 }) => {
   const [isRecipeModalOpen, setIsRecipeModalOpen] = useState(false);
   const [isCaptionExpanded, setIsCaptionExpanded] = useState(false);
@@ -107,11 +112,34 @@ export const PostCard: React.FC<PostCardProps> = ({
       {/* 1. Author Header Bar */}
       <div className="flex items-center justify-between gap-2 px-4 sm:px-6 pt-5 pb-3.5">
         <div className="flex items-center gap-3 sm:gap-3.5 min-w-0">
-          <div className="relative shrink-0">
+          {onAuthorAvatarClick ? (
+            <button
+              type="button"
+              onClick={onAuthorAvatarClick}
+              aria-label={`View ${post.author.name}'s story`}
+              className="relative shrink-0"
+            >
+              <CommunityAvatar
+                src={post.author.avatar}
+                alt={post.author.name}
+                className={`h-11 w-11 rounded-full object-cover ring-2 ${
+                  hasActiveStory ? "ring-[#FF9F43]" : "ring-emerald-100 dark:ring-emerald-950"
+                }`}
+              />
+              {post.author.role === "chef" && (
+                <span className="absolute -bottom-1 -right-1 rounded-full bg-[#FF9F43] p-1 text-white ring-2 ring-white dark:ring-[#121212]">
+                  <ChefHat className="h-3 w-3" />
+                </span>
+              )}
+            </button>
+          ) : (
+          <Link href={`/community/users/${post.author.id}`} className="relative shrink-0">
             <CommunityAvatar
               src={post.author.avatar}
               alt={post.author.name}
-              className="h-10 w-10 rounded-full object-cover ring-2 ring-emerald-100 sm:h-12 sm:w-12 dark:ring-emerald-950"
+              className={`h-10 w-10 rounded-full object-cover ring-2 sm:h-12 sm:w-12 ${
+                hasActiveStory ? "ring-[#FF9F43]" : "ring-emerald-100 dark:ring-emerald-950"
+              }`}
             />
             {post.author.role === "chef" && (
               <span
@@ -121,12 +149,16 @@ export const PostCard: React.FC<PostCardProps> = ({
                 <ChefHat className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
               </span>
             )}
-          </div>
+          </Link>
+          )}
           <div className="min-w-0 truncate">
             <div className="flex items-center gap-2">
-              <h3 className="font-bold text-sm sm:text-base text-neutral-900 dark:text-white hover:text-[#2F8F46] cursor-pointer transition truncate">
+              <Link
+                href={`/community/users/${post.author.id}`}
+                className="font-bold text-sm sm:text-base text-neutral-900 dark:text-white hover:text-[#2F8F46] cursor-pointer transition truncate"
+              >
                 {post.author.name}
-              </h3>
+              </Link>
               {post.author.badge && (
                 <span className="hidden sm:inline-flex items-center rounded-full bg-[#EAF7E8] px-2.5 py-0.5 text-[10px] font-bold text-[#176B35] dark:bg-emerald-950/60 dark:text-[#B7E35F] shrink-0">
                   {post.author.badge}
