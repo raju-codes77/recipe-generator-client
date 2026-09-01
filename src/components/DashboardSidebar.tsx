@@ -56,21 +56,21 @@ export default function DashboardSidebar() {
     { name: "My Recipes", icon: <FiBookOpen />, href: "/dashboard/users/myRecipes" },
     { name: "Generate Recipe", icon: <FiCpu />, href: "/dashboard/users/ai-generate", badge: "AI" },
     { name: "Collections", icon: <FiFolder />, href: "/dashboard/users/collectionsDs" },
-    { name: "Challenges", icon: <FiAward />, href: "/dashboard/users/challenges" },
-    { name: "AI Tools", icon: <FiCpu />, href: "/dashboard/users/ai-tools" },
-    { name: "Nutrition", icon: <FiActivity />, href: "/dashboard/users/nutrition" },
+    { name: "Challenges", icon: <FiAward />, href: "/challenges" },
+    { name: "AI Tools", icon: <FiCpu />, href: "/ai-tools" },
+    { name: "Nutrition", icon: <FiActivity />, href: "/ai-tools/nutrition-analyzer" },
   ];
 
   const kitchenNavItems = [
-    { name: "Pantry", icon: <FiBox />, href: "/dashboard/user/pantry" },
-    { name: "Meal Plan", icon: <FiCalendar />, href: "/dashboard/user/meal-plan" },
-    { name: "Shopping List", icon: <FiShoppingCart />, href: "/dashboard/user/shopping-list" },
+    { name: "Pantry", icon: <FiBox />, href: "/ai-tools/pantry-to-plate" },
+    { name: "Meal Plan", icon: <FiCalendar />, href: "/ai-tools/meal-tracker" },
+    { name: "Shopping List", icon: <FiShoppingCart />, href: "/dashboard/users/shopping-list" },
   ];
 
   const communityNavItems = [
-    { name: "Feed", icon: <FiList />, href: "/dashboard/user/feed" },
-    { name: "All Recipes", icon: <FiGrid />, href: "/dashboard/user/all-recipes" },
-    { name: "Community", icon: <FiUsers />, href: "/dashboard/user/community" },
+    { name: "Feed", icon: <FiList />, href: "/community" },
+    { name: "All Recipes", icon: <FiGrid />, href: "/recipes" },
+    { name: "Community", icon: <FiUsers />, href: "/community" },
   ];
 
   return (
@@ -116,17 +116,19 @@ export default function DashboardSidebar() {
         <div className="overflow-y-auto space-y-6 pt-14 lg:pt-0">
           
           {/* Logo & Brand */}
-          <div className="flex items-center space-x-3 px-2">
-            <div className="w-9 h-9 rounded-xl bg-[#2F8F46] flex items-center justify-center text-white font-bold text-lg shadow-md shadow-[#2F8F46]/30">
-              F
+          {isAdmin && (
+            <div className="flex items-center space-x-3 px-2 mb-2">
+              <div className="w-9 h-9 rounded-xl bg-[#2F8F46] flex items-center justify-center text-white font-bold text-lg shadow-md shadow-[#2F8F46]/30">
+                F
+              </div>
+              <div>
+                <h1 className="text-base font-bold tracking-wide text-gray-900 dark:text-[#F6F0D7]">FlavorAI</h1>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#EAF7E8] dark:bg-[#EAF7E8]/10 text-[#2F8F46] dark:text-[#B7E35F] capitalize font-medium">
+                  {role} Panel
+                </span>
+              </div>
             </div>
-            <div>
-              <h1 className="text-base font-bold tracking-wide text-gray-900 dark:text-[#F6F0D7]">FlavorAI</h1>
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#EAF7E8] dark:bg-[#EAF7E8]/10 text-[#2F8F46] dark:text-[#B7E35F] capitalize font-medium">
-                {role} Panel
-              </span>
-            </div>
-          </div>
+          )}
 
           {/* Navigation Section */}
           {isAdmin ? (
@@ -224,11 +226,14 @@ export default function DashboardSidebar() {
                           <span className="text-base">{item.icon}</span>
                           <span>{item.name}</span>
                         </div>
-                        {item.badge && (
-                          <span className="px-2 py-0.5 text-[9px] font-bold rounded-full bg-emerald-50 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 border border-emerald-200/50">
-                            ✨ {item.badge}
-                          </span>
-                        )}
+                        <div className="flex items-center gap-2">
+                          {item.badge && (
+                            <span className="px-2 py-0.5 text-[9px] font-bold rounded-full bg-emerald-50 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 border border-emerald-200/50">
+                              ✨ {item.badge}
+                            </span>
+                          )}
+                          {isActive && <div className="w-1.5 h-1.5 rounded-full bg-[#176B35] dark:bg-[#B7E35F]"></div>}
+                        </div>
                       </Link>
                     );
                   })}
@@ -291,27 +296,42 @@ export default function DashboardSidebar() {
 
 
 
-        {/* Bottom User Profile Preview */}
+        {/* Upgrade to Pro & User Profile Preview */}
         
-        <div className="space-y-3 pt-4 border-t border-gray-200 dark:border-[#89986D]/20">
-          <div className="flex items-center justify-between px-2 pt-1">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 rounded-full bg-[#2F8F46]/20 text-[#2F8F46] dark:text-[#B7E35F] flex items-center justify-center font-bold text-xs">
-                {isAdmin ? "A" : "N"}
+        <div className="mt-auto space-y-4 pt-6">
+          {!isAdmin && (
+            <div className="bg-[#EAF7E8] dark:bg-[#2F8F46]/10 rounded-2xl p-4 border border-[#2F8F46]/20">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-lg">👑</span>
+                <h4 className="font-bold text-gray-900 dark:text-[#F6F0D7] text-xs">Upgrade to Pro</h4>
+              </div>
+              <p className="text-[10px] text-gray-600 dark:text-[#F6F0D7]/60 mb-3 leading-relaxed">
+                Unlock advanced AI tools, custom meal plans, and more.
+              </p>
+              <button className="w-full py-2 bg-[#2F8F46] hover:bg-[#257338] text-white text-[11px] font-bold rounded-xl shadow-md transition flex items-center justify-center gap-1.5">
+                <span>Upgrade Now</span>
+                <span>→</span>
+              </button>
+            </div>
+          )}
+
+          <div className="flex items-center justify-between px-2 pt-2 border-t border-gray-200 dark:border-[#89986D]/20">
+            <div className="flex items-center space-x-3">
+              <div className="w-9 h-9 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-800">
+                <img src="/brooke-lark-4J059aGa5s4-unsplash.jpg" alt="Profile" className="w-full h-full object-cover" />
               </div>
               <div className="overflow-hidden">
                 <h4 className="text-xs font-bold text-gray-900 dark:text-[#F6F0D7] truncate">
-                  {isAdmin ? "Admin User" : "Nazmul Hossain"}
+                  {isAdmin ? "Admin User" : "John Doe"}
                 </h4>
                 <p className="text-[10px] text-gray-400 dark:text-[#F6F0D7]/60 truncate">
-                  {isAdmin ? "admin@flavorai.com" : "nazmul@flavorai.com"}
+                  {isAdmin ? "Admin" : "Chef"}
                 </p>
               </div>
             </div>
-            <Link href="/login" className="text-red-500 hover:text-red-600 p-1">
-              <FiLogOut size={16} />
+            <Link href="/dashboard/settings" className="text-gray-400 hover:text-gray-600 dark:hover:text-[#F6F0D7] p-1 transition-colors">
+              <FiSettings size={16} />
             </Link>
-
           </div>
         </div>
       </aside>
