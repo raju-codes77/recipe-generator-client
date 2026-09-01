@@ -6,14 +6,16 @@ import { getDailyHistory, DayEntry } from "@/app/api/meal-tracker/meal-tracker";
 import { useMealTracker } from "./MealTrackerContext";
 
 export default function MonthlyCalendarTracker() {
-  const { mealLog, dailyGoalKcal } = useMealTracker();
+  const { mealLog, dailyGoalKcal, userId } = useMealTracker();
   const [viewDate, setViewDate] = useState(new Date());
   const [history, setHistory] = useState<Record<string, DayEntry>>({});
 
   // Load stored history
   useEffect(() => {
-    getDailyHistory().then((h) => setHistory(h));
-  }, [mealLog]);
+    if (userId) {
+      getDailyHistory(userId).then((h) => setHistory(h));
+    }
+  }, [mealLog, userId]);
 
   const year = viewDate.getFullYear();
   const month = viewDate.getMonth();

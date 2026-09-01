@@ -6,7 +6,7 @@ import { updateUserGoal } from "@/app/api/meal-tracker/meal-tracker";
 import { useMealTracker } from "./MealTrackerContext";
 
 export default function DailyGoalCard() {
-  const { dailyGoalKcal, setDailyGoalKcal, mealLog } = useMealTracker();
+  const { dailyGoalKcal, setDailyGoalKcal, mealLog, userId } = useMealTracker();
 
   const [isEditing, setIsEditing] = useState(false);
   const [tempGoal, setTempGoal] = useState<string | number>(dailyGoalKcal ?? 2000);
@@ -28,9 +28,14 @@ export default function DailyGoalCard() {
       return;
     }
 
+    if (!userId) {
+      toast.error("User not identified");
+      return;
+    }
+
     try {
       setIsSaving(true);
-      await updateUserGoal(parsed);
+      await updateUserGoal(parsed, userId);
       setDailyGoalKcal(parsed);
       toast.success("Goal updated!");
       setIsEditing(false);

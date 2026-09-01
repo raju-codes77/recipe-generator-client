@@ -30,12 +30,14 @@ const CustomTooltip = ({ active, payload, label, todayName }: any) => {
 
 export default function CalorieTrend() {
   const [range] = useState("7 Days");
-  const { mealLog } = useMealTracker();
+  const { mealLog, userId } = useMealTracker();
   const [history, setHistory] = useState<Record<string, DayEntry>>({});
 
   useEffect(() => {
-    getDailyHistory().then(setHistory);
-  }, [mealLog]); // Refetch when mealLog changes so today's total is accurate
+    if (userId) {
+      getDailyHistory(userId).then(setHistory);
+    }
+  }, [mealLog, userId]); // Refetch when mealLog changes so today's total is accurate
 
   // 1. Calculate dynamic 7-day trend
   const todayTotalKcal = mealLog.reduce((acc, m) => acc + m.kcal, 0);

@@ -81,7 +81,7 @@ export default function DashboardSidebar() {
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between p-4 bg-white dark:bg-black border-b border-gray-200 dark:border-[#89986D]/20 shadow-sm">
         <div className="flex items-center space-x-2">
           <div className="w-8 h-8 rounded-lg bg-[#2F8F46] flex items-center justify-center text-white font-bold">F</div>
-          <span className="text-lg font-bold text-gray-900 dark:text-[#F6F0D7]">FlavorAI</span>
+          <span className="text-lg font-bold text-gray-900 dark:text-[#F6F0D7]">FoodCanvas</span>
           <span className="text-[10px] px-2 py-0.5 rounded uppercase font-semibold bg-[#2F8F46]/20 text-[#2F8F46] dark:text-[#B7E35F]">
             {role}
           </span>
@@ -122,7 +122,7 @@ export default function DashboardSidebar() {
                 F
               </div>
               <div>
-                <h1 className="text-base font-bold tracking-wide text-gray-900 dark:text-[#F6F0D7]">FlavorAI</h1>
+                <h1 className="text-base font-bold tracking-wide text-gray-900 dark:text-[#F6F0D7]">FoodCanvas</h1>
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#EAF7E8] dark:bg-[#EAF7E8]/10 text-[#2F8F46] dark:text-[#B7E35F] capitalize font-medium">
                   {role} Panel
                 </span>
