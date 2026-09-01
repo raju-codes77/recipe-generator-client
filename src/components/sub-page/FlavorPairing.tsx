@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Sparkles,
@@ -26,6 +27,7 @@ import {
     topPairings,
     getPairingsForTab,
     personalizeBlurb,
+    slugify,
 } from './flavorData'; // Update path if necessary
 import FlavorHeaderCard from './FlavorHeaderCard.';
 
@@ -39,10 +41,15 @@ const fadeUp = {
     show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: 'easeOut' } },
 };
 
-const FlavorPairing = () => {
+// initialIngredient / initialTab come from the dynamic route
+// (app/flavor-pairing/[ingredient]/page.tsx) — see that file for how the
+// URL slug is resolved back into these values. Both fall back to sensible
+// defaults so this component still works if rendered without a route.
+const FlavorPairing = ({ initialIngredient = 'Chicken', initialTab = 'Best Matches' }) => {
+    const router = useRouter();
     const [activeCategory, setActiveCategory] = useState('Popular');
-    const [activeTab, setActiveTab] = useState('Best Matches');
-    const [selectedIngredient, setSelectedIngredient] = useState('Chicken');
+    const [activeTab, setActiveTab] = useState(initialTab);
+    const [selectedIngredient, setSelectedIngredient] = useState(initialIngredient);
     const [searchQuery, setSearchQuery] = useState('');
     const [isSearchFocused, setIsSearchFocused] = useState(false);
 
@@ -65,6 +72,16 @@ const FlavorPairing = () => {
         setSelectedIngredient(name);
         setSearchQuery('');
         setIsSearchFocused(false);
+        // New ingredient = meaningful navigation → pushed onto history so
+        // back/forward and shareable links behave as expected.
+        router.push(`/flavor-pairing/${slugify(name)}?tab=${slugify(activeTab)}`, { scroll: false });
+    };
+
+    const handleSelectTab = (tabName) => {
+        setActiveTab(tabName);
+        // Switching a tab is a lightweight filter change → replaced in place
+        // instead of pushed, so repeated tab clicks don't clutter history.
+        router.replace(`/flavor-pairing/${slugify(selectedIngredient)}?tab=${slugify(tabName)}`, { scroll: false });
     };
 
     // Full record (emoji, bg color) for whichever ingredient is currently selected
@@ -295,7 +312,7 @@ const FlavorPairing = () => {
                                     return (
                                         <button
                                             key={tab.name}
-                                            onClick={() => setActiveTab(tab.name)}
+                                            onClick={() => handleSelectTab(tab.name)}
                                             className="relative whitespace-nowrap px-3.5 py-2.5 text-sm font-medium transition-colors duration-300 flex items-center gap-1.5"
                                         >
                                             <TabIcon
