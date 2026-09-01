@@ -78,14 +78,7 @@ export default function AIAssistantPopup() {
                   <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#2F8F46] to-[#FF9F43] p-0.5 flex items-center justify-center text-white shadow-md">
                     <FiCpu size={20} />
                   </div>
-                  <div>
-                    <h3 className="text-base font-bold text-gray-900 dark:text-[#F6F0D7] flex items-center gap-1.5">
-                      FlavorAI Intelligence <SparkleIcon className="text-[#FF9F43]" size={14} />
-                    </h3>
-                    <p className="text-xs text-gray-500 dark:text-[#F6F0D7]/60">
-                      Your personal AI chef & recipe generator
-                    </p>
-                  </div>
+
                 </div>
 
                 {/* Close Button */}

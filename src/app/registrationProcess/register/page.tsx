@@ -87,13 +87,28 @@ export default function RegisterPage() {
     try {
       setLoading(true);
 
-  setTimeout(() => {
-    router.refresh();
-    router.push("/");
-  }, 1000);
-} catch (error) {
-  console.error("Unexpected signup error:", error);
+      const { data, error } = await authClient.signUp.email({
+        name: name.trim(),
+        email: email.trim(),
+        password,
+        image: photo.trim() || undefined,
+      });
 
+      if (error) {
+        console.error("Signup error:", error);
+        setErrorMessage(
+          error.message || "Unable to create your account. Please try again."
+        );
+        return;
+      }
+
+      console.log("Signup successful:", data);
+      setSuccessMessage("Account created successfully! Redirecting...");
+
+      setTimeout(() => {
+        router.refresh();
+        router.push("/");
+      }, 1000);
     } catch (error) {
       console.error("Unexpected signup error:", error);
       setErrorMessage(
@@ -137,7 +152,7 @@ export default function RegisterPage() {
       >
 
         {/* LEFT COLUMN: Image with overlay text and features */}
-        <div className="lg:w-1/2 p-8 sm:p-12 flex flex-col justify-between relative overflow-hidden">
+        <div className="hidden lg:flex lg:w-1/2 p-8 sm:p-12 flex-col justify-between relative overflow-hidden">
           
           {/* Background Image with Dark Overlay */}
           <div className="absolute inset-0 z-0">

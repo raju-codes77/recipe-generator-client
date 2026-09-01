@@ -109,7 +109,9 @@ export default function UploadCard() {
         const todayKcal = updated.reduce((sum: number, m: any) => sum + (m.kcal || 0), 0);
         const todayProtein = updated.reduce((sum: number, m: any) => sum + (m.protein || 0), 0);
         const todayDate = new Date().toISOString().split("T")[0];
-        saveDayEntry({ date: todayDate, kcal: todayKcal, protein: todayProtein });
+        if (userId) {
+          saveDayEntry({ date: todayDate, kcal: todayKcal, protein: todayProtein }, userId);
+        }
       });
 
       console.log("Meal name:", result.mealName);
