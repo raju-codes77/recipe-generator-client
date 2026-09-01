@@ -18,13 +18,8 @@ import {
   FiEyeOff,
 } from "react-icons/fi";
 import { FcGoogle } from "react-icons/fc";
-import { createAuthClient } from "better-auth/react";
 import toast from "react-hot-toast";
-
-// ব্যাকএন্ড এক্সপ্রেস সার্ভারের পোর্ট 5000 পয়েন্ট করার জন্য ক্লায়েন্ট কনফিগারেশন
-export const authClient = createAuthClient({
-  baseURL: "http://localhost:5000",
-});
+import { authClient } from "@/lib/auth-client";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -92,35 +87,12 @@ export default function RegisterPage() {
     try {
       setLoading(true);
 
-   const { data, error } = await authClient.signUp.email({
-  name: name.trim(),
-  email: email.trim(),
-  password,
-  image: photo.trim() || undefined,
-  role: role, 
-} as any); // Type error এড়ানোর জন্য 'as any' ব্যবহার করা হলো
-
-      if (error) {
-        console.error("Signup error:", error);
-        setErrorMessage(
-          error.message || "Unable to create your account. Please try again."
-        );
-        setLoading(false);
-        return;
-      }
-
-      console.log("Signup successful:", data);
-      setSuccessMessage("Account created successfully! Redirecting...");
-      toast.success("Account created successfully!");
-
-
-      setTimeout(() => {
-        if (role === "ADMIN") {
-          window.location.href = "/dashboard/admin";
-        } else {
-          window.location.href = "/dashboard/users";
-        }
-      }, 1000);
+  setTimeout(() => {
+    router.refresh();
+    router.push("/");
+  }, 1000);
+} catch (error) {
+  console.error("Unexpected signup error:", error);
 
     } catch (error) {
       console.error("Unexpected signup error:", error);
@@ -140,11 +112,10 @@ export default function RegisterPage() {
       setLoading(true);
       toast.loading("Connecting with Google...", { id: "google-signup" });
       
-     
-    await authClient.signIn.social({
-  provider: "google",
-  callbackURL: `${window.location.origin}/dashboard/users`, // Production ebong localhost dutor jonnoi 100% safe
-});
+      await authClient.signIn.social({
+        provider: "google",
+        callbackURL: `${process.env.NEXT_PUBLIC_LOCAL_URL || "http://localhost:3000"}/`, // সফল লগইনের পর ফ্রন্টএন্ড হোমপেজে আসবে
+      });
     } catch (error) {
       console.error("Google signup error:", error);
       toast.dismiss("google-signup");

@@ -19,8 +19,8 @@ import { getDailyHistory, DayEntry } from "@/app/api/meal-tracker/meal-tracker";
 const CustomTooltip = ({ active, payload, label, todayName }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-white border border-gray-200 rounded-xl shadow-md px-3 py-2 text-xs">
-        <p className="font-semibold text-gray-700">{label === todayName ? "Today" : label}</p>
+      <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl shadow-md px-3 py-2 text-xs">
+        <p className="font-semibold text-gray-700 dark:text-gray-300">{label === todayName ? "Today" : label}</p>
         <p className="text-green-600 font-bold">{payload[0].value} kcal</p>
       </div>
     );
@@ -114,11 +114,11 @@ export default function CalorieTrend() {
   });
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 flex flex-col gap-4">
+    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm p-5 flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-bold text-gray-900">Calorie Trend</h3>
+        <h3 className="text-sm font-bold text-gray-900 dark:text-white">Calorie Trend</h3>
         <select
-          className="text-xs border border-gray-200 rounded-lg px-2 py-1 bg-white text-gray-600 focus:outline-none focus:ring-1 focus:ring-green-500"
+          className="text-xs border border-gray-200 dark:border-slate-700 rounded-lg px-2 py-1 bg-white dark:bg-slate-800 text-gray-600 dark:text-gray-400 focus:outline-none focus:ring-1 focus:ring-green-500"
           defaultValue={range}
         >
           <option>7 Days</option>
@@ -166,7 +166,7 @@ export default function CalorieTrend() {
 
       {/* Meal distribution */}
       <div>
-        <p className="text-xs font-semibold text-gray-700 mb-2">
+        <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
           Meal Distribution
         </p>
         <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
@@ -176,7 +176,7 @@ export default function CalorieTrend() {
                 className="w-2.5 h-2.5 rounded-full shrink-0"
                 style={{ backgroundColor: d.color }}
               />
-              <span className="text-xs text-gray-600">
+              <span className="text-xs text-gray-600 dark:text-gray-400">
                 {d.label}{" "}
                 <span className="text-gray-400">
                   {d.kcal} kcal ({d.pct})

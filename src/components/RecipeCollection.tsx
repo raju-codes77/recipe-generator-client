@@ -24,7 +24,7 @@ export default function RecipeCollectionSection() {
   useEffect(() => {
     const fetchLatestRecipes = async () => {
       try {
-        const response = await fetch("http://localhost:5000/api/recipes");
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/recipes`);
         const data = await response.json();
 
         // Jodi data array hoy ba object er vetor array thake (e.g. data.recipes)

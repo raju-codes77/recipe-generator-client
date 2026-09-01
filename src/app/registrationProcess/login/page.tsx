@@ -15,13 +15,8 @@ import {
   FiAlertTriangle,
 } from "react-icons/fi";
 import { FcGoogle } from "react-icons/fc";
-import { createAuthClient } from "better-auth/react";
 import toast from "react-hot-toast";
-
-// ব্যাকএন্ড এক্সপ্রেস সার্ভারের পোর্ট 5000 পয়েন্ট করার জন্য ক্লায়েন্ট কনফিগারেশন
-export const authClient = createAuthClient({
-  baseURL: "http://localhost:5000",
-});
+import { authClient } from "@/lib/auth-client";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -96,20 +91,15 @@ export default function LoginPage() {
       setSuccess(successMsg);
       toast.success(successMsg);
 
-      // ইউজারের রোল চেক করে ডায়নামিক রিডাইরেক্ট করা হচ্ছে
-      const userRole = (data?.user as any)?.role;
-
-      if (userRole === "admin" || userRole === "ADMIN") {
-        window.location.href = "/dashboard/admin"; // এডমিন হলে এডমিন ড্যাশবোর্ডে যাবে
-      } else {
-        window.location.href = "/dashboard/users"; // সাধারণ ইউজার হলে ইউজার ড্যাশবোর্ডে যাবে
-      }
+      router.refresh();
+      router.push("/");
     } catch (err) {
       console.error("Login error:", err);
       toast.dismiss("login");
       const msg = "Something went wrong. Please try again.";
       setError(msg);
       toast.error(msg);
+    } finally {
       setLoading(false);
     }
   };
@@ -127,10 +117,9 @@ export default function LoginPage() {
       setLoading(true);
       toast.loading("Connecting with Google...", { id: "google-login" });
 
-   
       await authClient.signIn.social({
         provider: "google",
-        callbackURL: `${window.location.origin}/dashboard/users`,
+        callbackURL: `${process.env.NEXT_PUBLIC_LOCAL_URL || "http://localhost:3000"}/`,
       });
     } catch (err) {
       console.error("Google login error:", err);
@@ -158,7 +147,7 @@ export default function LoginPage() {
       >
         {/* LEFT COLUMN: Image & Branding Section */}
         <div className="hidden lg:flex lg:w-1/2 relative p-12 flex-col justify-between overflow-hidden bg-zinc-900">
-          
+
           {/* Background Image */}
           <div className="absolute inset-0 z-0">
             <Image
@@ -245,13 +234,13 @@ export default function LoginPage() {
 
           {error && lockoutTime === 0 && (
             <div className="mb-5 p-4 rounded-2xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-xs font-medium flex items-center gap-2">
-                <FiMail size={16}/> {error}
+              <FiMail size={16} /> {error}
             </div>
           )}
 
           {success && (
             <div className="mb-5 p-4 rounded-2xl bg-green-50 dark:bg-green-950/40 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 text-xs font-medium flex items-center gap-2">
-                <FiCheckCircle size={16}/> {success}
+              <FiCheckCircle size={16} /> {success}
             </div>
           )}
 
@@ -281,12 +270,12 @@ export default function LoginPage() {
             {/* Password Input with Show/Hide Toggle */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                 <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 pl-1">
-                   Password
-                 </label>
-                 <Link href="/forgot-password" className="text-xs text-[#2F8F46] dark:text-[#89986D] hover:underline font-medium pr-1">
-                   Forgot Password?
-                 </Link>
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 pl-1">
+                  Password
+                </label>
+                <Link href="/forgot-password" className="text-xs text-[#2F8F46] dark:text-[#89986D] hover:underline font-medium pr-1">
+                  Forgot Password?
+                </Link>
               </div>
 
               <div className="relative">
@@ -348,7 +337,7 @@ export default function LoginPage() {
             <FcGoogle size={22} />
             <span>Google</span>
           </button>
-          
+
 
           {/* Register Link */}
           <p className="text-center text-sm text-gray-600 dark:text-gray-400 mt-6">
