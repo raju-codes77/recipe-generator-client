@@ -5,13 +5,25 @@ import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import { useMealTracker } from "./MealTrackerContext";
 
 export default function MacrosBreakdown() {
-  const { macros, nutritionFacts } = useMealTracker();
+  const { analysisResult } = useMealTracker();
 
+  const nutritionFacts = analysisResult?.nutritionFacts ?? null;
   const totalKcal = nutritionFacts?.kcal ?? null;
 
+  const protein = nutritionFacts?.protein ?? 0;
+  const carbs = nutritionFacts?.carbs ?? 0;
+  const fat = nutritionFacts?.fat ?? 0;
+  const totalMacros = protein + carbs + fat;
+
+  const macros = totalMacros > 0 ? [
+    { name: "Protein", value: protein, color: "#f87171", pct: `${Math.round((protein/totalMacros)*100)}%` },
+    { name: "Carbs", value: carbs, color: "#60a5fa", pct: `${Math.round((carbs/totalMacros)*100)}%` },
+    { name: "Fat", value: fat, color: "#fbbf24", pct: `${Math.round((fat/totalMacros)*100)}%` },
+  ] : [];
+
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 flex flex-col gap-4">
-      <h3 className="text-sm font-bold text-gray-900">Macros Breakdown</h3>
+    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm p-5 flex flex-col gap-4">
+      <h3 className="text-sm font-bold text-gray-900 dark:text-white">Macros Breakdown</h3>
 
       {macros.length > 0 ? (
         <>
@@ -34,7 +46,7 @@ export default function MacrosBreakdown() {
                   ))}
                 </Pie>
                 <Tooltip
-                  formatter={(v: number, name: string) => [`${v}g`, name]}
+                  formatter={(v: any, name: any) => [`${v}g`, name]}
                   contentStyle={{
                     borderRadius: "8px",
                     border: "1px solid #e5e7eb",
@@ -44,7 +56,7 @@ export default function MacrosBreakdown() {
               </PieChart>
             </ResponsiveContainer>
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <span className="text-xl font-extrabold text-gray-900">
+              <span className="text-xl font-extrabold text-gray-900 dark:text-white">
                 {totalKcal ?? "--"}
               </span>
               <span className="text-xs text-gray-400">kcal</span>
@@ -59,9 +71,9 @@ export default function MacrosBreakdown() {
                     className="w-2.5 h-2.5 rounded-full shrink-0"
                     style={{ backgroundColor: d.color }}
                   />
-                  <span className="text-xs text-gray-700">{d.name}</span>
+                  <span className="text-xs text-gray-700 dark:text-gray-300">{d.name}</span>
                 </div>
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-gray-500 dark:text-gray-400">
                   {d.value}g ({d.pct})
                 </span>
               </div>
@@ -70,7 +82,7 @@ export default function MacrosBreakdown() {
         </>
       ) : (
         <div className="flex flex-col items-center justify-center py-10 gap-2 text-gray-400">
-          <div className="w-20 h-20 rounded-full border-4 border-dashed border-gray-200 flex items-center justify-center">
+          <div className="w-20 h-20 rounded-full border-4 border-dashed border-gray-200 dark:border-slate-700 flex items-center justify-center">
             <span className="text-xs text-gray-300">No data</span>
           </div>
           <p className="text-xs text-center">

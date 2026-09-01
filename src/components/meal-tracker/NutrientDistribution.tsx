@@ -15,8 +15,8 @@ export default function NutrientDistribution() {
   const { nutrients, nutrientLegend } = useMealTracker();
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 flex flex-col gap-3">
-      <h3 className="text-sm font-bold text-gray-900">Nutrient Distribution</h3>
+    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm p-5 flex flex-col gap-3">
+      <h3 className="text-sm font-bold text-gray-900 dark:text-white">Nutrient Distribution</h3>
 
       {nutrients.length > 0 ? (
         <>
@@ -35,7 +35,7 @@ export default function NutrientDistribution() {
                 fillOpacity={0.2}
               />
               <Tooltip
-                formatter={(v: number) => [`${v}%`]}
+                formatter={(v: any) => [`${v}%`]}
                 contentStyle={{
                   borderRadius: "8px",
                   border: "1px solid #e5e7eb",
@@ -53,9 +53,9 @@ export default function NutrientDistribution() {
                     className="w-2.5 h-2.5 rounded-full shrink-0"
                     style={{ backgroundColor: l.color }}
                   />
-                  <span className="text-xs text-gray-700">{l.label}</span>
+                  <span className="text-xs text-gray-700 dark:text-gray-300">{l.label}</span>
                 </div>
-                <span className="text-xs font-medium text-gray-600">
+                <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
                   {l.value}
                 </span>
               </div>
