@@ -64,6 +64,39 @@ export default function CommunityUserProfilePage() {
     await loadProfile();
   };
 
+  const loadPostInteractions = async (
+    postId: string,
+    options: { commentsTake?: number; commentsSkip?: number; reviewsTake?: number; reviewsSkip?: number } = {},
+  ) => {
+    const interactions = await communityApi.getPostInteractions(postId, options);
+    setProfile((currentProfile) =>
+      currentProfile
+        ? {
+            ...currentProfile,
+            posts: currentProfile.posts.map((post) =>
+              post.id !== postId
+                ? post
+                : {
+                    ...post,
+                    comments:
+                      options.commentsTake === 0
+                        ? post.comments
+                        : options.commentsSkip
+                          ? [...post.comments, ...interactions.comments]
+                          : interactions.comments,
+                    reviews:
+                      options.reviewsTake === 0
+                        ? post.reviews
+                        : options.reviewsSkip
+                          ? [...post.reviews, ...interactions.reviews]
+                          : interactions.reviews,
+                  },
+            ),
+          }
+        : currentProfile,
+    );
+  };
+
   const sharePost = async (post: Post) => {
     const url = `${window.location.origin}/community/users/${post.author.id}`;
     if (navigator.share) {
@@ -143,6 +176,7 @@ export default function CommunityUserProfilePage() {
                   onDirectMessage={() => requireAuthentication()}
                   onToggleFollow={() => void updateProfile(() => communityApi.toggleFollow(profile.user.id))}
                   onAddComment={(postId, content) => void updateProfile(() => communityApi.addComment(postId, content))}
+                  onLoadInteractions={loadPostInteractions}
                   onMadeIt={(postId) => void updateProfile(() => communityApi.toggleMadeIt(postId))}
                   currentUserId={session?.user?.id}
                   isAuthenticated={Boolean(session?.user)}

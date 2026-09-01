@@ -31,6 +31,10 @@ interface PostCardProps {
   onDirectMessage: (authorId: string, post?: Post) => void;
   onToggleFollow: (authorId: string) => void;
   onAddComment: (postId: string, content: string) => void;
+  onLoadInteractions?: (
+    postId: string,
+    options?: { commentsTake?: number; commentsSkip?: number; reviewsTake?: number; reviewsSkip?: number },
+  ) => Promise<unknown>;
   onMadeIt: (postId: string) => void;
   currentUserId?: string;
   isAuthenticated?: boolean;
@@ -48,7 +52,8 @@ export const PostCard: React.FC<PostCardProps> = ({
   onReport,
   onDirectMessage,
   onToggleFollow,
-  onAddComment,
+    onAddComment,
+    onLoadInteractions,
   onMadeIt,
   currentUserId,
   isAuthenticated = true,
@@ -62,6 +67,7 @@ export const PostCard: React.FC<PostCardProps> = ({
   const [showMenu, setShowMenu] = useState(false);
   const [newCommentText, setNewCommentText] = useState("");
   const [likedAnimation, setLikedAnimation] = useState(false);
+  const [isLoadingMoreComments, setIsLoadingMoreComments] = useState(false);
 
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -386,7 +392,13 @@ export const PostCard: React.FC<PostCardProps> = ({
           {/* Comments Toggle */}
           <motion.button
             whileTap={{ scale: 0.9 }}
-            onClick={() => setShowComments(!showComments)}
+            onClick={() => {
+              const shouldShowComments = !showComments;
+              setShowComments(shouldShowComments);
+              if (shouldShowComments && post.commentsCount > 0 && post.comments.length === 0) {
+                void onLoadInteractions?.(post.id, { commentsTake: 8, commentsSkip: 0, reviewsTake: 0 });
+              }
+            }}
             className="flex items-center gap-2 text-xs sm:text-sm font-bold text-neutral-600 hover:text-[#2F8F46] transition dark:text-neutral-300 dark:hover:text-[#B7E35F]"
           >
             <MessageCircle className="h-5 w-5" />
@@ -454,7 +466,7 @@ export const PostCard: React.FC<PostCardProps> = ({
             className="overflow-hidden border-t border-slate-100 bg-neutral-50/50 px-6 py-5 dark:border-neutral-800 dark:bg-neutral-900/40"
           >
             <h5 className="font-bold text-xs uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mb-3">
-              Community Comments ({post.comments.length})
+              Community Comments ({post.comments.length} of {post.commentsCount})
             </h5>
 
             {/* New Comment Input */}
@@ -495,14 +507,25 @@ export const PostCard: React.FC<PostCardProps> = ({
               ) : (
                 post.comments.map((comment) => (
                   <div key={comment.id} className="flex items-start gap-3 text-xs sm:text-sm">
-                    <CommunityAvatar
-                      src={comment.userAvatar}
-                      alt={comment.userName}
-                      className="h-8 w-8 shrink-0 rounded-full object-cover ring-1 ring-slate-200 dark:ring-neutral-700"
-                    />
+                    <Link
+                      href={`/community/users/${comment.userId}`}
+                      aria-label={`View ${comment.userName}'s profile`}
+                      className="shrink-0 rounded-full transition hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-[#2F8F46]"
+                    >
+                      <CommunityAvatar
+                        src={comment.userAvatar}
+                        alt={comment.userName}
+                        className="h-8 w-8 rounded-full object-cover ring-1 ring-slate-200 dark:ring-neutral-700"
+                      />
+                    </Link>
                     <div className="flex-1 rounded-2xl bg-white p-3.5 shadow-xs border border-slate-200 dark:border-neutral-800 dark:bg-[#18181b]">
                       <div className="flex items-center justify-between">
-                        <span className="font-bold text-neutral-900 dark:text-white">{comment.userName}</span>
+                        <Link
+                          href={`/community/users/${comment.userId}`}
+                          className="font-bold text-neutral-900 transition hover:text-[#2F8F46] dark:text-white dark:hover:text-[#B7E35F]"
+                        >
+                          {comment.userName}
+                        </Link>
                         <span className="text-[11px] text-neutral-400">{comment.createdAt}</span>
                       </div>
                       <p className="mt-1 text-neutral-700 dark:text-neutral-300 leading-relaxed">{comment.content}</p>
@@ -511,6 +534,25 @@ export const PostCard: React.FC<PostCardProps> = ({
                 ))
               )}
             </div>
+
+            {post.comments.length < post.commentsCount && (
+              <button
+                type="button"
+                disabled={isLoadingMoreComments}
+                onClick={() => {
+                  if (!onLoadInteractions) return;
+                  setIsLoadingMoreComments(true);
+                  void onLoadInteractions(post.id, {
+                    commentsTake: 8,
+                    commentsSkip: post.comments.length,
+                    reviewsTake: 0,
+                  }).finally(() => setIsLoadingMoreComments(false));
+                }}
+                className="mt-4 w-full rounded-xl border border-slate-200 px-4 py-2 text-xs font-bold text-[#176B35] transition hover:bg-[#EAF7E8] disabled:cursor-not-allowed disabled:opacity-60 dark:border-neutral-700 dark:text-[#B7E35F] dark:hover:bg-emerald-950/40"
+              >
+                {isLoadingMoreComments ? "Loading comments..." : "Load more comments"}
+              </button>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

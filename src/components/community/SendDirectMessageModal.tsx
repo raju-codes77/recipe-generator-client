@@ -4,6 +4,7 @@ import { X, Send, MessageSquare, Search } from "lucide-react";
 import { DirectMessageUser, Post } from "./types";
 import { communityApi, CommunityMessage } from "@/app/api/community/community-api";
 import { authClient } from "@/lib/auth-client";
+import { CommunityAvatar } from "./CommunityAvatar";
 
 interface SendDirectMessageModalProps {
   isOpen: boolean;
@@ -133,7 +134,11 @@ export const SendDirectMessageModal: React.FC<SendDirectMessageModalProps> = ({
                   }`}
                 >
                   <div className="relative">
-                    <img src={contact.avatar} alt={contact.name} className="h-10 w-10 rounded-full object-cover" />
+                    <CommunityAvatar
+                      src={contact.avatar}
+                      alt={contact.name}
+                      className="h-10 w-10 rounded-full object-cover"
+                    />
                     {contact.online && (
                       <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-neutral-900" />
                     )}
@@ -152,7 +157,7 @@ export const SendDirectMessageModal: React.FC<SendDirectMessageModalProps> = ({
             {/* Chat Top Banner */}
             <div className="flex items-center justify-between border-b border-slate-100 bg-white px-5 py-3 dark:border-neutral-800 dark:bg-[#121212]">
               <div className="flex items-center gap-3">
-                <img
+                <CommunityAvatar
                   src={activeContact.avatar}
                   alt={activeContact.name}
                   className="h-9 w-9 rounded-full object-cover"

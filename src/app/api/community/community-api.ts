@@ -54,9 +54,30 @@ export interface CommunityMessage {
   timestamp: string;
 }
 
+export interface CommunityPostsPageOptions {
+  take?: number;
+  skip?: number;
+}
+
+export interface CommunityPostInteractions {
+  comments: Post["comments"];
+  reviews: Post["reviews"];
+}
+
+export interface CommunityPostInteractionOptions {
+  commentsTake?: number;
+  commentsSkip?: number;
+  reviewsTake?: number;
+  reviewsSkip?: number;
+}
+
 export const communityApi = {
-  async listPosts(): Promise<Post[]> {
-    const response = await request<{ posts: Post[] }>("/posts");
+  async listPosts({ take, skip }: CommunityPostsPageOptions = {}): Promise<Post[]> {
+    const query = new URLSearchParams();
+    if (take !== undefined) query.set("take", String(take));
+    if (skip !== undefined) query.set("skip", String(skip));
+    const suffix = query.size ? `?${query.toString()}` : "";
+    const response = await request<{ posts: Post[] }>(`/posts${suffix}`);
     return response.posts;
   },
 
@@ -101,6 +122,19 @@ export const communityApi = {
 
   toggleFollow(userId: string) {
     return request<{ active: boolean }>(`/users/${userId}/follow`, { method: "POST" });
+  },
+
+  async getPostInteractions(
+    postId: string,
+    options: CommunityPostInteractionOptions = {},
+  ): Promise<CommunityPostInteractions> {
+    const query = new URLSearchParams();
+    Object.entries(options).forEach(([key, value]) => {
+      if (value !== undefined) query.set(key, String(value));
+    });
+    const suffix = query.size ? `?${query.toString()}` : "";
+    const response = await request<{ interactions: CommunityPostInteractions }>(`/posts/${postId}/interactions${suffix}`);
+    return response.interactions;
   },
 
   async getPublicProfile(userId: string): Promise<PublicCommunityProfile> {

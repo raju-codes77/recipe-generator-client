@@ -23,10 +23,12 @@ import { authClient } from "@/lib/auth-client";
 import Link from "next/link";
 
 const POSTS_PER_PAGE = 4;
+const API_POSTS_PER_PAGE = 12;
 
 interface CommunityCache {
   posts: Post[];
   stories: StoryItem[];
+  hasMorePosts: boolean;
 }
 
 let communityCache: CommunityCache | null = null;
@@ -48,6 +50,8 @@ export const CommunityFeed: React.FC = () => {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [isInitialLoading, setIsInitialLoading] = useState(() => !communityCache);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [hasMoreServerPosts, setHasMoreServerPosts] = useState(() => communityCache?.hasMorePosts ?? true);
+  const [isLoadingMorePosts, setIsLoadingMorePosts] = useState(false);
 
   // Navigation & Filtering
   const [activeFilter, setActiveFilter] = useState<string>("all");
@@ -60,6 +64,7 @@ export const CommunityFeed: React.FC = () => {
   const [createPostOpen, setCreatePostOpen] = useState(false);
   const [createPostInitialAI, setCreatePostInitialAI] = useState(false);
   const [reviewModalPost, setReviewModalPost] = useState<Post | null>(null);
+  const [isLoadingMoreReviews, setIsLoadingMoreReviews] = useState(false);
   const [reportModalPost, setReportModalPost] = useState<Post | null>(null);
   const [saveModalPost, setSaveModalPost] = useState<Post | null>(null);
   const [dmModalOpen, setDmModalOpen] = useState(false);
@@ -148,11 +153,20 @@ export const CommunityFeed: React.FC = () => {
   const loadCommunity = useCallback(async () => {
     setLoadError(null);
     try {
-      const [loadedPosts, loadedStories] = await Promise.all([communityApi.listPosts(), communityApi.listStories()]);
+      const [loadedPosts, loadedStories] = await Promise.all([
+        communityApi.listPosts({ take: API_POSTS_PER_PAGE, skip: 0 }),
+        communityApi.listStories(),
+      ]);
       setPosts(loadedPosts);
       setStories(loadedStories);
+      setHasMoreServerPosts(loadedPosts.length === API_POSTS_PER_PAGE);
+      setVisiblePostCount(POSTS_PER_PAGE);
       setChefs(getCommunityChefs(loadedPosts, session?.user.id));
-      communityCache = { posts: loadedPosts, stories: loadedStories };
+      communityCache = {
+        posts: loadedPosts,
+        stories: loadedStories,
+        hasMorePosts: loadedPosts.length === API_POSTS_PER_PAGE,
+      };
       if (session?.user) {
         const [loadedCollections, loadedNotifications] = await Promise.all([
           communityApi.listCollections(),
@@ -187,6 +201,103 @@ export const CommunityFeed: React.FC = () => {
     },
     [loadCommunity, showToast],
   );
+
+  const loadMorePosts = useCallback(async () => {
+    if (isLoadingMorePosts || !hasMoreServerPosts) return;
+
+    setIsLoadingMorePosts(true);
+    try {
+      const nextPosts = await communityApi.listPosts({
+        take: API_POSTS_PER_PAGE,
+        skip: posts.length,
+      });
+      setPosts((currentPosts) => {
+        const existingIds = new Set(currentPosts.map((post) => post.id));
+        const mergedPosts = [...currentPosts, ...nextPosts.filter((post) => !existingIds.has(post.id))];
+        communityCache = {
+          posts: mergedPosts,
+          stories: communityCache?.stories ?? stories,
+          hasMorePosts: nextPosts.length === API_POSTS_PER_PAGE,
+        };
+        return mergedPosts;
+      });
+      setHasMoreServerPosts(nextPosts.length === API_POSTS_PER_PAGE);
+      setVisiblePostCount((count) => count + POSTS_PER_PAGE);
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "Unable to load more Community posts");
+    } finally {
+      setIsLoadingMorePosts(false);
+    }
+  }, [hasMoreServerPosts, isLoadingMorePosts, posts.length, showToast, stories]);
+
+  const loadPostInteractions = useCallback(async (
+    postId: string,
+    options: { commentsTake?: number; commentsSkip?: number; reviewsTake?: number; reviewsSkip?: number } = {},
+  ) => {
+    const interactions = await communityApi.getPostInteractions(postId, options);
+    setPosts((currentPosts) =>
+      currentPosts.map((post) => {
+        if (post.id !== postId) return post;
+
+        return {
+          ...post,
+          comments:
+            options.commentsTake === 0
+              ? post.comments
+              : options.commentsSkip
+                ? [...post.comments, ...interactions.comments]
+                : interactions.comments,
+          reviews:
+            options.reviewsTake === 0
+              ? post.reviews
+              : options.reviewsSkip
+                ? [...post.reviews, ...interactions.reviews]
+                : interactions.reviews,
+        };
+      }),
+    );
+    return interactions;
+  }, []);
+
+  const handleOpenReview = useCallback(
+    async (post: Post) => {
+      try {
+        const interactions = await loadPostInteractions(post.id, {
+          commentsTake: 0,
+          reviewsTake: 5,
+          reviewsSkip: 0,
+        });
+        setReviewModalPost({ ...post, reviews: interactions.reviews });
+      } catch (error) {
+        showToast(error instanceof Error ? error.message : "Unable to load recipe reviews");
+      }
+    },
+    [loadPostInteractions, showToast],
+  );
+
+  const loadMoreReviews = useCallback(async () => {
+    if (!reviewModalPost || isLoadingMoreReviews || reviewModalPost.reviews.length >= reviewModalPost.rating.totalReviews) {
+      return;
+    }
+
+    setIsLoadingMoreReviews(true);
+    try {
+      const interactions = await communityApi.getPostInteractions(reviewModalPost.id, {
+        commentsTake: 0,
+        reviewsTake: 5,
+        reviewsSkip: reviewModalPost.reviews.length,
+      });
+      const updatedPost = { ...reviewModalPost, reviews: [...reviewModalPost.reviews, ...interactions.reviews] };
+      setReviewModalPost(updatedPost);
+      setPosts((currentPosts) =>
+        currentPosts.map((post) => (post.id === updatedPost.id ? { ...post, reviews: updatedPost.reviews } : post)),
+      );
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "Unable to load more reviews");
+    } finally {
+      setIsLoadingMoreReviews(false);
+    }
+  }, [isLoadingMoreReviews, reviewModalPost, showToast]);
 
   const requireAuthentication = useCallback(
     (action: string) => {
@@ -322,7 +433,16 @@ export const CommunityFeed: React.FC = () => {
   }, [posts, searchQuery]);
 
   const visiblePosts = useMemo(() => filteredPosts.slice(0, visiblePostCount), [filteredPosts, visiblePostCount]);
-  const hasMorePosts = visiblePostCount < filteredPosts.length;
+  const hasMoreLoadedPosts = visiblePostCount < filteredPosts.length;
+  const hasMorePosts = hasMoreLoadedPosts || hasMoreServerPosts;
+
+  const handleLoadMore = useCallback(() => {
+    if (hasMoreLoadedPosts) {
+      setVisiblePostCount((count) => count + POSTS_PER_PAGE);
+      return;
+    }
+    void loadMorePosts();
+  }, [hasMoreLoadedPosts, loadMorePosts]);
 
   useEffect(() => {
     setVisiblePostCount(POSTS_PER_PAGE);
@@ -334,13 +454,18 @@ export const CommunityFeed: React.FC = () => {
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) setVisiblePostCount((count) => count + POSTS_PER_PAGE);
+        if (!entry.isIntersecting) return;
+        if (hasMoreLoadedPosts) {
+          setVisiblePostCount((count) => count + POSTS_PER_PAGE);
+          return;
+        }
+        void loadMorePosts();
       },
       { rootMargin: "360px 0px" },
     );
     observer.observe(feedEnd);
     return () => observer.disconnect();
-  }, [hasMorePosts]);
+  }, [hasMoreLoadedPosts, hasMorePosts, loadMorePosts]);
 
   const savedPostsCount = posts.filter((p) => p.isSaved).length;
   const likedPostsCount = posts.filter((p) => p.isLiked).length;
@@ -649,11 +774,12 @@ export const CommunityFeed: React.FC = () => {
                     onLike={handleToggleLike}
                     onSave={handleToggleSave}
                     onShare={handleShare}
-                    onRate={(p) => setReviewModalPost(p)}
+                    onRate={(p) => void handleOpenReview(p)}
                     onReport={(p) => setReportModalPost(p)}
                     onDirectMessage={(authorId, p) => handleOpenDM(authorId, p)}
                     onToggleFollow={handleToggleFollow}
                     onAddComment={handleAddComment}
+                    onLoadInteractions={loadPostInteractions}
                     onMadeIt={handleMadeIt}
                     currentUserId={currentUser?.id}
                     isAuthenticated={isAuthenticated}
@@ -674,9 +800,14 @@ export const CommunityFeed: React.FC = () => {
 
             <div ref={feedEndRef} className="flex min-h-12 items-center justify-center" aria-live="polite">
               {hasMorePosts ? (
-                <span className="text-xs font-semibold text-neutral-400 dark:text-neutral-500">
-                  Loading more recipes...
-                </span>
+                <button
+                  type="button"
+                  onClick={handleLoadMore}
+                  disabled={isLoadingMorePosts}
+                  className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-bold text-[#176B35] transition hover:bg-[#EAF7E8] disabled:cursor-not-allowed disabled:opacity-60 dark:border-neutral-700 dark:text-[#B7E35F] dark:hover:bg-emerald-950/40"
+                >
+                  {isLoadingMorePosts ? "Loading more recipes..." : "Load more recipes"}
+                </button>
               ) : filteredPosts.length > POSTS_PER_PAGE ? (
                 <span className="text-xs font-semibold text-neutral-400 dark:text-neutral-500">
                   You have reached the latest Community recipes.
@@ -722,8 +853,20 @@ export const CommunityFeed: React.FC = () => {
         initialUseAI={createPostInitialAI}
         onPublishPost={async (newPost, imageFile) => {
           const imageUrl = imageFile ? await communityApi.uploadImage(imageFile, "posts") : newPost.imageUrl;
-          await communityApi.createPost({ ...newPost, imageUrl });
-          await loadCommunity();
+          const createdPost = await communityApi.createPost({ ...newPost, imageUrl });
+          setPosts((currentPosts) => {
+            const updatedPosts = [createdPost, ...currentPosts.filter((post) => post.id !== createdPost.id)];
+            communityCache = {
+              posts: updatedPosts,
+              stories: communityCache?.stories ?? stories,
+              hasMorePosts: hasMoreServerPosts,
+            };
+            return updatedPosts;
+          });
+          setChefs((currentChefs) => {
+            if (createdPost.author.id === session?.user?.id) return currentChefs;
+            return [createdPost.author, ...currentChefs.filter((chef) => chef.id !== createdPost.author.id)].slice(0, 8);
+          });
           showToast("Recipe published to FoodCanvas Community!");
         }}
       />
@@ -731,8 +874,14 @@ export const CommunityFeed: React.FC = () => {
       <RecipeReviewModal
         post={reviewModalPost}
         isOpen={!!reviewModalPost}
-        onClose={() => setReviewModalPost(null)}
+        onClose={() => {
+          setReviewModalPost(null);
+          setIsLoadingMoreReviews(false);
+        }}
         onSubmitReview={handleSubmitReview}
+        onLoadMoreReviews={() => void loadMoreReviews()}
+        hasMoreReviews={Boolean(reviewModalPost && reviewModalPost.reviews.length < reviewModalPost.rating.totalReviews)}
+        isLoadingMoreReviews={isLoadingMoreReviews}
       />
 
       <ReportPostModal
