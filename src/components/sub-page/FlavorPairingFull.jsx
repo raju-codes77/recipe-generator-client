@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Sparkles,
@@ -20,10 +21,13 @@ import Image from 'next/image';
 // Import your dummy data from the separate file
 import {
     categories,
+    allIngredients,
     quickIngredients,
     pairingTabs,
-    pairingsByTab,
     topPairings,
+    getPairingsForTab,
+    personalizeBlurb,
+    slugify,
 } from './flavorData'; // Update path if necessary
 import FlavorHeaderCard from './FlavorHeaderCard.';
 
@@ -37,9 +41,66 @@ const fadeUp = {
     show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: 'easeOut' } },
 };
 
-const FlavorPairing = () => {
+// initialIngredient / initialTab come from the dynamic route
+// (app/ai-tools/flavor-pairing/[ingredient]/page.tsx) — see that file for
+// how the URL slug is resolved back into these values. Both fall back to
+// sensible defaults so this component still works if rendered without a route.
+const FlavorPairingFull = ({ initialIngredient = 'Chicken', initialTab = 'Best Matches' }) => {
+    const router = useRouter();
     const [activeCategory, setActiveCategory] = useState('Popular');
-    const [activeTab, setActiveTab] = useState('Best Matches');
+    const [activeTab, setActiveTab] = useState(initialTab);
+    const [selectedIngredient, setSelectedIngredient] = useState(initialIngredient);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [isSearchFocused, setIsSearchFocused] = useState(false);
+
+    // Ingredients shown in the quick-select grid — driven by the active category chip.
+    // "Popular" keeps the curated shortlist; any other category filters the full catalog.
+    const displayedIngredients =
+        activeCategory === 'Popular'
+            ? quickIngredients
+            : allIngredients.filter((ing) => ing.categories.includes(activeCategory)).slice(0, 6);
+
+    // Live search suggestions — matches ingredient names against the query, capped to 6 results.
+    const searchResults =
+        searchQuery.trim().length > 0
+            ? allIngredients
+                  .filter((ing) => ing.name.toLowerCase().includes(searchQuery.trim().toLowerCase()))
+                  .slice(0, 6)
+            : [];
+
+    const handleSelectIngredient = (name) => {
+        setSelectedIngredient(name);
+        setSearchQuery('');
+        setIsSearchFocused(false);
+        // New ingredient = meaningful navigation → pushed onto history so
+        // back/forward and shareable links behave as expected.
+        router.push(`/ai-tools/flavor-pairing/${slugify(name)}?tab=${slugify(activeTab)}`, { scroll: false });
+    };
+
+    const handleSelectTab = (tabName) => {
+        setActiveTab(tabName);
+        // Switching a tab is a lightweight filter change → replaced in place
+        // instead of pushed, so repeated tab clicks don't clutter history.
+        router.replace(`/ai-tools/flavor-pairing/${slugify(selectedIngredient)}?tab=${slugify(tabName)}`, { scroll: false });
+    };
+
+    // Full record (emoji, bg color) for whichever ingredient is currently selected
+    const selectedIngredientData =
+        allIngredients.find((ing) => ing.name === selectedIngredient) ?? {
+            name: selectedIngredient,
+            emoji: '🍽️',
+            bg: 'bg-gray-100 dark:bg-gray-800',
+        };
+
+    // Pairing cards for the active tab, personalized for the selected ingredient
+    const activePairings = getPairingsForTab(activeTab, selectedIngredient);
+
+    // Sidebar "Top Pairings" summary — always the overall best matches,
+    // but personalized to the currently selected ingredient
+    const personalizedTopPairings = topPairings.map((p) => ({
+        ...p,
+        blurb: personalizeBlurb(p.blurb, selectedIngredient),
+    }));
 
     return (
         <section className="w-full bg-[#F6F7F2] dark:bg-gray-950 py-16 transition-colors duration-300 overflow-hidden">
@@ -102,10 +163,48 @@ const FlavorPairing = () => {
                             <div className="relative mb-4">
                                 <input
                                     type="text"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    onFocus={() => setIsSearchFocused(true)}
+                                    onBlur={() => setTimeout(() => setIsSearchFocused(false), 120)}
                                     placeholder="Search ingredient... (e.g., Chicken, Basil, Chocolate)"
                                     className="w-full bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-2xl pl-5 pr-11 py-3.5 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 hover:border-emerald-200 transition-all duration-300"
                                 />
                                 <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+
+                                {/* Live search dropdown */}
+                                <AnimatePresence>
+                                    {isSearchFocused && searchQuery.trim().length > 0 && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: -6 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            exit={{ opacity: 0, y: -6 }}
+                                            transition={{ duration: 0.15 }}
+                                            className="absolute left-0 right-0 top-full mt-2 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl shadow-xl shadow-gray-900/5 z-20 overflow-hidden"
+                                        >
+                                            {searchResults.length > 0 ? (
+                                                searchResults.map((ing) => (
+                                                    <button
+                                                        key={ing.name}
+                                                        onClick={() => handleSelectIngredient(ing.name)}
+                                                        className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-colors duration-150"
+                                                    >
+                                                        <span className={`w-7 h-7 rounded-full flex items-center justify-center text-sm ${ing.bg}`}>
+                                                            {ing.emoji}
+                                                        </span>
+                                                        <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                                                            {ing.name}
+                                                        </span>
+                                                    </button>
+                                                ))
+                                            ) : (
+                                                <p className="px-4 py-3 text-sm text-gray-400 dark:text-gray-500">
+                                                    No ingredients found for &quot;{searchQuery}&quot;
+                                                </p>
+                                            )}
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
                             </div>
 
                             <div className="flex flex-wrap gap-2 mb-5">
@@ -125,28 +224,41 @@ const FlavorPairing = () => {
                             </div>
 
                             <motion.div
+                                key={activeCategory}
                                 variants={containerStagger}
                                 initial="hidden"
-                                whileInView="show"
-                                viewport={{ once: true }}
+                                animate="show"
                                 className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3"
                             >
-                                {quickIngredients.map((ing) => (
-                                    <motion.button
-                                        key={ing.name}
-                                        variants={fadeUp}
-                                        whileHover={{ y: -3, scale: 1.02 }}
-                                        whileTap={{ scale: 0.97 }}
-                                        className="flex items-center gap-2 px-3 py-3 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 hover:border-emerald-300 hover:shadow-md transition-all duration-300 text-left"
-                                    >
-                                        <span className={`w-8 h-8 rounded-full flex items-center justify-center text-base ${ing.bg}`}>
-                                            {ing.emoji}
-                                        </span>
-                                        <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">
-                                            {ing.name}
-                                        </span>
-                                    </motion.button>
-                                ))}
+                                {displayedIngredients.map((ing) => {
+                                    const isSelected = selectedIngredient === ing.name;
+                                    return (
+                                        <motion.button
+                                            key={ing.name}
+                                            variants={fadeUp}
+                                            onClick={() => handleSelectIngredient(ing.name)}
+                                            whileHover={{ y: -3, scale: 1.02 }}
+                                            whileTap={{ scale: 0.97 }}
+                                            className={`flex items-center gap-2 px-3 py-3 rounded-2xl border bg-white dark:bg-gray-950 hover:shadow-md transition-all duration-300 text-left ${
+                                                isSelected
+                                                    ? 'border-emerald-500 ring-2 ring-emerald-500/20'
+                                                    : 'border-gray-200 dark:border-gray-800 hover:border-emerald-300'
+                                            }`}
+                                        >
+                                            <span className={`w-8 h-8 rounded-full flex items-center justify-center text-base ${ing.bg}`}>
+                                                {ing.emoji}
+                                            </span>
+                                            <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                                                {ing.name}
+                                            </span>
+                                        </motion.button>
+                                    );
+                                })}
+                                {displayedIngredients.length === 0 && (
+                                    <p className="col-span-full text-sm text-gray-400 dark:text-gray-500 py-3">
+                                        No ingredients in this category yet.
+                                    </p>
+                                )}
                                 <motion.button
                                     variants={fadeUp}
                                     whileHover={{ y: -3, scale: 1.02 }}
@@ -183,7 +295,7 @@ const FlavorPairing = () => {
                                         </div>
                                         <p className="text-sm text-gray-500 dark:text-gray-400">
                                             Perfect combinations for{' '}
-                                            <span className="font-semibold text-gray-700 dark:text-gray-300">Chicken</span>
+                                            <span className="font-semibold text-gray-700 dark:text-gray-300">{selectedIngredient}</span>
                                         </p>
                                     </div>
                                 </div>
@@ -200,7 +312,7 @@ const FlavorPairing = () => {
                                     return (
                                         <button
                                             key={tab.name}
-                                            onClick={() => setActiveTab(tab.name)}
+                                            onClick={() => handleSelectTab(tab.name)}
                                             className="relative whitespace-nowrap px-3.5 py-2.5 text-sm font-medium transition-colors duration-300 flex items-center gap-1.5"
                                         >
                                             <TabIcon
@@ -228,19 +340,19 @@ const FlavorPairing = () => {
                                     </span>
                                 )}
                                 ingredients pair exceptionally well with{' '}
-                                <span className="font-semibold text-gray-700 dark:text-gray-300">Chicken</span>
+                                <span className="font-semibold text-gray-700 dark:text-gray-300">{selectedIngredient}</span>
                             </p>
 
                             <AnimatePresence mode="wait">
                                 <motion.div
-                                    key={activeTab}
+                                    key={`${activeTab}-${selectedIngredient}`}
                                     variants={containerStagger}
                                     initial="hidden"
                                     animate="show"
                                     exit={{ opacity: 0 }}
                                     className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5"
                                 >
-                                    {(pairingsByTab[activeTab] ?? pairingsByTab['Best Matches']).map((p) => (
+                                    {activePairings.map((p) => (
                                         <motion.div
                                             key={p.name}
                                             variants={fadeUp}
@@ -345,12 +457,12 @@ const FlavorPairing = () => {
 
                             <div className="bg-gray-50 dark:bg-gray-950 rounded-2xl border border-gray-100 dark:border-gray-800 p-4 mb-4">
                                 <div className="flex items-center gap-3">
-                                    <span className="w-11 h-11 rounded-xl bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center text-xl shrink-0">
-                                        🍗
+                                    <span className={`w-11 h-11 rounded-xl flex items-center justify-center text-xl shrink-0 ${selectedIngredientData.bg}`}>
+                                        {selectedIngredientData.emoji}
                                     </span>
                                     <div>
                                         <p className="text-xs text-gray-400 uppercase tracking-wide">Main Ingredient</p>
-                                        <p className="font-bold text-gray-900 dark:text-white">Chicken</p>
+                                        <p className="font-bold text-gray-900 dark:text-white">{selectedIngredient}</p>
                                     </div>
                                 </div>
                             </div>
@@ -359,7 +471,7 @@ const FlavorPairing = () => {
                                 Top Pairings
                             </p>
                             <div className="space-y-3 mb-4">
-                                {topPairings.map((p, i) => (
+                                {personalizedTopPairings.map((p, i) => (
                                     <motion.div
                                         key={p.name}
                                         whileHover={{ x: 4 }}
@@ -465,4 +577,4 @@ const FlavorPairing = () => {
     );
 };
 
-export default FlavorPairing;
+export default FlavorPairingFull;
