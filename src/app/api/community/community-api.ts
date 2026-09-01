@@ -204,8 +204,9 @@ export const communityApi = {
     return response.url;
   },
 
-  async listContacts(): Promise<DirectMessageUser[]> {
-    const response = await request<{ contacts: DirectMessageUser[] }>("/messages/contacts");
+  async listContacts(includeUserId?: string): Promise<DirectMessageUser[]> {
+    const query = includeUserId ? `?includeUserId=${encodeURIComponent(includeUserId)}` : "";
+    const response = await request<{ contacts: DirectMessageUser[] }>(`/messages/contacts${query}`);
     return response.contacts;
   },
 

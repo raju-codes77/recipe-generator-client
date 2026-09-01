@@ -39,7 +39,7 @@ export const SendDirectMessageModal: React.FC<SendDirectMessageModalProps> = ({
   useEffect(() => {
     if (!isOpen || !session?.user) return;
     void communityApi
-      .listContacts()
+      .listContacts(initialRecipientId)
       .then((items) => {
         setContacts(items);
         setSelectedContactId((current) => initialRecipientId || current || items[0]?.id || "");
@@ -139,9 +139,6 @@ export const SendDirectMessageModal: React.FC<SendDirectMessageModalProps> = ({
                       alt={contact.name}
                       className="h-10 w-10 rounded-full object-cover"
                     />
-                    {contact.online && (
-                      <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-neutral-900" />
-                    )}
                   </div>
                   <div className="flex-1 overflow-hidden">
                     <h5 className="truncate text-xs font-bold">{contact.name}</h5>
@@ -166,9 +163,7 @@ export const SendDirectMessageModal: React.FC<SendDirectMessageModalProps> = ({
                   <h4 className="font-bold text-xs sm:text-sm text-neutral-900 dark:text-white">
                     {activeContact.name}
                   </h4>
-                  <span className="text-[11px] text-emerald-600 font-semibold">
-                    {activeContact.online ? "● Active now" : "Offline"}
-                  </span>
+                  <span className="text-[11px] font-semibold text-neutral-500 dark:text-neutral-400">Community member</span>
                 </div>
               </div>
             </div>
