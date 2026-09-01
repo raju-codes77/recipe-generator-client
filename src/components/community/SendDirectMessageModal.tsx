@@ -6,6 +6,8 @@ import { communityApi, CommunityMessage } from "@/app/api/community/community-ap
 import { authClient } from "@/lib/auth-client";
 import { CommunityAvatar } from "./CommunityAvatar";
 
+const MESSAGES_PER_PAGE = 20;
+
 interface SendDirectMessageModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -25,6 +27,8 @@ export const SendDirectMessageModal: React.FC<SendDirectMessageModalProps> = ({
   const [searchQuery, setSearchQuery] = useState("");
   const [inputMessage, setInputMessage] = useState("");
   const [messages, setMessages] = useState<CommunityMessage[]>([]);
+  const [hasMoreMessages, setHasMoreMessages] = useState(false);
+  const [isLoadingOlderMessages, setIsLoadingOlderMessages] = useState(false);
   const selectedContact = contacts.find((contact) => contact.id === selectedContactId) || contacts[0];
   const activeContact: DirectMessageUser = selectedContact || {
     id: "",
@@ -49,14 +53,30 @@ export const SendDirectMessageModal: React.FC<SendDirectMessageModalProps> = ({
 
   useEffect(() => {
     if (!isOpen || !selectedContactId) return;
+    let cancelled = false;
+    setMessages([]);
+    setHasMoreMessages(false);
     const load = () =>
       void communityApi
-        .listMessages(selectedContactId)
-        .then(setMessages)
-        .catch(() => setMessages([]));
+        .listMessages(selectedContactId, { take: MESSAGES_PER_PAGE, skip: 0 })
+        .then((page) => {
+          if (cancelled) return;
+          setMessages((current) => {
+            if (current.length === 0) return page.messages;
+            const knownIds = new Set(current.map((message) => message.id));
+            return [...current, ...page.messages.filter((message) => !knownIds.has(message.id))];
+          });
+          setHasMoreMessages(page.hasMore);
+        })
+        .catch(() => {
+          if (!cancelled) setMessages([]);
+        });
     load();
     const timer = window.setInterval(load, 8000);
-    return () => window.clearInterval(timer);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
   }, [isOpen, selectedContactId]);
 
   if (!isOpen) return null;
@@ -71,8 +91,32 @@ export const SendDirectMessageModal: React.FC<SendDirectMessageModalProps> = ({
       inputMessage.trim() || "Check out this delicious recipe!",
       attachedPost?.id,
     );
-    setMessages(await communityApi.listMessages(activeContact.id));
+    const page = await communityApi.listMessages(activeContact.id, { take: MESSAGES_PER_PAGE, skip: 0 });
+    setMessages((current) => {
+      const knownIds = new Set(current.map((message) => message.id));
+      return [...current, ...page.messages.filter((message) => !knownIds.has(message.id))];
+    });
+    setHasMoreMessages(page.hasMore);
     setInputMessage("");
+  };
+
+  const loadOlderMessages = async () => {
+    if (!activeContact.id || !hasMoreMessages || isLoadingOlderMessages) return;
+    setIsLoadingOlderMessages(true);
+    try {
+      const page = await communityApi.listMessages(activeContact.id, {
+        take: MESSAGES_PER_PAGE,
+        skip: messages.length,
+      });
+      setMessages((current) => {
+        const uniqueMessages = new Map<string, CommunityMessage>();
+        [...page.messages, ...current].forEach((message) => uniqueMessages.set(message.id, message));
+        return [...uniqueMessages.values()];
+      });
+      setHasMoreMessages(page.hasMore);
+    } finally {
+      setIsLoadingOlderMessages(false);
+    }
   };
 
   const filteredContacts = contacts.filter((c) => c.name.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -170,6 +214,16 @@ export const SendDirectMessageModal: React.FC<SendDirectMessageModalProps> = ({
 
             {/* Chat Messages */}
             <div className="flex-1 overflow-y-auto p-5 space-y-3.5">
+              {hasMoreMessages && (
+                <button
+                  type="button"
+                  onClick={() => void loadOlderMessages()}
+                  disabled={isLoadingOlderMessages}
+                  className="mx-auto block rounded-full border border-slate-200 px-3 py-1.5 text-[11px] font-bold text-[#176B35] transition hover:bg-[#EAF7E8] disabled:cursor-not-allowed disabled:opacity-60 dark:border-neutral-700 dark:text-[#B7E35F] dark:hover:bg-emerald-950/40"
+                >
+                  {isLoadingOlderMessages ? "Loading older messages..." : "Load older messages"}
+                </button>
+              )}
               {currentChatMessages.map((msg) => {
                 const isMe = msg.senderId === session?.user.id;
                 return (
@@ -188,6 +242,9 @@ export const SendDirectMessageModal: React.FC<SendDirectMessageModalProps> = ({
                   </div>
                 );
               })}
+              {currentChatMessages.length === 0 && (
+                <p className="pt-12 text-center text-xs text-neutral-400">No messages yet. Start the conversation.</p>
+              )}
             </div>
 
             {/* Attached Recipe Callout before sending */}

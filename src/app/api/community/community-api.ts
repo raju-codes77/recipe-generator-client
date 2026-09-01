@@ -54,6 +54,16 @@ export interface CommunityMessage {
   timestamp: string;
 }
 
+export interface CommunityMessagesPage {
+  messages: CommunityMessage[];
+  hasMore: boolean;
+}
+
+export interface CommunityMessagesPageOptions {
+  take?: number;
+  skip?: number;
+}
+
 export interface CommunityPostsPageOptions {
   take?: number;
   skip?: number;
@@ -210,9 +220,12 @@ export const communityApi = {
     return response.contacts;
   },
 
-  async listMessages(userId: string): Promise<CommunityMessage[]> {
-    const response = await request<{ messages: CommunityMessage[] }>(`/messages/${userId}`);
-    return response.messages;
+  async listMessages(userId: string, options: CommunityMessagesPageOptions = {}): Promise<CommunityMessagesPage> {
+    const params = new URLSearchParams();
+    if (options.take !== undefined) params.set("take", String(options.take));
+    if (options.skip !== undefined) params.set("skip", String(options.skip));
+    const query = params.size ? `?${params.toString()}` : "";
+    return request<CommunityMessagesPage>(`/messages/${userId}${query}`);
   },
 
   sendMessage(userId: string, text: string, attachedPostId?: string) {
