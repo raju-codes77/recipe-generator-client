@@ -110,7 +110,7 @@ export default function LoginPage() {
       return;
     }
 
-    setError("");
+    setError("");  
     setSuccess("");
 
     try {

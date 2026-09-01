@@ -84,31 +84,8 @@ export default function RegisterPage() {
       return;
     }
 
-   try {
-  setLoading(true);
-
-  const { data, error } = await authClient.signUp.email({
-    name: name.trim(),
-    email: email.trim(),
-    password,
-    image: photo.trim() || undefined,
-  });
-
-  if (error) {
-    console.error("Signup error:", error);
-
-    setErrorMessage(
-      error.message || "Unable to create your account. Please try again."
-    );
-
-    return;
-  }
-
-  console.log("Signup successful:", data);
-
-  setSuccessMessage(
-    "Account created successfully! Redirecting..."
-  );
+    try {
+      setLoading(true);
 
   setTimeout(() => {
     router.refresh();
@@ -117,12 +94,14 @@ export default function RegisterPage() {
 } catch (error) {
   console.error("Unexpected signup error:", error);
 
-  setErrorMessage(
-    "Something went wrong. Please check your connection and try again."
-  );
-} finally {
-  setLoading(false);
-}
+    } catch (error) {
+      console.error("Unexpected signup error:", error);
+      setErrorMessage(
+        "Something went wrong. Please check your connection and try again."
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleGoogleSignup = async () => {
