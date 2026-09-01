@@ -18,7 +18,7 @@ import { FcGoogle } from "react-icons/fc";
 import { createAuthClient } from "better-auth/react";
 import toast from "react-hot-toast";
 
-// ব্যাকএন্ড এক্সপ্র্রেস সার্ভারের পোর্ট 5000 পয়েন্ট করার জন্য ক্লায়েন্ট কনফিগারেশন
+// ব্যাকএন্ড এক্সপ্রেস সার্ভারের পোর্ট 5000 পয়েন্ট করার জন্য ক্লায়েন্ট কনফিগারেশন
 export const authClient = createAuthClient({
   baseURL: "http://localhost:5000",
 });
@@ -96,8 +96,14 @@ export default function LoginPage() {
       setSuccess(successMsg);
       toast.success(successMsg);
 
-      router.push("/dashboard/users");
-      router.refresh();
+      // ইউজারের রোল চেক করে ডায়নামিক রিডাইরেক্ট করা হচ্ছে
+      const userRole = (data?.user as any)?.role;
+
+      if (userRole === "admin" || userRole === "ADMIN") {
+        window.location.href = "/dashboard/admin"; // এডমিন হলে এডমিন ড্যাশবোর্ডে যাবে
+      } else {
+        window.location.href = "/dashboard/users"; // সাধারণ ইউজার হলে ইউজার ড্যাশবোর্ডে যাবে
+      }
     } catch (err) {
       console.error("Login error:", err);
       toast.dismiss("login");
@@ -121,10 +127,10 @@ export default function LoginPage() {
       setLoading(true);
       toast.loading("Connecting with Google...", { id: "google-login" });
 
-      // গুগল সাইন-ইন সোশ্যাল রিকোয়েস্ট যেখানে সফল লগইনের পর সরাসরি ড্যাশবোর্ডে রিডাইরেক্ট করবে
+   
       await authClient.signIn.social({
         provider: "google",
-        callbackURL: "http://localhost:3000/dashboard/users",
+        callbackURL: `${window.location.origin}/dashboard/users`,
       });
     } catch (err) {
       console.error("Google login error:", err);
