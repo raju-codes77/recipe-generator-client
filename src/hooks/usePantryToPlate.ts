@@ -4,8 +4,6 @@ import { DEFAULT_INGREDIENTS } from "@/components/aitools/Pantry-to-Plate AI/con
 import { Recipe } from "@/components/aitools/Pantry-to-Plate AI/types";
 import { useState } from "react";
 import toast from "react-hot-toast";
-// import { DEFAULT_INGREDIENTS } from "../components/constants";
-// import { Recipe } from "../components/types";
 
 export function usePantryToPlate() {
   const [ingredients, setIngredients] = useState<string[]>(DEFAULT_INGREDIENTS);
@@ -18,7 +16,6 @@ export function usePantryToPlate() {
     "Garlic",
   ]);
 
-  // Preferences
   const [cuisine, setCuisine] = useState<string>("Bangladeshi");
   const [mealType, setMealType] = useState<string>("Breakfast");
   const [cookingTime, setCookingTime] = useState<string>("Up to 30 min");
@@ -26,9 +23,11 @@ export function usePantryToPlate() {
   const [servings, setServings] = useState<string>("1");
   const [selectedOptions, setSelectedOptions] = useState<string[]>(["Reduce Food Waste"]);
 
-  // AI generation state
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [generatedRecipe, setGeneratedRecipe] = useState<Recipe | null>(null);
+
+  // NEW: refine এর জন্য
+  const [refiningOption, setRefiningOption] = useState<string | null>(null);
 
   const handleAddIngredient = (name: string) => {
     const trimmed = name.trim();
@@ -63,10 +62,6 @@ export function usePantryToPlate() {
     );
   };
 
-  // Calls our own Next.js API route. Right now the route returns mock data
-  // after a short delay. Later, swap the inside of
-  // app/api/pantry-to-plate/route.ts with a real Gemini call + Prisma/PostgreSQL —
-  // this hook and every component below stay untouched.
   const handleGenerateRecipe = async () => {
     if (ingredients.length === 0) {
       toast.error("Please add at least one ingredient!");
@@ -91,7 +86,10 @@ export function usePantryToPlate() {
         }),
       });
 
-      if (!res.ok) throw new Error("Failed to generate recipe");
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || "Failed to generate recipe");
+      }
 
       const recipe: Recipe = await res.json();
       setGeneratedRecipe(recipe);
@@ -101,10 +99,39 @@ export function usePantryToPlate() {
         const merged = [...new Set([...ingredients, ...prev])];
         return merged.slice(0, 8);
       });
-    } catch (err) {
-      toast.error("Couldn't generate a recipe. Please try again.", { id: toastId });
+    } catch (err: any) {
+      toast.error(err.message || "Couldn't generate a recipe. Please try again.", { id: toastId });
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  // NEW: refine handler
+  const handleRefineRecipe = async (refinement: string) => {
+    if (!generatedRecipe) return;
+
+    setRefiningOption(refinement);
+    const toastId = toast.loading(`Refining: ${refinement}...`);
+
+    try {
+      const res = await fetch("/api/pantry-to-plate/refine", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: generatedRecipe.id, refinement }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || "Failed to refine recipe");
+      }
+
+      const updated: Recipe = await res.json();
+      setGeneratedRecipe(updated);
+      toast.success(`Recipe updated: ${refinement}`, { id: toastId });
+    } catch (err: any) {
+      toast.error(err.message || "Couldn't refine the recipe. Please try again.", { id: toastId });
+    } finally {
+      setRefiningOption(null);
     }
   };
 
@@ -135,5 +162,7 @@ export function usePantryToPlate() {
     generatedRecipe,
     handleGenerateRecipe,
     resetRecipe,
+    handleRefineRecipe,   // NEW
+    refiningOption,          // NEW
   };
 }
