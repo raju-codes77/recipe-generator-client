@@ -77,7 +77,7 @@ export const CommunitySidebarLeft: React.FC<CommunitySidebarLeftProps> = ({
       {isAuthenticated && currentUser ? (
         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-xs dark:border-neutral-800 dark:bg-[#121212]">
           <div className="flex items-center gap-3.5">
-            <div className="relative">
+            <Link href={`/community/users/${currentUser.id}`} className="relative shrink-0" aria-label="Open your community profile">
               <CommunityAvatar
                 src={currentUser.avatar}
                 alt={currentUser.name}
@@ -86,9 +86,9 @@ export const CommunitySidebarLeft: React.FC<CommunitySidebarLeftProps> = ({
               <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-[#FF9F43] text-white ring-2 ring-white dark:ring-[#121212]">
                 <ChefHat className="h-3 w-3" />
               </span>
-            </div>
+            </Link>
 
-            <div>
+            <Link href={`/community/users/${currentUser.id}`} className="min-w-0">
               <h3 className="font-bold text-base leading-tight text-neutral-900 dark:text-white">
                 {currentUser.name}
               </h3>
@@ -98,7 +98,7 @@ export const CommunitySidebarLeft: React.FC<CommunitySidebarLeftProps> = ({
               <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-[#EAF7E8] px-2.5 py-0.5 text-[10px] font-bold text-[#176B35] dark:bg-emerald-950/60 dark:text-[#B7E35F]">
                 🥈 {currentUser.badge || "FoodCanvas Cook"}
               </span>
-            </div>
+            </Link>
           </div>
 
           {/* User Stats Grid */}

@@ -7,10 +7,26 @@ interface CommunityAvatarProps {
   className: string;
 }
 
+function isBlockedProfileImage(src?: string | null) {
+  if (!src) return true;
+
+  try {
+    const url = new URL(src);
+
+    return (
+      url.hostname === "facebook.com" ||
+      url.hostname.endsWith(".facebook.com") ||
+      url.pathname.includes("photo.php")
+    );
+  } catch {
+    return true;
+  }
+}
+
 export const CommunityAvatar: React.FC<CommunityAvatarProps> = ({ src, alt, className }) => {
   const [imageFailed, setImageFailed] = useState(false);
 
-  if (!src || imageFailed) {
+  if (isBlockedProfileImage(src) || imageFailed) {
     return (
       <span
         role="img"
@@ -22,5 +38,5 @@ export const CommunityAvatar: React.FC<CommunityAvatarProps> = ({ src, alt, clas
     );
   }
 
-  return <img src={src} alt={alt} className={className} onError={() => setImageFailed(true)} />;
+  return <img src={src!} alt={alt} className={className} onError={() => setImageFailed(true)} />;
 };

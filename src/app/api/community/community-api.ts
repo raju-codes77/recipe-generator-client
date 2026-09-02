@@ -2,6 +2,7 @@ import type {
   DirectMessageUser,
   NotificationItem,
   Post,
+  PublicCommunityProfile,
   RecipeCollection,
   Review,
   StoryItem,
@@ -53,9 +54,40 @@ export interface CommunityMessage {
   timestamp: string;
 }
 
+export interface CommunityMessagesPage {
+  messages: CommunityMessage[];
+  hasMore: boolean;
+}
+
+export interface CommunityMessagesPageOptions {
+  take?: number;
+  skip?: number;
+}
+
+export interface CommunityPostsPageOptions {
+  take?: number;
+  skip?: number;
+}
+
+export interface CommunityPostInteractions {
+  comments: Post["comments"];
+  reviews: Post["reviews"];
+}
+
+export interface CommunityPostInteractionOptions {
+  commentsTake?: number;
+  commentsSkip?: number;
+  reviewsTake?: number;
+  reviewsSkip?: number;
+}
+
 export const communityApi = {
-  async listPosts(): Promise<Post[]> {
-    const response = await request<{ posts: Post[] }>("/posts");
+  async listPosts({ take, skip }: CommunityPostsPageOptions = {}): Promise<Post[]> {
+    const query = new URLSearchParams();
+    if (take !== undefined) query.set("take", String(take));
+    if (skip !== undefined) query.set("skip", String(skip));
+    const suffix = query.size ? `?${query.toString()}` : "";
+    const response = await request<{ posts: Post[] }>(`/posts${suffix}`);
     return response.posts;
   },
 
@@ -100,6 +132,24 @@ export const communityApi = {
 
   toggleFollow(userId: string) {
     return request<{ active: boolean }>(`/users/${userId}/follow`, { method: "POST" });
+  },
+
+  async getPostInteractions(
+    postId: string,
+    options: CommunityPostInteractionOptions = {},
+  ): Promise<CommunityPostInteractions> {
+    const query = new URLSearchParams();
+    Object.entries(options).forEach(([key, value]) => {
+      if (value !== undefined) query.set(key, String(value));
+    });
+    const suffix = query.size ? `?${query.toString()}` : "";
+    const response = await request<{ interactions: CommunityPostInteractions }>(`/posts/${postId}/interactions${suffix}`);
+    return response.interactions;
+  },
+
+  async getPublicProfile(userId: string): Promise<PublicCommunityProfile> {
+    const response = await request<{ profile: PublicCommunityProfile }>(`/users/${userId}/profile`);
+    return response.profile;
   },
 
   async listCollections(): Promise<RecipeCollection[]> {
@@ -164,14 +214,18 @@ export const communityApi = {
     return response.url;
   },
 
-  async listContacts(): Promise<DirectMessageUser[]> {
-    const response = await request<{ contacts: DirectMessageUser[] }>("/messages/contacts");
+  async listContacts(includeUserId?: string): Promise<DirectMessageUser[]> {
+    const query = includeUserId ? `?includeUserId=${encodeURIComponent(includeUserId)}` : "";
+    const response = await request<{ contacts: DirectMessageUser[] }>(`/messages/contacts${query}`);
     return response.contacts;
   },
 
-  async listMessages(userId: string): Promise<CommunityMessage[]> {
-    const response = await request<{ messages: CommunityMessage[] }>(`/messages/${userId}`);
-    return response.messages;
+  async listMessages(userId: string, options: CommunityMessagesPageOptions = {}): Promise<CommunityMessagesPage> {
+    const params = new URLSearchParams();
+    if (options.take !== undefined) params.set("take", String(options.take));
+    if (options.skip !== undefined) params.set("skip", String(options.skip));
+    const query = params.size ? `?${params.toString()}` : "";
+    return request<CommunityMessagesPage>(`/messages/${userId}${query}`);
   },
 
   sendMessage(userId: string, text: string, attachedPostId?: string) {

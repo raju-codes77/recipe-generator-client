@@ -13,6 +13,9 @@ interface RecipeReviewModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmitReview: (postId: string, review: Review) => void;
+  onLoadMoreReviews?: () => void;
+  hasMoreReviews?: boolean;
+  isLoadingMoreReviews?: boolean;
 }
 
 export const RecipeReviewModal: React.FC<RecipeReviewModalProps> = ({
@@ -20,6 +23,9 @@ export const RecipeReviewModal: React.FC<RecipeReviewModalProps> = ({
   isOpen,
   onClose,
   onSubmitReview,
+  onLoadMoreReviews,
+  hasMoreReviews = false,
+  isLoadingMoreReviews = false,
 }) => {
   const [overallRating, setOverallRating] = useState(5);
   const [flavorRating, setFlavorRating] = useState(5);
@@ -256,7 +262,7 @@ export const RecipeReviewModal: React.FC<RecipeReviewModalProps> = ({
           {/* Existing Community Reviews Section */}
           <div className="border-t border-slate-100 pt-5 dark:border-neutral-800">
             <h4 className="font-bold text-xs uppercase tracking-wider text-neutral-500 mb-3">
-              Community Reviews ({post.reviews.length})
+              Community Reviews ({post.reviews.length} of {post.rating.totalReviews})
             </h4>
 
             {post.reviews.length === 0 ? (
@@ -316,6 +322,17 @@ export const RecipeReviewModal: React.FC<RecipeReviewModalProps> = ({
                   </div>
                 ))}
               </div>
+            )}
+
+            {hasMoreReviews && (
+              <button
+                type="button"
+                onClick={onLoadMoreReviews}
+                disabled={isLoadingMoreReviews}
+                className="mt-4 w-full rounded-xl border border-slate-200 px-4 py-2 text-xs font-bold text-[#176B35] transition hover:bg-[#EAF7E8] disabled:cursor-not-allowed disabled:opacity-60 dark:border-neutral-700 dark:text-[#B7E35F] dark:hover:bg-emerald-950/40"
+              >
+                {isLoadingMoreReviews ? "Loading reviews..." : "Load more reviews"}
+              </button>
             )}
           </div>
         </div>
