@@ -37,7 +37,7 @@ export default function AvailableTools() {
             <Image
               src="https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=400&auto=format&fit=crop&q=80"
               alt="Pantry Salad"
-              fill
+              fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               className="object-cover"
             />
           </div>
@@ -64,7 +64,7 @@ export default function AvailableTools() {
             <Image
               src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=400&auto=format&fit=crop&q=80"
               alt="Healthy Food"
-              fill
+              fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               className="object-cover"
             />
           </div>
@@ -102,7 +102,7 @@ export default function AvailableTools() {
               <Image
                 src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&auto=format&fit=crop&q=80"
                 alt="Healthy Bowl"
-                fill
+                fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 className="object-cover"
               />
             </div>
@@ -130,9 +130,9 @@ export default function AvailableTools() {
             Discover perfect ingredient and flavor combinations. Get AI-powered pairing suggestions to elevate your dishes.
           </p>
 
-          <button className="text-purple-700 dark:text-purple-500 font-semibold text-sm flex items-center gap-1.5 group-hover:gap-2 transition-all">
+          <Link href={"/ai-tools/flavor-pairing"} className="text-purple-700 dark:text-purple-500 font-semibold text-sm flex items-center gap-1.5 group-hover:gap-2 transition-all">
             Explore pairings <ArrowRight size={16} />
-          </button>
+          </Link>
 
           {/* Decorative Ingredients Circle */}
           <div className="absolute right-0 md:right-10 top-1/2 -translate-y-1/2 w-48 h-48 rounded-full border border-dashed border-purple-300 dark:border-purple-900/50 flex items-center justify-center hidden sm:flex">
@@ -140,7 +140,7 @@ export default function AvailableTools() {
               <Image
                 src="https://images.unsplash.com/photo-1506368249639-73a05d6f6488?w=400&auto=format&fit=crop&q=80"
                 alt="Spices"
-                fill
+                fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 className="object-cover"
               />
             </div>
@@ -175,13 +175,13 @@ export default function AvailableTools() {
             </div>
             {/* Surrounding food bubbles */}
             <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-12 h-12 rounded-full border-2 border-white dark:border-slate-800 overflow-hidden z-20">
-              <Image src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=100&auto=format&fit=crop&q=60" alt="Food" fill className="object-cover" />
+              <Image src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=100&auto=format&fit=crop&q=60" alt="Food" fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" className="object-cover" />
             </div>
             <div className="absolute bottom-6 -left-4 w-12 h-12 rounded-full border-2 border-white dark:border-slate-800 overflow-hidden z-20">
-              <Image src="https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=100&auto=format&fit=crop&q=60" alt="Food" fill className="object-cover" />
+              <Image src="https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=100&auto=format&fit=crop&q=60" alt="Food" fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" className="object-cover" />
             </div>
             <div className="absolute bottom-6 -right-4 w-12 h-12 rounded-full border-2 border-white dark:border-slate-800 overflow-hidden z-20">
-              <Image src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=100&auto=format&fit=crop&q=60" alt="Food" fill className="object-cover" />
+              <Image src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=100&auto=format&fit=crop&q=60" alt="Food" fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" className="object-cover" />
             </div>
           </div>
         </div>

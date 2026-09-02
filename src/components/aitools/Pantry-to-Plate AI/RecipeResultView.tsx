@@ -44,25 +44,8 @@ export default function RecipeResultView({ recipe, onBack, onRefine, refiningOpt
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
         <div className="space-y-5">
-          <div className="relative w-full h-64 sm:h-80 md:h-96 rounded-2xl overflow-hidden shadow-md border border-zinc-200/60 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-800">
-            {isLoading && (
-              <div className="absolute inset-0 flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 animate-pulse">
-                <Sparkles className="w-8 h-8 text-emerald-500/50 animate-bounce" />
-              </div>
-            )}
-            <Image
-              src={imgSrc}
-              alt={recipe.title}
-              fill
-              className={`object-cover transition-opacity duration-300 ${isLoading ? "opacity-0" : "opacity-100"}`}
-              priority
-              unoptimized
-              onLoad={() => setIsLoading(false)}
-              onError={() => {
-                setImgSrc(DEFAULT_FOOD_IMAGE);
-                setIsLoading(false);
-              }}
-            />
+          <div className="relative w-full h-64 sm:h-80 rounded-2xl overflow-hidden shadow-md border border-zinc-200/60 dark:border-zinc-800">
+            <Image src={recipe.image} alt={recipe.title} fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" className="object-cover" priority />
           </div>
 
           <div className="space-y-2">

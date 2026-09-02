@@ -21,7 +21,7 @@ export default function CommunitySection() {
              <Image 
                 src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=400&auto=format&fit=crop&q=80" 
                 alt="Decorative leaf and food" 
-                fill 
+                fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" 
                 className="object-cover rounded-full mix-blend-multiply dark:mix-blend-lighten"
              />
           </div>
@@ -33,7 +33,7 @@ export default function CommunitySection() {
              <Image 
                 src="https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400&auto=format&fit=crop&q=80" 
                 alt="Decorative bowl and leaf" 
-                fill 
+                fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" 
                 className="object-cover rounded-full mix-blend-multiply dark:mix-blend-lighten"
              />
           </div>
@@ -54,7 +54,7 @@ export default function CommunitySection() {
             <div className="flex -space-x-3">
               {avatars.map((avatar, index) => (
                 <div key={index} className="relative w-10 h-10 md:w-12 md:h-12 rounded-full border-2 border-white dark:border-slate-900 overflow-hidden shadow-sm hover:-translate-y-1 transition-transform z-0">
-                  <Image src={avatar} alt="Community member" fill className="object-cover" />
+                  <Image src={avatar} alt="Community member" fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" className="object-cover" />
                 </div>
               ))}
             </div>

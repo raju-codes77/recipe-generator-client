@@ -96,7 +96,7 @@ export default function ExploreRecipes() {
           }
 
           const response = await fetch(
-            `http://localhost:5000/api/collections?userId=${session.user.id}`,
+            `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/collections?userId=${session.user.id}`,
             { credentials: "include" }
           );
           const data = await response.json();
@@ -157,7 +157,7 @@ export default function ExploreRecipes() {
         }
 
         const response = await fetch(
-          `http://localhost:5000/api/recipes?${params.toString()}`,
+          `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/recipes?${params.toString()}`,
           { credentials: "include" }
         );
 
@@ -249,7 +249,7 @@ export default function ExploreRecipes() {
       if (activeTab === "My Collections" && !selectedCollectionId && session?.user?.id) {
         try {
           const response = await fetch(
-            `http://localhost:5000/api/collections?userId=${session.user.id}`,
+            `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/collections?userId=${session.user.id}`,
             { credentials: "include" }
           );
           const data = await response.json();
@@ -273,7 +273,7 @@ export default function ExploreRecipes() {
     e.stopPropagation();
 
     try {
-      const response = await fetch(`http://localhost:5000/api/collections`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/collections`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
@@ -558,7 +558,10 @@ export default function ExploreRecipes() {
                             recipe={recipe} 
                             index={index}
                             onFavoriteRemoved={(removedId) => {
-                              setRecipes((prev) => prev.filter((r) => r.id !== removedId));
+                              // Only remove instantly if we are on the Favorite Recipes tab
+                              if (activeTab === "Favorite Recipes") {
+                                setRecipes((prev) => prev.filter((r) => r.id !== removedId));
+                              }
                             }}
                           />
                         </div>
@@ -575,7 +578,7 @@ export default function ExploreRecipes() {
                             <Image
                               src={recipe.image}
                               alt={recipe.title}
-                              fill
+                              fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                               className="object-cover"
                             />
                             <div className="absolute left-3 top-3 flex items-center gap-1 rounded-full border border-white/10 bg-white/90 px-2.5 py-1 text-xs font-bold text-gray-800 shadow-sm backdrop-blur-md dark:bg-[#131B2E]/90 dark:text-white">

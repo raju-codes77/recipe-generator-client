@@ -30,7 +30,7 @@ export default function Sidebar({ selectedCollectionId, onSelectCollection }: Si
   const fetchCollections = async () => {
     if (!userId) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/collections?userId=${userId}`);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/collections?userId=${userId}`);
       const data = await res.json();
       if (data.success) {
         setCollections(data.collections || []);
@@ -73,7 +73,7 @@ export default function Sidebar({ selectedCollectionId, onSelectCollection }: Si
 
     try {
       setCreating(true);
-      const res = await fetch("http://localhost:5000/api/collections", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/collections`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId, name: newCollectionName }),
@@ -173,7 +173,7 @@ export default function Sidebar({ selectedCollectionId, onSelectCollection }: Si
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-gray-100">
-                <Image src="https://images.unsplash.com/photo-1543339308-43e59d6b73a6?w=100&auto=format&fit=crop&q=60" alt="High Protein Meals" fill className="object-cover" />
+                <Image src="https://images.unsplash.com/photo-1543339308-43e59d6b73a6?w=100&auto=format&fit=crop&q=60" alt="High Protein Meals" fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" className="object-cover" />
               </div>
               <div>
                 <h4 className="text-xs font-bold text-gray-900 dark:text-white line-clamp-1">High Protein Meals</h4>
@@ -185,7 +185,7 @@ export default function Sidebar({ selectedCollectionId, onSelectCollection }: Si
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-gray-100">
-                <Image src="https://images.unsplash.com/photo-1498837167922-ddd27525d352?w=100&auto=format&fit=crop&q=60" alt="Low Carb Recipes" fill className="object-cover" />
+                <Image src="https://images.unsplash.com/photo-1498837167922-ddd27525d352?w=100&auto=format&fit=crop&q=60" alt="Low Carb Recipes" fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" className="object-cover" />
               </div>
               <div>
                 <h4 className="text-xs font-bold text-gray-900 dark:text-white line-clamp-1">Low Carb Recipes</h4>
@@ -205,7 +205,7 @@ export default function Sidebar({ selectedCollectionId, onSelectCollection }: Si
           <button className="cursor-pointer px-4 py-2.5 rounded-xl bg-[#24733E] text-white text-xs font-bold hover:bg-[#1e5d32] transition-colors shadow-sm">Try Pantry-to-Plate AI</button>
         </div>
         <div className="absolute -bottom-4 -right-4 w-32 h-32 pointer-events-none opacity-90">
-          <Image src="https://images.unsplash.com/photo-1540420773420-3366772f4999?w=300&auto=format&fit=crop&q=60" alt="AI Vegetables Bowl" fill className="object-contain" />
+          <Image src="https://images.unsplash.com/photo-1540420773420-3366772f4999?w=300&auto=format&fit=crop&q=60" alt="AI Vegetables Bowl" fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" className="object-contain" />
         </div>
       </div>
 
