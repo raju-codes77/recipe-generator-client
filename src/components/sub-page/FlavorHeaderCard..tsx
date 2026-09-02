@@ -1,4 +1,3 @@
-import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { Sparkles } from 'lucide-react';
 
@@ -31,19 +30,17 @@ export default function FlavorHeaderCard() {
         </p>
       </div>
 
-      {/* Decorative illustration with rounded corners and image zoom */}
-      <div className="relative hidden md:flex items-center justify-center w-72 h-44 shrink-0 overflow-hidden rounded-2xl bg-emerald-100/30 dark:bg-emerald-950/20">
-        <div className="absolute right-0 top-1/2 -translate-y-1/2 w-56 h-56 rounded-full bg-emerald-100/60 dark:bg-emerald-900/20 blur-2xl pointer-events-none" />
-        <div className="relative w-full h-full z-10 flex items-center justify-center p-2 rounded-2xl overflow-hidden">
-          <Image
-            src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQwW6ZVVNEYSqS6K6RO6QOyETCKBzDr9oH59HL7K-pKVQ&s=10"
-            alt="Flavor Pairing Illustration"
-            fill
-            sizes="(max-width: 1000px) 100vw, 288px"
-            className="object-contain rounded-xl drop-shadow-md transition-transform duration-500 group-hover:scale-108"
-            priority
-          />
-        </div>
+      {/* Increased container width and height (w-80 h-56 / lg:w-96 lg:h-64) */}
+      <div className="relative hidden md:flex items-center justify-center w-80 lg:w-96 h-52 lg:h-60 shrink-0 overflow-visible">
+        {/* Soft ambient glow */}
+        <div className="absolute right-1/3 top-1/2 -translate-y-1/2 w-48 h-48 rounded-full bg-emerald-400/15 dark:bg-emerald-500/15 blur-2xl pointer-events-none" />
+        
+        {/* Larger Image with scale override */}
+        <img
+          src="/images/flavor.png" 
+          alt="Flavor Pairing Illustration"
+          className="w-full h-full object-contain scale-125 transition-transform duration-500 group-hover:scale-135 relative z-10 drop-shadow-md"
+        />
       </div>
     </motion.div>
   );
