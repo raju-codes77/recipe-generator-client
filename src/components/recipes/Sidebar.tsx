@@ -52,11 +52,11 @@ export default function Sidebar({ selectedCollectionId, onSelectCollection }: Si
     }
   }, [userId, session]);
 
-  // কাস্টম ইভেন্ট লিসেনার: কালেকশন তৈরি বা রেসিপি অ্যাড হলেই সাথে সাথে কল হবে
+  
   useEffect(() => {
     const handleCollectionUpdate = () => {
       if (userId) {
-        fetchCollections(); // পেজ রিলোড ছাড়াই সাথে সাথে নতুন ডেটা নিয়ে আসবে
+        fetchCollections(); 
       }
     };
 
@@ -66,7 +66,7 @@ export default function Sidebar({ selectedCollectionId, onSelectCollection }: Si
     };
   }, [userId]);
 
-  // নতুন কালেকশন তৈরির ফাংশন
+  // new collection
   const handleCreateCollection = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCollectionName.trim() || !userId) return;
@@ -82,7 +82,7 @@ export default function Sidebar({ selectedCollectionId, onSelectCollection }: Si
       if (data.success) {
         setNewCollectionName("");
         setIsModalOpen(false);
-        // ইভেন্ট ট্রিগার করে সাথে সাথে সাইডবার আপডেট করে দেওয়া হলো
+        // sidebar update
         window.dispatchEvent(new Event("collectionUpdated"));
       }
     } catch (error) {

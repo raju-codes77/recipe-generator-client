@@ -8,6 +8,7 @@ import {
   Heart,
   Folder,
   X,
+  Plus,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -39,16 +40,21 @@ export default function RecipeCard({
 }: RecipeCardProps) {
   const { data: session } = authClient.useSession();
 
-  //  FAVORITE STATE 
+  // FAVORITE STATE 
   const [isLiked, setIsLiked] = useState(false);
   const [isFavoriteLoading, setIsFavoriteLoading] = useState(false);
 
-  //  COLLECTION MODAL STATE 
+  // COLLECTION MODAL STATE 
   const [isCollectionModalOpen, setIsCollectionModalOpen] = useState(false);
   const [collections, setCollections] = useState<any[]>([]);
   const [loadingCollections, setLoadingCollections] = useState(false);
 
-  //  CHECK FAVORITE 
+  // NEW COLLECTION INPUT STATE
+  const [isCreatingNew, setIsCreatingNew] = useState(false);
+  const [newCollectionName, setNewCollectionName] = useState("");
+  const [isSubmittingNew, setIsSubmittingNew] = useState(false);
+
+  // CHECK FAVORITE 
   useEffect(() => {
     if (!session?.user?.id) {
       setIsLiked(false);
@@ -87,7 +93,7 @@ export default function RecipeCard({
     checkFavorite();
   }, [session?.user?.id, recipe.id]);
 
-  //  ADD / REMOVE FAVORITE 
+  // ADD / REMOVE FAVORITE 
   const handleFavorite = async (e: React.MouseEvent) => {
     e.stopPropagation();
 
@@ -181,18 +187,10 @@ export default function RecipeCard({
     }
   };
 
-  //  OPEN COLLECTION MODAL 
-  const handleOpenCollectionModal = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-
-    if (!session?.user?.id) {
-      toast.error("Please login first to save recipes to collections.");
-      return;
-    }
-
-    setIsCollectionModalOpen(true);
+  // FETCH COLLECTIONS HELPER
+  const fetchCollections = async () => {
+    if (!session?.user?.id) return;
     setLoadingCollections(true);
-
     try {
       const res = await fetch(`http://localhost:5000/api/collections?userId=${session.user.id}`);
       const data = await res.json();
@@ -209,7 +207,22 @@ export default function RecipeCard({
     }
   };
 
-  //  SAVE TO SPECIFIC COLLECTION WITH TOAST 
+  // OPEN COLLECTION MODAL 
+  const handleOpenCollectionModal = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    if (!session?.user?.id) {
+      toast.error("Please login first to save recipes to collections.");
+      return;
+    }
+
+    setIsCollectionModalOpen(true);
+    setIsCreatingNew(false);
+    setNewCollectionName("");
+    await fetchCollections();
+  };
+
+  // SAVE TO SPECIFIC COLLECTION WITH TOAST 
   const handleAddToCollection = async (collectionId: string) => {
     try {
       const res = await fetch("http://localhost:5000/api/collections/add-recipe", {
@@ -232,6 +245,49 @@ export default function RecipeCard({
     }
   };
 
+  // CREATE NEW COLLECTION FROM MODAL
+  const handleCreateCollection = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCollectionName.trim()) {
+      toast.error("Please enter a collection name");
+      return;
+    }
+
+    if (!session?.user?.id) return;
+
+    setIsSubmittingNew(true);
+    try {
+      const res = await fetch("http://localhost:5000/api/collections", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: session.user.id,
+          name: newCollectionName.trim(),
+        }),
+      });
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        toast.success("Collection created successfully!");
+        setNewCollectionName("");
+        setIsCreatingNew(false);
+        // Refresh list and optionally add the current recipe straight into this newly created collection
+        await fetchCollections();
+        if (data.collection?.id) {
+          await handleAddToCollection(data.collection.id);
+        }
+        window.dispatchEvent(new Event("collectionUpdated"));
+      } else {
+        toast.error(data.message || "Failed to create collection");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Something went wrong");
+    } finally {
+      setIsSubmittingNew(false);
+    }
+  };
+
   return (
     <>
       <motion.article
@@ -248,7 +304,7 @@ export default function RecipeCard({
         }}
         className="group relative flex h-full w-full flex-col overflow-hidden rounded-[24px] border border-[#E2EBE4] bg-white p-3 shadow-sm transition-all duration-300 hover:border-[#C5DED0] hover:shadow-md dark:border-white/10 dark:bg-[#131B2E]"
       >
-        {/*  IMAGE CONTAINER  */}
+        {/* IMAGE CONTAINER */}
         <div className="relative h-[200px] w-full shrink-0 overflow-hidden rounded-[18px] bg-[#EEF4EF] dark:bg-[#1A233A]">
           <motion.div
             whileHover={{ scale: 1.05 }}
@@ -264,7 +320,7 @@ export default function RecipeCard({
             />
           </motion.div>
 
-          {/*  RATING BADGE  */}
+          {/* RATING BADGE */}
           <div className="absolute left-3 top-3 flex items-center gap-1 rounded-full border border-white/80 bg-white/90 px-2.5 py-1 shadow-sm backdrop-blur-md dark:border-white/10 dark:bg-[#131B2E]/90">
             <Star className="h-3 w-3 fill-[#F6A51A] text-[#F6A51A]" />
             <span className="text-[11px] font-bold text-gray-900 dark:text-white">
@@ -272,7 +328,7 @@ export default function RecipeCard({
             </span>
           </div>
 
-          {/* ================= TOP RIGHT ACTION BUTTONS ================= */}
+          {/* TOP RIGHT ACTION BUTTONS */}
           <div className="absolute right-3 top-3 flex items-center gap-1.5">
             {/* COLLECTION FOLDER BUTTON */}
             <motion.button
@@ -307,15 +363,15 @@ export default function RecipeCard({
           </div>
         </div>
 
-        {/*  CONTENT AREA  */}
+        {/* CONTENT AREA */}
         <div className="flex flex-1 flex-col justify-between pt-3.5 px-1 pb-1">
           <div>
-            {/*  TITLE  */}
+            {/* TITLE */}
             <h3 className="line-clamp-1 text-[16px] font-bold tracking-tight text-gray-900 transition-colors duration-200 dark:text-white">
               {recipe.title}
             </h3>
 
-            {/*  TIME & CALORIES  */}
+            {/* TIME & CALORIES */}
             <div className="mt-2 flex items-center justify-between text-xs font-medium text-gray-500 dark:text-gray-400">
               <div className="flex items-center gap-1.5">
                 <Clock3 className="h-3.5 w-3.5 text-[#24733E] dark:text-[#10B981]" />
@@ -364,31 +420,81 @@ export default function RecipeCard({
               </button>
             </div>
 
-            <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
-              {loadingCollections ? (
-                <p className="text-xs text-gray-400 text-center py-4">Loading your collections...</p>
-              ) : collections.length > 0 ? (
-                collections.map((col) => (
-                  <div
-                    key={col.id}
-                    onClick={() => handleAddToCollection(col.id)}
-                    className="flex justify-between items-center p-3 border border-gray-100 dark:border-white/10 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 cursor-pointer transition-colors group"
+            {!isCreatingNew ? (
+              <>
+                <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                  {loadingCollections ? (
+                    <p className="text-xs text-gray-400 text-center py-4">Loading your collections...</p>
+                  ) : collections.length > 0 ? (
+                    collections.map((col) => (
+                      <div
+                        key={col.id}
+                        onClick={() => handleAddToCollection(col.id)}
+                        className="flex justify-between items-center p-3 border border-gray-100 dark:border-white/10 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 cursor-pointer transition-colors group"
+                      >
+                        <div className="flex items-center gap-2">
+                          <Folder className="w-4 h-4 text-[#24733E] dark:text-[#10B981]" />
+                          <span className="font-medium text-xs text-gray-800 dark:text-gray-200">{col.name}</span>
+                        </div>
+                        <span className="text-[10px] bg-[#EAF4EB] text-[#24733E] dark:bg-[#10B981]/20 dark:text-[#10B981] px-2.5 py-1 rounded-lg font-bold group-hover:bg-[#24733E] group-hover:text-white transition-colors">
+                          Save
+                        </span>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-xs text-gray-400 text-center py-4">
+                      No collections found yet.
+                    </p>
+                  )}
+                </div>
+
+                {/* CREATE NEW COLLECTION TRIGGER BUTTON */}
+                <div className="mt-4 pt-3 border-t border-gray-100 dark:border-white/10">
+                  <button
+                    type="button"
+                    onClick={() => setIsCreatingNew(true)}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-dashed border-[#24733E] dark:border-[#10B981] text-[#24733E] dark:text-[#10B981] text-xs font-bold hover:bg-[#24733E]/5 dark:hover:bg-[#10B981]/10 transition-colors cursor-pointer"
                   >
-                    <div className="flex items-center gap-2">
-                      <Folder className="w-4 h-4 text-[#24733E] dark:text-[#10B981]" />
-                      <span className="font-medium text-xs text-gray-800 dark:text-gray-200">{col.name}</span>
-                    </div>
-                    <span className="text-[10px] bg-[#EAF4EB] text-[#24733E] dark:bg-[#10B981]/20 dark:text-[#10B981] px-2.5 py-1 rounded-lg font-bold group-hover:bg-[#24733E] group-hover:text-white transition-colors">
-                      Save
-                    </span>
-                  </div>
-                ))
-              ) : (
-                <p className="text-xs text-gray-400 text-center py-4">
-                  No collections found. Create one from the sidebar first!
-                </p>
-              )}
-            </div>
+                    <Plus className="w-4 h-4" />
+                    <span>Create New Collection</span>
+                  </button>
+                </div>
+              </>
+            ) : (
+              /* CREATE NEW COLLECTION FORM */
+              <form onSubmit={handleCreateCollection} className="space-y-3">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                    Collection Name
+                  </label>
+                  <input
+                    type="text"
+                    value={newCollectionName}
+                    onChange={(e) => setNewCollectionName(e.target.value)}
+                    placeholder="e.g., Weekend Brunch, Keto..."
+                    autoFocus
+                    className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs text-gray-900 shadow-sm outline-none transition-all focus:border-[#24733E] dark:border-white/10 dark:bg-[#1A233A] dark:text-white dark:focus:border-[#10B981]"
+                  />
+                </div>
+
+                <div className="flex items-center gap-2 pt-1">
+                  <button
+                    type="submit"
+                    disabled={isSubmittingNew}
+                    className="flex-1 bg-[#24733E] hover:bg-[#1d5c32] dark:bg-[#10B981] dark:hover:bg-[#0e9f6e] text-white text-xs font-bold py-2 rounded-xl transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    {isSubmittingNew ? "Creating..." : "Create & Save"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsCreatingNew(false)}
+                    className="px-3 py-2 text-xs font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/10 rounded-xl transition-colors cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       )}
