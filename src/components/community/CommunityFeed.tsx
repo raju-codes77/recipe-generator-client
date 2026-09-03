@@ -168,12 +168,20 @@ export const CommunityFeed: React.FC = () => {
         hasMorePosts: loadedPosts.length === API_POSTS_PER_PAGE,
       };
       if (session?.user) {
-        const [loadedCollections, loadedNotifications] = await Promise.all([
-          communityApi.listCollections(),
-          communityApi.listNotifications(),
-        ]);
-        setCollections(loadedCollections);
-        setNotifications(loadedNotifications);
+        try {
+          const [loadedCollections, loadedNotifications] = await Promise.all([
+            communityApi.listCollections(),
+            communityApi.listNotifications(),
+          ]);
+          setCollections(loadedCollections);
+          setNotifications(loadedNotifications);
+        } catch {
+          // These require a valid authenticated session. If a cross-origin
+          // cookie is unavailable, keep the public feed usable instead of
+          // replacing it with a Community-wide error.
+          setCollections([]);
+          setNotifications([]);
+        }
       } else {
         setCollections([]);
         setNotifications([]);
