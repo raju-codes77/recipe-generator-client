@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState } from "react";
@@ -9,6 +8,8 @@ import { SparkleIcon, SpeakerIcon } from "lucide-react";
 export default function AIAssistantPopup() {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [chatResponse, setChatResponse] = useState<string | null>(null);
 
   const popularPrompts = [
     "Quick dinner with chicken",
@@ -17,10 +18,40 @@ export default function AIAssistantPopup() {
     "Healthy smoothie ideas",
   ];
 
-  const handleSearch = (e: React.FormEvent) => {
+  // ব্যাকএন্ড এপিআই কল করার ফাংশন
+  const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!searchQuery.trim()) return;
-    console.log("Searching for:", searchQuery);
+    if (!searchQuery.trim() || loading) return;
+
+    // ইউজার যে কুয়েরিটি করছে তা সাময়িকভাবে সেভ করে রাখা যেতে পারে যদি প্রয়োজন হয়
+    const currentQuery = searchQuery;
+
+    try {
+      setLoading(true);
+      setChatResponse(null);
+
+      const res = await fetch("http://localhost:5000/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ prompt: currentQuery }),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        setChatResponse(data.reply);
+        setSearchQuery(""); // সার্চ সফল হওয়ার পর ইনপুট বক্স পরিষ্কার করে দেওয়া হলো
+      } else {
+        setChatResponse("Error: " + (data.error || "Something went wrong"));
+      }
+    } catch (error) {
+      console.error("Failed to connect to chat API:", error);
+      setChatResponse("Failed to connect to the server. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -111,14 +142,37 @@ export default function AIAssistantPopup() {
                     autoFocus
                     className="w-full pl-12 pr-12 py-3.5 rounded-2xl bg-gray-50 dark:bg-[#89986D]/10 border border-gray-200 dark:border-[#89986D]/20 text-xs sm:text-sm text-gray-900 dark:text-[#F6F0D7] focus:outline-none focus:border-[#2F8F46] transition"
                   />
+                  
+                  {/* Clear button inside input if text exists */}
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchQuery("")}
+                      className="absolute right-12 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1"
+                    >
+                      <FiX size={14} />
+                    </button>
+                  )}
+
                   <button
                     type="submit"
-                    className="absolute right-2 p-2.5 rounded-xl bg-[#2F8F46] text-white hover:bg-[#2F8F46]/90 transition shadow-md"
+                    disabled={loading}
+                    className="absolute right-2 p-2.5 rounded-xl bg-[#2F8F46] text-white hover:bg-[#2F8F46]/90 transition shadow-md disabled:opacity-50"
                   >
-                    <FiArrowRight size={16} />
+                    {loading ? <span className="animate-spin text-xs">⏳</span> : <FiArrowRight size={16} />}
                   </button>
                 </div>
               </form>
+
+              {/* AI Response Display Box */}
+              {chatResponse && (
+                <div className="mb-6 p-4 rounded-2xl bg-gray-50 dark:bg-[#89986D]/10 border border-gray-200 dark:border-[#89986D]/20 max-h-48 overflow-y-auto">
+                  <p className="text-[11px] font-bold text-[#2F8F46] mb-1 uppercase tracking-wide">AI Recipe Result:</p>
+                  <p className="text-xs sm:text-sm text-gray-800 dark:text-[#F6F0D7] whitespace-pre-line">
+                    {chatResponse}
+                  </p>
+                </div>
+              )}
 
               {/* Popular Suggestions Chips */}
               <div>
@@ -129,6 +183,7 @@ export default function AIAssistantPopup() {
                   {popularPrompts.map((prompt, index) => (
                     <button
                       key={index}
+                      type="button"
                       onClick={() => setSearchQuery(prompt)}
                       className="text-xs px-3.5 py-2 rounded-xl bg-gray-100 dark:bg-[#89986D]/10 text-gray-700 dark:text-[#F6F0D7]/80 hover:bg-[#2F8F46]/10 hover:text-[#2F8F46] dark:hover:text-[#B7E35F] border border-gray-200/60 dark:border-[#89986D]/15 transition flex items-center gap-1.5"
                     >
