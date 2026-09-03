@@ -167,6 +167,13 @@ export const CommunityFeed: React.FC = () => {
         stories: loadedStories,
         hasMorePosts: loadedPosts.length === API_POSTS_PER_PAGE,
       };
+      try {
+        const suggestedChefs = await communityApi.listSuggestedChefs();
+        setChefs(suggestedChefs);
+      } catch {
+        // Keep the feed usable if an older deployment does not have this route yet.
+        setChefs(getCommunityChefs(loadedPosts));
+      }
       if (session?.user) {
         try {
           const [loadedCollections, loadedNotifications] = await Promise.all([

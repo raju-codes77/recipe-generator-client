@@ -24,6 +24,8 @@ export const CommunitySidebarRight: React.FC<CommunitySidebarRightProps> = ({
   isAuthenticated = true,
   onRequireAuthentication = () => undefined,
 }) => {
+  const [showAllChefs, setShowAllChefs] = React.useState(false);
+  const visibleChefs = showAllChefs ? chefs : chefs.slice(0, 3);
   const liveActivities = React.useMemo(() => {
     return trendingPosts
       .slice(0, 12)
@@ -96,15 +98,25 @@ export const CommunitySidebarRight: React.FC<CommunitySidebarRightProps> = ({
           <h4 className="text-[11px] font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
             Top Community Chefs
           </h4>
-          <span className="text-xs font-semibold text-[#2F8F46] hover:underline cursor-pointer dark:text-[#B7E35F]">
-            See All
-          </span>
+          {chefs.length > 3 && (
+            <button
+              type="button"
+              onClick={() => setShowAllChefs((visible) => !visible)}
+              className="text-xs font-semibold text-[#2F8F46] hover:underline dark:text-[#B7E35F]"
+            >
+              {showAllChefs ? "View Less" : "View More"}
+            </button>
+          )}
         </div>
 
         <div className="space-y-3.5 mt-1">
-          {chefs.map((chef) => (
+          {visibleChefs.map((chef) => (
             <div key={chef.id} className="flex items-center justify-between">
-              <div className="flex items-center gap-3 overflow-hidden">
+              <Link
+                href={`/community/users/${encodeURIComponent(chef.id)}`}
+                className="flex min-w-0 items-center gap-3 overflow-hidden rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2F8F46]"
+                aria-label={`View ${chef.name}'s Community profile`}
+              >
                 <CommunityAvatar
                   src={chef.avatar}
                   alt={chef.name}
@@ -116,7 +128,7 @@ export const CommunitySidebarRight: React.FC<CommunitySidebarRightProps> = ({
                     <span>{chef.recipesCount} recipes</span> • <span>{chef.badge}</span>
                   </p>
                 </div>
-              </div>
+              </Link>
 
               {isAuthenticated ? (
                 <motion.button
@@ -149,6 +161,11 @@ export const CommunitySidebarRight: React.FC<CommunitySidebarRightProps> = ({
               )}
             </div>
           ))}
+          {chefs.length === 0 && (
+            <p className="py-2 text-xs text-neutral-500 dark:text-neutral-400">
+              No active Community members yet.
+            </p>
+          )}
         </div>
       </div>
 

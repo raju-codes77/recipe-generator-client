@@ -1,6 +1,7 @@
 import type {
   DirectMessageUser,
   NotificationItem,
+  Author,
   Post,
   PublicCommunityProfile,
   RecipeCollection,
@@ -94,6 +95,11 @@ export const communityApi = {
     const suffix = query.size ? `?${query.toString()}` : "";
     const response = await request<{ posts: Post[] }>(`/posts${suffix}`);
     return response.posts;
+  },
+
+  async listSuggestedChefs(): Promise<Author[]> {
+    const response = await request<{ chefs: Author[] }>("/suggested-chefs");
+    return response.chefs;
   },
 
   async createPost(post: Post): Promise<Post> {

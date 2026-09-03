@@ -125,32 +125,38 @@ export default function CommunityUserProfilePage() {
   const storyIndex = viewingStory ? storyGroup.findIndex((story) => story.id === viewingStory.id) : 0;
 
   return (
-    <main className="min-h-screen bg-[#FCFDF9] px-4 py-8 text-neutral-900 dark:bg-[#0a0a0a] dark:text-neutral-100 sm:px-6">
+    <main className="min-h-screen bg-[#FCFDF9] px-0 py-4 text-neutral-900 dark:bg-[#0a0a0a] dark:text-neutral-100 sm:px-6 sm:py-8">
       <div className="mx-auto max-w-4xl">
-        <button onClick={() => router.back()} className="mb-5 inline-flex items-center gap-2 text-sm font-semibold text-neutral-500 transition hover:text-[#2F8F46]">
+        <button onClick={() => router.back()} className="mb-4 ml-4 inline-flex items-center gap-2 text-xs font-semibold text-neutral-500 transition hover:text-[#2F8F46] sm:mb-5 sm:ml-0 sm:text-sm">
           <ArrowLeft className="h-4 w-4" /> Back to Community
         </button>
 
-        <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-neutral-800 dark:bg-[#121212] sm:p-8">
-          <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
+        <section className="border-y border-slate-200 bg-white px-4 py-5 shadow-xs dark:border-neutral-800 dark:bg-[#121212] sm:rounded-3xl sm:border sm:p-8">
+          <div className="grid grid-cols-[80px_minmax(0,1fr)] items-start gap-x-4 gap-y-3 sm:flex sm:items-center sm:gap-6">
             <button type="button" onClick={() => hasStories && setViewingStory(storyGroup[0])} className={`shrink-0 rounded-full ${hasStories ? "bg-gradient-to-tr from-[#2F8F46] via-[#B7E35F] to-[#FF9F43] p-1" : ""}`} aria-label={hasStories ? "View user's stories" : "User profile photo"}>
-              <CommunityAvatar src={profile.user.avatar} alt={profile.user.name} className="h-28 w-28 rounded-full border-4 border-white object-cover dark:border-[#121212]" />
+              <CommunityAvatar src={profile.user.avatar} alt={profile.user.name} className="h-20 w-20 rounded-full border-4 border-white object-cover dark:border-[#121212] sm:h-28 sm:w-28" />
             </button>
-            <div className="min-w-0 flex-1">
-              <h1 className="text-2xl font-black tracking-tight">{profile.user.name}</h1>
-              <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">@{profile.user.username}</p>
-              <div className="mt-4 flex flex-wrap gap-5 text-sm">
-                <span><strong>{profile.posts.length}</strong> posts</span>
-                <span><strong>{profile.user.followersCount}</strong> followers</span>
-                <span><strong>{profile.followingCount}</strong> following</span>
+            <div className="col-start-1 row-start-2 min-w-0 text-center sm:hidden">
+              <h1 className="truncate text-base font-black tracking-tight">{profile.user.name}</h1>
+              <p className="mt-1 truncate text-xs text-neutral-500 dark:text-neutral-400">@{profile.user.username}</p>
+            </div>
+            <div className="col-start-2 row-span-2 row-start-1 min-w-0 flex-1 sm:col-auto sm:row-auto">
+              <div className="hidden sm:block">
+                <h1 className="text-2xl font-black tracking-tight">{profile.user.name}</h1>
+                <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">@{profile.user.username}</p>
               </div>
-              <div className="mt-5 flex flex-wrap gap-3">
+              <div className="mt-3 grid grid-cols-3 gap-2 text-center text-[11px] sm:mt-4 sm:flex sm:justify-start sm:gap-5 sm:text-sm">
+                <span><strong className="block text-sm sm:inline">{profile.posts.length}</strong> posts</span>
+                <span><strong className="block text-sm sm:inline">{profile.user.followersCount}</strong> followers</span>
+                <span><strong className="block text-sm sm:inline">{profile.followingCount}</strong> following</span>
+              </div>
+              <div className="mt-4 grid grid-cols-2 gap-2 sm:mt-5 sm:flex sm:flex-wrap sm:gap-3">
                 {profile.user.id !== session?.user?.id && (
-                  <button onClick={() => void updateProfile(() => communityApi.toggleFollow(profile.user.id))} className="inline-flex items-center gap-2 rounded-xl bg-[#2F8F46] px-5 py-2.5 text-xs font-bold text-white transition hover:bg-[#176B35]">
+                  <button onClick={() => void updateProfile(() => communityApi.toggleFollow(profile.user.id))} className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#2F8F46] px-3 py-2.5 text-xs font-bold text-white transition hover:bg-[#176B35] sm:px-5">
                     <UserPlus className="h-4 w-4" /> {profile.user.isFollowing ? "Following" : "Follow"}
                   </button>
                 )}
-                <button onClick={requireAuthentication} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-5 py-2.5 text-xs font-bold text-neutral-700 dark:border-neutral-700 dark:text-neutral-200">
+                <button onClick={requireAuthentication} className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 px-3 py-2.5 text-xs font-bold text-neutral-700 dark:border-neutral-700 dark:text-neutral-200 sm:px-5">
                   <MessageCircle className="h-4 w-4" /> Message
                 </button>
               </div>
