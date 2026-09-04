@@ -123,6 +123,9 @@ export interface PublicCommunityProfile {
   posts: Post[];
   stories: StoryItem[];
   followingCount: number;
+  postsTotal?: number;
+  likesTotal?: number;
+  hasMorePosts?: boolean;
 }
 
 export interface RecipeCollection {

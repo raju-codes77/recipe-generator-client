@@ -41,6 +41,7 @@ interface PostCardProps {
   onRequireAuthentication?: (action: string) => void;
   hasActiveStory?: boolean;
   onAuthorAvatarClick?: () => void;
+  onImageClick?: (post: Post) => void;
 }
 
 export const PostCard: React.FC<PostCardProps> = ({
@@ -60,6 +61,7 @@ export const PostCard: React.FC<PostCardProps> = ({
   onRequireAuthentication = () => undefined,
     hasActiveStory = false,
     onAuthorAvatarClick,
+    onImageClick,
 }) => {
   const [isRecipeModalOpen, setIsRecipeModalOpen] = useState(false);
   const [isCaptionExpanded, setIsCaptionExpanded] = useState(false);
@@ -305,11 +307,13 @@ export const PostCard: React.FC<PostCardProps> = ({
 
       {/* 3. Food Photo with Overlay Metadata Badge */}
       <div className="relative aspect-4/3 sm:aspect-16/10 w-full overflow-hidden bg-neutral-100 dark:bg-neutral-900">
-        <img
-          src={post.imageUrl}
-          alt={post.recipe?.title || "Community Food"}
-          className="h-full w-full object-cover transition duration-500 hover:scale-105"
-        />
+        {onImageClick ? (
+          <button type="button" onClick={() => onImageClick(post)} className="absolute inset-0 h-full w-full cursor-zoom-in text-left" aria-label="Open full-size food image">
+            <img src={post.imageUrl} alt={post.recipe?.title || "Community Food"} className="h-full w-full object-cover transition duration-500 hover:scale-105" />
+          </button>
+        ) : (
+          <img src={post.imageUrl} alt={post.recipe?.title || "Community Food"} className="h-full w-full object-cover transition duration-500 hover:scale-105" />
+        )}
 
         {/* Metadata Chips on Image */}
         {post.recipe && (

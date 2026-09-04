@@ -158,8 +158,13 @@ export const communityApi = {
     return response.interactions;
   },
 
-  async getPublicProfile(userId: string): Promise<PublicCommunityProfile> {
-    const response = await request<{ profile: PublicCommunityProfile }>(`/users/${userId}/profile`);
+  async getPublicProfile(userId: string, options: { take?: number; skip?: number } = {}): Promise<PublicCommunityProfile> {
+    const query = new URLSearchParams();
+    Object.entries(options).forEach(([key, value]) => {
+      if (value !== undefined) query.set(key, String(value));
+    });
+    const suffix = query.size ? `?${query.toString()}` : "";
+    const response = await request<{ profile: PublicCommunityProfile }>(`/users/${userId}/profile${suffix}`);
     return response.profile;
   },
 

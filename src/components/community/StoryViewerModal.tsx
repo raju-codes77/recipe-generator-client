@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
-import { X, Heart, Flame } from 'lucide-react';
+import { X, Heart, Flame, Send, Eye, Pause, Play } from 'lucide-react';
+import Link from 'next/link';
 import { StoryItem } from './types';
 import { CommunityAvatar } from './CommunityAvatar';
 
@@ -12,6 +13,8 @@ interface StoryViewerModalProps {
   onPreviousStory?: () => void;
   storyCount?: number;
   storyIndex?: number;
+  isOwnStory?: boolean;
+  onSendMessage?: (recipientId: string, text: string) => Promise<void>;
 }
 
 export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
@@ -22,14 +25,24 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
   onPreviousStory,
   storyCount = 1,
   storyIndex = 0,
+  isOwnStory = false,
+  onSendMessage,
 }) => {
   const [progress, setProgress] = useState(0);
   const [replyText, setReplyText] = useState('');
   const [liked, setLiked] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
+  const [isPaused, setIsPaused] = useState(false);
 
   useEffect(() => {
     if (!isOpen || !story) return;
     setProgress(0);
+    setIsPaused(false);
+  }, [isOpen, story]);
+
+  useEffect(() => {
+    if (!isOpen || !story || isPaused) return;
     const interval = setInterval(() => {
       setProgress((prev) => {
         if (prev >= 100) {
@@ -41,7 +54,7 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
     }, 100);
 
     return () => clearInterval(interval);
-  }, [isOpen, story]);
+  }, [isOpen, story, isPaused]);
 
   // Handle auto-closing safely in an effect when progress reaches 100
   useEffect(() => {
@@ -56,56 +69,60 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
 
   if (!isOpen || !story) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4 backdrop-blur-md">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.9 }}
-        className="relative w-full max-w-sm rounded-3xl overflow-hidden bg-neutral-900 shadow-2xl h-[580px] flex flex-col"
-      >
-        {/* Story Progress Bar */}
-        <div className="absolute top-3 left-3 right-3 z-20 flex gap-1">
-          {Array.from({ length: storyCount }, (_, index) => (
-            <div key={index} className="h-1 flex-1 overflow-hidden rounded-full bg-white/30">
-              <div
-                className="h-full bg-white transition-all duration-100 ease-linear"
-                style={{ width: index < storyIndex ? '100%' : index === storyIndex ? `${progress}%` : '0%' }}
-              />
-            </div>
-          ))}
-        </div>
+  const sendReply = async () => {
+    const message = replyText.trim();
+    if (!message || !onSendMessage || isSending) return;
+    setIsSending(true);
+    setSendError(null);
+    try {
+      await onSendMessage(story.author.id, message);
+      setReplyText('');
+    } catch (error) {
+      setSendError(error instanceof Error ? error.message : 'Unable to send this message.');
+    } finally {
+      setIsSending(false);
+    }
+  };
 
-        {/* Top Author Info */}
-        <div className="absolute top-6 left-4 right-4 z-20 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <CommunityAvatar
-              src={story.author.avatar}
-              alt={story.author.name}
-              className="h-9 w-9 rounded-full object-cover ring-2 ring-[#2F8F46]"
-            />
-            <div>
-              <h4 className="font-bold text-xs text-white drop-shadow-md">
-                {story.author.name}
-              </h4>
-              <p className="text-[10px] text-white/80">{story.timestamp}</p>
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            className="rounded-full bg-black/40 p-1.5 text-white backdrop-blur-xs hover:bg-black/60"
-          >
-            <X className="h-4 w-4" />
+  return (
+    <div className="fixed inset-0 z-[70] flex h-dvh w-screen items-center justify-center overflow-hidden bg-black text-white">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="relative flex h-full w-full items-center justify-center overflow-hidden"
+      >
+        <div className="absolute left-5 top-5 z-40 flex items-center gap-3 sm:left-8 sm:top-7">
+          <button type="button" onClick={onClose} aria-label="Exit story viewer" className="cursor-pointer rounded-full bg-white/15 p-3 text-white backdrop-blur-sm transition hover:bg-white/25">
+            <X className="h-5 w-5" />
           </button>
+          <Link href="/" aria-label="Go to FoodCanvas home" className="rounded-full bg-white/10 p-1.5 transition hover:bg-white/20">
+            <img src="/logohere.png" alt="FoodCanvas" className="h-9 w-9 rounded-full object-contain" />
+          </Link>
         </div>
 
         {/* Story Image */}
-        <div className="relative flex-1 bg-black">
+        <div className="relative flex h-[min(92dvh,760px)] w-[min(92vw,430px)] shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-[#111827] shadow-2xl ring-1 ring-white/15 sm:rounded-3xl">
+          {/* Story progress, brand, and author stay inside the story canvas. */}
+          <div className="absolute left-5 right-5 top-5 z-20 flex gap-1 sm:left-7 sm:right-7 sm:top-7">
+            {Array.from({ length: storyCount }, (_, index) => (
+              <div key={index} className="h-1 flex-1 overflow-hidden rounded-full bg-white/30">
+                <div className="h-full bg-white transition-all duration-100 ease-linear" style={{ width: index < storyIndex ? '100%' : index === storyIndex ? `${progress}%` : '0%' }} />
+              </div>
+            ))}
+          </div>
+          <div className="absolute left-1/2 top-11 z-20 flex -translate-x-1/2 items-center gap-2.5 sm:top-14">
+            <CommunityAvatar src={story.author.avatar} alt={story.author.name} className="h-10 w-10 rounded-full object-cover ring-2 ring-[#2F8F46]" />
+            <div>
+              <h4 className="text-xs font-bold text-white drop-shadow-md">{story.author.name}</h4>
+              <p className="text-[10px] text-white/80">{story.timestamp}</p>
+            </div>
+          </div>
           {story.imageUrl ? (
             <img
               src={story.imageUrl}
               alt={story.caption}
-              className="h-full w-full object-cover"
+              className="h-full w-full object-contain"
             />
           ) : (
             <div className="flex h-full items-center justify-center text-sm text-white/70">
@@ -131,38 +148,28 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
             />
           )}
 
+          <button type="button" onClick={() => setIsPaused((paused) => !paused)} aria-label={isPaused ? "Resume story" : "Pause story"} className="absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2 rounded-full bg-black/45 p-4 text-white opacity-80 backdrop-blur-sm transition hover:bg-black/65 hover:opacity-100">
+            {isPaused ? <Play className="h-6 w-6 fill-current" /> : <Pause className="h-6 w-6" />}
+          </button>
+
           {/* Caption & Tag */}
-          <div className="absolute bottom-16 left-4 right-4 text-white space-y-1">
+          <div className="absolute bottom-8 left-5 right-5 space-y-1 text-white sm:bottom-10 sm:left-10 sm:right-10">
             {story.tag && (
               <span className="inline-flex items-center gap-1 rounded-full bg-[#FF9F43] px-2.5 py-0.5 text-[10px] font-extrabold text-white">
                 <Flame className="h-3 w-3" /> {story.tag}
               </span>
             )}
-            <p className="text-xs font-medium leading-relaxed drop-shadow-md">
+            <p className="max-w-2xl text-sm font-medium leading-relaxed drop-shadow-md sm:text-base">
               {story.caption}
             </p>
           </div>
+
+          {!isOwnStory && <div className="absolute bottom-3 left-4 right-4 z-20 flex items-center gap-2 sm:bottom-5 sm:left-6 sm:right-6"><input type="text" placeholder="Reply to kitchen story..." value={replyText} onChange={(e) => setReplyText(e.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') void sendReply(); }} className="min-w-0 flex-1 rounded-full border border-white/20 bg-black/35 px-4 py-3 text-sm text-white placeholder-white/70 outline-none backdrop-blur-sm focus:border-[#2F8F46]" /><button type="button" onClick={() => void sendReply()} disabled={!replyText.trim() || isSending} aria-label="Send story reply" className="rounded-full bg-[#2F8F46] p-3 transition hover:bg-[#176B35] disabled:cursor-not-allowed disabled:opacity-50"><Send className="h-4 w-4" /></button><motion.button type="button" whileTap={{ scale: 0.85 }} onClick={() => setLiked(!liked)} aria-label={liked ? 'Remove reaction' : 'React to story'} className={`rounded-full p-3 transition ${liked ? 'bg-rose-500' : 'bg-black/35 hover:bg-black/55'}`}><Heart className={`h-4 w-4 ${liked ? 'fill-white' : ''}`} /></motion.button></div>}
+          {sendError && <p className="absolute bottom-20 left-1/2 z-20 -translate-x-1/2 rounded-lg bg-black/70 px-3 py-1 text-xs text-rose-300">{sendError}</p>}
         </div>
 
-        {/* Story Quick Reply & Reactions */}
-        <div className="absolute bottom-3 left-4 right-4 z-20 flex items-center gap-2">
-          <input
-            type="text"
-            placeholder="Reply to kitchen story..."
-            value={replyText}
-            onChange={(e) => setReplyText(e.target.value)}
-            className="flex-1 rounded-full border border-white/20 bg-white/20 px-3.5 py-1.5 text-xs text-white placeholder-white/60 backdrop-blur-xs focus:outline-hidden"
-          />
-          <motion.button
-            whileTap={{ scale: 0.85 }}
-            onClick={() => setLiked(!liked)}
-            className={`rounded-full p-2 backdrop-blur-xs transition ${
-              liked ? 'bg-rose-500 text-white' : 'bg-white/20 text-white'
-            }`}
-          >
-            <Heart className={`h-4 w-4 ${liked ? 'fill-white' : ''}`} />
-          </motion.button>
-        </div>
+        {isOwnStory && <div className="absolute bottom-4 left-1/2 z-30 flex -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-2xl bg-black/70 px-4 py-2 text-xs font-bold backdrop-blur-sm sm:bottom-7"><Eye className="h-4 w-4 text-[#B7E35F]" /> Story viewers</div>}
+
       </motion.div>
     </div>
   );

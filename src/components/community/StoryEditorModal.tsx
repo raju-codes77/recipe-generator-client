@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { Crop, Eraser, Pencil, RotateCcw, Send, Type, X } from "lucide-react";
+import { UnsavedChangesModal } from "@/components/community/UnsavedChangesModal";
 
 type EditorTool = "crop" | "draw" | "text";
 type ImageFit = "cover" | "contain";
@@ -169,6 +170,7 @@ export const StoryEditorModal: React.FC<StoryEditorModalProps> = ({ file, isOpen
   const [fontStyle, setFontStyle] = useState<FontStyle>("classic");
   const [isSharing, setIsSharing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isCloseConfirmOpen, setIsCloseConfirmOpen] = useState(false);
 
   useEffect(() => {
     if (!file) return;
@@ -314,6 +316,27 @@ export const StoryEditorModal: React.FC<StoryEditorModalProps> = ({ file, isOpen
     setFontStyle("classic");
   };
 
+  const hasUnsavedChanges = Boolean(
+    storyText.trim() ||
+      strokes.length ||
+      zoom !== 1 ||
+      pan.x !== 0 ||
+      pan.y !== 0 ||
+      frameBackground !== "#111827" ||
+      textColor !== "#ffffff" ||
+      textStyle !== "transparent" ||
+      textBackdropColor !== "#2563eb" ||
+      fontStyle !== "classic",
+  );
+
+  const requestClose = () => {
+    if (hasUnsavedChanges) {
+      setIsCloseConfirmOpen(true);
+      return;
+    }
+    onClose();
+  };
+
   const handleShare = async () => {
     if (!file || !imageRef.current) return;
     setError(null);
@@ -364,7 +387,7 @@ export const StoryEditorModal: React.FC<StoryEditorModalProps> = ({ file, isOpen
 
   return (
     <AnimatePresence>
-      {isOpen && file && (
+      {isOpen && file && !isCloseConfirmOpen && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -373,11 +396,15 @@ export const StoryEditorModal: React.FC<StoryEditorModalProps> = ({ file, isOpen
           role="dialog"
           aria-modal="true"
           aria-label="Edit your Community story"
+          onClick={(event) => {
+            if (!(event.target instanceof Element && event.target.closest("[data-story-editor]"))) requestClose();
+          }}
         >
           <motion.div
             initial={{ opacity: 0, y: 20, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.98 }}
+            data-story-editor
             className="flex max-h-[94vh] w-full max-w-5xl flex-col overflow-hidden rounded-3xl border border-emerald-200 bg-white shadow-2xl dark:border-emerald-900/60 dark:bg-[#121212]"
           >
             <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-neutral-800 sm:px-6">
@@ -388,7 +415,7 @@ export const StoryEditorModal: React.FC<StoryEditorModalProps> = ({ file, isOpen
                 </p>
               </div>
               <button
-                onClick={onClose}
+                onClick={requestClose}
                 disabled={isSharing}
                 className="rounded-full p-2 text-neutral-500 transition hover:bg-neutral-100 dark:hover:bg-neutral-800"
                 aria-label="Cancel story editing"
@@ -615,7 +642,7 @@ export const StoryEditorModal: React.FC<StoryEditorModalProps> = ({ file, isOpen
 
             <div className="flex items-center justify-between gap-3 border-t border-slate-100 px-5 py-4 dark:border-neutral-800 sm:px-6">
               <button
-                onClick={onClose}
+                onClick={requestClose}
                 disabled={isSharing}
                 className="rounded-xl px-4 py-2.5 text-xs font-bold text-neutral-600 transition hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800"
               >
@@ -633,6 +660,13 @@ export const StoryEditorModal: React.FC<StoryEditorModalProps> = ({ file, isOpen
           </motion.div>
         </motion.div>
       )}
+      <UnsavedChangesModal
+        isOpen={isCloseConfirmOpen && isOpen && Boolean(file)}
+        title="Discard story edits?"
+        message="You have unsaved story edits. Do you want to close this editor without sharing?"
+        onKeepEditing={() => setIsCloseConfirmOpen(false)}
+        onDiscard={() => { setIsCloseConfirmOpen(false); onClose(); }}
+      />
     </AnimatePresence>
   );
 };
