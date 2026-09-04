@@ -384,7 +384,7 @@ export default function CommunityUserProfilePage() {
       <StoryViewerModal
         story={viewingStory}
         isOpen={Boolean(viewingStory)}
-        isOwnStory={Boolean(viewingStory && viewingStory.author.id === session?.user?.id)}
+        isOwnStory={isOwnProfile === true}
         onClose={() => setViewingStory(null)}
         onSendMessage={async (recipientId, text) => { await communityApi.sendMessage(recipientId, text); }}
         onNextStory={handleNextStory}

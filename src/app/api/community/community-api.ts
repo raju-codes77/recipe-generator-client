@@ -199,7 +199,7 @@ export const communityApi = {
     return response.stories;
   },
 
-  createStory(imageUrl: string, caption: string) {
+  createStory(imageUrl: string, caption = "") {
     return request("/stories", {
       method: "POST",
       body: JSON.stringify({ imageUrl, caption }),

@@ -34,6 +34,7 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
   const [isSending, setIsSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
   const [isPaused, setIsPaused] = useState(false);
+  const [isInsightsOpen, setIsInsightsOpen] = useState(false);
 
   useEffect(() => {
     if (!isOpen || !story) return;
@@ -102,7 +103,7 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
         </div>
 
         {/* Story Image */}
-        <div className="relative flex h-[min(92dvh,760px)] w-[min(92vw,430px)] shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-[#111827] shadow-2xl ring-1 ring-white/15 sm:rounded-3xl">
+        <div className="relative flex h-[min(92dvh,680px)] w-[min(90vw,384px)] shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-[#111827] shadow-2xl ring-1 ring-white/15 sm:rounded-3xl">
           {/* Story progress, brand, and author stay inside the story canvas. */}
           <div className="absolute left-5 right-5 top-5 z-20 flex gap-1 sm:left-7 sm:right-7 sm:top-7">
             {Array.from({ length: storyCount }, (_, index) => (
@@ -111,7 +112,7 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
               </div>
             ))}
           </div>
-          <div className="absolute left-1/2 top-11 z-20 flex -translate-x-1/2 items-center gap-2.5 sm:top-14">
+          <div className="absolute left-5 top-11 z-20 flex items-center gap-2.5 sm:left-7 sm:top-14">
             <CommunityAvatar src={story.author.avatar} alt={story.author.name} className="h-10 w-10 rounded-full object-cover ring-2 ring-[#2F8F46]" />
             <div>
               <h4 className="text-xs font-bold text-white drop-shadow-md">{story.author.name}</h4>
@@ -148,8 +149,8 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
             />
           )}
 
-          <button type="button" onClick={() => setIsPaused((paused) => !paused)} aria-label={isPaused ? "Resume story" : "Pause story"} className="absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2 rounded-full bg-black/45 p-4 text-white opacity-80 backdrop-blur-sm transition hover:bg-black/65 hover:opacity-100">
-            {isPaused ? <Play className="h-6 w-6 fill-current" /> : <Pause className="h-6 w-6" />}
+          <button type="button" onClick={() => setIsPaused((paused) => !paused)} aria-label={isPaused ? "Resume story" : "Pause story"} className="absolute right-5 top-11 z-30 rounded-full bg-black/45 p-3 text-white backdrop-blur-sm transition hover:bg-black/65 sm:right-7 sm:top-14">
+            {isPaused ? <Play className="h-5 w-5 fill-current" /> : <Pause className="h-5 w-5" />}
           </button>
 
           {/* Caption & Tag */}
@@ -168,7 +169,7 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
           {sendError && <p className="absolute bottom-20 left-1/2 z-20 -translate-x-1/2 rounded-lg bg-black/70 px-3 py-1 text-xs text-rose-300">{sendError}</p>}
         </div>
 
-        {isOwnStory && <div className="absolute bottom-4 left-1/2 z-30 flex -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-2xl bg-black/70 px-4 py-2 text-xs font-bold backdrop-blur-sm sm:bottom-7"><Eye className="h-4 w-4 text-[#B7E35F]" /> Story viewers</div>}
+        {isOwnStory && <div className="absolute bottom-4 left-1/2 z-30 -translate-x-1/2 sm:bottom-7"><button type="button" onClick={() => setIsInsightsOpen((open) => !open)} className="flex items-center gap-2 whitespace-nowrap rounded-2xl bg-black/70 px-4 py-2 text-xs font-bold backdrop-blur-sm transition hover:bg-black/85"><Eye className="h-4 w-4 text-[#B7E35F]" /> Story viewers <span className="text-neutral-400">⌃</span></button>{isInsightsOpen && <div className="absolute bottom-full left-1/2 mb-2 w-[min(340px,88vw)] -translate-x-1/2 rounded-2xl border border-white/10 bg-[#202522] p-4 text-left shadow-2xl"><p className="text-sm font-black">Story viewers</p><p className="mt-1 text-xs text-neutral-400">Viewer and reaction details will appear here after story tracking is connected.</p><div className="mt-4 rounded-xl bg-white/5 p-3 text-xs text-neutral-500">No viewer data available yet.</div></div>}</div>}
 
       </motion.div>
     </div>

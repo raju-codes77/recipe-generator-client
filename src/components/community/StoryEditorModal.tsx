@@ -376,7 +376,7 @@ export const StoryEditorModal: React.FC<StoryEditorModalProps> = ({ file, isOpen
       const editedFile = new File([outputBlob], `${file.name.replace(/\.[^.]+$/, "") || "foodcanvas-story"}.jpg`, {
         type: "image/jpeg",
       });
-      await onShare(editedFile, storyText.trim() || "Shared a kitchen story");
+      await onShare(editedFile, storyText.trim());
       onClose();
     } catch (shareError) {
       setError(shareError instanceof Error ? shareError.message : "Unable to share this story.");
