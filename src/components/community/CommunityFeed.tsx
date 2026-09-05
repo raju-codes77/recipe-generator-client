@@ -335,6 +335,15 @@ export const CommunityFeed: React.FC = () => {
   const handleDeletePost = (postId: string) =>
     void runMutation(() => communityApi.deletePost(postId), "Post deleted");
 
+  const handleEditPost = async (post: Post) => {
+    const caption = window.prompt("Edit post caption", post.caption);
+    if (caption === null || !caption.trim()) return;
+    await runMutation(() => communityApi.updatePost(post.id, { caption: caption.trim() }), "Post updated");
+  };
+
+  const handleTogglePin = (postId: string, isPinned: boolean) =>
+    void runMutation(() => communityApi.updatePost(postId, { isPinned }), isPinned ? "Post pinned to your profile" : "Post unpinned");
+
   const handleSaveToCollection = (collectionId: string, postId: string) =>
     void runMutation(() => communityApi.savePost(postId, collectionId), "Saved recipe to your collection!");
 
@@ -795,6 +804,8 @@ export const CommunityFeed: React.FC = () => {
                     onRate={(p) => void handleOpenReview(p)}
                     onReport={(p) => setReportModalPost(p)}
                     onDelete={handleDeletePost}
+                    onEdit={handleEditPost}
+                    onTogglePin={handleTogglePin}
                     onDirectMessage={(authorId, p) => handleOpenDM(authorId, p)}
                     onToggleFollow={handleToggleFollow}
                     onAddComment={handleAddComment}
@@ -948,7 +959,6 @@ export const CommunityFeed: React.FC = () => {
         profileImage={session?.user?.image}
         notifications={notifications}
         onOpenMessages={() => {
-          setViewingStory(null);
           setDmRecipientId(undefined);
           setDmAttachedPost(null);
           setDmModalOpen(true);

@@ -3,6 +3,10 @@ export interface Author {
   name: string;
   username: string;
   avatar: string;
+  bio?: string;
+  location?: string;
+  interests?: string[];
+  coverImage?: string;
   badge?: string; // e.g. "Verified Chef", "Top Contributor", "Healthy Foodie"
   role: 'user' | 'creator' | 'chef' | 'admin';
   followersCount: number;

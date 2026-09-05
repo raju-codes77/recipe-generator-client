@@ -173,6 +173,14 @@ export const communityApi = {
     return response.collections;
   },
 
+  async listSavedPosts({ take, skip }: CommunityPostsPageOptions = {}): Promise<{ posts: Post[]; hasMore: boolean }> {
+    const query = new URLSearchParams();
+    if (take !== undefined) query.set("take", String(take));
+    if (skip !== undefined) query.set("skip", String(skip));
+    const suffix = query.size ? `?${query.toString()}` : "";
+    return request<{ posts: Post[]; hasMore: boolean }>(`/saved-posts${suffix}`);
+  },
+
   createCollection(name: string, description: string) {
     return request("/collections", {
       method: "POST",
@@ -196,6 +204,10 @@ export const communityApi = {
 
   deletePost(postId: string) {
     return request<void>(`/posts/${postId}`, { method: "DELETE" });
+  },
+
+  updatePost(postId: string, data: { caption?: string; tags?: string[]; isPinned?: boolean }) {
+    return request<void>(`/posts/${postId}`, { method: "PATCH", body: JSON.stringify(data) });
   },
 
   async listStories(): Promise<StoryItem[]> {
@@ -223,7 +235,7 @@ export const communityApi = {
     return request(`/notifications/${notificationId}/read`, { method: "PATCH" });
   },
 
-  async uploadImage(file: File, folder: "posts" | "stories"): Promise<string> {
+  async uploadImage(file: File, folder: "posts" | "stories" | "profiles"): Promise<string> {
     const maxImageBytes = 6 * 1024 * 1024;
     if (file.size > maxImageBytes) {
       throw new Error("Image must be 6 MB or smaller");
@@ -236,6 +248,13 @@ export const communityApi = {
     });
 
     return response.url;
+  },
+
+  updateProfile(data: { name?: string; bio?: string; location?: string; interests?: string[]; image?: string; coverImage?: string }) {
+    return request<{ profile: { id: string; name: string; image: string | null; bio: string | null; location: string | null; interests: string[]; coverImage: string | null } }>("/users/me/profile", {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    });
   },
 
   async listContacts(includeUserId?: string): Promise<DirectMessageUser[]> {

@@ -108,7 +108,6 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
 
   const navigateFromStory = (href: string) => {
     setIsNotificationsOpen(false);
-    onClose();
     router.push(href);
   };
 
@@ -161,12 +160,12 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[70] flex h-dvh w-screen items-center justify-center overflow-hidden bg-[#F5F7F2] text-neutral-900 dark:bg-black dark:text-white">
+    <div className="fixed inset-0 z-[70] flex h-dvh w-screen items-center justify-center overflow-hidden bg-[#F5F7F2] text-neutral-900 shadow-none dark:bg-black dark:text-white">
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="relative flex h-full w-full items-center justify-center overflow-hidden"
+        className="relative flex h-full w-full items-center justify-center overflow-hidden shadow-none"
       >
         {onPreviousStory && <button type="button" onClick={onPreviousStory} aria-label="Previous story" className="absolute inset-y-0 left-0 z-0 w-1/2 cursor-pointer" />}
         {onNextStory && <button type="button" onClick={onNextStory} aria-label="Next story" className="absolute inset-y-0 right-0 z-0 w-1/2 cursor-pointer" />}
@@ -175,8 +174,8 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
           <button type="button" onClick={onClose} aria-label="Exit story viewer" className="cursor-pointer rounded-full border border-neutral-200 bg-white/90 p-3 text-neutral-800 shadow-sm backdrop-blur-sm transition hover:bg-white dark:border-white/10 dark:bg-white/15 dark:text-white dark:hover:bg-white/25">
             <X className="h-5 w-5" />
           </button>
-          <button type="button" onClick={() => navigateFromStory('/')} aria-label="Go to FoodCanvas home" className="rounded-full border border-neutral-200 bg-white/90 p-1.5 shadow-sm transition hover:bg-white dark:border-white/10 dark:bg-white/10 dark:hover:bg-white/20">
-            <img src="/logohere.png" alt="FoodCanvas" className="h-9 w-9 rounded-full object-contain" />
+          <button type="button" onClick={() => navigateFromStory('/')} aria-label="Go to FoodCanvas home" className="rounded-full transition hover:scale-105">
+            <img src="/logohere.png" alt="FoodCanvas" className="h-10 w-10 rounded-full object-cover" />
           </button>
         </div>
 
@@ -211,9 +210,9 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
         </div>
 
         {/* Story Image */}
-        <div className="relative z-10 flex items-center justify-center">
+        <div className="relative z-10 flex items-center justify-center shadow-none ring-0">
           {onPreviousStory && <button type="button" onClick={onPreviousStory} onPointerEnter={() => setHoveredStorySide('previous')} onPointerLeave={() => setHoveredStorySide(null)} aria-label="Previous story" className={`absolute right-full mr-10 hidden h-12 w-12 items-center justify-center rounded-full border border-neutral-200 text-neutral-700 shadow-xl backdrop-blur-sm transition duration-200 dark:border-white/10 dark:text-white lg:flex ${hoveredStorySide === 'previous' ? 'scale-110 bg-white animate-pulse dark:bg-white/35' : 'scale-100 bg-white/80 dark:bg-white/20'}`}><ChevronLeft className="h-7 w-7" /></button>}
-          <div className="relative flex h-[min(92dvh,680px)] w-[min(88vw,382px)] shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-[#111827] sm:rounded-3xl">
+          <div className="relative flex h-[min(92dvh,680px)] w-[min(88vw,360px)] shrink-0 items-center justify-center overflow-hidden rounded-2xl border-0 bg-white shadow-none ring-0 dark:bg-[#111827] sm:rounded-3xl" style={{ boxShadow: 'none' }}>
           {/* Story progress, brand, and author stay inside the story canvas. */}
           <div className="absolute left-5 right-5 top-5 z-20 flex gap-1 sm:left-7 sm:right-7 sm:top-7">
             {Array.from({ length: storyCount }, (_, index) => (

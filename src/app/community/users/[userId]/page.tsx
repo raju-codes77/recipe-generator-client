@@ -12,7 +12,46 @@ import { CreatePostModal } from "@/components/community/CreatePostModal";
 import { StoryViewerModal } from "@/components/community/StoryViewerModal";
 import { StoryEditorModal } from "@/components/community/StoryEditorModal";
 import { UnsavedChangesModal } from "@/components/community/UnsavedChangesModal";
+import { RecipeDetailsModal } from "@/components/community/RecipeDetailsModal";
 import type { Post, PublicCommunityProfile, StoryItem } from "@/components/community/types";
+
+function ProfileSkeleton() {
+  return (
+    <main className="min-h-screen bg-[#F1F5F0] px-0 pb-10 dark:bg-[#090B0A] sm:px-6 sm:pt-5">
+      <div className="mx-auto max-w-5xl animate-pulse">
+        <div className="mb-4 h-4 w-32 rounded bg-neutral-200 dark:bg-neutral-800" />
+        <section className="overflow-hidden border-y border-slate-200 bg-white dark:border-neutral-800 dark:bg-[#121614] sm:rounded-3xl sm:border">
+          <div className="h-36 bg-neutral-200 dark:bg-neutral-800 sm:h-64" />
+          <div className="relative px-4 pb-7 sm:px-10">
+            <div className="-mt-14 flex flex-col gap-4 sm:-mt-20 sm:flex-row sm:items-end">
+              <div className="h-40 w-40 shrink-0 rounded-full border-8 border-white bg-neutral-200 dark:border-[#121614] dark:bg-neutral-800" />
+              <div className="flex-1 space-y-3 pb-2">
+                <div className="h-7 w-48 rounded bg-neutral-200 dark:bg-neutral-800" />
+                <div className="h-4 w-64 rounded bg-neutral-200 dark:bg-neutral-800" />
+              </div>
+              <div className="h-10 w-28 rounded-xl bg-neutral-200 dark:bg-neutral-800" />
+            </div>
+            <div className="mt-5 h-5 w-full max-w-2xl rounded bg-neutral-200 dark:bg-neutral-800" />
+            <div className="mt-3 h-4 w-40 rounded bg-neutral-200 dark:bg-neutral-800" />
+            <div className="mt-6 h-14 rounded bg-neutral-200 dark:bg-neutral-800" />
+          </div>
+          <div className="flex gap-6 border-t border-slate-200 px-4 py-4 dark:border-neutral-800 sm:px-10">
+            {[1, 2, 3, 4, 5].map((item) => (
+              <div key={`profile-tab-skeleton-${item}`} className="h-4 w-20 rounded bg-neutral-200 dark:bg-neutral-800" />
+            ))}
+          </div>
+        </section>
+        <section className="mt-6 grid gap-6 lg:grid-cols-[300px_minmax(0,1fr)]">
+          <div className="h-64 rounded-3xl bg-white dark:bg-[#121614]" />
+          <div className="space-y-6">
+            <div className="h-28 rounded-3xl bg-white dark:bg-[#121614]" />
+            <div className="h-[520px] rounded-3xl bg-white dark:bg-[#121614]" />
+          </div>
+        </section>
+      </div>
+    </main>
+  );
+}
 
 export default function CommunityUserProfilePage() {
   const { userId } = useParams<{ userId: string }>();
@@ -22,7 +61,7 @@ export default function CommunityUserProfilePage() {
   const [viewingStory, setViewingStory] = useState<StoryItem | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"Overview" | "My Recipes" | "Saved" | "Collections" | "About">("Overview");
+  const [activeTab, setActiveTab] = useState<"Overview" | "My Recipes" | "Saved" | "About">("Overview");
   const [localCoverImage, setLocalCoverImage] = useState<string | null>(null);
   const [localAvatarImage, setLocalAvatarImage] = useState<string | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -34,6 +73,13 @@ export default function CommunityUserProfilePage() {
   const [isCreateRecipeOpen, setIsCreateRecipeOpen] = useState(false);
   const [hasMorePosts, setHasMorePosts] = useState(false);
   const [isLoadingMorePosts, setIsLoadingMorePosts] = useState(false);
+  const [savedPosts, setSavedPosts] = useState<Post[]>([]);
+  const [isLoadingSavedPosts, setIsLoadingSavedPosts] = useState(false);
+  const [savedPostsError, setSavedPostsError] = useState<string | null>(null);
+  const [savedPostDetails, setSavedPostDetails] = useState<Post | null>(null);
+  const [isUploadingProfileImage, setIsUploadingProfileImage] = useState(false);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [profileSaveError, setProfileSaveError] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ name: "", bio: "", location: "", interests: "" });
   const [localProfileInfo, setLocalProfileInfo] = useState({ bio: "Sharing simple recipes, kitchen experiments, and everyday food inspiration with the FoodCanvas community.", location: "Home cook", interests: ["Home Cooking", "Healthy Meals", "Quick Recipes"] });
   const coverInputRef = useRef<HTMLInputElement>(null);
@@ -60,6 +106,13 @@ export default function CommunityUserProfilePage() {
     try {
       const loadedProfile = await communityApi.getPublicProfile(userId, { take: 6, skip });
       setProfile((currentProfile) => append && currentProfile ? { ...loadedProfile, posts: [...currentProfile.posts, ...loadedProfile.posts] } : loadedProfile);
+      if (!append) {
+        setLocalProfileInfo({
+          bio: loadedProfile.user.bio || "",
+          location: loadedProfile.user.location || "",
+          interests: loadedProfile.user.interests || [],
+        });
+      }
       setHasMorePosts(Boolean(loadedProfile.hasMorePosts));
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : "Unable to load this profile");
@@ -82,6 +135,39 @@ export default function CommunityUserProfilePage() {
     const timer = window.setTimeout(() => void loadProfile(), 0);
     return () => window.clearTimeout(timer);
   }, [loadProfile]);
+
+  useEffect(() => {
+    if (activeTab !== "Saved" || !profile || profile.user.id !== session?.user?.id) return;
+    let cancelled = false;
+    setIsLoadingSavedPosts(true);
+    setSavedPostsError(null);
+    void communityApi.listSavedPosts({ take: 30 })
+      .then((response) => {
+        if (!cancelled) setSavedPosts(response.posts);
+      })
+      .catch((loadError) => {
+        if (!cancelled) setSavedPostsError(loadError instanceof Error ? loadError.message : "Unable to load saved posts");
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoadingSavedPosts(false);
+      });
+    return () => { cancelled = true; };
+  }, [activeTab, profile, session?.user?.id]);
+
+  useEffect(() => {
+    const previousScrollRestoration = window.history.scrollRestoration;
+    window.history.scrollRestoration = "manual";
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+
+    const frame = window.requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.history.scrollRestoration = previousScrollRestoration;
+    };
+  }, [userId]);
 
   const storyGroup = useMemo(() => profile?.stories.slice().reverse() ?? [], [profile]);
 
@@ -156,10 +242,11 @@ export default function CommunityUserProfilePage() {
     if (!profile || !isOwnProfile) return;
     setEditForm({
       name: profile.user.name,
-      bio: localProfileInfo.bio,
-      location: localProfileInfo.location,
-      interests: localProfileInfo.interests.join(", "),
+      bio: profile.user.bio || localProfileInfo.bio,
+      location: profile.user.location || localProfileInfo.location,
+      interests: (profile.user.interests || localProfileInfo.interests).join(", "),
     });
+    setProfileSaveError(null);
     setIsEditModalOpen(true);
   };
 
@@ -180,19 +267,36 @@ export default function CommunityUserProfilePage() {
     setIsEditModalOpen(false);
   };
 
-  const handleLocalImage = (event: ChangeEvent<HTMLInputElement>, setImage: (image: string) => void) => {
+  const handleProfileImage = async (event: ChangeEvent<HTMLInputElement>, kind: "avatar" | "cover") => {
     const file = event.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.addEventListener("load", () => {
-      if (typeof reader.result === "string") setImage(reader.result);
-    });
-    reader.readAsDataURL(file);
     event.target.value = "";
+
+    if (!isOwnProfile) return;
+    setIsUploadingProfileImage(true);
+    setProfileSaveError(null);
+    try {
+      const imageUrl = await communityApi.uploadImage(file, "profiles");
+      const response = await communityApi.updateProfile(kind === "avatar" ? { image: imageUrl } : { coverImage: imageUrl });
+      setProfile((currentProfile) => currentProfile ? {
+        ...currentProfile,
+        user: {
+          ...currentProfile.user,
+          avatar: response.profile.image || currentProfile.user.avatar,
+          coverImage: response.profile.coverImage || currentProfile.user.coverImage,
+        },
+      } : currentProfile);
+      if (kind === "avatar") setLocalAvatarImage(imageUrl);
+      else setLocalCoverImage(imageUrl);
+    } catch (uploadError) {
+      setProfileSaveError(uploadError instanceof Error ? uploadError.message : "Unable to upload the profile image");
+    } finally {
+      setIsUploadingProfileImage(false);
+    }
   };
 
   if (loading) {
-    return <main className="min-h-screen bg-[#FCFDF9] p-6 text-center text-sm text-neutral-500 dark:bg-[#0a0a0a]">Loading profile...</main>;
+    return <ProfileSkeleton />;
   }
 
   if (error || !profile) {
@@ -210,7 +314,7 @@ export default function CommunityUserProfilePage() {
   const hasProfileImage = Boolean(localAvatarImage || profile.user.avatar);
   const canOpenProfileMenu = isOwnProfile || hasProfileImage || hasStories;
   const storyIndex = viewingStory ? storyGroup.findIndex((story) => story.id === viewingStory.id) : 0;
-  const coverImage = profile.posts[0]?.imageUrl;
+  const coverImage = localCoverImage || profile.user.coverImage;
   const recipePosts = profile.posts.filter((post) => post.recipe);
   const visiblePosts = activeTab === "My Recipes" ? recipePosts : profile.posts;
 
@@ -222,11 +326,11 @@ export default function CommunityUserProfilePage() {
         </button>
 
         <section className="overflow-hidden border-y border-slate-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-[#121614] sm:rounded-3xl sm:border">
-          <div onClick={() => isOwnProfile && coverInputRef.current?.click()} className={`relative h-36 overflow-hidden bg-gradient-to-br from-[#183E28] via-[#2F8F46] to-[#B7E35F] sm:h-64 ${isOwnProfile ? "cursor-pointer" : ""}`}>
-            {(localCoverImage || coverImage) && <img src={localCoverImage || coverImage} alt="Featured food" className="h-full w-full object-cover" />}
+          <div onClick={() => coverImage && setSelectedImage({ src: coverImage, alt: `${profile.user.name}'s cover photo` })} className={`relative h-36 overflow-hidden bg-gradient-to-br from-[#183E28] via-[#2F8F46] to-[#B7E35F] sm:h-64 ${coverImage ? "cursor-pointer" : ""}`}>
+            {coverImage && <img src={coverImage} alt="Profile cover" className="h-full w-full cursor-pointer object-cover" />}
             {isOwnProfile && <>
-              <input ref={coverInputRef} type="file" accept="image/*" className="hidden" onChange={(event) => handleLocalImage(event, setLocalCoverImage)} />
-              <button type="button" onClick={(event) => { event.stopPropagation(); coverInputRef.current?.click(); }} className="absolute bottom-3 right-3 inline-flex items-center gap-2 rounded-xl bg-black/65 px-3 py-2 text-xs font-bold text-white backdrop-blur transition hover:bg-black/80"><Camera className="h-4 w-4" /> Change cover</button>
+              <input ref={coverInputRef} type="file" accept="image/*" className="hidden" onChange={(event) => void handleProfileImage(event, "cover")} />
+              <button type="button" disabled={isUploadingProfileImage} aria-busy={isUploadingProfileImage} onClick={(event) => { event.preventDefault(); event.stopPropagation(); if (!isUploadingProfileImage) coverInputRef.current?.click(); }} className="absolute bottom-3 right-3 z-20 inline-flex cursor-pointer items-center gap-2 rounded-xl bg-black/65 px-3 py-2 text-xs font-bold text-white backdrop-blur transition hover:bg-black/80 disabled:cursor-wait disabled:opacity-60"><Camera className="h-4 w-4" /> {isUploadingProfileImage ? "Uploading..." : "Change cover"}</button>
             </>}
           </div>
 
@@ -240,13 +344,13 @@ export default function CommunityUserProfilePage() {
                 {profileMenuOpen && canOpenProfileMenu && <div className="absolute left-0 top-[calc(100%+0.75rem)] z-50 w-64 rounded-2xl border border-neutral-700 bg-[#242725] p-2 text-left shadow-2xl">
                   {hasProfileImage && <button type="button" onClick={() => { setSelectedImage({ src: localAvatarImage || profile.user.avatar, alt: `${profile.user.name}'s profile picture` }); setProfileMenuOpen(false); }} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-white hover:bg-white/10"><Eye className="h-5 w-5 text-neutral-300" /> View profile picture</button>}
                   {isOwnProfile && <>
-                    <button type="button" onClick={() => { avatarInputRef.current?.click(); setProfileMenuOpen(false); }} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-white hover:bg-white/10"><Camera className="h-5 w-5 text-neutral-300" /> Choose profile picture</button>
+                    <button type="button" disabled={isUploadingProfileImage} onClick={() => { avatarInputRef.current?.click(); setProfileMenuOpen(false); }} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-white hover:bg-white/10 disabled:opacity-60"><Camera className="h-5 w-5 text-neutral-300" /> Choose profile picture</button>
                     <button type="button" onClick={() => { storyInputRef.current?.click(); setProfileMenuOpen(false); }} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-white hover:bg-white/10"><span className="text-lg">＋</span> Add to story</button>
                   </>}
                   {hasStories && <button type="button" onClick={() => { setViewingStory(storyGroup[0] ?? null); setProfileMenuOpen(false); }} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-white hover:bg-white/10"><Eye className="h-5 w-5 text-[#B7E35F]" /> View story</button>}
                 </div>}
               </div>
-              {isOwnProfile && <><input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={(event) => handleLocalImage(event, setLocalAvatarImage)} /><input ref={storyInputRef} type="file" accept="image/*" className="hidden" onChange={(event) => { const file = event.target.files?.[0] || null; setStoryEditorFile(file); event.target.value = ""; }} /></>}
+              {isOwnProfile && <><input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={(event) => void handleProfileImage(event, "avatar")} /><input ref={storyInputRef} type="file" accept="image/*" className="hidden" onChange={(event) => { const file = event.target.files?.[0] || null; setStoryEditorFile(file); event.target.value = ""; }} /></>}
               <div className="min-w-0 flex-1 sm:min-w-0 sm:translate-y-1 sm:pb-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <h1 className="text-2xl font-black tracking-tight sm:text-3xl">{profile.user.name}</h1>
@@ -283,41 +387,38 @@ export default function CommunityUserProfilePage() {
           </div>
 
           <nav className="flex overflow-x-auto border-t border-slate-200 px-4 sm:px-10 dark:border-neutral-800" aria-label="Profile sections">
-            {['Overview', 'My Recipes', 'Saved', 'Collections', 'About'].map((tab) => (
+            {['Overview', 'My Recipes', 'Saved', 'About'].map((tab) => (
               <button key={tab} type="button" onClick={() => setActiveTab(tab as typeof activeTab)} className={`shrink-0 border-b-2 px-4 py-4 text-sm font-bold transition first:pl-0 ${activeTab === tab ? 'border-[#2F8F46] text-[#2F8F46]' : 'border-transparent text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200'}`}>{tab}</button>
             ))}
           </nav>
         </section>
 
         {activeTab === "Saved" ? (
-          <div className="mt-6 rounded-3xl border border-dashed border-slate-300 bg-white p-10 text-center dark:border-neutral-700 dark:bg-[#121614]">
-            <Heart className="mx-auto h-8 w-8 text-[#FF6B6B]" /><h2 className="mt-3 text-xl font-black">Saved recipes</h2><p className="mx-auto mt-2 max-w-md text-sm leading-6 text-neutral-500">Recipes saved by {profile.user.name.split(" ")[0]} will appear here.</p>
-          </div>
-        ) : activeTab === "Collections" ? (
-          <div className="mt-6 rounded-3xl border border-dashed border-slate-300 bg-white p-10 text-center dark:border-neutral-700 dark:bg-[#121614]">
-            <BookOpen className="mx-auto h-8 w-8 text-[#2F8F46]" /><h2 className="mt-3 text-xl font-black">Recipe collections</h2><p className="mx-auto mt-2 max-w-md text-sm leading-6 text-neutral-500">Personal recipe collections will appear here when they are created.</p>
+          <div className="mt-6 rounded-3xl border border-slate-200 bg-white p-5 dark:border-neutral-800 dark:bg-[#121614] sm:p-6">
+            <div className="flex items-center gap-3"><Heart className="h-6 w-6 text-[#FF6B6B]" /><div><h2 className="text-xl font-black">Saved posts & recipes</h2><p className="mt-1 text-sm text-neutral-500">Your saved community content appears here.</p></div></div>
+            {profile.user.id !== session?.user?.id ? <div className="mt-6 rounded-2xl border border-dashed border-slate-300 p-10 text-center text-sm text-neutral-500 dark:border-neutral-700">Saved posts are private.</div> : isLoadingSavedPosts ? <div className="mt-6 grid gap-5 sm:grid-cols-2">{[1, 2, 3, 4].map((item) => <div key={`saved-skeleton-${item}`} className="h-64 animate-pulse rounded-2xl bg-neutral-100 dark:bg-neutral-800" />)}</div> : savedPostsError ? <div className="mt-6 rounded-2xl border border-rose-200 bg-rose-50 p-6 text-center text-sm text-rose-600 dark:border-rose-900 dark:bg-rose-950/20 dark:text-rose-300">{savedPostsError}</div> : savedPosts.length === 0 ? <div className="mt-6 rounded-2xl border border-dashed border-slate-300 p-10 text-center text-sm text-neutral-500 dark:border-neutral-700">No saved posts or recipes yet.</div> : <div className="mt-6 grid gap-5 sm:grid-cols-2">{savedPosts.map((post) => <article key={post.id} className="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-neutral-800 dark:bg-[#171B18]"><button type="button" onClick={() => post.recipe ? setSavedPostDetails(post) : setSelectedImage({ src: post.imageUrl, alt: "Saved FoodCanvas post" })} className="block w-full text-left"><img src={post.imageUrl} alt={post.recipe?.title || "Saved FoodCanvas post"} className="h-48 w-full object-cover transition duration-300 hover:scale-[1.02]" /></button><div className="p-4"><p className="line-clamp-2 text-sm font-bold">{post.recipe?.title || post.caption}</p><p className="mt-2 text-xs text-neutral-500">by {post.author.name}</p><button type="button" onClick={() => post.recipe ? setSavedPostDetails(post) : setSelectedImage({ src: post.imageUrl, alt: "Saved FoodCanvas post" })} className="mt-4 text-xs font-bold text-[#2F8F46] hover:underline">{post.recipe ? "View recipe details" : "View post image"}</button><button type="button" onClick={() => { setSavedPosts((current) => current.filter((savedPost) => savedPost.id !== post.id)); void communityApi.savePost(post.id); }} className="ml-4 mt-4 text-xs font-bold text-[#2F8F46] hover:underline">Remove from saved</button></div></article>)}</div>}
           </div>
         ) : activeTab === "About" ? (
           <div className="mt-6 grid gap-6 md:grid-cols-2">
-            <div className="rounded-3xl border border-slate-200 bg-white p-6 dark:border-neutral-800 dark:bg-[#121614]"><h2 className="text-xl font-black">About {profile.user.name}</h2><p className="mt-4 text-sm leading-7 text-neutral-600 dark:text-neutral-300">{localProfileInfo.bio}</p><div className="mt-6 space-y-4 text-sm text-neutral-500 dark:text-neutral-400"><p className="flex items-center gap-3"><MapPin className="h-5 w-5 text-[#2F8F46]" /> {localProfileInfo.location}</p><p className="flex items-center gap-3"><CalendarDays className="h-5 w-5 text-[#2F8F46]" /> FoodCanvas community member</p><p className="flex items-center gap-3"><Award className="h-5 w-5 text-[#FF9F43]" /> {profile.user.badge || "FoodCanvas Cook"}</p></div></div>
-            <div className="rounded-3xl border border-slate-200 bg-white p-6 dark:border-neutral-800 dark:bg-[#121614]"><h2 className="text-xl font-black">Food interests</h2><div className="mt-5 flex flex-wrap gap-2">{localProfileInfo.interests.map((tag) => <span key={tag} className="rounded-full bg-[#EFF8E9] px-3 py-2 text-xs font-bold text-[#2F8F46] dark:bg-[#17351F] dark:text-[#B7E35F]">{tag}</span>)}</div></div>
+            <div className="rounded-3xl border border-slate-200 bg-white p-6 dark:border-neutral-800 dark:bg-[#121614]"><div className="flex items-center justify-between gap-4"><h2 className="text-xl font-black">About {profile.user.name}</h2>{isOwnProfile && <button type="button" onClick={openEditProfile} aria-label="Edit about information" title="Edit about information" className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#2F8F46] transition hover:bg-[#EFF8E9] dark:hover:bg-[#17351F]"><Pencil className="h-4 w-4" /></button>}</div><p className="mt-4 text-sm leading-7 text-neutral-600 dark:text-neutral-300">{localProfileInfo.bio || "No bio added yet."}</p><div className="mt-6 space-y-4 text-sm text-neutral-500 dark:text-neutral-400"><p className="flex items-center gap-3"><MapPin className="h-5 w-5 text-[#2F8F46]" /> {localProfileInfo.location || "No location added yet."}</p><p className="flex items-center gap-3"><CalendarDays className="h-5 w-5 text-[#2F8F46]" /> Community member</p>{profile.user.badge && <p className="flex items-center gap-3"><Award className="h-5 w-5 text-[#FF9F43]" /> {profile.user.badge}</p>}</div></div>
+            <div className="rounded-3xl border border-slate-200 bg-white p-6 dark:border-neutral-800 dark:bg-[#121614]"><div className="flex items-center justify-between gap-4"><h2 className="text-xl font-black">Food interests</h2>{isOwnProfile && <button type="button" onClick={openEditProfile} aria-label="Edit food interests" title="Edit food interests" className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#2F8F46] transition hover:bg-[#EFF8E9] dark:hover:bg-[#17351F]"><Pencil className="h-4 w-4" /></button>}</div><div className="mt-5 flex flex-wrap gap-2">{localProfileInfo.interests.map((tag) => <span key={tag} className="rounded-full bg-[#EFF8E9] px-3 py-2 text-xs font-bold text-[#2F8F46] dark:bg-[#17351F] dark:text-[#B7E35F]">{tag}</span>)}</div></div>
           </div>
         ) : (
         <section className="mt-6 grid gap-6 lg:grid-cols-[300px_minmax(0,1fr)]">
           <aside className="space-y-6 lg:sticky lg:top-24 lg:self-start">
             <div className="rounded-3xl border border-slate-200 bg-white p-5 dark:border-neutral-800 dark:bg-[#121614]">
               <div className="flex items-center justify-between"><h2 className="text-lg font-black">About {profile.user.name.split(' ')[0]}</h2>{isOwnProfile && <button type="button" onClick={openEditProfile} className="text-xs font-bold text-[#2F8F46] hover:underline">Edit</button>}</div>
-              <p className="mt-3 text-sm leading-6 text-neutral-600 dark:text-neutral-300">A food lover building a personal recipe shelf and sharing delicious moments with the community.</p>
+              <p className="mt-3 text-sm leading-6 text-neutral-600 dark:text-neutral-300">{localProfileInfo.bio || "No bio added yet."}</p>
               <div className="mt-5 space-y-3 text-xs text-neutral-500 dark:text-neutral-400">
                 <p className="flex items-center gap-2"><BookOpen className="h-4 w-4 text-[#2F8F46]" /> {profile.user.recipesCount} recipes shared</p>
-                <p className="flex items-center gap-2"><Award className="h-4 w-4 text-[#FF9F43]" /> {profile.user.badge || 'FoodCanvas Cook'}</p>
+                {profile.user.badge && <p className="flex items-center gap-2"><Award className="h-4 w-4 text-[#FF9F43]" /> {profile.user.badge}</p>}
                 {isOwnProfile && <p className="flex items-center gap-2"><Heart className="h-4 w-4 text-[#FF6B6B]" /> {profile.likesTotal ?? profile.posts.reduce((total, post) => total + post.likesCount, 0)} total likes</p>}
               </div>
             </div>
             <div className="rounded-3xl border border-slate-200 bg-white p-5 dark:border-neutral-800 dark:bg-[#121614]">
               <div className="flex items-center justify-between"><h2 className="text-lg font-black">Food interests</h2>{isOwnProfile && <button type="button" onClick={openEditProfile} className="text-xs font-bold text-[#2F8F46] hover:underline">Edit</button>}</div>
               <div className="mt-4 flex flex-wrap gap-2">
-                {['Home Cooking', 'Healthy Meals', 'Quick Recipes', 'Food Styling'].map((tag) => <span key={tag} className="rounded-full bg-[#EFF8E9] px-3 py-1.5 text-[11px] font-bold text-[#2F8F46] dark:bg-[#17351F] dark:text-[#B7E35F]">{tag}</span>)}
+                {localProfileInfo.interests.length > 0 ? localProfileInfo.interests.map((tag) => <span key={tag} className="rounded-full bg-[#EFF8E9] px-3 py-1.5 text-[11px] font-bold text-[#2F8F46] dark:bg-[#17351F] dark:text-[#B7E35F]">{tag}</span>) : <span className="text-xs text-neutral-500">No interests added yet.</span>}
               </div>
             </div>
           </aside>
@@ -331,7 +432,7 @@ export default function CommunityUserProfilePage() {
 
             <div className="rounded-3xl border border-slate-200 bg-white p-5 dark:border-neutral-800 dark:bg-[#121614] sm:p-6">
               <div className="mb-5 flex items-center justify-between"><div><p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#2F8F46]">{activeTab === "My Recipes" ? "Recipe shelf" : "Personal activity"}</p><h2 className="mt-1 text-xl font-black">{activeTab === "My Recipes" ? "My recipes" : "Recent posts"}</h2></div><button type="button" onClick={() => void loadMorePosts()} disabled={!hasMorePosts || isLoadingMorePosts} className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold text-neutral-600 transition hover:border-[#2F8F46] hover:text-[#2F8F46] disabled:cursor-default disabled:opacity-50 dark:border-neutral-700 dark:text-neutral-300">{isLoadingMorePosts ? "Loading..." : hasMorePosts ? "View all" : "All posts loaded"}</button></div>
-              {visiblePosts.length === 0 ? <div className="rounded-2xl border border-dashed border-slate-300 p-10 text-center text-sm text-neutral-500 dark:border-neutral-700">{activeTab === "My Recipes" ? "No recipes shared yet." : "No public posts yet."}</div> : <div className="space-y-7">{visiblePosts.map((post) => <div key={post.id} className="profile-post"><PostCard post={post} onLike={(postId) => void updateProfile(() => communityApi.toggleLike(postId))} onSave={(postId) => void updateProfile(() => communityApi.savePost(postId))} onShare={(postToShare) => void sharePost(postToShare)} onRate={() => undefined} onReport={() => undefined} onDelete={(postId) => void updateProfile(() => communityApi.deletePost(postId))} onDirectMessage={() => requireAuthentication()} onToggleFollow={() => void updateProfile(() => communityApi.toggleFollow(profile.user.id))} onAddComment={(postId, content) => void updateProfile(() => communityApi.addComment(postId, content))} onLoadInteractions={loadPostInteractions} onMadeIt={(postId) => void updateProfile(() => communityApi.toggleMadeIt(postId))} currentUserId={session?.user?.id} isAuthenticated={Boolean(session?.user)} onRequireAuthentication={requireAuthentication} hasActiveStory={hasStories} onAuthorAvatarClick={hasStories ? () => setViewingStory(storyGroup[0] ?? null) : undefined} onImageClick={(imagePost) => setSelectedImage({ src: imagePost.imageUrl, alt: imagePost.recipe?.title || "FoodCanvas post" })} /></div>)}</div>}
+              {visiblePosts.length === 0 ? <div className="rounded-2xl border border-dashed border-slate-300 p-10 text-center text-sm text-neutral-500 dark:border-neutral-700">{activeTab === "My Recipes" ? "No recipes shared yet." : "No public posts yet."}</div> : <div className="space-y-7">{visiblePosts.map((post) => <div key={post.id} className="profile-post"><PostCard post={post} onLike={(postId) => void updateProfile(() => communityApi.toggleLike(postId))} onSave={(postId) => void updateProfile(() => communityApi.savePost(postId))} onShare={(postToShare) => void sharePost(postToShare)} onRate={() => undefined} onReport={() => undefined} onDelete={(postId) => void updateProfile(() => communityApi.deletePost(postId))} onEdit={async (postToEdit) => { const caption = window.prompt("Edit post caption", postToEdit.caption); if (caption?.trim()) await updateProfile(() => communityApi.updatePost(postToEdit.id, { caption: caption.trim() })); }} onTogglePin={(postId, isPinned) => void updateProfile(() => communityApi.updatePost(postId, { isPinned }))} onDirectMessage={() => requireAuthentication()} onToggleFollow={() => void updateProfile(() => communityApi.toggleFollow(profile.user.id))} onAddComment={(postId, content) => void updateProfile(() => communityApi.addComment(postId, content))} onLoadInteractions={loadPostInteractions} onMadeIt={(postId) => void updateProfile(() => communityApi.toggleMadeIt(postId))} currentUserId={session?.user?.id} isAuthenticated={Boolean(session?.user)} onRequireAuthentication={requireAuthentication} hasActiveStory={hasStories} onAuthorAvatarClick={hasStories ? () => setViewingStory(storyGroup[0] ?? null) : undefined} onImageClick={(imagePost) => setSelectedImage({ src: imagePost.imageUrl, alt: imagePost.recipe?.title || "FoodCanvas post" })} /></div>)}</div>}
             </div>
           </div>
         </section>)}
@@ -347,7 +448,8 @@ export default function CommunityUserProfilePage() {
               <label className="block text-sm font-semibold">Location<input value={editForm.location} onChange={(event) => setEditForm((current) => ({ ...current, location: event.target.value }))} className="mt-2 w-full rounded-xl border border-neutral-700 bg-[#0D100E] px-4 py-3 text-sm outline-none focus:border-[#2F8F46]" /></label>
               <label className="block text-sm font-semibold">Food interests<input value={editForm.interests} onChange={(event) => setEditForm((current) => ({ ...current, interests: event.target.value }))} className="mt-2 w-full rounded-xl border border-neutral-700 bg-[#0D100E] px-4 py-3 text-sm outline-none focus:border-[#2F8F46]" /></label>
             </div>
-            <div className="mt-6 flex justify-end gap-3"><button type="button" onClick={requestCloseEditProfile} className="rounded-xl px-4 py-2.5 text-sm font-bold text-neutral-400 hover:text-white">Cancel</button><button type="button" onClick={() => { setProfile((current) => current ? { ...current, user: { ...current.user, name: editForm.name || current.user.name } } : current); setLocalProfileInfo({ bio: editForm.bio, location: editForm.location, interests: editForm.interests.split(",").map((item) => item.trim()).filter(Boolean) }); setIsEditModalOpen(false); }} className="inline-flex items-center gap-2 rounded-xl bg-[#2F8F46] px-4 py-2.5 text-sm font-bold text-white hover:bg-[#176B35]"><Check className="h-4 w-4" /> Save changes</button></div>
+            {profileSaveError && <p className="mt-4 rounded-xl bg-rose-500/10 px-3 py-2 text-xs font-semibold text-rose-300">{profileSaveError}</p>}
+            <div className="mt-6 flex justify-end gap-3"><button type="button" onClick={requestCloseEditProfile} className="rounded-xl px-4 py-2.5 text-sm font-bold text-neutral-400 hover:text-white">Cancel</button><button type="button" disabled={isSavingProfile} onClick={async () => { setIsSavingProfile(true); setProfileSaveError(null); try { const interests = editForm.interests.split(",").map((item) => item.trim()).filter(Boolean); const response = await communityApi.updateProfile({ name: editForm.name, bio: editForm.bio, location: editForm.location, interests }); setProfile((current) => current ? { ...current, user: { ...current.user, name: response.profile.name, bio: response.profile.bio || "", location: response.profile.location || "", interests: response.profile.interests } } : current); setLocalProfileInfo({ bio: response.profile.bio || "", location: response.profile.location || "", interests: response.profile.interests }); setIsEditModalOpen(false); } catch (saveError) { setProfileSaveError(saveError instanceof Error ? saveError.message : "Unable to save profile changes"); } finally { setIsSavingProfile(false); } }} className="inline-flex items-center gap-2 rounded-xl bg-[#2F8F46] px-4 py-2.5 text-sm font-bold text-white hover:bg-[#176B35] disabled:opacity-60"><Check className="h-4 w-4" /> {isSavingProfile ? "Saving..." : "Save changes"}</button></div>
           </div>
         </div>
       )}
@@ -377,7 +479,23 @@ export default function CommunityUserProfilePage() {
         </div>
       )}
 
-      <CreatePostModal isOpen={isCreateRecipeOpen} onClose={() => setIsCreateRecipeOpen(false)} onPublishPost={(newPost) => { setProfile((current) => current ? { ...current, posts: [newPost, ...current.posts] } : current); setIsCreateRecipeOpen(false); }} />
+      {savedPostDetails?.recipe && <RecipeDetailsModal
+        post={savedPostDetails}
+        isOpen
+        fullScreen
+        onClose={() => setSavedPostDetails(null)}
+        onLike={() => { void communityApi.toggleLike(savedPostDetails.id); }}
+        onSave={() => { setSavedPosts((current) => current.filter((post) => post.id !== savedPostDetails.id)); setSavedPostDetails(null); void communityApi.savePost(savedPostDetails.id); }}
+        onAddComment={async (content) => { await communityApi.addComment(savedPostDetails.id, content); }}
+        onLoadComments={async () => (await communityApi.getPostInteractions(savedPostDetails.id, { commentsTake: 50 })).comments}
+      />}
+
+      <CreatePostModal isOpen={isCreateRecipeOpen} onClose={() => setIsCreateRecipeOpen(false)} onPublishPost={async (newPost, imageFile) => {
+        const imageUrl = imageFile ? await communityApi.uploadImage(imageFile, "posts") : newPost.imageUrl;
+        const createdPost = await communityApi.createPost({ ...newPost, imageUrl });
+        setProfile((current) => current ? { ...current, posts: [createdPost, ...current.posts] } : current);
+        setIsCreateRecipeOpen(false);
+      }} />
 
       <StoryEditorModal file={storyEditorFile} isOpen={Boolean(storyEditorFile)} onClose={() => setStoryEditorFile(null)} onShare={async (editedFile, caption) => { const imageUrl = await communityApi.uploadImage(editedFile, "stories"); await communityApi.createStory(imageUrl, caption); await loadProfile(); }} />
 

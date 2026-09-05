@@ -263,11 +263,24 @@ export default function RecipeDetailsPage() {
     );
   }
 
-  const formattedInstructions: string[] = typeof recipe.instructions === "string" 
-    ? recipe.instructions.split("\n").filter(Boolean)
-    : Array.isArray(recipe.instructions) 
-    ? recipe.instructions 
-    : [];
+  const formattedInstructions: string[] = (() => {
+    const rawInstructions: unknown = recipe.instructions;
+    if (typeof rawInstructions === "string") {
+      try {
+        const parsed: unknown = JSON.parse(rawInstructions);
+        if (Array.isArray(parsed)) {
+          return parsed.flatMap((step) => typeof step === "string" ? [step] : step && typeof step === "object" && "instruction" in step && typeof step.instruction === "string" ? [step.instruction] : []);
+        }
+      } catch {
+        // Older recipes use newline-separated instructions.
+      }
+      return rawInstructions.split("\n").filter(Boolean);
+    }
+    if (Array.isArray(rawInstructions)) {
+      return rawInstructions.flatMap((step) => typeof step === "string" ? [step] : step && typeof step === "object" && "instruction" in step && typeof step.instruction === "string" ? [step.instruction] : []);
+    }
+    return [];
+  })();
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] text-gray-900 transition-colors duration-200 dark:bg-black dark:text-white pb-16">

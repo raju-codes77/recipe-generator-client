@@ -16,6 +16,8 @@ import {
   ChefHat,
   SendHorizontal,
   Trash2,
+  Pencil,
+  Pin,
 } from "lucide-react";
 import { Post } from "./types";
 import { RecipeDetailsModal } from "./RecipeDetailsModal";
@@ -30,6 +32,8 @@ interface PostCardProps {
   onRate: (post: Post) => void;
   onReport: (post: Post) => void;
   onDelete?: (postId: string) => void | Promise<void>;
+  onEdit?: (post: Post) => void | Promise<void>;
+  onTogglePin?: (postId: string, isPinned: boolean) => void | Promise<void>;
   onDirectMessage: (authorId: string, post?: Post) => void;
   onToggleFollow: (authorId: string) => void;
   onAddComment: (postId: string, content: string) => void;
@@ -54,6 +58,8 @@ export const PostCard: React.FC<PostCardProps> = ({
   onRate,
   onReport,
   onDelete,
+  onEdit,
+  onTogglePin,
   onDirectMessage,
   onToggleFollow,
     onAddComment,
@@ -218,16 +224,13 @@ export const PostCard: React.FC<PostCardProps> = ({
                   className="absolute right-0 top-10 z-20 w-52 rounded-2xl border border-slate-200 bg-white py-2 shadow-xl dark:border-neutral-800 dark:bg-[#18181b] text-xs"
                 >
                   {post.author.id === currentUserId ? (
-                    <button
-                      onClick={() => {
-                        if (window.confirm("Delete this post? This cannot be undone.")) void onDelete?.(post.id);
-                        setShowMenu(false);
-                      }}
-                      className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      Delete post
-                    </button>
+                    <>
+                      <button onClick={() => { void onEdit?.(post); setShowMenu(false); }} className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-neutral-700 hover:bg-neutral-50 dark:text-neutral-200 dark:hover:bg-neutral-800"><Pencil className="h-4 w-4 text-[#2F8F46]" /> Edit post</button>
+                      <button onClick={() => { onSave(post.id); setShowMenu(false); }} className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-neutral-700 hover:bg-neutral-50 dark:text-neutral-200 dark:hover:bg-neutral-800"><Bookmark className="h-4 w-4 text-[#2F8F46]" /> {post.isSaved ? "Remove from Saved" : "Save to Collection"}</button>
+                      <button onClick={() => { void onTogglePin?.(post.id, !post.isPinned); setShowMenu(false); }} className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-neutral-700 hover:bg-neutral-50 dark:text-neutral-200 dark:hover:bg-neutral-800"><Pin className="h-4 w-4 text-[#FF9F43]" /> {post.isPinned ? "Unpin post" : "Pin post"}</button>
+                      <div className="my-1.5 border-t border-slate-100 dark:border-neutral-800" />
+                      <button onClick={() => { if (window.confirm("Delete this post? This cannot be undone.")) void onDelete?.(post.id); setShowMenu(false); }} className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40"><Trash2 className="h-4 w-4" /> Delete post</button>
+                    </>
                   ) : (
                     <>
                   <button
