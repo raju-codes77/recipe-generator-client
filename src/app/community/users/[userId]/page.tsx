@@ -331,7 +331,7 @@ export default function CommunityUserProfilePage() {
 
             <div className="rounded-3xl border border-slate-200 bg-white p-5 dark:border-neutral-800 dark:bg-[#121614] sm:p-6">
               <div className="mb-5 flex items-center justify-between"><div><p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#2F8F46]">{activeTab === "My Recipes" ? "Recipe shelf" : "Personal activity"}</p><h2 className="mt-1 text-xl font-black">{activeTab === "My Recipes" ? "My recipes" : "Recent posts"}</h2></div><button type="button" onClick={() => void loadMorePosts()} disabled={!hasMorePosts || isLoadingMorePosts} className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold text-neutral-600 transition hover:border-[#2F8F46] hover:text-[#2F8F46] disabled:cursor-default disabled:opacity-50 dark:border-neutral-700 dark:text-neutral-300">{isLoadingMorePosts ? "Loading..." : hasMorePosts ? "View all" : "All posts loaded"}</button></div>
-              {visiblePosts.length === 0 ? <div className="rounded-2xl border border-dashed border-slate-300 p-10 text-center text-sm text-neutral-500 dark:border-neutral-700">{activeTab === "My Recipes" ? "No recipes shared yet." : "No public posts yet."}</div> : <div className="space-y-7">{visiblePosts.map((post) => <div key={post.id} className="profile-post"><PostCard post={post} onLike={(postId) => void updateProfile(() => communityApi.toggleLike(postId))} onSave={(postId) => void updateProfile(() => communityApi.savePost(postId))} onShare={(postToShare) => void sharePost(postToShare)} onRate={() => undefined} onReport={() => undefined} onDirectMessage={() => requireAuthentication()} onToggleFollow={() => void updateProfile(() => communityApi.toggleFollow(profile.user.id))} onAddComment={(postId, content) => void updateProfile(() => communityApi.addComment(postId, content))} onLoadInteractions={loadPostInteractions} onMadeIt={(postId) => void updateProfile(() => communityApi.toggleMadeIt(postId))} currentUserId={session?.user?.id} isAuthenticated={Boolean(session?.user)} onRequireAuthentication={requireAuthentication} hasActiveStory={hasStories} onAuthorAvatarClick={hasStories ? () => setViewingStory(storyGroup[0] ?? null) : undefined} onImageClick={(imagePost) => setSelectedImage({ src: imagePost.imageUrl, alt: imagePost.recipe?.title || "FoodCanvas post" })} /></div>)}</div>}
+              {visiblePosts.length === 0 ? <div className="rounded-2xl border border-dashed border-slate-300 p-10 text-center text-sm text-neutral-500 dark:border-neutral-700">{activeTab === "My Recipes" ? "No recipes shared yet." : "No public posts yet."}</div> : <div className="space-y-7">{visiblePosts.map((post) => <div key={post.id} className="profile-post"><PostCard post={post} onLike={(postId) => void updateProfile(() => communityApi.toggleLike(postId))} onSave={(postId) => void updateProfile(() => communityApi.savePost(postId))} onShare={(postToShare) => void sharePost(postToShare)} onRate={() => undefined} onReport={() => undefined} onDelete={(postId) => void updateProfile(() => communityApi.deletePost(postId))} onDirectMessage={() => requireAuthentication()} onToggleFollow={() => void updateProfile(() => communityApi.toggleFollow(profile.user.id))} onAddComment={(postId, content) => void updateProfile(() => communityApi.addComment(postId, content))} onLoadInteractions={loadPostInteractions} onMadeIt={(postId) => void updateProfile(() => communityApi.toggleMadeIt(postId))} currentUserId={session?.user?.id} isAuthenticated={Boolean(session?.user)} onRequireAuthentication={requireAuthentication} hasActiveStory={hasStories} onAuthorAvatarClick={hasStories ? () => setViewingStory(storyGroup[0] ?? null) : undefined} onImageClick={(imagePost) => setSelectedImage({ src: imagePost.imageUrl, alt: imagePost.recipe?.title || "FoodCanvas post" })} /></div>)}</div>}
             </div>
           </div>
         </section>)}
@@ -382,15 +382,25 @@ export default function CommunityUserProfilePage() {
       <StoryEditorModal file={storyEditorFile} isOpen={Boolean(storyEditorFile)} onClose={() => setStoryEditorFile(null)} onShare={async (editedFile, caption) => { const imageUrl = await communityApi.uploadImage(editedFile, "stories"); await communityApi.createStory(imageUrl, caption); await loadProfile(); }} />
 
       <StoryViewerModal
+        key={viewingStory?.id ?? "profile-story-viewer"}
         story={viewingStory}
         isOpen={Boolean(viewingStory)}
-        isOwnStory={isOwnProfile === true}
+        isOwnStory={viewingStory?.author.id === session?.user?.id}
+        dashboardHref={session?.user ? "/dashboard/users" : "/registrationProcess/login"}
+        profileHref={session?.user ? `/community/users/${encodeURIComponent(session.user.id)}` : "/registrationProcess/login"}
+        profileImage={session?.user?.image}
+        onOpenMessages={() => router.push("/community")}
         onClose={() => setViewingStory(null)}
         onSendMessage={async (recipientId, text) => { await communityApi.sendMessage(recipientId, text); }}
         onNextStory={handleNextStory}
         onPreviousStory={handlePreviousStory}
         storyCount={storyGroup.length || 1}
         storyIndex={storyIndex < 0 ? 0 : storyIndex}
+        onDeleteStory={async (storyId) => {
+          await communityApi.deleteStory(storyId);
+          setViewingStory(null);
+          await loadProfile();
+        }}
       />
     </main>
   );

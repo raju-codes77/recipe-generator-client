@@ -332,6 +332,9 @@ export const CommunityFeed: React.FC = () => {
     setSaveModalPost(post);
   };
 
+  const handleDeletePost = (postId: string) =>
+    void runMutation(() => communityApi.deletePost(postId), "Post deleted");
+
   const handleSaveToCollection = (collectionId: string, postId: string) =>
     void runMutation(() => communityApi.savePost(postId, collectionId), "Saved recipe to your collection!");
 
@@ -486,7 +489,7 @@ export const CommunityFeed: React.FC = () => {
   const likedPostsCount = posts.filter((p) => p.isLiked).length;
 
   return (
-    <div className="min-h-screen bg-[#FCFDF9] text-neutral-900 transition-colors duration-200 dark:bg-[#0a0a0a] dark:text-neutral-100 font-sans">
+    <div className="community-surface min-h-screen bg-[#FCFDF9] text-neutral-900 transition-colors duration-200 dark:bg-[#0a0a0a] dark:text-neutral-100 font-sans">
       {/* Toast Alert Banner */}
       <AnimatePresence>
         {toastMessage && (
@@ -791,6 +794,7 @@ export const CommunityFeed: React.FC = () => {
                     onShare={handleShare}
                     onRate={(p) => void handleOpenReview(p)}
                     onReport={(p) => setReportModalPost(p)}
+                    onDelete={handleDeletePost}
                     onDirectMessage={(authorId, p) => handleOpenDM(authorId, p)}
                     onToggleFollow={handleToggleFollow}
                     onAddComment={handleAddComment}
@@ -930,6 +934,7 @@ export const CommunityFeed: React.FC = () => {
       />
 
       <StoryViewerModal
+        key={viewingStory?.id ?? "community-story-viewer"}
         story={viewingStory}
         isOpen={!!viewingStory}
         onClose={() => setViewingStory(null)}
@@ -937,6 +942,23 @@ export const CommunityFeed: React.FC = () => {
         onPreviousStory={handlePreviousStory}
         storyCount={viewingStoryGroup?.length ?? 1}
         storyIndex={viewingStoryIndex}
+        isOwnStory={viewingStory?.author.id === session?.user?.id}
+        dashboardHref={isAuthenticated ? "/dashboard/users" : "/registrationProcess/login"}
+        profileHref={session?.user ? `/community/users/${encodeURIComponent(session.user.id)}` : "/registrationProcess/login"}
+        profileImage={session?.user?.image}
+        notifications={notifications}
+        onOpenMessages={() => {
+          setViewingStory(null);
+          setDmRecipientId(undefined);
+          setDmAttachedPost(null);
+          setDmModalOpen(true);
+        }}
+        onDeleteStory={async (storyId) => {
+          await communityApi.deleteStory(storyId);
+          await loadCommunity();
+          setViewingStory(null);
+          showToast("Story deleted");
+        }}
       />
 
       <StoryEditorModal

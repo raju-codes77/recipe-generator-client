@@ -15,6 +15,7 @@ import {
   ShieldAlert,
   ChefHat,
   SendHorizontal,
+  Trash2,
 } from "lucide-react";
 import { Post } from "./types";
 import { RecipeDetailsModal } from "./RecipeDetailsModal";
@@ -28,6 +29,7 @@ interface PostCardProps {
   onShare: (post: Post) => void;
   onRate: (post: Post) => void;
   onReport: (post: Post) => void;
+  onDelete?: (postId: string) => void | Promise<void>;
   onDirectMessage: (authorId: string, post?: Post) => void;
   onToggleFollow: (authorId: string) => void;
   onAddComment: (postId: string, content: string) => void;
@@ -51,6 +53,7 @@ export const PostCard: React.FC<PostCardProps> = ({
   onShare,
   onRate,
   onReport,
+  onDelete,
   onDirectMessage,
   onToggleFollow,
     onAddComment,
@@ -214,6 +217,19 @@ export const PostCard: React.FC<PostCardProps> = ({
                   exit={{ opacity: 0, scale: 0.92, y: 5 }}
                   className="absolute right-0 top-10 z-20 w-52 rounded-2xl border border-slate-200 bg-white py-2 shadow-xl dark:border-neutral-800 dark:bg-[#18181b] text-xs"
                 >
+                  {post.author.id === currentUserId ? (
+                    <button
+                      onClick={() => {
+                        if (window.confirm("Delete this post? This cannot be undone.")) void onDelete?.(post.id);
+                        setShowMenu(false);
+                      }}
+                      className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Delete post
+                    </button>
+                  ) : (
+                    <>
                   <button
                     onClick={() => {
                       if (isAuthenticated) onSave(post.id);
@@ -258,6 +274,8 @@ export const PostCard: React.FC<PostCardProps> = ({
                     <ShieldAlert className="h-4 w-4" />
                     Report Recipe Content
                   </button>
+                    </>
+                  )}
                 </motion.div>
               )}
             </AnimatePresence>

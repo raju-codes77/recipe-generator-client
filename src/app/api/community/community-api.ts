@@ -194,6 +194,10 @@ export const communityApi = {
     });
   },
 
+  deletePost(postId: string) {
+    return request<void>(`/posts/${postId}`, { method: "DELETE" });
+  },
+
   async listStories(): Promise<StoryItem[]> {
     const response = await request<{ stories: StoryItem[] }>("/stories");
     return response.stories;
@@ -204,6 +208,10 @@ export const communityApi = {
       method: "POST",
       body: JSON.stringify({ imageUrl, caption }),
     });
+  },
+
+  deleteStory(storyId: string) {
+    return request<void>(`/stories/${storyId}`, { method: "DELETE" });
   },
 
   async listNotifications(): Promise<NotificationItem[]> {

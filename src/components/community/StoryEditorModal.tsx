@@ -389,6 +389,7 @@ export const StoryEditorModal: React.FC<StoryEditorModalProps> = ({ file, isOpen
     <AnimatePresence>
       {isOpen && file && !isCloseConfirmOpen && (
         <motion.div
+          key="story-editor"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -500,9 +501,9 @@ export const StoryEditorModal: React.FC<StoryEditorModalProps> = ({ file, isOpen
                             ["#111827", "Black"],
                             ["#ffffff", "White"],
                             ["#176B35", "Green"],
-                          ].map(([value, label]) => (
+                          ].map(([value, label], index) => (
                             <button
-                              key={value}
+                              key={`frame-background-${index}-${value || "option"}`}
                               onClick={() => setFrameBackground(value)}
                               className={`rounded-full px-3 py-1.5 text-[10px] font-bold transition ${frameBackground === value ? "bg-[#2F8F46] text-white" : "border border-slate-200 text-neutral-600 dark:border-neutral-700 dark:text-neutral-300"}`}
                             >
@@ -661,6 +662,7 @@ export const StoryEditorModal: React.FC<StoryEditorModalProps> = ({ file, isOpen
         </motion.div>
       )}
       <UnsavedChangesModal
+        key="discard-story-edits"
         isOpen={isCloseConfirmOpen && isOpen && Boolean(file)}
         title="Discard story edits?"
         message="You have unsaved story edits. Do you want to close this editor without sharing?"
