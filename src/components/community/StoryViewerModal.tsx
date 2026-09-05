@@ -198,8 +198,8 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
             {isNotificationsOpen && (
               <div className="absolute right-0 top-[calc(100%+0.75rem)] w-[min(320px,calc(100vw-2.5rem))] overflow-hidden rounded-2xl border border-white/10 bg-[#171C1A] text-left shadow-2xl">
                 <div className="border-b border-white/10 px-4 py-3"><p className="text-sm font-black text-white">Notifications</p></div>
-                <div className="max-h-72 overflow-y-auto p-2">
-                  {notifications.length === 0 ? <p className="px-3 py-5 text-center text-xs text-neutral-400">No notifications yet.</p> : notifications.slice(0, 8).map((notification) => <div key={notification.id} className={`rounded-xl px-3 py-2.5 text-xs ${notification.read ? "text-neutral-400" : "bg-white/8 text-white"}`}><p className="font-semibold">{notification.user.name}</p><p className="mt-0.5 leading-5">{notification.text}</p><p className="mt-1 text-[10px] text-neutral-500">{notification.timeAgo}</p></div>)}
+                <div className="max-h-80 space-y-3 overflow-y-auto p-3">
+                  {notifications.length === 0 ? <p className="px-3 py-5 text-center text-xs text-neutral-400">No notifications yet.</p> : notifications.slice(0, 8).map((notification) => <div key={notification.id} className={`rounded-xl px-4 py-3 text-xs shadow-sm ${notification.read ? "bg-white/[0.03] text-neutral-400" : "bg-white/8 text-white"}`}><p className="font-semibold">{notification.user.name}</p><p className="mt-1 leading-5">{notification.text}</p><p className="mt-1.5 text-[10px] text-neutral-500">{notification.timeAgo}</p></div>)}
                 </div>
               </div>
             )}
