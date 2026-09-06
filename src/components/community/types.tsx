@@ -110,6 +110,7 @@ export interface Post {
   isChallengeEntry?: boolean;
   challengeName?: string;
   isPinned?: boolean;
+  sharedFrom?: Author;
 }
 
 export interface StoryItem {

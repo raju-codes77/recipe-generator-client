@@ -73,6 +73,7 @@ export interface CommunityMessagesPageOptions {
 export interface CommunityPostsPageOptions {
   take?: number;
   skip?: number;
+  filter?: "all" | "trending" | "following" | "quick" | "wellness" | "challenge" | "ai_sparks" | "saved" | "liked";
 }
 
 export interface CommunityPostInteractions {
@@ -88,10 +89,11 @@ export interface CommunityPostInteractionOptions {
 }
 
 export const communityApi = {
-  async listPosts({ take, skip }: CommunityPostsPageOptions = {}): Promise<Post[]> {
+  async listPosts({ take, skip, filter }: CommunityPostsPageOptions = {}): Promise<Post[]> {
     const query = new URLSearchParams();
     if (take !== undefined) query.set("take", String(take));
     if (skip !== undefined) query.set("skip", String(skip));
+    if (filter) query.set("filter", filter);
     const suffix = query.size ? `?${query.toString()}` : "";
     const response = await request<{ posts: Post[] }>(`/posts${suffix}`);
     return response.posts;
@@ -100,6 +102,10 @@ export const communityApi = {
   async listSuggestedChefs(): Promise<Author[]> {
     const response = await request<{ chefs: Author[] }>("/suggested-chefs");
     return response.chefs;
+  },
+
+  getFeedCounts() {
+    return request<{ savedPostsCount: number; likedPostsCount: number }>("/feed-counts");
   },
 
   async createPost(post: Post): Promise<Post> {
@@ -143,6 +149,16 @@ export const communityApi = {
 
   toggleFollow(userId: string) {
     return request<{ active: boolean }>(`/users/${userId}/follow`, { method: "POST" });
+  },
+
+  async sharePost(postId: string): Promise<Post> {
+    const response = await request<{ post: Post }>(`/posts/${postId}/share`, { method: "POST" });
+    return response.post;
+  },
+
+  async listConnections(userId: string, type: "followers" | "following"): Promise<Author[]> {
+    const response = await request<{ users: Author[] }>(`/users/${userId}/connections?type=${type}`);
+    return response.users;
   },
 
   async getPostInteractions(

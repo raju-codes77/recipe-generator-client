@@ -29,6 +29,7 @@ interface PostCardProps {
   onLike: (postId: string) => void;
   onSave: (postId: string) => void;
   onShare: (post: Post) => void;
+  onShareToProfile?: (post: Post) => void | Promise<void>;
   onRate: (post: Post) => void;
   onReport: (post: Post) => void;
   onDelete?: (postId: string) => void | Promise<void>;
@@ -55,6 +56,7 @@ export const PostCard: React.FC<PostCardProps> = ({
   onLike,
   onSave,
   onShare,
+  onShareToProfile,
   onRate,
   onReport,
   onDelete,
@@ -76,11 +78,13 @@ export const PostCard: React.FC<PostCardProps> = ({
   const [isCaptionExpanded, setIsCaptionExpanded] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [showShareMenu, setShowShareMenu] = useState(false);
   const [newCommentText, setNewCommentText] = useState("");
   const [likedAnimation, setLikedAnimation] = useState(false);
   const [isLoadingMoreComments, setIsLoadingMoreComments] = useState(false);
 
   const menuRef = useRef<HTMLDivElement>(null);
+  const shareMenuRef = useRef<HTMLDivElement>(null);
 
   // Close 3-dot dropdown menu when clicking anywhere outside
   useEffect(() => {
@@ -97,6 +101,19 @@ export const PostCard: React.FC<PostCardProps> = ({
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [showMenu]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (shareMenuRef.current && !shareMenuRef.current.contains(event.target as Node)) {
+        setShowShareMenu(false);
+      }
+    };
+
+    if (showShareMenu) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showShareMenu]);
 
   const handleLikeClick = () => {
     if (!isAuthenticated) {
@@ -265,6 +282,19 @@ export const PostCard: React.FC<PostCardProps> = ({
                     <Share2 className="h-4 w-4 text-neutral-500" />
                     Copy Recipe Link
                   </button>
+                  {onShareToProfile && (
+                    <button
+                      onClick={() => {
+                        if (isAuthenticated) void onShareToProfile(post);
+                        else onRequireAuthentication("share posts to your profile");
+                        setShowMenu(false);
+                      }}
+                      className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-neutral-700 hover:bg-neutral-50 dark:text-neutral-200 dark:hover:bg-neutral-800"
+                    >
+                      <Share2 className="h-4 w-4 text-[#2F8F46]" />
+                      Share to Profile
+                    </button>
+                  )}
                   <div className="my-1.5 border-t border-slate-100 dark:border-neutral-800" />
                   <button
                     onClick={() => {
@@ -285,6 +315,12 @@ export const PostCard: React.FC<PostCardProps> = ({
           </div>
         </div>
       </div>
+
+      {post.sharedFrom && (
+        <div className="px-4 pb-2 text-xs text-neutral-500 dark:text-neutral-400 sm:px-6">
+          Shared from <span className="font-bold text-neutral-700 dark:text-neutral-200">{post.sharedFrom.name}</span>
+        </div>
+      )}
 
       {/* 2. Post Caption Narrative */}
       <div className="px-4 sm:px-6 pb-4">
@@ -468,15 +504,55 @@ export const PostCard: React.FC<PostCardProps> = ({
           >
             <Bookmark className={`h-4 w-4 ${post.isSaved ? "fill-[#2F8F46]" : ""}`} />
           </motion.button>
-          <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            onClick={() => onShare(post)}
-            title="Share Recipe"
-            className="rounded-full p-2 text-neutral-500 hover:bg-neutral-100 hover:text-neutral-700 dark:text-neutral-400 dark:hover:bg-neutral-800"
-          >
-            <Share2 className="h-4 w-4" />
-          </motion.button>
+          <div ref={shareMenuRef} className="relative">
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={() => setShowShareMenu((visible) => !visible)}
+              title="Share Recipe"
+              aria-expanded={showShareMenu}
+              className={`rounded-full p-2 text-neutral-500 transition hover:bg-neutral-100 hover:text-neutral-700 dark:text-neutral-400 dark:hover:bg-neutral-800 ${showShareMenu ? "bg-neutral-100 dark:bg-neutral-800" : ""}`}
+            >
+              <Share2 className="h-4 w-4" />
+            </motion.button>
+
+            <AnimatePresence>
+              {showShareMenu && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.94, y: 5 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.94, y: 5 }}
+                  className="absolute bottom-11 right-0 z-30 w-52 overflow-hidden rounded-2xl border border-slate-200 bg-white py-1.5 shadow-xl dark:border-neutral-800 dark:bg-[#18181b]"
+                >
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onShare(post);
+                      setShowShareMenu(false);
+                    }}
+                    className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-xs font-semibold text-neutral-700 transition hover:bg-neutral-50 dark:text-neutral-200 dark:hover:bg-neutral-800"
+                  >
+                    <Share2 className="h-4 w-4 text-neutral-500" />
+                    Copy Recipe Link
+                  </button>
+                  {onShareToProfile && post.author.id !== currentUserId && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (isAuthenticated) void onShareToProfile(post);
+                        else onRequireAuthentication("share posts to your profile");
+                        setShowShareMenu(false);
+                      }}
+                      className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-xs font-semibold text-neutral-700 transition hover:bg-neutral-50 dark:text-neutral-200 dark:hover:bg-neutral-800"
+                    >
+                      <Share2 className="h-4 w-4 text-[#2F8F46]" />
+                      Share to Profile
+                    </button>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       </div>
 
