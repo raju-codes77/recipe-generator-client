@@ -17,7 +17,7 @@ export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // ইউজার ডাটা ফেচ করা
+  // Users fetched data
   const fetchUsers = async () => {
     try {
       const res = await fetch("http://localhost:5000/api/admin/users");
@@ -37,7 +37,7 @@ export default function AdminUsersPage() {
     fetchUsers();
   }, []);
 
-  // ইউজার স্ট্যাটাস চেঞ্জ (Suspend / Active) করার ফাংশন
+  // users status (Suspend / Active) 
   const handleStatusChange = async (id: string, currentStatus: string) => {
     const newStatus = currentStatus === "ACTIVE" ? "SUSPENDED" : "ACTIVE";
     try {
@@ -49,7 +49,7 @@ export default function AdminUsersPage() {
       const data = await res.json();
       if (data.success) {
         toast.success(`User ${newStatus.toLowerCase()} successfully`);
-        fetchUsers(); // লিস্ট রিফ্রেশ করা
+        fetchUsers(); // refreshing our list
       } else {
         toast.error(data.message || "Action failed");
       }
@@ -59,7 +59,7 @@ export default function AdminUsersPage() {
     }
   };
 
-  // ইউজার ডিলিট করার ফাংশন
+  //users delete function
   const handleDeleteUser = async (id: string) => {
     if (!confirm("Are you sure you want to delete this user?")) return;
 

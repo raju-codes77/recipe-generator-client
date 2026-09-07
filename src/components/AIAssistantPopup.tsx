@@ -18,12 +18,12 @@ export default function AIAssistantPopup() {
     "Healthy smoothie ideas",
   ];
 
-  // ব্যাকএন্ড এপিআই কল করার ফাংশন
+  // backend api call 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchQuery.trim() || loading) return;
 
-    // ইউজার যে কুয়েরিটি করছে তা সাময়িকভাবে সেভ করে রাখা যেতে পারে যদি প্রয়োজন হয়
+    // Users query saving if its needed
     const currentQuery = searchQuery;
 
     try {
@@ -42,7 +42,7 @@ export default function AIAssistantPopup() {
 
       if (data.success) {
         setChatResponse(data.reply);
-        setSearchQuery(""); // সার্চ সফল হওয়ার পর ইনপুট বক্স পরিষ্কার করে দেওয়া হলো
+        setSearchQuery(""); // after completing search , the search box will clear
       } else {
         setChatResponse("Error: " + (data.error || "Something went wrong"));
       }
