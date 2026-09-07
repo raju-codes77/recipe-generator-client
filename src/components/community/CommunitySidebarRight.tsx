@@ -199,11 +199,17 @@ export const CommunitySidebarRight: React.FC<CommunitySidebarRightProps> = ({
               <span className="font-black text-sm text-neutral-300 group-hover:text-[#2F8F46] w-4 text-center">
                 0{idx + 1}
               </span>
-              <img
-                src={post.imageUrl}
-                alt={post.recipe?.title || "Recipe"}
-                className="h-12 w-12 rounded-xl object-cover"
-              />
+              {post.imageUrl ? (
+                <img
+                  src={post.imageUrl}
+                  alt={post.recipe?.title || "Recipe"}
+                  className="h-12 w-12 rounded-xl object-cover"
+                />
+              ) : (
+                <div aria-hidden="true" className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#EAF7E8] text-xs font-black text-[#2F8F46] dark:bg-emerald-950/50 dark:text-[#B7E35F]">
+                  FC
+                </div>
+              )}
               <div className="flex-1 overflow-hidden">
                 <h5 className="truncate text-xs font-bold text-neutral-800 group-hover:text-[#2F8F46] dark:text-neutral-200">
                   {post.recipe?.title || post.caption.slice(0, 30)}
