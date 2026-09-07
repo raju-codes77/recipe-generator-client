@@ -86,7 +86,7 @@ const FlavorPairing = () => {
     }));
 
     return (
-        <section className="w-full bg-[#F6F7F2] dark:bg-gray-950 py-16 transition-colors duration-300 overflow-hidden">
+        <section className="w-full bg-white dark:bg-gray-950 py-16 transition-colors duration-300 overflow-hidden">
             {/* Custom thin scrollbar for the pairing tabs strip — subtle emerald tone instead of the harsh default gray/green OS scrollbar */}
             <style jsx global>{`
         .pairing-tabs-scroll {

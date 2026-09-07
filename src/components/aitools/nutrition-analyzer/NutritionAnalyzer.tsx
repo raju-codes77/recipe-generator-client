@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import toast from "react-hot-toast";
 import UploadCard from "./UploadCard";
 import AnalysisResult from "./AnalysisResult";
@@ -27,6 +27,7 @@ export default function NutritionAnalyzer() {
         body: formData,
       });
 
+      if (reqId !== requestRef.current) return;
       const data = await res.json();
 
       if (!res.ok) {

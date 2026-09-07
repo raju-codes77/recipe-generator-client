@@ -283,7 +283,7 @@ export function MealTrackerProvider({
   // Re-run whenever the authenticated user identity changes.
   // Covers: first load, login (null → userId), logout (userId → null),
   // and user switching (userIdA → userIdB).
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   }, [userId, isSessionPending]);
 
   const value: MealTrackerContextValue = {

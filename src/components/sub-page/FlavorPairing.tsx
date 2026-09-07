@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, Variants } from 'framer-motion';
 import {
     Sparkles,
     Search,
@@ -31,14 +31,14 @@ import {
 } from './flavorData'; // Update path if necessary
 import FlavorHeaderCard from './FlavorHeaderCard.';
 
-const containerStagger = {
+const containerStagger: Variants = {
     hidden: {},
     show: { transition: { staggerChildren: 0.06 } },
 };
 
-const fadeUp = {
+const fadeUp: Variants = {
     hidden: { opacity: 0, y: 14 },
-    show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: 'easeOut' } },
+    show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: 'easeOut' as const } },
 };
 
 // initialIngredient / initialTab come from the dynamic route
@@ -68,7 +68,7 @@ const FlavorPairing = ({ initialIngredient = 'Chicken', initialTab = 'Best Match
                   .slice(0, 6)
             : [];
 
-    const handleSelectIngredient = (name) => {
+    const handleSelectIngredient = (name: string) => {
         setSelectedIngredient(name);
         setSearchQuery('');
         setIsSearchFocused(false);
@@ -77,7 +77,7 @@ const FlavorPairing = ({ initialIngredient = 'Chicken', initialTab = 'Best Match
         router.push(`/flavor-pairing/${slugify(name)}?tab=${slugify(activeTab)}`, { scroll: false });
     };
 
-    const handleSelectTab = (tabName) => {
+    const handleSelectTab = (tabName: string) => {
         setActiveTab(tabName);
         // Switching a tab is a lightweight filter change → replaced in place
         // instead of pushed, so repeated tab clicks don't clutter history.
@@ -352,7 +352,7 @@ const FlavorPairing = ({ initialIngredient = 'Chicken', initialTab = 'Best Match
                                     exit={{ opacity: 0 }}
                                     className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5"
                                 >
-                                    {activePairings.map((p) => (
+                                    {activePairings.map((p: any) => (
                                         <motion.div
                                             key={p.name}
                                             variants={fadeUp}
@@ -471,7 +471,7 @@ const FlavorPairing = ({ initialIngredient = 'Chicken', initialTab = 'Best Match
                                 Top Pairings
                             </p>
                             <div className="space-y-3 mb-4">
-                                {personalizedTopPairings.map((p, i) => (
+                                {personalizedTopPairings.map((p: any, i: number) => (
                                     <motion.div
                                         key={p.name}
                                         whileHover={{ x: 4 }}
