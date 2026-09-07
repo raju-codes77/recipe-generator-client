@@ -30,7 +30,7 @@ export default function DashboardSidebar() {
   const adminNavItems = [
     { name: "Dashboard", icon: <FiHome />, href: "/dashboard/admin" },
     { name: "Users", icon: <FiUsers />, href: "/dashboard/admin/users" },
-    { name: "Recipes", icon: <FiBookOpen />, href: "/dashboard/admin/recipes" },
+    { name: "Recipes", icon: <FiBookOpen />, href: "/recipes" },
     { name: "Collections", icon: <FiFolder />, href: "/dashboard/admin/collections" },
     { name: "Challenges", icon: <FiAward />, href: "/dashboard/admin/challenges" },
     { name: "Community Posts", icon: <FiMessageSquare />, href: "/dashboard/admin/posts" },

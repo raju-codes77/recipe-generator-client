@@ -7,11 +7,13 @@ import CounterProps from "@/components/CounterProps";
 import PantryToPlateSection from "@/components/PantryToPlate";
 
 
+
 export default function Home() {
   return (
     <div>
       <Banner />
       <PantryToPlateSection />
+
       <RecipeCollectionSection />
       <PersonalizationSection />
       <CounterProps />
