@@ -17,6 +17,7 @@ interface ApiErrorBody {
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const headers = new Headers(init?.headers);
+  const method = (init?.method || "GET").toUpperCase();
 
   // A Content-Type header on an otherwise simple GET forces a CORS preflight.
   // Community reads do not send a body, so leave the header out for those calls.
@@ -27,6 +28,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE_URL}/api/community${path}`, {
     ...init,
     credentials: "include",
+    ...(method === "GET" ? { cache: "no-store" as const } : {}),
     headers,
   });
 

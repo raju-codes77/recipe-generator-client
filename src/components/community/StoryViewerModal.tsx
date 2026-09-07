@@ -4,6 +4,7 @@ import { Bell, ChevronLeft, ChevronRight, Download, Eye, Flame, Grid3X3, Heart, 
 import { useRouter } from 'next/navigation';
 import { NotificationItem, StoryItem } from './types';
 import { CommunityAvatar } from './CommunityAvatar';
+import { CommunityConfirmModal } from './CommunityConfirmModal';
 
 interface StoryViewerModalProps {
   story: StoryItem | null;
@@ -50,6 +51,7 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
   const [isInsightsOpen, setIsInsightsOpen] = useState(false);
   const [isStoryMenuOpen, setIsStoryMenuOpen] = useState(false);
   const [isDeletingStory, setIsDeletingStory] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [hoveredStorySide, setHoveredStorySide] = useState<'previous' | 'next' | null>(null);
   const notificationsRef = useRef<HTMLDivElement>(null);
@@ -59,6 +61,7 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
     setProgress(0);
     setIsPaused(false);
     setIsStoryMenuOpen(false);
+    setIsDeleteConfirmOpen(false);
     setIsNotificationsOpen(false);
     setHoveredStorySide(null);
   }, [isOpen, story]);
@@ -147,7 +150,6 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
 
   const deleteStory = async () => {
     if (!onDeleteStory || isDeletingStory) return;
-    if (!window.confirm("Delete this story? This cannot be undone.")) return;
     setIsDeletingStory(true);
     try {
       await onDeleteStory(story.id);
@@ -282,7 +284,7 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
                     <button type="button" onClick={() => void downloadStoryImage()} className="flex w-full items-center gap-2.5 px-4 py-3 text-left font-semibold text-neutral-800 transition hover:bg-neutral-100 dark:text-white dark:hover:bg-white/10">
                       <Download className="h-4 w-4 text-[#B7E35F]" /> Save image
                     </button>
-                    <button type="button" onClick={() => void deleteStory()} disabled={isDeletingStory} className="flex w-full items-center gap-2.5 px-4 py-3 text-left font-semibold text-rose-300 transition hover:bg-rose-500/15 disabled:cursor-not-allowed disabled:opacity-60">
+                    <button type="button" onClick={() => { setIsStoryMenuOpen(false); setIsDeleteConfirmOpen(true); }} disabled={isDeletingStory} className="flex w-full items-center gap-2.5 px-4 py-3 text-left font-semibold text-rose-300 transition hover:bg-rose-500/15 disabled:cursor-not-allowed disabled:opacity-60">
                       <Trash2 className="h-4 w-4" /> {isDeletingStory ? "Deleting..." : "Delete story"}
                     </button>
                   </div>
@@ -312,6 +314,15 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
         {isOwnStory && <div className="absolute bottom-4 left-1/2 z-30 -translate-x-1/2 sm:bottom-7"><button type="button" onClick={() => setIsInsightsOpen((open) => !open)} className="flex items-center gap-2 whitespace-nowrap rounded-2xl border border-neutral-200 bg-white/95 px-4 py-2 text-xs font-bold text-neutral-900 shadow-sm backdrop-blur-sm transition hover:bg-white dark:border-white/10 dark:bg-black/70 dark:text-white dark:hover:bg-black/85"><Eye className="h-4 w-4 text-[#2F8F46] dark:text-[#B7E35F]" /> Story viewers <span className="text-neutral-400">⌃</span></button>{isInsightsOpen && <div className="absolute bottom-full left-1/2 mb-2 w-[min(340px,88vw)] -translate-x-1/2 rounded-2xl border border-neutral-200 bg-white p-4 text-left text-neutral-900 shadow-2xl dark:border-white/10 dark:bg-[#202522] dark:text-white"><p className="text-sm font-black">Story viewers</p><p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">Viewer and reaction details will appear here after story tracking is connected.</p><div className="mt-4 rounded-xl bg-neutral-100 p-3 text-xs text-neutral-500 dark:bg-white/5">No viewer data available yet.</div></div>}</div>}
 
       </motion.div>
+      <CommunityConfirmModal
+        isOpen={isDeleteConfirmOpen}
+        title="Delete this story?"
+        message="This story will be removed from your Community profile immediately."
+        confirmLabel="Delete story"
+        isLoading={isDeletingStory}
+        onClose={() => setIsDeleteConfirmOpen(false)}
+        onConfirm={() => void deleteStory()}
+      />
     </div>
   );
 };

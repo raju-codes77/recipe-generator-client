@@ -22,6 +22,8 @@ import {
 import { Post } from "./types";
 import { RecipeDetailsModal } from "./RecipeDetailsModal";
 import { CommunityAvatar } from "./CommunityAvatar";
+import { CommunityConfirmModal } from "./CommunityConfirmModal";
+import { parseCommunityTags } from "./community-tags";
 import Link from "next/link";
 
 interface PostCardProps {
@@ -82,6 +84,9 @@ export const PostCard: React.FC<PostCardProps> = ({
   const [newCommentText, setNewCommentText] = useState("");
   const [likedAnimation, setLikedAnimation] = useState(false);
   const [isLoadingMoreComments, setIsLoadingMoreComments] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const displayTags = Array.from(new Set((post.tags ?? []).flatMap((tag) => parseCommunityTags(tag))));
 
   const menuRef = useRef<HTMLDivElement>(null);
   const shareMenuRef = useRef<HTMLDivElement>(null);
@@ -244,9 +249,9 @@ export const PostCard: React.FC<PostCardProps> = ({
                     <>
                       <button onClick={() => { void onEdit?.(post); setShowMenu(false); }} className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-neutral-700 hover:bg-neutral-50 dark:text-neutral-200 dark:hover:bg-neutral-800"><Pencil className="h-4 w-4 text-[#2F8F46]" /> Edit post</button>
                       <button onClick={() => { onSave(post.id); setShowMenu(false); }} className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-neutral-700 hover:bg-neutral-50 dark:text-neutral-200 dark:hover:bg-neutral-800"><Bookmark className="h-4 w-4 text-[#2F8F46]" /> {post.isSaved ? "Remove from Saved" : "Save to Collection"}</button>
-                      <button onClick={() => { void onTogglePin?.(post.id, !post.isPinned); setShowMenu(false); }} className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-neutral-700 hover:bg-neutral-50 dark:text-neutral-200 dark:hover:bg-neutral-800"><Pin className="h-4 w-4 text-[#FF9F43]" /> {post.isPinned ? "Unpin post" : "Pin post"}</button>
+                      {onTogglePin && <button onClick={() => { void onTogglePin(post.id, !post.isPinned); setShowMenu(false); }} className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-neutral-700 hover:bg-neutral-50 dark:text-neutral-200 dark:hover:bg-neutral-800"><Pin className="h-4 w-4 text-[#FF9F43]" /> {post.isPinned ? "Unpin post" : "Pin post"}</button>}
                       <div className="my-1.5 border-t border-slate-100 dark:border-neutral-800" />
-                      <button onClick={() => { if (window.confirm("Delete this post? This cannot be undone.")) void onDelete?.(post.id); setShowMenu(false); }} className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40"><Trash2 className="h-4 w-4" /> Delete post</button>
+                      <button onClick={() => { setShowMenu(false); setIsDeleteConfirmOpen(true); }} className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40"><Trash2 className="h-4 w-4" /> Delete post</button>
                     </>
                   ) : (
                     <>
@@ -317,8 +322,21 @@ export const PostCard: React.FC<PostCardProps> = ({
       </div>
 
       {post.sharedFrom && (
-        <div className="px-4 pb-2 text-xs text-neutral-500 dark:text-neutral-400 sm:px-6">
-          Shared from <span className="font-bold text-neutral-700 dark:text-neutral-200">{post.sharedFrom.name}</span>
+        <div className="mx-4 mb-3 flex items-center gap-3 rounded-2xl border border-[#2F8F46]/20 bg-[#EAF7E8]/70 px-3.5 py-2.5 dark:border-[#B7E35F]/20 dark:bg-emerald-950/25 sm:mx-6">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#2F8F46] text-white dark:bg-[#B7E35F] dark:text-[#14230D]">
+            <Share2 className="h-4 w-4" aria-hidden="true" />
+          </div>
+          <CommunityAvatar
+            src={post.sharedFrom.avatar}
+            alt={post.sharedFrom.name}
+            className="h-8 w-8 shrink-0 rounded-full object-cover ring-1 ring-white/80 dark:ring-neutral-800"
+          />
+          <div className="min-w-0 text-xs leading-5">
+            <p className="font-bold text-neutral-900 dark:text-white">{post.author.name} shared this post</p>
+            <p className="truncate text-neutral-600 dark:text-neutral-300">
+              Originally posted by <span className="font-semibold text-[#176B35] dark:text-[#B7E35F]">{post.sharedFrom.name}</span>
+            </p>
+          </div>
         </div>
       )}
 
@@ -343,9 +361,9 @@ export const PostCard: React.FC<PostCardProps> = ({
         </div>
 
         {/* Tags */}
-        {post.tags && post.tags.length > 0 && (
+        {displayTags.length > 0 && (
           <div className="mt-3 flex flex-wrap gap-2">
-            {post.tags.map((tag, idx) => (
+            {displayTags.map((tag, idx) => (
               <span
                 key={idx}
                 className="rounded-lg bg-[#EAF7E8] px-2.5 py-1 text-xs font-semibold text-[#176B35] hover:bg-[#D8F3DC] cursor-pointer transition dark:bg-emerald-950/50 dark:text-[#B7E35F]"
@@ -363,7 +381,7 @@ export const PostCard: React.FC<PostCardProps> = ({
       </div>
 
       {/* 3. Food Photo with Overlay Metadata Badge */}
-      <div className="relative aspect-4/3 sm:aspect-16/10 w-full overflow-hidden bg-neutral-100 dark:bg-neutral-900">
+      {post.imageUrl && <div className="relative aspect-4/3 sm:aspect-16/10 w-full overflow-hidden bg-neutral-100 dark:bg-neutral-900">
         {onImageClick ? (
           <button type="button" onClick={() => onImageClick(post)} className="absolute inset-0 h-full w-full cursor-zoom-in text-left" aria-label="Open full-size food image">
             <img src={post.imageUrl} alt={post.recipe?.title || "Community Food"} className="h-full w-full object-cover transition duration-500 hover:scale-105" />
@@ -402,7 +420,7 @@ export const PostCard: React.FC<PostCardProps> = ({
             </motion.div>
           </div>
         )}
-      </div>
+      </div>}
 
       {/* 4. Recipe Accordion / Drawer Toggle */}
       {post.recipe && (
@@ -658,6 +676,24 @@ export const PostCard: React.FC<PostCardProps> = ({
         )}
       </AnimatePresence>
       <RecipeDetailsModal post={post} isOpen={isRecipeModalOpen} onClose={() => setIsRecipeModalOpen(false)} />
+      <CommunityConfirmModal
+        isOpen={isDeleteConfirmOpen}
+        title="Delete this post?"
+        message="This post and its Community interactions will be permanently removed."
+        confirmLabel="Delete post"
+        isLoading={isDeleting}
+        onClose={() => setIsDeleteConfirmOpen(false)}
+        onConfirm={async () => {
+          if (!onDelete || isDeleting) return;
+          setIsDeleting(true);
+          try {
+            await onDelete(post.id);
+            setIsDeleteConfirmOpen(false);
+          } finally {
+            setIsDeleting(false);
+          }
+        }}
+      />
     </motion.article>
   );
 };

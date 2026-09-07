@@ -191,13 +191,13 @@ export const CommunitySidebarLeft: React.FC<CommunitySidebarLeftProps> = ({
                       : "text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-900 dark:hover:text-white"
                   }`}
                 >
-                  <div className="flex items-center gap-2.5">
+                  <div className="flex min-w-0 flex-1 items-center gap-2.5">
                     <Icon
                       className={`h-4 w-4 ${
                         isActive ? "text-white" : "text-neutral-400"
                       }`}
                     />
-                    <span>{cat.label}</span>
+                    <span className="text-left">{cat.label}</span>
                   </div>
 
                   {cat.badge && (
