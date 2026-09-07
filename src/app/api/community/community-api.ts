@@ -153,8 +153,11 @@ export const communityApi = {
     return request<{ active: boolean }>(`/users/${userId}/follow`, { method: "POST" });
   },
 
-  async sharePost(postId: string): Promise<Post> {
-    const response = await request<{ post: Post }>(`/posts/${postId}/share`, { method: "POST" });
+  async sharePost(postId: string, caption?: string): Promise<Post> {
+    const response = await request<{ post: Post }>(`/posts/${postId}/share`, {
+      method: "POST",
+      body: JSON.stringify({ caption }),
+    });
     return response.post;
   },
 

@@ -321,67 +321,36 @@ export const PostCard: React.FC<PostCardProps> = ({
         </div>
       </div>
 
-      {post.sharedFrom && (
-        <div className="mx-4 mb-3 flex items-center gap-3 rounded-2xl border border-[#2F8F46]/20 bg-[#EAF7E8]/70 px-3.5 py-2.5 dark:border-[#B7E35F]/20 dark:bg-emerald-950/25 sm:mx-6">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#2F8F46] text-white dark:bg-[#B7E35F] dark:text-[#14230D]">
-            <Share2 className="h-4 w-4" aria-hidden="true" />
-          </div>
-          <CommunityAvatar
-            src={post.sharedFrom.avatar}
-            alt={post.sharedFrom.name}
-            className="h-8 w-8 shrink-0 rounded-full object-cover ring-1 ring-white/80 dark:ring-neutral-800"
-          />
-          <div className="min-w-0 text-xs leading-5">
-            <p className="font-bold text-neutral-900 dark:text-white">{post.author.name} shared this post</p>
-            <p className="truncate text-neutral-600 dark:text-neutral-300">
-              Originally posted by <span className="font-semibold text-[#176B35] dark:text-[#B7E35F]">{post.sharedFrom.name}</span>
-            </p>
-          </div>
-        </div>
-      )}
-
       {/* 2. Post Caption Narrative */}
-      <div className="px-4 sm:px-6 pb-4">
-        <div>
-          <p
-            className={`text-sm sm:text-base text-neutral-800 dark:text-neutral-200 leading-relaxed whitespace-pre-line ${
-              !isCaptionExpanded ? "line-clamp-2" : ""
-            }`}
-          >
-            {post.caption}
-          </p>
-          {post.caption.length > 120 && (
-            <button
-              onClick={() => setIsCaptionExpanded(!isCaptionExpanded)}
-              className="mt-1 text-xs sm:text-sm font-bold text-[#2F8F46] hover:underline dark:text-[#B7E35F] cursor-pointer"
-            >
-              {isCaptionExpanded ? "Show less" : "...more"}
-            </button>
-          )}
-        </div>
-
-        {/* Tags */}
-        {displayTags.length > 0 && (
-          <div className="mt-3 flex flex-wrap gap-2">
-            {displayTags.map((tag, idx) => (
-              <span
-                key={idx}
-                className="rounded-lg bg-[#EAF7E8] px-2.5 py-1 text-xs font-semibold text-[#176B35] hover:bg-[#D8F3DC] cursor-pointer transition dark:bg-emerald-950/50 dark:text-[#B7E35F]"
-              >
-                {tag}
-              </span>
-            ))}
-            {post.isChallengeEntry && (
-              <span className="rounded-lg bg-[#FFF0DD] px-2.5 py-1 text-xs font-bold text-[#FF9F43] flex items-center gap-1.5 dark:bg-amber-950/40">
-                <Flame className="h-3.5 w-3.5" /> Challenge: {post.challengeName}
-              </span>
-            )}
+      {post.sharedOriginal ? (
+        <div className="space-y-3 px-4 pb-0 sm:px-6">
+          {post.caption.trim() && <div>
+            <p className="whitespace-pre-line text-sm sm:text-base text-neutral-800 dark:text-neutral-200">{post.caption}</p>
+          </div>}
+          <div className="rounded-t-2xl border border-b-0 border-slate-200 bg-neutral-50 p-4 pb-3 dark:border-neutral-700 dark:bg-[#181B19]">
+            <div className="flex items-center gap-3">
+              <CommunityAvatar src={post.sharedOriginal.author.avatar} alt={post.sharedOriginal.author.name} className="h-10 w-10 rounded-full object-cover" />
+              <div className="min-w-0">
+                <p className="truncate text-sm font-bold text-neutral-900 dark:text-white">{post.sharedOriginal.author.name}</p>
+                <p className="text-xs text-neutral-500">{post.sharedOriginal.createdAt}</p>
+              </div>
+            </div>
+            <p className="mt-3 whitespace-pre-line text-sm leading-6 text-neutral-800 dark:text-neutral-200">{post.sharedOriginal.caption}</p>
           </div>
-        )}
-      </div>
+        </div>
+      ) : <div className="px-4 pb-4 sm:px-6">
+        <div>
+          <p className={`text-sm sm:text-base text-neutral-800 dark:text-neutral-200 leading-relaxed whitespace-pre-line ${!isCaptionExpanded ? "line-clamp-2" : ""}`}>{post.caption}</p>
+          {post.caption.length > 120 && <button onClick={() => setIsCaptionExpanded(!isCaptionExpanded)} className="mt-1 text-xs sm:text-sm font-bold text-[#2F8F46] hover:underline dark:text-[#B7E35F] cursor-pointer">{isCaptionExpanded ? "Show less" : "...more"}</button>}
+        </div>
+        {displayTags.length > 0 && <div className="mt-3 flex flex-wrap gap-2">
+          {displayTags.map((tag) => <span key={tag} className="rounded-lg bg-[#EAF7E8] px-2.5 py-1 text-xs font-semibold text-[#176B35] hover:bg-[#D8F3DC] cursor-pointer transition dark:bg-emerald-950/50 dark:text-[#B7E35F]">{tag}</span>)}
+          {post.isChallengeEntry && <span className="rounded-lg bg-[#FFF0DD] px-2.5 py-1 text-xs font-bold text-[#FF9F43] flex items-center gap-1.5 dark:bg-amber-950/40"><Flame className="h-3.5 w-3.5" /> Challenge: {post.challengeName}</span>}
+        </div>}
+      </div>}
 
       {/* 3. Food Photo with Overlay Metadata Badge */}
-      {post.imageUrl && <div className="relative aspect-4/3 sm:aspect-16/10 w-full overflow-hidden bg-neutral-100 dark:bg-neutral-900">
+      {post.imageUrl && <div className={`relative aspect-4/3 sm:aspect-16/10 w-full overflow-hidden bg-neutral-100 dark:bg-neutral-900 ${post.sharedOriginal ? "mx-4 w-[calc(100%-2rem)] border-x border-slate-200 sm:mx-6 sm:w-[calc(100%-3rem)] dark:border-neutral-700" : ""}`}>
         {onImageClick ? (
           <button type="button" onClick={() => onImageClick(post)} className="absolute inset-0 h-full w-full cursor-zoom-in text-left" aria-label="Open full-size food image">
             <img src={post.imageUrl} alt={post.recipe?.title || "Community Food"} className="h-full w-full object-cover transition duration-500 hover:scale-105" />
@@ -424,7 +393,7 @@ export const PostCard: React.FC<PostCardProps> = ({
 
       {/* 4. Recipe Accordion / Drawer Toggle */}
       {post.recipe && (
-        <div className="border-t border-slate-100 bg-neutral-50/50 dark:border-neutral-800 dark:bg-neutral-900/30">
+        <div className={`border-t border-slate-100 bg-neutral-50/50 dark:border-neutral-800 dark:bg-neutral-900/30 ${post.sharedOriginal ? "mx-4 mb-3 border-x border-b border-slate-200 rounded-b-2xl sm:mx-6 dark:border-neutral-700" : ""}`}>
           <button
             onClick={() => setIsRecipeModalOpen(true)}
             className="flex w-full items-center justify-between gap-3 px-4 sm:px-6 py-4 text-left transition hover:bg-neutral-100/60 dark:hover:bg-neutral-900"
@@ -489,7 +458,8 @@ export const PostCard: React.FC<PostCardProps> = ({
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.85 }}
             onClick={() => (isAuthenticated ? onRate(post) : onRequireAuthentication("rate and review recipes"))}
-            title="Rate & Review Recipe"
+            title={`Rate & Review ${post.recipe ? "Recipe" : "Post"}`}
+            aria-label={`Rate & Review ${post.recipe ? "Recipe" : "Post"}`}
             className="flex items-center text-neutral-600 hover:text-amber-500 transition dark:text-neutral-300"
           >
             <Star className="h-5 w-5 fill-amber-400 text-amber-400" />

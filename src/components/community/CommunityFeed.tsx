@@ -18,6 +18,7 @@ import { SendDirectMessageModal } from "./SendDirectMessageModal";
 import { SaveToCollectionModal } from "./SaveToCollectionModal";
 import { ConfirmUnsaveModal } from "./ConfirmUnsaveModal";
 import { CommunityTextPromptModal } from "./CommunityTextPromptModal";
+import { CommunityShareModal } from "./CommunityShareModal";
 import { formatCommunityTags, parseCommunityTags } from "./community-tags";
 import { CommunityScrollColumn } from "./CommunityStickySidebar";
 import { StoryViewerModal } from "./StoryViewerModal";
@@ -86,6 +87,8 @@ export const CommunityFeed: React.FC = () => {
   const [dmModalOpen, setDmModalOpen] = useState(false);
   const [dmRecipientId, setDmRecipientId] = useState<string | undefined>(undefined);
   const [dmAttachedPost, setDmAttachedPost] = useState<Post | null>(null);
+  const [shareModalPost, setShareModalPost] = useState<Post | null>(null);
+  const [isSharingPost, setIsSharingPost] = useState(false);
   const [viewingStory, setViewingStory] = useState<StoryItem | null>(null);
   const [storyEditorFile, setStoryEditorFile] = useState<File | null>(null);
   const [editPost, setEditPost] = useState<Post | null>(null);
@@ -432,8 +435,24 @@ export const CommunityFeed: React.FC = () => {
     showToast("Recipe link copied to clipboard! Ready to share.");
   };
 
-  const handleShareToProfile = (post: Post) =>
-    runMutation(() => communityApi.sharePost(post.id), "Post shared to your profile");
+  const handleShareToProfile = (post: Post) => {
+    if (!isAuthenticated) {
+      requireAuthentication("share posts to your profile");
+      return;
+    }
+    setShareModalPost(post);
+  };
+
+  const confirmShareToProfile = async (caption: string) => {
+    if (!shareModalPost || isSharingPost) return;
+    setIsSharingPost(true);
+    try {
+      await runMutation(() => communityApi.sharePost(shareModalPost.id, caption), "Post shared to your profile");
+      setShareModalPost(null);
+    } finally {
+      setIsSharingPost(false);
+    }
+  };
 
   // Handle Direct Message open
   const handleOpenDM = (authorId?: string, post?: Post) => {
@@ -1064,6 +1083,16 @@ export const CommunityFeed: React.FC = () => {
           setViewingStory(null);
           showToast("Story deleted");
         }}
+      />
+
+      <CommunityShareModal
+        post={shareModalPost}
+        isOpen={Boolean(shareModalPost)}
+        currentUserName={session?.user?.name || "Your profile"}
+        currentUserAvatar={session?.user?.image || ""}
+        isSubmitting={isSharingPost}
+        onClose={() => { if (!isSharingPost) setShareModalPost(null); }}
+        onShareNow={confirmShareToProfile}
       />
 
       <ConfirmUnsaveModal post={unsaveModalPost} onClose={() => setUnsaveModalPost(null)} onConfirm={handleConfirmUnsave} />

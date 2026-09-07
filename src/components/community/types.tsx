@@ -111,6 +111,13 @@ export interface Post {
   challengeName?: string;
   isPinned?: boolean;
   sharedFrom?: Author;
+  sharedOriginal?: {
+    author: Author;
+    caption: string;
+    tags: string[];
+    createdAt: string;
+    imageUrl: string;
+  };
 }
 
 export interface StoryItem {
