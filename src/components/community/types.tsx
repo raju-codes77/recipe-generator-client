@@ -118,6 +118,13 @@ export interface StoryItem {
   timestamp: string;
 }
 
+export interface PublicCommunityProfile {
+  user: Author;
+  posts: Post[];
+  stories: StoryItem[];
+  followingCount: number;
+}
+
 export interface RecipeCollection {
   id: string;
   name: string;

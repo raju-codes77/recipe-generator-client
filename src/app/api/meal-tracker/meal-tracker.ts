@@ -36,29 +36,31 @@ export const analyzeMeal = async (file: File) => {
     return data;
 };
 
-export const getUserGoal = async () => {
+export const getUserGoal = async (userId: string) => {
     try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/goal`, {
-            credentials: "include",
-        });
-        if (!res.ok) return null;
-        const data = await res.json();
-        return data?.dailyKcal ?? null;
+        if (typeof window !== "undefined" && userId) {
+            const saved = localStorage.getItem(`user_goal_${userId}`);
+            if (saved) {
+                return Number(saved);
+            }
+        }
+        return null;
     } catch (error) {
         console.error("Error fetching user goal:", error);
         return null;
     }
 };
 
-export const updateUserGoal = async (goal: number) => {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/goal`, {
-        method: "PUT",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ dailyKcal: goal }),
-    });
-    if (!res.ok) throw new Error("Failed to save goal");
-    return await res.json();
+export const updateUserGoal = async (goal: number, userId: string) => {
+    try {
+        if (typeof window !== "undefined" && userId) {
+            localStorage.setItem(`user_goal_${userId}`, goal.toString());
+            return { dailyKcal: goal };
+        }
+        throw new Error("Cannot save locally");
+    } catch (error) {
+        throw new Error("Failed to save goal");
+    }
 };
 
 export const getMealLog = async (userId: string) => {
@@ -96,26 +98,25 @@ export interface DayEntry {
     protein: number;
 }
 
-export const getDailyHistory = async (): Promise<Record<string, DayEntry>> => {
+export const getDailyHistory = async (userId: string): Promise<Record<string, DayEntry>> => {
     try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/daily-history`, {
-            credentials: "include",
-        });
-        if (!res.ok) return {};
-        return await res.json();
+        if (typeof window !== "undefined" && userId) {
+            const saved = localStorage.getItem(`daily_history_${userId}`);
+            if (saved) return JSON.parse(saved);
+        }
+        return {};
     } catch {
         return {};
     }
 };
 
-export const saveDayEntry = async (entry: DayEntry): Promise<void> => {
+export const saveDayEntry = async (entry: DayEntry, userId: string): Promise<void> => {
     try {
-        await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/daily-history`, {
-            method: "POST",
-            credentials: "include",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(entry),
-        });
+        if (typeof window !== "undefined" && userId) {
+            const history = await getDailyHistory(userId);
+            history[entry.date] = entry;
+            localStorage.setItem(`daily_history_${userId}`, JSON.stringify(history));
+        }
     } catch {
         console.error("Failed to save day entry");
     }

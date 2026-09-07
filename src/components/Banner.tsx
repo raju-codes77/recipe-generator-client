@@ -1,7 +1,10 @@
 "use client";
 
-import { ArrowRight, Sparkles, Activity, Leaf, Users, Utensils, Sunrise, Trophy } from "lucide-react";
+import { ArrowRight, Sparkles, Activity, Leaf, Users, Utensils, Sunrise, Trophy,  } from "lucide-react";
 import { motion } from "framer-motion";
+import Link from "next/link"; // 
+
+import { FaUserAlt } from "react-icons/fa";
 
 export default function Banner() {
   // Stagger variants for the left column
@@ -71,7 +74,7 @@ export default function Banner() {
             </motion.button>
           </motion.div>
 
-          {/* Feature Icon Row (replaces avatars/social proof) */}
+          {/* Feature Icon Row */}
           <div className="flex flex-wrap items-start gap-6 sm:gap-8">
             <motion.div variants={itemVariants}><FeatureIcon icon={<Utensils size={18} />} label="Pantry-to-Plate" /></motion.div>
             <motion.div variants={itemVariants}><FeatureIcon icon={<Activity size={18} />} label="AI Nutrition" /></motion.div>
@@ -91,7 +94,7 @@ export default function Banner() {
           {/* Wrapper for Image and Badges */}
           <div className="relative w-full max-w-[540px] aspect-square flex items-center justify-center">
 
-            {/* Hero Bowl Image (with overflow-hidden) */}
+            {/* Hero Bowl Image */}
             <motion.div
               className="absolute inset-0 bg-slate-100 dark:bg-slate-800 rounded-3xl lg:rounded-[2.5rem] overflow-hidden"
               initial={{ opacity: 0, scale: 0.9 }}
@@ -150,34 +153,47 @@ export default function Banner() {
               </div>
             </motion.div>
 
-            {/* Floating Badge 3: Smart Flavor Pairing (Middle Right) */}
+            {/* ✨ NEW: Health Consultant Interactive Floating Card (Middle Right / Bottom Right) */}
             <motion.div
-              className="absolute top-1/2 -translate-y-1/2 -right-2 sm:-right-8 lg:-right-12 z-20 bg-white dark:bg-slate-800 shadow-xl border border-gray-100 dark:border-slate-700/60 rounded-2xl p-2.5 px-3.5 flex items-center gap-3"
-              initial={{ opacity: 0, x: 30 }}
-              animate={{ opacity: 1, x: 0, y: [-5, 3, -5] }}
+              className="absolute -bottom-6 sm:-bottom-8 right-2 sm:right-4 lg:-right-8 z-30 max-w-[240px]"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: [0, -6, 0] }}
               transition={{
-                opacity: { delay: 0.7, duration: 0.5 },
-                x: { delay: 0.7, duration: 0.5, ease: "easeOut" },
-                y: { repeat: Infinity, duration: 3.8, ease: "easeInOut", delay: 1.2 }
+                opacity: { delay: 0.9, duration: 0.5 },
+                y: { repeat: Infinity, duration: 4, ease: "easeInOut", delay: 1.5 }
               }}
             >
-              <div className="w-9 h-9 rounded-full bg-emerald-100 dark:bg-emerald-950/60 flex items-center justify-center text-emerald-600">
-                <Leaf size={18} />
-              </div>
-              <div className="text-left">
-                <p className="text-[11px] sm:text-xs font-bold text-slate-800 dark:text-white leading-tight">
-                  Smart<br />Flavor Pairing
+              <Link
+                href="/dashboard/users/health-consultant"
+                className="block bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-2xl border-2 border-emerald-500/40 hover:border-emerald-500 rounded-2xl p-3.5 transition-all group"
+              >
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-200 to-[#2F8F46] flex items-center justify-center text-white shadow-md shadow-emerald-500/30 group-hover:scale-110 transition-transform">
+                    <FaUserAlt size={16} />
+                  </div>
+                  <div>
+                    <span className="inline-block px-1.5 py-0.5 rounded bg-orange-500/10 text-orange-600 dark:text-orange-400 text-[12px] font-extrabold uppercase tracking-wider">
+                      PRO FEATURE
+                    </span>
+                    <h4 className="text-xs font-bold text-slate-900 dark:text-white leading-tight">
+                      AI Health Consultant
+                    </h4>
+                  </div>
+                </div>
+                <p className="text-[12px] text-slate-500 dark:text-slate-400 mb-2 leading-relaxed">
+                  Get custom meal plans & track diet instantly.
                 </p>
-              </div>
+                <div className="flex items-center justify-between text-[12px] font-bold text-emerald-600 dark:text-emerald-400 group-hover:translate-x-0.5 transition-transform">
+                  <span>Consult Now</span>
+                  <ArrowRight size={12} />
+                </div>
+              </Link>
             </motion.div>
 
           </div>
         </div>
 
       </div>
-
-      {/* Bottom Floating Stats Card Bar */}
-
 
     </section>
   );
@@ -197,23 +213,5 @@ function FeatureIcon({ icon, label }: { icon: React.ReactNode; label: string }) 
         {label}
       </span>
     </motion.div>
-  );
-}
-
-// Custom Chef Hat SVG Component for pixel accuracy
-function ChefHatIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M6 19h12M6 16h12M12 3a5 5 0 00-4.546 2.916A4.5 4.5 0 005 10.5c0 1.954 1.242 3.619 3 4.255v1.245h8v-1.245c1.758-.636 3-2.301 3-4.255a4.5 4.5 0 00-2.454-4.584A5 5 0 0012 3z" />
-    </svg>
-  );
-}
-
-// Custom Soup/Meal SVG Component
-function SoupIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v3m-4-3v3m8-3v3M4 11h16a1 1 0 011 1v2a7 7 0 01-14 0v-2a1 1 0 011-1zM5 19h14" />
-    </svg>
   );
 }

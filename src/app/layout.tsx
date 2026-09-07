@@ -31,11 +31,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col bg-slate-100 dark:bg-slate-950 transition-colors duration-300">
         <div className="">
           <Navbar />
+          <AIAssistantPopup/>
           <main className="flex-1">
             {children}
             <Toaster position="bottom-right" reverseOrder={false} />
           </main>
-          <AIAssistantPopup/>
           <Footer />
         </div>
       </body>

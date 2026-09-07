@@ -265,7 +265,7 @@ export function MealTrackerProvider({
         // getUserGoal calls /api/users/goal with credentials: "include".
         // The backend reads the session cookie — no client-provided userId
         // is sent, so this endpoint is already backend-authorised.
-        getUserGoal().then((goal: number | null) => {
+        getUserGoal(userId).then((goal: number | null) => {
           setDailyGoalKcal(typeof goal === "number" ? goal : 2000);
         });
 
