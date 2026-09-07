@@ -26,11 +26,13 @@ export const analyzeMeal = async (file: File) => {
     const data = await response.json();
 
     if (!response.ok) {
-        throw new Error(
-            data.error ||
-            data.message ||
-            "Failed to analyze meal"
-        );
+        let errorMessage = "Failed to analyze meal";
+        if (data.error) {
+            errorMessage = typeof data.error === "object" ? data.error.message || JSON.stringify(data.error) : data.error;
+        } else if (data.message) {
+            errorMessage = typeof data.message === "object" ? data.message.message || JSON.stringify(data.message) : data.message;
+        }
+        throw new Error(errorMessage);
     }
 
     return data;

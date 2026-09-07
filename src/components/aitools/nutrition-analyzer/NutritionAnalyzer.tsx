@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import toast from "react-hot-toast";
 import { RotateCcw } from "lucide-react";
 import type { AnalyzerStatus, NutritionResult } from "@/types/nutrition";
@@ -10,8 +10,13 @@ import AnalysisResult from "./AnalysisResult";
 export default function NutritionAnalyzer() {
   const [status, setStatus] = useState<AnalyzerStatus>("idle");
   const [result, setResult] = useState<NutritionResult | null>(null);
+  const requestRef = useRef<number>(0);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   async function handleFileSelected(file: File) {
+    const reqId = ++requestRef.current;
+    if (abortControllerRef.current) abortControllerRef.current.abort();
+    abortControllerRef.current = new AbortController();
     setStatus("analyzing");
     const toastId = toast.loading("Analyzing your food photo...");
 
@@ -24,6 +29,7 @@ export default function NutritionAnalyzer() {
         body: formData,
       });
 
+      if (reqId !== requestRef.current) return;
       const data = await res.json();
 
       if (!res.ok) {

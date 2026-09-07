@@ -196,6 +196,7 @@ export const CommunityFeed: React.FC = () => {
         await loadCommunity();
         showToast(success);
       } catch (error) {
+        setHasMoreServerPosts(false);
         showToast(error instanceof Error ? error.message : "Community action failed");
       }
     },
