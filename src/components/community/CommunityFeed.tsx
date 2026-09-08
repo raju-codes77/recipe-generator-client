@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 import { PlusCircle, RefreshCw, Check, Utensils, Sparkles, Search, X } from "lucide-react";
 import { Post, Review, StoryItem, RecipeCollection, NotificationItem, Author } from "./types";
@@ -15,6 +16,11 @@ import { RecipeReviewModal } from "./RecipeReviewModal";
 import { ReportPostModal } from "./ReportPostModal";
 import { SendDirectMessageModal } from "./SendDirectMessageModal";
 import { SaveToCollectionModal } from "./SaveToCollectionModal";
+import { ConfirmUnsaveModal } from "./ConfirmUnsaveModal";
+import { CommunityTextPromptModal } from "./CommunityTextPromptModal";
+import { CommunityShareModal } from "./CommunityShareModal";
+import { formatCommunityTags, parseCommunityTags } from "./community-tags";
+import { CommunityScrollColumn } from "./CommunityStickySidebar";
 import { StoryViewerModal } from "./StoryViewerModal";
 import { StoryEditorModal } from "./StoryEditorModal";
 import { CommunityAvatar } from "./CommunityAvatar";
@@ -24,9 +30,11 @@ import Link from "next/link";
 
 const POSTS_PER_PAGE = 4;
 const API_POSTS_PER_PAGE = 12;
+type CommunityFilter = "all" | "trending" | "following" | "quick" | "wellness" | "challenge" | "ai_sparks" | "saved" | "liked";
 
 interface CommunityCache {
   posts: Post[];
+  trendingPosts: Post[];
   stories: StoryItem[];
   hasMorePosts: boolean;
 }
@@ -39,15 +47,22 @@ const getCommunityChefs = (communityPosts: Post[], viewerId?: string) => {
 };
 
 export const CommunityFeed: React.FC = () => {
+  const router = useRouter();
   const { data: session, isPending: isSessionPending } = authClient.useSession();
   const isAuthenticated = Boolean(session?.user);
 
   // Community data state
   const [posts, setPosts] = useState<Post[]>(() => communityCache?.posts ?? []);
+  const [trendingPosts, setTrendingPosts] = useState<Post[]>(() => communityCache?.trendingPosts ?? []);
   const [stories, setStories] = useState<StoryItem[]>(() => communityCache?.stories ?? []);
   const [collections, setCollections] = useState<RecipeCollection[]>([]);
+  const [feedCounts, setFeedCounts] = useState({ savedPostsCount: 0, likedPostsCount: 0 });
+  const [currentUserRecipeCount, setCurrentUserRecipeCount] = useState<number | null>(null);
   const [chefs, setChefs] = useState<Author[]>(() => getCommunityChefs(communityCache?.posts ?? []));
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [connectionsOpen, setConnectionsOpen] = useState(false);
+  const [connectionUsers, setConnectionUsers] = useState<Author[]>([]);
+  const [isLoadingConnections, setIsLoadingConnections] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(() => !communityCache);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [hasMoreServerPosts, setHasMoreServerPosts] = useState(() => communityCache?.hasMorePosts ?? true);
@@ -63,16 +78,23 @@ export const CommunityFeed: React.FC = () => {
   // Modals state
   const [createPostOpen, setCreatePostOpen] = useState(false);
   const [createPostInitialAI, setCreatePostInitialAI] = useState(false);
+  const [createPostMode, setCreatePostMode] = useState<"quick" | "recipe" | "ai_import">("quick");
   const [reviewModalPost, setReviewModalPost] = useState<Post | null>(null);
   const [isLoadingMoreReviews, setIsLoadingMoreReviews] = useState(false);
   const [reportModalPost, setReportModalPost] = useState<Post | null>(null);
   const [saveModalPost, setSaveModalPost] = useState<Post | null>(null);
+  const [unsaveModalPost, setUnsaveModalPost] = useState<Post | null>(null);
   const [dmModalOpen, setDmModalOpen] = useState(false);
   const [dmRecipientId, setDmRecipientId] = useState<string | undefined>(undefined);
   const [dmAttachedPost, setDmAttachedPost] = useState<Post | null>(null);
+  const [shareModalPost, setShareModalPost] = useState<Post | null>(null);
+  const [isSharingPost, setIsSharingPost] = useState(false);
   const [viewingStory, setViewingStory] = useState<StoryItem | null>(null);
   const [storyEditorFile, setStoryEditorFile] = useState<File | null>(null);
-
+  const [editPost, setEditPost] = useState<Post | null>(null);
+  const [editCaption, setEditCaption] = useState("");
+  const [editTags, setEditTags] = useState("");
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
   const storyGroups = useMemo(() => {
     const groups = new Map<string, StoryItem[]>();
 
@@ -146,48 +168,82 @@ export const CommunityFeed: React.FC = () => {
         avatar: session.user.image || "",
         role: "user",
         followersCount: currentUserPost?.author.followersCount || 0,
-        recipesCount: posts.filter((post) => post.author.id === session.user.id).length,
+        recipesCount: currentUserRecipeCount ?? posts.filter((post) => post.author.id === session.user.id && post.recipe).length,
       }
     : null;
 
   const loadCommunity = useCallback(async () => {
     setLoadError(null);
     try {
-      const [loadedPosts, loadedStories] = await Promise.all([
-        communityApi.listPosts({ take: API_POSTS_PER_PAGE, skip: 0 }),
+      const [loadedPosts, loadedTrendingPosts, loadedStories, ownProfile] = await Promise.all([
+        communityApi.listPosts({ take: API_POSTS_PER_PAGE, skip: 0, filter: activeFilter as CommunityFilter }),
+        communityApi.listPosts({ take: 3, skip: 0, filter: "trending" }),
         communityApi.listStories(),
+        session?.user?.id ? communityApi.getPublicProfile(session.user.id, { take: 1 }).catch(() => null) : Promise.resolve(null),
       ]);
+      setCurrentUserRecipeCount(ownProfile?.user.recipesCount ?? 0);
       setPosts(loadedPosts);
+      setTrendingPosts(loadedTrendingPosts);
       setStories(loadedStories);
       setHasMoreServerPosts(loadedPosts.length === API_POSTS_PER_PAGE);
       setVisiblePostCount(POSTS_PER_PAGE);
       setChefs(getCommunityChefs(loadedPosts, session?.user.id));
       communityCache = {
         posts: loadedPosts,
+        trendingPosts: loadedTrendingPosts,
         stories: loadedStories,
         hasMorePosts: loadedPosts.length === API_POSTS_PER_PAGE,
       };
+      try {
+        const suggestedChefs = await communityApi.listSuggestedChefs();
+        setChefs(suggestedChefs);
+      } catch {
+        // Keep the feed usable if an older deployment does not have this route yet.
+        setChefs(getCommunityChefs(loadedPosts));
+      }
       if (session?.user) {
-        const [loadedCollections, loadedNotifications] = await Promise.all([
-          communityApi.listCollections(),
-          communityApi.listNotifications(),
-        ]);
-        setCollections(loadedCollections);
-        setNotifications(loadedNotifications);
+        try {
+          const [loadedCollections, loadedNotifications, loadedFeedCounts] = await Promise.all([
+            communityApi.listCollections(),
+            communityApi.listNotifications(),
+            communityApi.getFeedCounts(),
+          ]);
+          setCollections(loadedCollections);
+          setNotifications(loadedNotifications);
+          setFeedCounts(loadedFeedCounts);
+        } catch {
+          // These require a valid authenticated session. If a cross-origin
+          // cookie is unavailable, keep the public feed usable instead of
+          // replacing it with a Community-wide error.
+          setCollections([]);
+          setNotifications([]);
+        }
       } else {
+        setCurrentUserRecipeCount(0);
         setCollections([]);
         setNotifications([]);
+        setFeedCounts({ savedPostsCount: 0, likedPostsCount: 0 });
       }
     } catch (error) {
       setLoadError(error instanceof Error ? error.message : "Unable to load the Community feed");
     } finally {
       setIsInitialLoading(false);
     }
-  }, [session?.user?.id]);
+  }, [activeFilter, session?.user?.id]);
 
   useEffect(() => {
     void loadCommunity();
   }, [loadCommunity]);
+
+  const openFollowers = () => {
+    if (!session?.user?.id) return;
+    setConnectionsOpen(true);
+    setIsLoadingConnections(true);
+    void communityApi.listConnections(session.user.id, "followers")
+      .then(setConnectionUsers)
+      .catch(() => setConnectionUsers([]))
+      .finally(() => setIsLoadingConnections(false));
+  };
 
   const runMutation = useCallback(
     async (mutation: () => Promise<unknown>, success: string) => {
@@ -211,12 +267,14 @@ export const CommunityFeed: React.FC = () => {
       const nextPosts = await communityApi.listPosts({
         take: API_POSTS_PER_PAGE,
         skip: posts.length,
+        filter: activeFilter as CommunityFilter,
       });
       setPosts((currentPosts) => {
         const existingIds = new Set(currentPosts.map((post) => post.id));
         const mergedPosts = [...currentPosts, ...nextPosts.filter((post) => !existingIds.has(post.id))];
         communityCache = {
           posts: mergedPosts,
+          trendingPosts: communityCache?.trendingPosts ?? trendingPosts,
           stories: communityCache?.stories ?? stories,
           hasMorePosts: nextPosts.length === API_POSTS_PER_PAGE,
         };
@@ -229,7 +287,7 @@ export const CommunityFeed: React.FC = () => {
     } finally {
       setIsLoadingMorePosts(false);
     }
-  }, [hasMoreServerPosts, isLoadingMorePosts, posts.length, showToast, stories]);
+  }, [activeFilter, hasMoreServerPosts, isLoadingMorePosts, posts.length, showToast, stories, trendingPosts]);
 
   const loadPostInteractions = useCallback(async (
     postId: string,
@@ -315,11 +373,43 @@ export const CommunityFeed: React.FC = () => {
   const handleToggleSave = (postId: string) => {
     const post = posts.find((p) => p.id === postId);
     if (!post) return;
-    setSaveModalPost(post);
+    if (post.isSaved) setUnsaveModalPost(post);
+    else setSaveModalPost(post);
+  };
+
+  const handleDeletePost = (postId: string) =>
+    runMutation(() => communityApi.deletePost(postId), "Post deleted");
+
+  const handleEditPost = (post: Post) => {
+    setEditPost(post);
+    setEditCaption(post.caption);
+    setEditTags(formatCommunityTags(post.tags));
+  };
+
+  const handleSubmitEditPost = async () => {
+    if (!editPost || !editCaption.trim() || isSavingEdit) return;
+    setIsSavingEdit(true);
+    try {
+      await communityApi.updatePost(editPost.id, { caption: editCaption.trim(), tags: parseCommunityTags(editTags) });
+      await loadCommunity();
+      setEditPost(null);
+      showToast("Post updated");
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "Unable to update post");
+    } finally {
+      setIsSavingEdit(false);
+    }
   };
 
   const handleSaveToCollection = (collectionId: string, postId: string) =>
     void runMutation(() => communityApi.savePost(postId, collectionId), "Saved recipe to your collection!");
+
+  const handleConfirmUnsave = () => {
+    if (!unsaveModalPost) return;
+    const postId = unsaveModalPost.id;
+    void runMutation(() => communityApi.savePost(postId), "Removed post from Saved")
+      .finally(() => setUnsaveModalPost(null));
+  };
 
   const handleCreateCollection = (name: string, description: string) =>
     void runMutation(() => communityApi.createCollection(name, description), `Created collection "${name}"`);
@@ -344,6 +434,25 @@ export const CommunityFeed: React.FC = () => {
   const handleShare = (post: Post) => {
     navigator.clipboard.writeText(`https://foodcanvas.app/community/recipe/${post.id}`);
     showToast("Recipe link copied to clipboard! Ready to share.");
+  };
+
+  const handleShareToProfile = (post: Post) => {
+    if (!isAuthenticated) {
+      requireAuthentication("share posts to your profile");
+      return;
+    }
+    setShareModalPost(post);
+  };
+
+  const confirmShareToProfile = async (caption: string) => {
+    if (!shareModalPost || isSharingPost) return;
+    setIsSharingPost(true);
+    try {
+      await runMutation(() => communityApi.sharePost(shareModalPost.id, caption), "Post shared to your profile");
+      setShareModalPost(null);
+    } finally {
+      setIsSharingPost(false);
+    }
   };
 
   // Handle Direct Message open
@@ -385,33 +494,10 @@ export const CommunityFeed: React.FC = () => {
         }
       }
 
-      // Category / Tab filter
-      switch (activeFilter) {
-        case "trending":
-          return post.rating.overall >= 4.8 || post.likesCount > 300;
-        case "following":
-          return post.author.isFollowing;
-        case "quick":
-          return post.recipe && post.recipe.prepTimeMinutes + post.recipe.cookTimeMinutes <= 25;
-        case "wellness":
-          return (
-            post.recipe &&
-            (post.recipe.dietaryTags.includes("High Protein") ||
-              post.recipe.dietaryTags.includes("Gluten-Free") ||
-              post.recipe.dietaryTags.includes("Vegan") ||
-              post.recipe.nutrition.protein >= 25)
-          );
-        case "challenge":
-          return post.isChallengeEntry;
-        case "ai_sparks":
-          return post.recipe?.sourceType === "ai_generated" || post.recipe?.sourceType === "mealdb";
-        case "saved":
-          return post.isSaved;
-        case "liked":
-          return post.isLiked;
-        default:
-          return true;
-      }
+      // Category filters are evaluated by the Community API against the full
+      // database result set. Keep this client step permissive so pagination
+      // does not accidentally hide valid server-filtered posts.
+      return true;
     });
   }, [posts, activeFilter, searchQuery]);
 
@@ -468,11 +554,16 @@ export const CommunityFeed: React.FC = () => {
     return () => observer.disconnect();
   }, [hasMoreLoadedPosts, hasMorePosts, loadMorePosts]);
 
-  const savedPostsCount = posts.filter((p) => p.isSaved).length;
-  const likedPostsCount = posts.filter((p) => p.isLiked).length;
+  const savedPostsCount = isAuthenticated ? feedCounts.savedPostsCount : 0;
+  const likedPostsCount = isAuthenticated ? feedCounts.likedPostsCount : 0;
 
   return (
-    <div className="min-h-screen bg-[#FCFDF9] text-neutral-900 transition-colors duration-200 dark:bg-[#0a0a0a] dark:text-neutral-100 font-sans">
+    <div className="community-surface min-h-screen bg-[#FCFDF9] text-neutral-900 transition-colors duration-200 dark:bg-[#0a0a0a] dark:text-neutral-100 font-sans">
+      <style jsx>{`
+        .community-surface :is(a[href], button:not(:disabled), [role="button"], label[for]) {
+          cursor: pointer;
+        }
+      `}</style>
       {/* Toast Alert Banner */}
       <AnimatePresence>
         {toastMessage && (
@@ -490,27 +581,29 @@ export const CommunityFeed: React.FC = () => {
 
       {/* Main Container Layout: 3 Columns (Enhanced sizing & comfortable spacing) */}
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 gap-7 lg:grid-cols-12">
+        <div className="grid grid-cols-1 items-start gap-7 lg:grid-cols-12">
           {/* Column 1: Left Navigation & Profile */}
-          <div className="hidden lg:block lg:col-span-3">
-            <div className="sticky top-6">
-              <CommunitySidebarLeft
-                activeFilter={activeFilter}
-                setActiveFilter={(f) => {
-                  setActiveFilter(f);
-                }}
-                collections={collections}
-                savedPostsCount={savedPostsCount}
-                likedPostsCount={likedPostsCount}
-                currentUser={currentUser}
-                isAuthenticated={isAuthenticated}
-                onRequireAuthentication={requireAuthentication}
-              />
-            </div>
-          </div>
+          <CommunityScrollColumn className="hidden lg:col-span-3 lg:block">
+            <CommunitySidebarLeft
+              activeFilter={activeFilter}
+              setActiveFilter={(f) => {
+                setActiveFilter(f);
+              }}
+              collections={collections}
+              savedPostsCount={savedPostsCount}
+              likedPostsCount={likedPostsCount}
+              currentUser={currentUser}
+              isAuthenticated={isAuthenticated}
+              onRequireAuthentication={requireAuthentication}
+              onOpenFollowers={openFollowers}
+              onOpenSaved={() => {
+                if (session?.user?.id) router.push(`/community/users/${session.user.id}?tab=Saved`);
+              }}
+            />
+          </CommunityScrollColumn>
 
           {/* Column 2: Main Social Cooking Feed */}
-          <div className="lg:col-span-6 space-y-7">
+          <CommunityScrollColumn hideScrollbar className="lg:col-span-6 space-y-7">
             {/* Cooking Stories Carousel */}
             <StoriesBar
               stories={stories}
@@ -541,6 +634,7 @@ export const CommunityFeed: React.FC = () => {
                   <button
                     onClick={() => {
                       setCreatePostInitialAI(false);
+                      setCreatePostMode("quick");
                       setCreatePostOpen(true);
                     }}
                     className="flex-1 rounded-2xl border border-slate-200 bg-neutral-50 px-5 py-3 text-left text-xs sm:text-sm text-neutral-400 hover:border-[#2F8F46] hover:bg-[#EAF7E8]/40 transition dark:border-neutral-700 dark:bg-neutral-900/70 dark:text-neutral-400"
@@ -556,6 +650,7 @@ export const CommunityFeed: React.FC = () => {
                     whileTap={{ scale: 0.97 }}
                     onClick={() => {
                       setCreatePostInitialAI(false);
+                      setCreatePostMode("recipe");
                       setCreatePostOpen(true);
                     }}
                     className="flex items-center gap-2 font-bold text-neutral-600 hover:text-[#2F8F46] transition dark:text-neutral-300 dark:hover:text-[#B7E35F]"
@@ -569,6 +664,7 @@ export const CommunityFeed: React.FC = () => {
                     whileTap={{ scale: 0.97 }}
                     onClick={() => {
                       setCreatePostInitialAI(true);
+                      setCreatePostMode("ai_import");
                       setCreatePostOpen(true);
                     }}
                     className="flex items-center gap-2 font-bold text-neutral-600 hover:text-[#FF9F43] transition dark:text-neutral-300"
@@ -671,7 +767,11 @@ export const CommunityFeed: React.FC = () => {
                           }}
                           className="flex w-full items-center gap-2.5 rounded-xl px-2 py-2 text-left transition hover:bg-neutral-50 dark:hover:bg-neutral-800"
                         >
-                          <img src={post.imageUrl} alt="" className="h-8 w-8 shrink-0 rounded-lg object-cover" />
+                          {post.imageUrl ? (
+                            <img src={post.imageUrl} alt="" className="h-8 w-8 shrink-0 rounded-lg object-cover" />
+                          ) : (
+                            <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#EAF7E8] text-[9px] font-black text-[#2F8F46] dark:bg-emerald-950/50 dark:text-[#B7E35F]">FC</span>
+                          )}
                           <span className="truncate text-xs font-bold text-neutral-800 dark:text-neutral-100">
                             {post.recipe?.title || post.caption}
                           </span>
@@ -758,6 +858,7 @@ export const CommunityFeed: React.FC = () => {
                         return;
                       }
                       setCreatePostInitialAI(false);
+                      setCreatePostMode("recipe");
                       setCreatePostOpen(true);
                     }}
                     className="rounded-xl bg-[#2F8F46] px-5 py-2 text-xs font-bold text-white transition hover:bg-[#176B35]"
@@ -775,8 +876,11 @@ export const CommunityFeed: React.FC = () => {
                     onLike={handleToggleLike}
                     onSave={handleToggleSave}
                     onShare={handleShare}
+                    onShareToProfile={handleShareToProfile}
                     onRate={(p) => void handleOpenReview(p)}
                     onReport={(p) => setReportModalPost(p)}
+                    onDelete={handleDeletePost}
+                    onEdit={handleEditPost}
                     onDirectMessage={(authorId, p) => handleOpenDM(authorId, p)}
                     onToggleFollow={handleToggleFollow}
                     onAddComment={handleAddComment}
@@ -815,43 +919,82 @@ export const CommunityFeed: React.FC = () => {
                 </span>
               ) : null}
             </div>
-          </div>
+          </CommunityScrollColumn>
 
           {/* Column 3: Right Sidebar */}
-          <div className="hidden lg:block lg:col-span-3">
-            <div className="sticky top-6">
-              <CommunitySidebarRight
-                chefs={chefs}
-                onToggleFollow={handleToggleFollow}
-                trendingPosts={posts}
-                onSelectRecipe={(p) => {
-                  if (!isAuthenticated) {
-                    requireAuthentication("rate and review recipes");
-                    return;
-                  }
-                  setReviewModalPost(p);
-                }}
-                onOpenCreatePostWithAI={() => {
-                  if (!isAuthenticated) {
-                    requireAuthentication("create an AI recipe");
-                    return;
-                  }
-                  setCreatePostInitialAI(true);
-                  setCreatePostOpen(true);
-                }}
-                isAuthenticated={isAuthenticated}
-                onRequireAuthentication={requireAuthentication}
-              />
-            </div>
-          </div>
+          <CommunityScrollColumn className="hidden lg:col-span-3 lg:block">
+            <CommunitySidebarRight
+              chefs={chefs}
+              currentUserId={session?.user.id}
+              onToggleFollow={handleToggleFollow}
+              trendingPosts={trendingPosts}
+              onSelectRecipe={(p) => {
+                if (!isAuthenticated) {
+                  requireAuthentication("rate and review recipes");
+                  return;
+                }
+                setReviewModalPost(p);
+              }}
+              onOpenCreatePostWithAI={() => {
+                if (!isAuthenticated) {
+                  requireAuthentication("create an AI recipe");
+                  return;
+                }
+                setCreatePostInitialAI(true);
+                setCreatePostMode("ai_import");
+                setCreatePostOpen(true);
+              }}
+              isAuthenticated={isAuthenticated}
+              onRequireAuthentication={requireAuthentication}
+            />
+          </CommunityScrollColumn>
         </div>
       </main>
 
       {/* Modals */}
+      {connectionsOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Followers"
+          onClick={() => setConnectionsOpen(false)}
+        >
+          <div
+            className="w-full max-w-md rounded-3xl border border-neutral-700 bg-[#151916] p-5 text-white shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-neutral-800 pb-4">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#B7E35F]">Community connections</p>
+                <h2 className="mt-1 text-xl font-black">Followers</h2>
+              </div>
+              <button type="button" onClick={() => setConnectionsOpen(false)} aria-label="Close followers" className="rounded-full p-2 text-neutral-400 hover:bg-white/10 hover:text-white">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="mt-4 space-y-2">
+              {isLoadingConnections ? (
+                [1, 2, 3].map((item) => <div key={`feed-connection-skeleton-${item}`} className="h-16 animate-pulse rounded-2xl bg-white/5" />)
+              ) : connectionUsers.length === 0 ? (
+                <p className="py-8 text-center text-sm text-neutral-500">No followers yet.</p>
+              ) : (
+                connectionUsers.map((person) => (
+                  <Link key={person.id} href={`/community/users/${person.id}`} onClick={() => setConnectionsOpen(false)} className="flex items-center gap-3 rounded-2xl p-3 transition hover:bg-white/5">
+                    <CommunityAvatar src={person.avatar} alt={person.name} className="h-11 w-11 rounded-full border border-neutral-700 object-cover" />
+                    <div className="min-w-0 flex-1"><p className="truncate text-sm font-bold">{person.name}</p><p className="text-xs text-neutral-500">@{person.username}</p></div>
+                  </Link>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
       <CreatePostModal
         isOpen={createPostOpen}
         onClose={() => setCreatePostOpen(false)}
         initialUseAI={createPostInitialAI}
+        initialMode={createPostMode}
         onPublishPost={async (newPost, imageFile) => {
           const imageUrl = imageFile ? await communityApi.uploadImage(imageFile, "posts") : newPost.imageUrl;
           const createdPost = await communityApi.createPost({ ...newPost, imageUrl });
@@ -859,6 +1002,7 @@ export const CommunityFeed: React.FC = () => {
             const updatedPosts = [createdPost, ...currentPosts.filter((post) => post.id !== createdPost.id)];
             communityCache = {
               posts: updatedPosts,
+              trendingPosts: communityCache?.trendingPosts ?? trendingPosts,
               stories: communityCache?.stories ?? stories,
               hasMorePosts: hasMoreServerPosts,
             };
@@ -868,7 +1012,7 @@ export const CommunityFeed: React.FC = () => {
             if (createdPost.author.id === session?.user?.id) return currentChefs;
             return [createdPost.author, ...currentChefs.filter((chef) => chef.id !== createdPost.author.id)].slice(0, 8);
           });
-          showToast("Recipe published to FoodCanvas Community!");
+          showToast(createPostMode === "quick" ? "Post published to FoodCanvas Community!" : "Recipe published to FoodCanvas Community!");
         }}
       />
 
@@ -916,6 +1060,7 @@ export const CommunityFeed: React.FC = () => {
       />
 
       <StoryViewerModal
+        key={viewingStory?.id ?? "community-story-viewer"}
         story={viewingStory}
         isOpen={!!viewingStory}
         onClose={() => setViewingStory(null)}
@@ -923,7 +1068,35 @@ export const CommunityFeed: React.FC = () => {
         onPreviousStory={handlePreviousStory}
         storyCount={viewingStoryGroup?.length ?? 1}
         storyIndex={viewingStoryIndex}
+        isOwnStory={viewingStory?.author.id === session?.user?.id}
+        dashboardHref={isAuthenticated ? "/dashboard/users" : "/registrationProcess/login"}
+        profileHref={session?.user ? `/community/users/${encodeURIComponent(session.user.id)}` : "/registrationProcess/login"}
+        profileImage={session?.user?.image}
+        notifications={notifications}
+        onOpenMessages={() => {
+          setDmRecipientId(undefined);
+          setDmAttachedPost(null);
+          setDmModalOpen(true);
+        }}
+        onDeleteStory={async (storyId) => {
+          await communityApi.deleteStory(storyId);
+          await loadCommunity();
+          setViewingStory(null);
+          showToast("Story deleted");
+        }}
       />
+
+      <CommunityShareModal
+        post={shareModalPost}
+        isOpen={Boolean(shareModalPost)}
+        currentUserName={session?.user?.name || "Your profile"}
+        currentUserAvatar={session?.user?.image || ""}
+        isSubmitting={isSharingPost}
+        onClose={() => { if (!isSharingPost) setShareModalPost(null); }}
+        onShareNow={confirmShareToProfile}
+      />
+
+      <ConfirmUnsaveModal post={unsaveModalPost} onClose={() => setUnsaveModalPost(null)} onConfirm={handleConfirmUnsave} />
 
       <StoryEditorModal
         file={storyEditorFile}
@@ -935,6 +1108,20 @@ export const CommunityFeed: React.FC = () => {
           await loadCommunity();
           showToast("Story published for 24 hours");
         }}
+      />
+
+      <CommunityTextPromptModal
+        isOpen={Boolean(editPost)}
+        title="Edit post"
+        description="Update the caption and hashtags shown with your Community recipe or food post."
+        value={editCaption}
+        tagsValue={editTags}
+        submitLabel="Save changes"
+        isSubmitting={isSavingEdit}
+        onChange={setEditCaption}
+        onTagsChange={setEditTags}
+        onClose={() => { if (!isSavingEdit) setEditPost(null); }}
+        onSubmit={handleSubmitEditPost}
       />
     </div>
   );

@@ -3,6 +3,10 @@ export interface Author {
   name: string;
   username: string;
   avatar: string;
+  bio?: string;
+  location?: string;
+  interests?: string[];
+  coverImage?: string;
   badge?: string; // e.g. "Verified Chef", "Top Contributor", "Healthy Foodie"
   role: 'user' | 'creator' | 'chef' | 'admin';
   followersCount: number;
@@ -106,6 +110,14 @@ export interface Post {
   isChallengeEntry?: boolean;
   challengeName?: string;
   isPinned?: boolean;
+  sharedFrom?: Author;
+  sharedOriginal?: {
+    author: Author;
+    caption: string;
+    tags: string[];
+    createdAt: string;
+    imageUrl: string;
+  };
 }
 
 export interface StoryItem {
@@ -123,6 +135,9 @@ export interface PublicCommunityProfile {
   posts: Post[];
   stories: StoryItem[];
   followingCount: number;
+  postsTotal?: number;
+  likesTotal?: number;
+  hasMorePosts?: boolean;
 }
 
 export interface RecipeCollection {
