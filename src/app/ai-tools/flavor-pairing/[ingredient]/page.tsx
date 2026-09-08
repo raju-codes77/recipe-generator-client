@@ -1,7 +1,9 @@
-// import { redirect } from 'next/navigation';
+import FlavorPairingFull from "@/components/sub-page/FlavorPairingFull";
 
-// // Visiting the bare /ai-tools/flavor-pairing route redirects to a sensible
-// // default so there's always a canonical, shareable ingredient URL.
-// export default function FlavorPairingIndexPage() {
-//     redirect('/ai-tools/flavor-pairing/chicken');
-// }
+export default function FlavorPairingIngredientPage() {
+    return (
+        <div className="w-full max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-10">
+            <FlavorPairingFull />
+        </div>
+    );
+}
