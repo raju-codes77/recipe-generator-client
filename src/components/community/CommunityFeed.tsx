@@ -558,7 +558,7 @@ export const CommunityFeed: React.FC = () => {
 
   return (
     <div className="community-surface min-h-screen bg-[#FCFDF9] text-neutral-900 transition-colors duration-200 dark:bg-[#0a0a0a] dark:text-neutral-100 font-sans">
-      <style jsx>{`
+      <style>{`
         .community-surface :is(a[href], button:not(:disabled), [role="button"], label[for]) {
           cursor: pointer;
         }
