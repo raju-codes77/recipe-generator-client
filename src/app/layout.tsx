@@ -22,7 +22,11 @@ import Footer from "@/components/Footer";
 import { Toaster } from "react-hot-toast";
 import AIAssistantPopup from "@/components/AIAssistantPopup";
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html
       lang="en"

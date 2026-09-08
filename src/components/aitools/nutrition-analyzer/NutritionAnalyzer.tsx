@@ -27,7 +27,6 @@ export default function NutritionAnalyzer() {
         body: formData,
       });
 
-      if (reqId !== requestRef.current) return;
       const data = await res.json();
 
       if (!res.ok) {
