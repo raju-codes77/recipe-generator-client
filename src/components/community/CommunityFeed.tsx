@@ -49,7 +49,11 @@ const getCommunityChefs = (communityPosts: Post[], viewerId?: string) => {
 export const CommunityFeed: React.FC = () => {
   const router = useRouter();
   const { data: session, isPending: isSessionPending } = authClient.useSession();
-  const isAuthenticated = Boolean(session?.user);
+  const [isHydrated, setIsHydrated] = useState(false);
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
+  const isAuthenticated = isHydrated && Boolean(session?.user);
 
   // Community data state
   const [posts, setPosts] = useState<Post[]>(() => communityCache?.posts ?? []);
@@ -559,7 +563,7 @@ export const CommunityFeed: React.FC = () => {
 
   return (
     <div className="community-surface min-h-screen bg-[#FCFDF9] text-neutral-900 transition-colors duration-200 dark:bg-[#0a0a0a] dark:text-neutral-100 font-sans">
-      <style jsx>{`
+      <style>{`
         .community-surface :is(a[href], button:not(:disabled), [role="button"], label[for]) {
           cursor: pointer;
         }
