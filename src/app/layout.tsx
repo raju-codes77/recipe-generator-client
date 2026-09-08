@@ -20,6 +20,7 @@ export const metadata: Metadata = {
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Toaster } from "react-hot-toast";
+import AIAssistantPopup from "@/components/AIAssistantPopup";
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
@@ -30,9 +31,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col bg-slate-100 dark:bg-slate-950 transition-colors duration-300">
         <div className="">
           <Navbar />
+          <AIAssistantPopup/>
           <main className="flex-1">
             {children}
-            <Toaster position="top-right" reverseOrder={false} />
+            <Toaster position="bottom-right" reverseOrder={false} />
           </main>
           <Footer />
         </div>

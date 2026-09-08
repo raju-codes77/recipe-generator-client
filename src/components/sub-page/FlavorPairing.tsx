@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter, useParams, useSearchParams } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { motion, AnimatePresence, Variants } from 'framer-motion';
 import {
     Sparkles,
     Search,
@@ -11,14 +11,11 @@ import {
     ArrowRight,
     ClipboardList,
     ChevronDown,
-    ChevronLeft,
-    ChevronRight,
+    Leaf,
     Lightbulb,
     Star,
-    Loader2,
-    CheckCircle2,
-    RefreshCw,
 } from 'lucide-react';
+import Image from 'next/image';
 
 
 // Import your dummy data from the separate file
@@ -31,81 +28,39 @@ import {
     getPairingsForTab,
     personalizeBlurb,
     slugify,
-    findIngredientBySlug,
-    findTabBySlug,
 } from './flavorData'; // Update path if necessary
 import FlavorHeaderCard from './FlavorHeaderCard.';
-import FlavorBanner from './FlavorBanner';
 
-// Point this at your Express server (set NEXT_PUBLIC_API_URL in .env.local)
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-
-const containerStagger = {
+const containerStagger: Variants = {
     hidden: {},
     show: { transition: { staggerChildren: 0.06 } },
 };
 
-const fadeUp = {
+const fadeUp: Variants = {
     hidden: { opacity: 0, y: 14 },
-    show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: 'easeOut' } },
+    show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: 'easeOut' as const } },
 };
 
-const FlavorPairingFull = () => {
+// initialIngredient / initialTab come from the dynamic route
+// (app/flavor-pairing/[ingredient]/page.tsx) — see that file for how the
+// URL slug is resolved back into these values. Both fall back to sensible
+// defaults so this component still works if rendered without a route.
+const FlavorPairing = ({ initialIngredient = 'Chicken', initialTab = 'Best Matches' }) => {
     const router = useRouter();
-
-    const params = useParams();
-    const searchParams = useSearchParams();
-
-    const ingredientFromUrl = params?.ingredient ? findIngredientBySlug(params.ingredient) : null;
-    const tabFromUrl = searchParams.get('tab') ? findTabBySlug(searchParams.get('tab')) : null;
-
     const [activeCategory, setActiveCategory] = useState('Popular');
-    const [activeTab, setActiveTab] = useState(tabFromUrl?.name ?? 'Best Matches');
-    const [selectedIngredient, setSelectedIngredient] = useState(ingredientFromUrl?.name ?? 'Chicken');
+    const [activeTab, setActiveTab] = useState(initialTab);
+    const [selectedIngredient, setSelectedIngredient] = useState(initialIngredient);
     const [searchQuery, setSearchQuery] = useState('');
     const [isSearchFocused, setIsSearchFocused] = useState(false);
 
-    // --- AI Flavor Match state (Try This Combination card) -------------
-    const [flavorMatch, setFlavorMatch] = useState(null); // current page's match object
-    const [matchPage, setMatchPage] = useState(1);
-    const [matchTotalPages, setMatchTotalPages] = useState(1);
-    const [matchLoading, setMatchLoading] = useState(false);
-    const [matchError, setMatchError] = useState(null);
-    const [hasRequestedMatch, setHasRequestedMatch] = useState(false);
-
-    useEffect(() => {
-        const ing = params?.ingredient ? findIngredientBySlug(params.ingredient) : null;
-        if (ing && ing.name !== selectedIngredient) {
-            setSelectedIngredient(ing.name);
-        }
-
-    }, [params?.ingredient]);
-
-    useEffect(() => {
-        const tabSlug = searchParams.get('tab');
-        const tab = tabSlug ? findTabBySlug(tabSlug) : null;
-        const tabName = tab?.name ?? 'Best Matches';
-        if (tabName !== activeTab) {
-            setActiveTab(tabName);
-        }
-
-    }, [searchParams]);
-
-    // Whenever the main ingredient changes, the old AI matches no longer
-    // apply — reset so the user re-triggers generation for the new one.
-    useEffect(() => {
-        setFlavorMatch(null);
-        setMatchPage(1);
-        setMatchTotalPages(1);
-        setMatchError(null);
-        setHasRequestedMatch(false);
-    }, [selectedIngredient]);
-
+    // Ingredients shown in the quick-select grid — driven by the active category chip.
+    // "Popular" keeps the curated shortlist; any other category filters the full catalog.
     const displayedIngredients =
         activeCategory === 'Popular'
             ? quickIngredients
             : allIngredients.filter((ing) => ing.categories.includes(activeCategory)).slice(0, 6);
 
+    // Live search suggestions — matches ingredient names against the query, capped to 6 results.
     const searchResults =
         searchQuery.trim().length > 0
             ? allIngredients
@@ -113,18 +68,23 @@ const FlavorPairingFull = () => {
                   .slice(0, 6)
             : [];
 
-    const handleSelectIngredient = (name) => {
+    const handleSelectIngredient = (name: string) => {
         setSelectedIngredient(name);
         setSearchQuery('');
         setIsSearchFocused(false);
-        router.push(`/ai-tools/flavor-pairing/${slugify(name)}?tab=${slugify(activeTab)}`, { scroll: false });
+        // New ingredient = meaningful navigation → pushed onto history so
+        // back/forward and shareable links behave as expected.
+        router.push(`/flavor-pairing/${slugify(name)}?tab=${slugify(activeTab)}`, { scroll: false });
     };
 
-    const handleSelectTab = (tabName) => {
+    const handleSelectTab = (tabName: string) => {
         setActiveTab(tabName);
-        router.replace(`/ai-tools/flavor-pairing/${slugify(selectedIngredient)}?tab=${slugify(tabName)}`, { scroll: false });
+        // Switching a tab is a lightweight filter change → replaced in place
+        // instead of pushed, so repeated tab clicks don't clutter history.
+        router.replace(`/flavor-pairing/${slugify(selectedIngredient)}?tab=${slugify(tabName)}`, { scroll: false });
     };
 
+    // Full record (emoji, bg color) for whichever ingredient is currently selected
     const selectedIngredientData =
         allIngredients.find((ing) => ing.name === selectedIngredient) ?? {
             name: selectedIngredient,
@@ -132,49 +92,19 @@ const FlavorPairingFull = () => {
             bg: 'bg-gray-100 dark:bg-gray-800',
         };
 
+    // Pairing cards for the active tab, personalized for the selected ingredient
     const activePairings = getPairingsForTab(activeTab, selectedIngredient);
 
+    // Sidebar "Top Pairings" summary — always the overall best matches,
+    // but personalized to the currently selected ingredient
     const personalizedTopPairings = topPairings.map((p) => ({
         ...p,
         blurb: personalizeBlurb(p.blurb, selectedIngredient),
     }));
 
-    // --- AI Flavor Match: fetch a given page from the Express backend ---
-    const fetchFlavorMatch = async (page) => {
-        setMatchLoading(true);
-        setMatchError(null);
-        try {
-            const res = await fetch(
-                `${API_BASE}/api/flavor-pairing/match?ingredient=${encodeURIComponent(selectedIngredient)}&page=${page}`
-            );
-            if (!res.ok) {
-                const body = await res.json().catch(() => ({}));
-                throw new Error(body.error || 'Failed to generate flavor match');
-            }
-            const data = await res.json();
-            setFlavorMatch(data.match);
-            setMatchPage(data.page);
-            setMatchTotalPages(data.totalPages);
-        } catch (err) {
-            setMatchError(err.message || 'Something went wrong');
-        } finally {
-            setMatchLoading(false);
-            setHasRequestedMatch(true);
-        }
-    };
-
-    const handleFlavorMatchClick = () => fetchFlavorMatch(1);
-    const handlePrevMatch = () => matchPage > 1 && fetchFlavorMatch(matchPage - 1);
-    const handleNextMatch = () => fetchFlavorMatch(matchPage + 1); // backend auto-generates more as needed
-
     return (
-<<<<<<< HEAD
         <section className="w-full bg-[#F6F7F2] dark:bg-gray-950 py-16 transition-colors duration-300 overflow-hidden">
-
-=======
-        <section className="w-full bg-white dark:bg-gray-950 py-16 transition-colors duration-300 overflow-hidden">
             {/* Custom thin scrollbar for the pairing tabs strip — subtle emerald tone instead of the harsh default gray/green OS scrollbar */}
->>>>>>> origin/development
             <style jsx global>{`
         .pairing-tabs-scroll {
           scrollbar-width: thin;
@@ -200,7 +130,7 @@ const FlavorPairingFull = () => {
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 {/* Header */}
-
+                
                 <FlavorHeaderCard />
 
                 {/* Main Grid */}
@@ -422,7 +352,7 @@ const FlavorPairingFull = () => {
                                     exit={{ opacity: 0 }}
                                     className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5"
                                 >
-                                    {activePairings.map((p) => (
+                                    {activePairings.map((p: any) => (
                                         <motion.div
                                             key={p.name}
                                             variants={fadeUp}
@@ -447,8 +377,7 @@ const FlavorPairingFull = () => {
                                 </motion.div>
                             </AnimatePresence>
 
-                            {/* Action row: existing "View More Pairings" + new AI-powered "Flavor Match" trigger */}
-                            <div className="flex flex-col sm:flex-row justify-center items-center gap-3">
+                            <div className="flex justify-center">
                                 <motion.button
                                     whileHover={{ y: -2 }}
                                     whileTap={{ scale: 0.96 }}
@@ -456,24 +385,58 @@ const FlavorPairingFull = () => {
                                 >
                                     View More Pairings <ChevronDown className="w-4 h-4" />
                                 </motion.button>
-
-                                <motion.button
-                                    onClick={handleFlavorMatchClick}
-                                    disabled={matchLoading}
-                                    whileHover={{ y: -2 }}
-                                    whileTap={{ scale: 0.96 }}
-                                    className="inline-flex items-center gap-1.5 text-sm font-semibold text-white bg-emerald-600 rounded-full px-5 py-2.5 shadow-sm shadow-emerald-600/30 hover:bg-emerald-700 transition-colors duration-300 disabled:opacity-60 disabled:cursor-not-allowed"
-                                >
-                                    {matchLoading ? (
-                                        <Loader2 className="w-4 h-4 animate-spin" />
-                                    ) : (
-                                        <Sparkles className="w-4 h-4" />
-                                    )}
-                                    {hasRequestedMatch ? 'Regenerate Flavor Match' : 'Flavor Match'}
-                                </motion.button>
                             </div>
                         </motion.div>
 
+                        {/* Bottom banner */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 24 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ duration: 0.5, delay: 0.15 }}
+                            className="bg-emerald-50/60 dark:bg-emerald-950/20 rounded-3xl border border-emerald-100 dark:border-emerald-900/40 p-6 sm:p-8 flex flex-col sm:flex-row items-center gap-6"
+                        >
+                            <Leaf className="w-6 h-6 text-emerald-600 shrink-0" />
+                            <div className="flex-1">
+                                <h3 className="font-bold text-gray-900 dark:text-white mb-1">
+                                    Flavor science meets culinary art
+                                </h3>
+                                <p className="text-sm text-gray-600 dark:text-gray-400">
+                                    Our AI analyzes thousands of recipes and flavor compounds to find the perfect combinations for you.
+                                </p>
+                            </div>
+                            {/* Venn diagram: taller container + "Perfect Pairing" pushed further down so it no longer sits on the same line as Aroma/Texture */}
+                            <div className="flex items-center gap-3 shrink-0">
+                                <div className="relative w-28 h-24">
+                                    <motion.span
+                                        animate={{ scale: [1, 1.05, 1] }}
+                                        transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                                        className="absolute left-0 top-0 w-16 h-16 rounded-full bg-emerald-200/70 dark:bg-emerald-800/40 flex items-center justify-center text-[11px] font-medium text-emerald-800 dark:text-emerald-300"
+                                    >
+                                        Aroma
+                                    </motion.span>
+                                    <span className="absolute left-9 top-9 w-14 h-14 rounded-full bg-lime-200/90 dark:bg-lime-800/60 flex items-center justify-center text-[10px] font-semibold text-center text-emerald-900 dark:text-lime-100 leading-tight z-10 shadow-sm">
+                                        Perfect
+                                        <br />
+                                        Pairing
+                                    </span>
+                                    <motion.span
+                                        animate={{ scale: [1, 1.05, 1] }}
+                                        transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
+                                        className="absolute left-16 top-0 w-16 h-16 rounded-full bg-amber-200/70 dark:bg-amber-800/40 flex items-center justify-center text-[11px] font-medium text-amber-800 dark:text-amber-300"
+                                    >
+                                        Texture
+                                    </motion.span>
+                                </div>
+                                <ArrowRight className="w-4 h-4 text-gray-400" />
+                                <div className="flex items-center gap-1.5 text-sm font-semibold text-gray-800 dark:text-gray-200">
+                                    <span className="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center">
+                                        <Heart className="w-4 h-4" />
+                                    </span>
+                                    Amazing Dishes
+                                </div>
+                            </div>
+                        </motion.div>
                     </div>
 
                     {/* Right Sidebar */}
@@ -508,7 +471,7 @@ const FlavorPairingFull = () => {
                                 Top Pairings
                             </p>
                             <div className="space-y-3 mb-4">
-                                {personalizedTopPairings.map((p, i) => (
+                                {personalizedTopPairings.map((p: any, i: number) => (
                                     <motion.div
                                         key={p.name}
                                         whileHover={{ x: 4 }}
@@ -537,7 +500,7 @@ const FlavorPairingFull = () => {
                             </motion.button>
                         </motion.div>
 
-                        {/* Try This Combination — now fully dynamic, driven by the AI Flavor Match endpoint */}
+                        {/* Try This Combination */}
                         <motion.div
                             initial={{ opacity: 0, x: 24 }}
                             whileInView={{ opacity: 1, x: 0 }}
@@ -546,148 +509,43 @@ const FlavorPairingFull = () => {
                             whileHover={{ y: -4 }}
                             className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-100 dark:border-gray-800 p-6 shadow-sm hover:shadow-xl hover:shadow-emerald-900/5 transition-shadow duration-300"
                         >
-                            <div className="flex items-center justify-between mb-3">
-                                <h3 className="font-bold text-gray-900 dark:text-white">Try This Combination</h3>
-                                {flavorMatch && (
-                                    <span className="text-xs font-medium text-gray-400">
-                                        {matchPage} / {matchTotalPages}
-                                    </span>
-                                )}
+                            <h3 className="font-bold text-gray-900 dark:text-white mb-3">Try This Combination</h3>
+                            <div className="relative rounded-2xl overflow-hidden mb-3 aspect-[4/3] bg-gradient-to-br from-amber-100 to-orange-200 dark:from-amber-900/40 dark:to-orange-900/30 flex items-center justify-center group">
+                                <motion.div
+                                    className="w-full h-full"
+                                    whileHover={{ scale: 1.08 }}
+                                    transition={{ duration: 0.3 }}
+                                >
+                                    <img
+                                        src="https://media.istockphoto.com/id/1545092834/photo/lemon-garlic-chicken-with-roast-potatoes-top-view.jpg?s=612x612&w=0&k=20&c=rbHIh0tgm7UmBKaZVeD1-YKgQ5VGEbN93nja_JT2NNY="
+                                        alt="Lemon Garlic Chicken with Rosemary"
+                                        className="w-full h-full object-cover"
+                                    />
+                                </motion.div>
+                                <motion.button
+                                    whileHover={{ scale: 1.1 }}
+                                    whileTap={{ scale: 0.9 }}
+                                    aria-label="Save recipe"
+                                    className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 dark:bg-gray-900/90 flex items-center justify-center shadow-sm z-10"
+                                >
+                                    <Heart className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+                                </motion.button>
                             </div>
-
-                            <AnimatePresence mode="wait">
-                                {matchLoading ? (
-                                    <motion.div
-                                        key="loading"
-                                        initial={{ opacity: 0 }}
-                                        animate={{ opacity: 1 }}
-                                        exit={{ opacity: 0 }}
-                                        className="py-10 flex flex-col items-center justify-center gap-3 text-gray-400"
-                                    >
-                                        <Loader2 className="w-6 h-6 animate-spin text-emerald-500" />
-                                        <p className="text-sm">Cooking up a combination…</p>
-                                    </motion.div>
-                                ) : matchError ? (
-                                    <motion.div
-                                        key="error"
-                                        initial={{ opacity: 0 }}
-                                        animate={{ opacity: 1 }}
-                                        exit={{ opacity: 0 }}
-                                        className="py-8 flex flex-col items-center justify-center gap-3 text-center"
-                                    >
-                                        <p className="text-sm text-red-500">{matchError}</p>
-                                        <button
-                                            onClick={() => fetchFlavorMatch(matchPage)}
-                                            className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900 rounded-full px-3.5 py-1.5 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-colors"
-                                        >
-                                            <RefreshCw className="w-3.5 h-3.5" /> Try again
-                                        </button>
-                                    </motion.div>
-                                ) : !flavorMatch ? (
-                                    <motion.div
-                                        key="empty"
-                                        initial={{ opacity: 0 }}
-                                        animate={{ opacity: 1 }}
-                                        exit={{ opacity: 0 }}
-                                        className="py-8 flex flex-col items-center justify-center gap-3 text-center border border-dashed border-gray-200 dark:border-gray-800 rounded-2xl"
-                                    >
-                                        <Sparkles className="w-6 h-6 text-emerald-400" />
-                                        <p className="text-sm text-gray-500 dark:text-gray-400 px-4">
-                                            Click <span className="font-semibold text-emerald-600">Flavor Match</span> above to
-                                            let AI build a full recipe around {selectedIngredient}.
-                                        </p>
-                                    </motion.div>
-                                ) : (
-                                    <motion.div
-                                        key={flavorMatch.id}
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        exit={{ opacity: 0, y: -10 }}
-                                        transition={{ duration: 0.3 }}
-                                    >
-                                        <div className="relative rounded-2xl overflow-hidden mb-3 aspect-[4/3] bg-gradient-to-br from-amber-100 to-orange-200 dark:from-amber-900/40 dark:to-orange-900/30 flex items-center justify-center group">
-                                            <motion.div
-                                                className="w-full h-full"
-                                                whileHover={{ scale: 1.08 }}
-                                                transition={{ duration: 0.3 }}
-                                            >
-                                                <img
-                                                    src={flavorMatch.imageUrl}
-                                                    alt={flavorMatch.title}
-                                                    className="w-full h-full object-cover"
-                                                />
-                                            </motion.div>
-                                            <motion.button
-                                                whileHover={{ scale: 1.1 }}
-                                                whileTap={{ scale: 0.9 }}
-                                                aria-label="Save recipe"
-                                                className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 dark:bg-gray-900/90 flex items-center justify-center shadow-sm z-10"
-                                            >
-                                                <Heart className="w-4 h-4 text-gray-600 dark:text-gray-300" />
-                                            </motion.button>
-                                            <span className="absolute bottom-3 left-3 bg-white/90 dark:bg-gray-900/90 text-[11px] font-semibold text-gray-700 dark:text-gray-200 px-2.5 py-1 rounded-full">
-                                                {flavorMatch.cookTime} · {flavorMatch.difficulty} · {flavorMatch.servings} servings
-                                            </span>
-                                        </div>
-
-                                        <h4 className="font-semibold text-gray-900 dark:text-white mb-1 leading-snug">
-                                            {flavorMatch.title}
-                                        </h4>
-                                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-                                            {flavorMatch.description}
-                                        </p>
-                                        <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400 mb-3">
-                                            <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
-                                            <span className="font-semibold text-gray-800 dark:text-gray-200">{flavorMatch.rating}</span>
-                                            <span className="text-gray-400">({flavorMatch.reviewCount})</span>
-                                        </div>
-
-                                        {flavorMatch.benefits?.length > 0 && (
-                                            <ul className="space-y-1.5 mb-4">
-                                                {flavorMatch.benefits.map((b) => (
-                                                    <li key={b} className="flex items-start gap-1.5 text-xs text-gray-600 dark:text-gray-400">
-                                                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 mt-0.5 shrink-0" />
-                                                        {b}
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                        )}
-
-                                        <motion.button
-                                            whileHover={{ scale: 1.01 }}
-                                            whileTap={{ scale: 0.98 }}
-                                            className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:border-emerald-300 hover:text-emerald-700 transition-colors duration-300 mb-3"
-                                        >
-                                            View Recipe <ArrowRight className="w-4 h-4" />
-                                        </motion.button>
-
-                                        {/* Pagination — one card at a time */}
-                                        <div className="flex items-center justify-between">
-                                            <button
-                                                onClick={handlePrevMatch}
-                                                disabled={matchPage <= 1 || matchLoading}
-                                                className="inline-flex items-center gap-1 text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-emerald-700 dark:hover:text-emerald-400 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                                            >
-                                                <ChevronLeft className="w-4 h-4" /> Prev
-                                            </button>
-                                            <button
-                                                onClick={handleFlavorMatchClick}
-                                                disabled={matchLoading}
-                                                className="text-xs font-medium text-gray-400 hover:text-emerald-600 transition-colors"
-                                            >
-                                                Start over
-                                            </button>
-                                            <button
-                                                onClick={handleNextMatch}
-                                                disabled={matchLoading}
-                                                className="inline-flex items-center gap-1 text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-emerald-700 dark:hover:text-emerald-400 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                                            >
-                                                Next <ChevronRight className="w-4 h-4" />
-                                            </button>
-                                        </div>
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
+                            <h4 className="font-semibold text-gray-900 dark:text-white mb-1 leading-snug">
+                                Lemon Garlic Chicken with Rosemary
+                            </h4>
+                            <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400 mb-4">
+                                <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
+                                <span className="font-semibold text-gray-800 dark:text-gray-200">4.8</span>
+                                <span className="text-gray-400">(124)</span>
+                            </div>
+                            <motion.button
+                                whileHover={{ scale: 1.01 }}
+                                whileTap={{ scale: 0.98 }}
+                                className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:border-emerald-300 hover:text-emerald-700 transition-colors duration-300"
+                            >
+                                View Recipe <ArrowRight className="w-4 h-4" />
+                            </motion.button>
                         </motion.div>
 
                         {/* Pro Tip */}
@@ -714,14 +572,9 @@ const FlavorPairingFull = () => {
                         </motion.div>
                     </div>
                 </div>
-
-                <div className='md:py-8 py-6'>
-                    <FlavorBanner/>
-                </div>
-
             </div>
         </section>
     );
 };
 
-export default FlavorPairingFull;
+export default FlavorPairing;
