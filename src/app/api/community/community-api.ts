@@ -1,6 +1,7 @@
 import type {
   DirectMessageUser,
   NotificationItem,
+  Author,
   Post,
   PublicCommunityProfile,
   RecipeCollection,
@@ -15,13 +16,20 @@ interface ApiErrorBody {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const headers = new Headers(init?.headers);
+  const method = (init?.method || "GET").toUpperCase();
+
+  // A Content-Type header on an otherwise simple GET forces a CORS preflight.
+  // Community reads do not send a body, so leave the header out for those calls.
+  if (init?.body && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
+
   const response = await fetch(`${API_BASE_URL}/api/community${path}`, {
     ...init,
     credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      ...init?.headers,
-    },
+    ...(method === "GET" ? { cache: "no-store" as const } : {}),
+    headers,
   });
 
   if (!response.ok) {
@@ -67,6 +75,7 @@ export interface CommunityMessagesPageOptions {
 export interface CommunityPostsPageOptions {
   take?: number;
   skip?: number;
+  filter?: "all" | "trending" | "following" | "quick" | "wellness" | "challenge" | "ai_sparks" | "saved" | "liked";
 }
 
 export interface CommunityPostInteractions {
@@ -82,13 +91,23 @@ export interface CommunityPostInteractionOptions {
 }
 
 export const communityApi = {
-  async listPosts({ take, skip }: CommunityPostsPageOptions = {}): Promise<Post[]> {
+  async listPosts({ take, skip, filter }: CommunityPostsPageOptions = {}): Promise<Post[]> {
     const query = new URLSearchParams();
     if (take !== undefined) query.set("take", String(take));
     if (skip !== undefined) query.set("skip", String(skip));
+    if (filter) query.set("filter", filter);
     const suffix = query.size ? `?${query.toString()}` : "";
     const response = await request<{ posts: Post[] }>(`/posts${suffix}`);
     return response.posts;
+  },
+
+  async listSuggestedChefs(): Promise<Author[]> {
+    const response = await request<{ chefs: Author[] }>("/suggested-chefs");
+    return response.chefs;
+  },
+
+  getFeedCounts() {
+    return request<{ savedPostsCount: number; likedPostsCount: number }>("/feed-counts");
   },
 
   async createPost(post: Post): Promise<Post> {
@@ -134,6 +153,19 @@ export const communityApi = {
     return request<{ active: boolean }>(`/users/${userId}/follow`, { method: "POST" });
   },
 
+  async sharePost(postId: string, caption?: string): Promise<Post> {
+    const response = await request<{ post: Post }>(`/posts/${postId}/share`, {
+      method: "POST",
+      body: JSON.stringify({ caption }),
+    });
+    return response.post;
+  },
+
+  async listConnections(userId: string, type: "followers" | "following"): Promise<Author[]> {
+    const response = await request<{ users: Author[] }>(`/users/${userId}/connections?type=${type}`);
+    return response.users;
+  },
+
   async getPostInteractions(
     postId: string,
     options: CommunityPostInteractionOptions = {},
@@ -147,14 +179,27 @@ export const communityApi = {
     return response.interactions;
   },
 
-  async getPublicProfile(userId: string): Promise<PublicCommunityProfile> {
-    const response = await request<{ profile: PublicCommunityProfile }>(`/users/${userId}/profile`);
+  async getPublicProfile(userId: string, options: { take?: number; skip?: number } = {}): Promise<PublicCommunityProfile> {
+    const query = new URLSearchParams();
+    Object.entries(options).forEach(([key, value]) => {
+      if (value !== undefined) query.set(key, String(value));
+    });
+    const suffix = query.size ? `?${query.toString()}` : "";
+    const response = await request<{ profile: PublicCommunityProfile }>(`/users/${userId}/profile${suffix}`);
     return response.profile;
   },
 
   async listCollections(): Promise<RecipeCollection[]> {
     const response = await request<{ collections: RecipeCollection[] }>("/collections");
     return response.collections;
+  },
+
+  async listSavedPosts({ take, skip }: CommunityPostsPageOptions = {}): Promise<{ posts: Post[]; hasMore: boolean }> {
+    const query = new URLSearchParams();
+    if (take !== undefined) query.set("take", String(take));
+    if (skip !== undefined) query.set("skip", String(skip));
+    const suffix = query.size ? `?${query.toString()}` : "";
+    return request<{ posts: Post[]; hasMore: boolean }>(`/saved-posts${suffix}`);
   },
 
   createCollection(name: string, description: string) {
@@ -178,16 +223,28 @@ export const communityApi = {
     });
   },
 
+  deletePost(postId: string) {
+    return request<void>(`/posts/${postId}`, { method: "DELETE" });
+  },
+
+  updatePost(postId: string, data: { caption?: string; tags?: string[]; isPinned?: boolean }) {
+    return request<void>(`/posts/${postId}`, { method: "PATCH", body: JSON.stringify(data) });
+  },
+
   async listStories(): Promise<StoryItem[]> {
     const response = await request<{ stories: StoryItem[] }>("/stories");
     return response.stories;
   },
 
-  createStory(imageUrl: string, caption: string) {
+  createStory(imageUrl: string, caption = "") {
     return request("/stories", {
       method: "POST",
       body: JSON.stringify({ imageUrl, caption }),
     });
+  },
+
+  deleteStory(storyId: string) {
+    return request<void>(`/stories/${storyId}`, { method: "DELETE" });
   },
 
   async listNotifications(): Promise<NotificationItem[]> {
@@ -199,7 +256,7 @@ export const communityApi = {
     return request(`/notifications/${notificationId}/read`, { method: "PATCH" });
   },
 
-  async uploadImage(file: File, folder: "posts" | "stories"): Promise<string> {
+  async uploadImage(file: File, folder: "posts" | "stories" | "profiles"): Promise<string> {
     const maxImageBytes = 6 * 1024 * 1024;
     if (file.size > maxImageBytes) {
       throw new Error("Image must be 6 MB or smaller");
@@ -212,6 +269,13 @@ export const communityApi = {
     });
 
     return response.url;
+  },
+
+  updateProfile(data: { name?: string; bio?: string; location?: string; interests?: string[]; image?: string; coverImage?: string }) {
+    return request<{ profile: { id: string; name: string; image: string | null; bio: string | null; location: string | null; interests: string[]; coverImage: string | null } }>("/users/me/profile", {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    });
   },
 
   async listContacts(includeUserId?: string): Promise<DirectMessageUser[]> {
