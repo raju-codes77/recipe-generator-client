@@ -28,6 +28,8 @@ interface CommunitySidebarLeftProps {
   currentUser?: Author | null;
   isAuthenticated?: boolean;
   onRequireAuthentication?: (action: string) => void;
+  onOpenFollowers?: () => void;
+  onOpenSaved?: () => void;
 }
 
 export const CommunitySidebarLeft: React.FC<CommunitySidebarLeftProps> = ({
@@ -39,6 +41,8 @@ export const CommunitySidebarLeft: React.FC<CommunitySidebarLeftProps> = ({
   currentUser = CURRENT_USER,
   isAuthenticated = true,
   onRequireAuthentication = () => undefined,
+  onOpenFollowers = () => undefined,
+  onOpenSaved = () => undefined,
 }) => {
   const filterCategories = [
     { id: "all", label: "All Community Posts", icon: Compass },
@@ -112,23 +116,23 @@ export const CommunitySidebarLeft: React.FC<CommunitySidebarLeftProps> = ({
               </span>
             </div>
 
-            <div>
+            <button type="button" onClick={onOpenFollowers} className="cursor-pointer rounded-lg px-1 py-0.5 transition hover:bg-neutral-100 dark:hover:bg-neutral-800">
               <span className="block font-extrabold text-sm text-neutral-800 dark:text-neutral-200">
                 {currentUser.followersCount}
               </span>
               <span className="text-[10px] font-medium text-neutral-500 dark:text-neutral-400">
                 Followers
               </span>
-            </div>
+            </button>
 
-            <div>
+            <button type="button" onClick={onOpenSaved} className="cursor-pointer rounded-lg px-1 py-0.5 transition hover:bg-neutral-100 dark:hover:bg-neutral-800">
               <span className="block font-extrabold text-sm text-[#FF9F43]">
                 {savedPostsCount}
               </span>
               <span className="text-[10px] font-medium text-neutral-500 dark:text-neutral-400">
                 Saved
               </span>
-            </div>
+            </button>
           </div>
         </div>
       ) : (
@@ -187,13 +191,13 @@ export const CommunitySidebarLeft: React.FC<CommunitySidebarLeftProps> = ({
                       : "text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-900 dark:hover:text-white"
                   }`}
                 >
-                  <div className="flex items-center gap-2.5">
+                  <div className="flex min-w-0 flex-1 items-center gap-2.5">
                     <Icon
                       className={`h-4 w-4 ${
                         isActive ? "text-white" : "text-neutral-400"
                       }`}
                     />
-                    <span>{cat.label}</span>
+                    <span className="text-left">{cat.label}</span>
                   </div>
 
                   {cat.badge && (

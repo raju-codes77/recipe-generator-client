@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { toast } from "react-hot-toast";
 import { Upload, CloudUpload, CheckSquare } from "lucide-react";
 import { useMealTracker } from "./MealTrackerContext";
@@ -16,10 +16,10 @@ export default function UploadCard() {
     userId,
   } = useMealTracker();
 
-
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string>("");
+  const isRequestingRef = useRef(false);
 
   const handleFile = (file: File) => {
     if (!file.type.startsWith("image/")) {
@@ -63,10 +63,14 @@ export default function UploadCard() {
   };
 
   const handleAnalyze = async () => {
+    if (isRequestingRef.current) return;
+    
     if (!selectedFile) {
       toast.error("Please select an image first.");
       return;
     }
+
+    isRequestingRef.current = true;
 
     try {
       setLoading(true);
@@ -131,6 +135,7 @@ export default function UploadCard() {
     } finally {
       setLoading(false);
       setIsAnalyzing(false);
+      isRequestingRef.current = false;
     }
   };
 

@@ -83,6 +83,7 @@ export default function ExploreRecipes() {
 
   // FETCH DATA
   useEffect(() => {
+    const abortController = new AbortController();
     async function fetchData() {
       try {
         setLoading(true);
@@ -116,6 +117,9 @@ export default function ExploreRecipes() {
         }
 
         const params = new URLSearchParams();
+
+        params.append('page', String(currentPage));
+        params.append('limit', String(recipesPerPage));
 
         if (searchQuery.trim()) {
           params.append("search", searchQuery.trim());

@@ -130,6 +130,8 @@ const DEFAULT_RECIPES: Recipe[] = [
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 export default function TasteMatcherDashboard() {
+  const requestRef = React.useRef(0);
+  const abortControllerRef = React.useRef<AbortController | null>(null);
   const [sweetness, setSweetness] = useState<number>(7);
   const [sourness, setSourness] = useState<number>(3);
   const [saltiness, setSaltiness] = useState<number>(5);
@@ -192,6 +194,9 @@ export default function TasteMatcherDashboard() {
 
   // Groq AI Match Function — APPENDS new batch to existing collection
   const handleMatchRecipes = async () => {
+    const reqId = ++requestRef.current;
+    if (abortControllerRef.current) abortControllerRef.current.abort();
+    abortControllerRef.current = new AbortController();
     setLoading(true);
     setErrorMsg(null);
 
@@ -203,16 +208,17 @@ export default function TasteMatcherDashboard() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sweetness, sourness, saltiness, umami, spiciness, likes, dislikes, cuisines }),
-        signal: controller.signal,
+        signal: abortControllerRef.current?.signal,
       });
 
-      clearTimeout(timeoutId);
+      
 
       let data: any = null;
       try {
         data = await response.json();
       } catch {}
 
+      if (reqId !== requestRef.current) return;
       if (response.ok && data?.success && Array.isArray(data?.recipes) && data.recipes.length > 0) {
         setRecipes((prev) => {
           // Re-number ids so a new batch never collides with existing cards'
