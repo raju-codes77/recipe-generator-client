@@ -64,7 +64,7 @@ export default function RecipeCard({
     const checkFavorite = async () => {
       try {
         const response = await fetch(
-          `http://localhost:5000/api/favorites/check?userId=${session.user.id}&recipeId=${recipe.id}`,
+          `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/favorites/check?userId=${session.user.id}&recipeId=${recipe.id}`,
           {
             credentials: "include",
           }
@@ -109,7 +109,7 @@ export default function RecipeCard({
     try {
       if (isLiked) {
         const response = await fetch(
-          "http://localhost:5000/api/favorites",
+          `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/favorites`,
           {
             method: "DELETE",
             headers: {
@@ -147,7 +147,7 @@ export default function RecipeCard({
         window.dispatchEvent(new Event("recipeUpdated"));
       } else {
         const response = await fetch(
-          "http://localhost:5000/api/favorites",
+          `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/favorites`,
           {
             method: "POST",
             headers: {
@@ -192,7 +192,7 @@ export default function RecipeCard({
     if (!session?.user?.id) return;
     setLoadingCollections(true);
     try {
-      const res = await fetch(`http://localhost:5000/api/collections?userId=${session.user.id}`);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/collections?userId=${session.user.id}`);
       const data = await res.json();
       if (data.success) {
         setCollections(data.collections);
@@ -225,7 +225,7 @@ export default function RecipeCard({
   // SAVE TO SPECIFIC COLLECTION WITH TOAST 
   const handleAddToCollection = async (collectionId: string) => {
     try {
-      const res = await fetch("http://localhost:5000/api/collections/add-recipe", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/collections/add-recipe`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ collectionId, recipeId: recipe.id }),

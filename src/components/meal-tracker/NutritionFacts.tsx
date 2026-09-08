@@ -12,15 +12,15 @@ export default function NutritionFacts() {
     v !== null && v !== undefined ? `${v}${unit}` : "--";
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 flex flex-col gap-4">
-      <h3 className="text-sm font-bold text-gray-900">
+    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm p-5 flex flex-col gap-4">
+      <h3 className="text-sm font-bold text-gray-900 dark:text-white">
         Nutrition Facts{" "}
         <span className="text-gray-400 font-normal">(Per Serving)</span>
       </h3>
 
       {/* Big calorie */}
       <div className="flex items-end gap-1">
-        <span className="text-5xl font-extrabold text-gray-900 leading-none">
+        <span className="text-5xl font-extrabold text-gray-900 dark:text-white leading-none">
           {nutritionFacts?.kcal ?? "--"}
         </span>
         <span className="text-sm text-gray-400 mb-1">kcal</span>
@@ -36,10 +36,10 @@ export default function NutritionFacts() {
         ].map((m) => (
           <div
             key={m.label}
-            className="flex flex-col items-center justify-center bg-gray-50 rounded-xl py-2 px-3 text-center"
+            className="flex flex-col items-center justify-center bg-gray-50 dark:bg-slate-700/50 rounded-xl py-2 px-3 text-center"
           >
             <span className="text-xs text-gray-400">{m.label}</span>
-            <span className="text-lg font-bold text-gray-900">{m.value}</span>
+            <span className="text-lg font-bold text-gray-900 dark:text-white">{m.value}</span>
           </div>
         ))}
       </div>
@@ -50,7 +50,7 @@ export default function NutritionFacts() {
       </button>
 
       {/* Extra 3 stats */}
-      <div className="grid grid-cols-3 gap-2 pt-1 border-t border-gray-100">
+      <div className="grid grid-cols-3 gap-2 pt-1 border-t border-gray-100 dark:border-slate-700">
         {[
           { label: "Sugar", value: val(nutritionFacts?.sugar, "g") },
           { label: "Sodium", value: val(nutritionFacts?.sodium, "mg") },
@@ -58,7 +58,7 @@ export default function NutritionFacts() {
         ].map((e) => (
           <div key={e.label} className="text-center">
             <p className="text-xs text-gray-400">{e.label}</p>
-            <p className="text-sm font-bold text-gray-800">{e.value}</p>
+            <p className="text-sm font-bold text-gray-800 dark:text-gray-200">{e.value}</p>
           </div>
         ))}
       </div>

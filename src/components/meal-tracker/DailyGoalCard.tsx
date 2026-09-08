@@ -6,7 +6,7 @@ import { updateUserGoal } from "@/app/api/meal-tracker/meal-tracker";
 import { useMealTracker } from "./MealTrackerContext";
 
 export default function DailyGoalCard() {
-  const { dailyGoalKcal, setDailyGoalKcal, mealLog } = useMealTracker();
+  const { dailyGoalKcal, setDailyGoalKcal, mealLog, userId } = useMealTracker();
 
   const [isEditing, setIsEditing] = useState(false);
   const [tempGoal, setTempGoal] = useState<string | number>(dailyGoalKcal ?? 2000);
@@ -28,9 +28,14 @@ export default function DailyGoalCard() {
       return;
     }
 
+    if (!userId) {
+      toast.error("User not identified");
+      return;
+    }
+
     try {
       setIsSaving(true);
-      await updateUserGoal(parsed);
+      await updateUserGoal(parsed, userId);
       setDailyGoalKcal(parsed);
       toast.success("Goal updated!");
       setIsEditing(false);
@@ -49,9 +54,9 @@ export default function DailyGoalCard() {
   const fmt = (v: number | null) => (v !== null ? v.toLocaleString() : "--");
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 flex flex-col gap-4">
+    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm p-5 flex flex-col gap-4">
       <div className="flex items-center justify-between h-5">
-        <h3 className="text-sm font-bold text-gray-900">Daily Goal</h3>
+        <h3 className="text-sm font-bold text-gray-900 dark:text-white">Daily Goal</h3>
         {isEditing ? (
           <div className="flex items-center gap-2">
             <input
@@ -108,7 +113,7 @@ export default function DailyGoalCard() {
             <p className="text-[10px] text-gray-400 leading-tight">
               Daily Calorie Goal
             </p>
-            <p className="text-3xl font-extrabold text-gray-900 leading-none mt-1">
+            <p className="text-3xl font-extrabold text-gray-900 dark:text-white leading-none mt-1">
               {fmt(dailyGoalKcal)}
             </p>
             <p className="text-xs text-gray-400">kcal</p>
@@ -120,7 +125,7 @@ export default function DailyGoalCard() {
       <div className="flex justify-between text-center">
         <div>
           <p className="text-[10px] text-gray-400 mb-0.5">Consumed</p>
-          <p className="text-base font-bold text-gray-900">
+          <p className="text-base font-bold text-gray-900 dark:text-white">
             {consumedKcal !== null ? `${fmt(consumedKcal)} kcal` : "--"}
           </p>
         </div>

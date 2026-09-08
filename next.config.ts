@@ -2,6 +2,14 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /* config options here */
+  async rewrites() {
+    return [
+      {
+        source: '/api/auth/:path*',
+        destination: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/auth/:path*`,
+      },
+    ];
+  },
   reactCompiler: true,
   images: {
     remotePatterns: [
@@ -25,7 +33,8 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'encrypted-tbn0.gstatic.com',
       },
-    ],
+      { protocol: "https", hostname: "source.unsplash.com" }]
+     
   },
 };
 

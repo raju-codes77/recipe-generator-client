@@ -78,46 +78,8 @@ export default function ExploreRecipes() {
 
   // Initial fetch for collections on mount
   useEffect(() => {
-    async function fetchInitialCollections() {
-      if (!session?.user?.id) {
-        setIsCollectionsLoading(false);
-        return;
-      }
-      try {
-        const response = await fetch(
-          `http://localhost:5000/api/collections?userId=${session.user.id}`,
-          { credentials: "include" }
-        );
-        const data = await response.json();
-        if (response.ok && data.success && Array.isArray(data.collections)) {
-          setCollections(data.collections);
-        }
-      } catch (err) {
-        console.error("Failed to load initial collections:", err);
-      } finally {
-        setIsCollectionsLoading(false);
-      }
-    }
-
-    if (session?.user?.id) {
-      fetchInitialCollections();
-    } else {
-      setIsCollectionsLoading(false);
-    }
-  }, [session?.user?.id]);
-
-  // Dynamic skeleton count for My Collections based on actual recipe count
-  const expectedSkeletonCount = useMemo(() => {
-    if (activeTab === "My Collections" && selectedCollectionId) {
-      const currentCollection = collections.find((c) => c.id === selectedCollectionId);
-      return currentCollection?.recipes?.length || 0;
-    }
-    return 6; // Standard default for All Recipes, My Recipes, and Favorite Recipes
-  }, [activeTab, selectedCollectionId, collections]);
-
-  // FETCH RECIPES EFFECT
-  useEffect(() => {
-    async function fetchRecipesData() {
+    const abortController = new AbortController();
+    async function fetchData() {
       try {
         setError(null);
 
@@ -129,11 +91,33 @@ export default function ExploreRecipes() {
             setIsRecipesLoading(false);
             return;
           }
+
+          const response = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/collections?userId=${session.user.id}`,
+            { credentials: "include" }
+          );
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data.message || "Failed to fetch collections");
+          }
+
+          if (data.success && Array.isArray(data.collections)) {
+            setCollections(data.collections);
+          } else {
+            setCollections([]);
+          }
+          setRecipes([]);
+          setLoading(false);
+          return;
         }
 
         setIsRecipesLoading(true);
 
         const params = new URLSearchParams();
+
+        params.append('page', String(currentPage));
+        params.append('limit', String(recipesPerPage));
 
         if (searchQuery.trim()) {
           params.append("search", searchQuery.trim());
@@ -175,7 +159,7 @@ export default function ExploreRecipes() {
         }
 
         const response = await fetch(
-          `http://localhost:5000/api/recipes?${params.toString()}`,
+          `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/recipes?${params.toString()}`,
           { credentials: "include" }
         );
 
@@ -259,7 +243,7 @@ export default function ExploreRecipes() {
       if (session?.user?.id) {
         try {
           const response = await fetch(
-            `http://localhost:5000/api/collections?userId=${session.user.id}`,
+            `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/collections?userId=${session.user.id}`,
             { credentials: "include" }
           );
           const data = await response.json();
@@ -282,7 +266,7 @@ export default function ExploreRecipes() {
     e.stopPropagation();
 
     try {
-      const response = await fetch(`http://localhost:5000/api/collections`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/collections`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

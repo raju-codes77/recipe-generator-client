@@ -7,6 +7,7 @@ import { CommunityAvatar } from "./CommunityAvatar";
 
 interface CommunitySidebarRightProps {
   chefs: Author[];
+  currentUserId?: string;
   onToggleFollow: (chefId: string) => void;
   trendingPosts: Post[];
   onSelectRecipe: (post: Post) => void;
@@ -17,6 +18,7 @@ interface CommunitySidebarRightProps {
 
 export const CommunitySidebarRight: React.FC<CommunitySidebarRightProps> = ({
   chefs,
+  currentUserId,
   onToggleFollow,
   trendingPosts,
   onSelectRecipe,
@@ -24,6 +26,8 @@ export const CommunitySidebarRight: React.FC<CommunitySidebarRightProps> = ({
   isAuthenticated = true,
   onRequireAuthentication = () => undefined,
 }) => {
+  const [showAllChefs, setShowAllChefs] = React.useState(false);
+  const visibleChefs = showAllChefs ? chefs : chefs.slice(0, 3);
   const liveActivities = React.useMemo(() => {
     return trendingPosts
       .slice(0, 12)
@@ -96,59 +100,82 @@ export const CommunitySidebarRight: React.FC<CommunitySidebarRightProps> = ({
           <h4 className="text-[11px] font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
             Top Community Chefs
           </h4>
-          <span className="text-xs font-semibold text-[#2F8F46] hover:underline cursor-pointer dark:text-[#B7E35F]">
-            See All
-          </span>
+          {chefs.length > 3 && (
+            <button
+              type="button"
+              onClick={() => setShowAllChefs((visible) => !visible)}
+              className="text-xs font-semibold text-[#2F8F46] hover:underline dark:text-[#B7E35F]"
+            >
+              {showAllChefs ? "View Less" : "View More"}
+            </button>
+          )}
         </div>
 
         <div className="space-y-3.5 mt-1">
-          {chefs.map((chef) => (
-            <div key={chef.id} className="flex items-center justify-between">
-              <div className="flex items-center gap-3 overflow-hidden">
-                <CommunityAvatar
-                  src={chef.avatar}
-                  alt={chef.name}
-                  className="h-10 w-10 shrink-0 rounded-full object-cover ring-1 ring-[#2F8F46]/40"
-                />
-                <div className="truncate">
-                  <h5 className="truncate text-xs font-bold text-neutral-900 dark:text-white">{chef.name}</h5>
-                  <p className="text-[11px] text-neutral-500 dark:text-neutral-400 flex items-center gap-1">
-                    <span>{chef.recipesCount} recipes</span> • <span>{chef.badge}</span>
-                  </p>
-                </div>
-              </div>
+          {visibleChefs.map((chef) => {
+            const isCurrentUser = chef.id === currentUserId;
 
-              {isAuthenticated ? (
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => onToggleFollow(chef.id)}
-                  className={`ml-2 shrink-0 rounded-full px-3 py-1 text-xs font-bold transition ${
-                    chef.isFollowing
-                      ? "border border-emerald-200 bg-[#EAF7E8] text-[#176B35] dark:border-emerald-800 dark:bg-emerald-950 dark:text-[#B7E35F]"
-                      : "bg-[#2F8F46] text-white hover:bg-[#176B35]"
-                  }`}
+            return (
+              <div key={chef.id} className="flex items-center justify-between">
+                <Link
+                  href={`/community/users/${encodeURIComponent(chef.id)}`}
+                  className="flex min-w-0 items-center gap-3 overflow-hidden rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2F8F46]"
+                  aria-label={`View ${chef.name}'s Community profile`}
                 >
-                  {chef.isFollowing ? (
-                    <span className="flex items-center gap-1">
-                      <UserCheck className="h-3 w-3" /> Following
-                    </span>
-                  ) : (
-                    <span className="flex items-center gap-1">
-                      <UserPlus className="h-3 w-3" /> Follow
-                    </span>
-                  )}
-                </motion.button>
-              ) : (
-                <button
-                  onClick={() => onRequireAuthentication("follow Community chefs")}
-                  className="ml-2 shrink-0 rounded-full border border-emerald-200 px-3 py-1 text-xs font-bold text-[#176B35] transition hover:bg-[#EAF7E8] dark:border-emerald-800 dark:text-[#B7E35F]"
-                >
-                  Log in
-                </button>
-              )}
-            </div>
-          ))}
+                  <CommunityAvatar
+                    src={chef.avatar}
+                    alt={chef.name}
+                    className="h-10 w-10 shrink-0 rounded-full object-cover ring-1 ring-[#2F8F46]/40"
+                  />
+                  <div className="truncate">
+                    <h5 className="truncate text-xs font-bold text-neutral-900 dark:text-white">{chef.name}</h5>
+                    <p className="text-[11px] text-neutral-500 dark:text-neutral-400 flex items-center gap-1">
+                      <span>{chef.recipesCount} recipes</span> • <span>{chef.badge}</span>
+                    </p>
+                  </div>
+                </Link>
+
+                {isCurrentUser ? (
+                  <span className="ml-2 shrink-0 rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-xs font-bold text-neutral-600 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">
+                    You
+                  </span>
+                ) : isAuthenticated ? (
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => onToggleFollow(chef.id)}
+                    className={`ml-2 shrink-0 rounded-full px-3 py-1 text-xs font-bold transition ${
+                      chef.isFollowing
+                        ? "border border-emerald-200 bg-[#EAF7E8] text-[#176B35] dark:border-emerald-800 dark:bg-emerald-950 dark:text-[#B7E35F]"
+                        : "bg-[#2F8F46] text-white hover:bg-[#176B35]"
+                    }`}
+                  >
+                    {chef.isFollowing ? (
+                      <span className="flex items-center gap-1">
+                        <UserCheck className="h-3 w-3" /> Following
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-1">
+                        <UserPlus className="h-3 w-3" /> Follow
+                      </span>
+                    )}
+                  </motion.button>
+                ) : (
+                  <button
+                    onClick={() => onRequireAuthentication("follow Community chefs")}
+                    className="ml-2 shrink-0 rounded-full border border-emerald-200 px-3 py-1 text-xs font-bold text-[#176B35] transition hover:bg-[#EAF7E8] dark:border-emerald-800 dark:text-[#B7E35F]"
+                  >
+                    Log in
+                  </button>
+                )}
+              </div>
+            );
+          })}
+          {chefs.length === 0 && (
+            <p className="py-2 text-xs text-neutral-500 dark:text-neutral-400">
+              No active Community members yet.
+            </p>
+          )}
         </div>
       </div>
 
@@ -172,11 +199,17 @@ export const CommunitySidebarRight: React.FC<CommunitySidebarRightProps> = ({
               <span className="font-black text-sm text-neutral-300 group-hover:text-[#2F8F46] w-4 text-center">
                 0{idx + 1}
               </span>
-              <img
-                src={post.imageUrl}
-                alt={post.recipe?.title || "Recipe"}
-                className="h-12 w-12 rounded-xl object-cover"
-              />
+              {post.imageUrl ? (
+                <img
+                  src={post.imageUrl}
+                  alt={post.recipe?.title || "Recipe"}
+                  className="h-12 w-12 rounded-xl object-cover"
+                />
+              ) : (
+                <div aria-hidden="true" className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#EAF7E8] text-xs font-black text-[#2F8F46] dark:bg-emerald-950/50 dark:text-[#B7E35F]">
+                  FC
+                </div>
+              )}
               <div className="flex-1 overflow-hidden">
                 <h5 className="truncate text-xs font-bold text-neutral-800 group-hover:text-[#2F8F46] dark:text-neutral-200">
                   {post.recipe?.title || post.caption.slice(0, 30)}

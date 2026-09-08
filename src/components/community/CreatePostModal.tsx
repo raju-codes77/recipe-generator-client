@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   X,
@@ -15,6 +15,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { Post, RecipeDetail, Ingredient, CookingStep } from "./types";
+import { parseCommunityTags } from "./community-tags";
 import { CURRENT_USER } from "./mockData";
 import { fetchMealDbRecipes } from "./mealDbService";
 
@@ -23,6 +24,7 @@ interface CreatePostModalProps {
   onClose: () => void;
   onPublishPost: (post: Post, imageFile?: File) => Promise<void> | void;
   initialUseAI?: boolean;
+  initialMode?: "quick" | "recipe" | "ai_import";
 }
 
 const PRESET_FOOD_PHOTOS = [
@@ -34,12 +36,19 @@ const PRESET_FOOD_PHOTOS = [
   "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=900&auto=format&fit=crop&q=80",
 ];
 
+// Stored in the existing imageUrl field so text-only posts need no schema change.
+// The API normalizes this marker back to an empty imageUrl for clients.
+const TEXT_ONLY_POST_IMAGE = "__foodcanvas_text_only__";
+const DEFAULT_RECIPE_TAGS = "#PantryToPlate, #HealthyDinner, #FoodCanvas";
+
 export const CreatePostModal: React.FC<CreatePostModalProps> = ({
   isOpen,
   onClose,
   onPublishPost,
   initialUseAI = false,
+  initialMode,
 }) => {
+  const [postMode, setPostMode] = useState<"quick" | "recipe">(initialMode === "recipe" || initialMode === "ai_import" ? "recipe" : "quick");
   const [activeTab, setActiveTab] = useState<"standard" | "ai_import">(initialUseAI ? "ai_import" : "standard");
 
   // Form Fields
@@ -54,8 +63,15 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
   const [customPhotoUrl, setCustomPhotoUrl] = useState("");
   const [imageFile, setImageFile] = useState<File | undefined>();
   const [isPublishing, setIsPublishing] = useState(false);
-  const [tagsInput, setTagsInput] = useState("#PantryToPlate, #HealthyDinner, #FoodCanvas");
+  const [tagsInput, setTagsInput] = useState(DEFAULT_RECIPE_TAGS);
   const [isChallengeEntry, setIsChallengeEntry] = useState(false);
+
+  useEffect(() => {
+    const mode = initialMode ?? (initialUseAI ? "ai_import" : "quick");
+    setPostMode(mode === "ai_import" ? "recipe" : mode);
+    setActiveTab(mode === "ai_import" ? "ai_import" : "standard");
+    setTagsInput(mode === "quick" ? "" : DEFAULT_RECIPE_TAGS);
+  }, [initialMode, initialUseAI, isOpen]);
 
   // Nutrition
   const [calories, setCalories] = useState(420);
@@ -156,11 +172,7 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
   const handlePublish = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const parsedTags = tagsInput
-      .split(",")
-      .map((t) => t.trim())
-      .filter((t) => t.length > 0)
-      .map((t) => (t.startsWith("#") ? t : `#${t}`));
+    const parsedTags = parseCommunityTags(tagsInput);
 
     const recipe: RecipeDetail = {
       title: title.trim() || "Delicious Community Dish",
@@ -184,9 +196,11 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
     const newPost: Post = {
       id: `post_${Date.now()}`,
       author: CURRENT_USER,
-      caption: caption.trim() || `Cooked this delicious ${title}! Fresh ingredients and incredible flavors. ✨`,
-      imageUrl: customPhotoUrl.trim() || selectedPhoto,
-      recipe,
+      caption: caption.trim() || (postMode === "quick" ? "Shared a food moment with the Community." : `Cooked this delicious ${title}! Fresh ingredients and incredible flavors. ✨`),
+      imageUrl: postMode === "quick"
+        ? (customPhotoUrl.trim() || (imageFile ? "" : TEXT_ONLY_POST_IMAGE))
+        : (customPhotoUrl.trim() || selectedPhoto),
+      recipe: postMode === "quick" ? undefined : recipe,
       rating: {
         overall: 5.0,
         flavor: 5.0,
@@ -249,8 +263,26 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
           </button>
         </div>
 
-        {/* Tab Toggle: Standard vs. AI / TheMealDB Generator */}
-        <div className="flex border-b border-slate-100 px-6 pt-3 bg-neutral-50/50 dark:border-neutral-800 dark:bg-neutral-900/30">
+        {/* Post type selector keeps the existing composer layout while adding quick posts. */}
+        <div className="flex gap-2 border-b border-slate-100 bg-neutral-50/50 px-6 pt-3 dark:border-neutral-800 dark:bg-neutral-900/30">
+          <button
+            type="button"
+            onClick={() => { setPostMode("quick"); setActiveTab("standard"); setTagsInput(""); }}
+            className={`border-b-2 px-4 py-3 text-xs font-bold transition ${postMode === "quick" ? "border-[#2F8F46] text-[#2F8F46] dark:border-[#B7E35F] dark:text-[#B7E35F]" : "border-transparent text-neutral-500 hover:text-neutral-900 dark:hover:text-white"}`}
+          >
+            Quick Post
+          </button>
+          <button
+            type="button"
+            onClick={() => { setPostMode("recipe"); if (!tagsInput.trim()) setTagsInput(DEFAULT_RECIPE_TAGS); }}
+            className={`border-b-2 px-4 py-3 text-xs font-bold transition ${postMode === "recipe" ? "border-[#2F8F46] text-[#2F8F46] dark:border-[#B7E35F] dark:text-[#B7E35F]" : "border-transparent text-neutral-500 hover:text-neutral-900 dark:hover:text-white"}`}
+          >
+            Recipe Post
+          </button>
+        </div>
+
+        {/* Recipe source toggle */}
+        {postMode === "recipe" && <div className="flex border-b border-slate-100 px-6 pt-3 bg-neutral-50/50 dark:border-neutral-800 dark:bg-neutral-900/30">
           <button
             onClick={() => setActiveTab("standard")}
             className={`flex items-center gap-2 border-b-2 px-5 py-3 text-xs sm:text-sm font-bold transition ${
@@ -273,11 +305,38 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
             <Sparkles className="h-4 w-4 text-[#FF9F43]" />
             <span>Auto-Draft via TheMealDB / AI</span>
           </button>
-        </div>
+        </div>}
 
         {/* Modal Scrollable Body */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
-          {activeTab === "ai_import" ? (
+          {postMode === "quick" ? (
+            <form id="create-post-form" onSubmit={handlePublish} className="space-y-5">
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-neutral-600 dark:text-neutral-400">Post text</label>
+                <textarea
+                  rows={6}
+                  value={caption}
+                  onChange={(event) => setCaption(event.target.value)}
+                  placeholder="Share a cooking tip, food thought, technique, or story..."
+                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-neutral-900 placeholder-neutral-400 focus:border-[#2F8F46] focus:outline-hidden focus:ring-2 focus:ring-[#2F8F46]/15 dark:border-neutral-700 dark:bg-[#18181b] dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-neutral-600 dark:text-neutral-400">Add a food photo <span className="font-normal normal-case text-neutral-400">(optional)</span></label>
+                <input type="file" accept="image/*" onChange={(event) => setImageFile(event.target.files?.[0])} className="mt-2 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-neutral-600 file:mr-3 file:rounded-lg file:border-0 file:bg-[#EAF7E8] file:px-3 file:py-2 file:text-xs file:font-bold file:text-[#176B35] dark:border-neutral-700 dark:bg-[#18181b] dark:text-neutral-300 dark:file:bg-emerald-950 dark:file:text-[#B7E35F]" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-neutral-600 dark:text-neutral-400">Hashtags <span className="font-normal normal-case text-neutral-400">(optional)</span></label>
+                <input
+                  type="text"
+                  value={tagsInput}
+                  onChange={(event) => setTagsInput(event.target.value)}
+                  placeholder="#Dinner, #Baking, #FoodCanvas"
+                  className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-neutral-900 placeholder-neutral-400 focus:border-[#2F8F46] focus:outline-hidden focus:ring-2 focus:ring-[#2F8F46]/15 dark:border-neutral-700 dark:bg-[#18181b] dark:text-white"
+                />
+              </div>
+            </form>
+          ) : activeTab === "ai_import" ? (
             /* AI / TheMealDB Import Panel */
             <div className="space-y-5">
               <div className="rounded-2xl border border-amber-200/80 bg-gradient-to-br from-[#FFF0DD]/70 to-white p-4.5 dark:border-amber-900/40 dark:from-amber-950/20 dark:to-[#121212]">
@@ -599,7 +658,7 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-100 dark:border-neutral-800">
                 <div>
                   <label className="block text-xs font-bold text-neutral-600 dark:text-neutral-400 mb-1">
-                    Tags (comma-separated)
+                    Tags (comma or space-separated)
                   </label>
                   <input
                     type="text"

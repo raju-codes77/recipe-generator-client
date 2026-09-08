@@ -1,0 +1,138 @@
+"use client";
+
+import React, { useEffect, useRef, useState } from "react";
+
+interface CommunityScrollColumnProps {
+  children: React.ReactNode;
+  className?: string;
+  hideScrollbar?: boolean;
+}
+
+const SCROLLBAR_HIDE_DELAY = 900;
+
+export const CommunityScrollColumn: React.FC<CommunityScrollColumnProps> = ({ children, className = "", hideScrollbar = false }) => {
+  const [isScrolling, setIsScrolling] = useState(false);
+  const hideTimerRef = useRef<number | null>(null);
+
+  useEffect(() => () => {
+    if (hideTimerRef.current !== null) window.clearTimeout(hideTimerRef.current);
+  }, []);
+
+  const handleScroll = () => {
+    setIsScrolling(true);
+    if (hideTimerRef.current !== null) window.clearTimeout(hideTimerRef.current);
+    hideTimerRef.current = window.setTimeout(() => setIsScrolling(false), SCROLLBAR_HIDE_DELAY);
+  };
+
+  const handleMouseLeave = () => {
+    if (hideTimerRef.current !== null) window.clearTimeout(hideTimerRef.current);
+    setIsScrolling(false);
+  };
+
+  return (
+    <>
+      <style>{`
+        .community-scroll-column {
+          min-height: 0;
+          scrollbar-color: transparent transparent;
+          scrollbar-width: thin;
+        }
+        @media (min-width: 1024px) {
+          .community-scroll-column:not(.community-scroll-column--feed) {
+            height: calc(100dvh - 7rem);
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            padding-right: 10px;
+          }
+          .community-scroll-column--feed {
+            height: calc(100dvh - 7rem);
+            overflow-y: auto;
+            overscroll-behavior: contain;
+          }
+        }
+        .community-scroll-column::-webkit-scrollbar {
+          width: 8px;
+        }
+        .community-scroll-column::-webkit-scrollbar-button,
+        .community-scroll-column::-webkit-scrollbar-button:single-button,
+        .community-scroll-column::-webkit-scrollbar-button:horizontal,
+        .community-scroll-column::-webkit-scrollbar-button:vertical,
+        .community-scroll-column::-webkit-scrollbar-button:vertical:decrement,
+        .community-scroll-column::-webkit-scrollbar-button:vertical:increment,
+        .community-scroll-column::-webkit-scrollbar-button:single-button:vertical:decrement,
+        .community-scroll-column::-webkit-scrollbar-button:single-button:vertical:increment,
+        .community-scroll-column::-webkit-scrollbar-button:start:decrement,
+        .community-scroll-column::-webkit-scrollbar-button:end:increment,
+        .community-scroll-column::-webkit-scrollbar-button:vertical:start:increment,
+        .community-scroll-column::-webkit-scrollbar-button:vertical:end:decrement {
+          display: none !important;
+          width: 0 !important;
+          height: 0 !important;
+          min-width: 0 !important;
+          min-height: 0 !important;
+          background: transparent !important;
+          background-image: none !important;
+          border: 0 !important;
+          appearance: none !important;
+          -webkit-appearance: none !important;
+          color: transparent !important;
+        }
+        .community-scroll-column::-webkit-scrollbar-track {
+          background: transparent;
+          border-radius: 999px;
+        }
+        .community-scroll-column::-webkit-scrollbar-thumb {
+          background: transparent;
+          border: 2px solid transparent;
+          border-radius: 999px;
+          transition: background-color 220ms ease, border-color 220ms ease;
+        }
+        .community-scroll-column:hover,
+        .community-scroll-column[data-scroll-active="true"] {
+          scrollbar-color: rgba(47, 143, 70, 0.5) transparent;
+        }
+        .community-scroll-column:hover::-webkit-scrollbar-thumb,
+        .community-scroll-column[data-scroll-active="true"]::-webkit-scrollbar-thumb {
+          background: rgba(47, 143, 70, 0.5);
+          border-color: transparent;
+        }
+        .community-scroll-column:hover::-webkit-scrollbar-thumb:hover,
+        .community-scroll-column[data-scroll-active="true"]::-webkit-scrollbar-thumb:hover {
+          background: rgba(47, 143, 70, 0.72);
+        }
+        .community-scroll-column::-webkit-scrollbar:hover {
+          background: rgba(231, 238, 231, 0.22);
+        }
+        :global(.dark) .community-scroll-column:hover,
+        :global(.dark) .community-scroll-column[data-scroll-active="true"] {
+          scrollbar-color: rgba(183, 227, 95, 0.38) transparent;
+        }
+        :global(.dark) .community-scroll-column:hover::-webkit-scrollbar-thumb,
+        :global(.dark) .community-scroll-column[data-scroll-active="true"]::-webkit-scrollbar-thumb {
+          background: rgba(183, 227, 95, 0.38);
+        }
+        :global(.dark) .community-scroll-column:hover::-webkit-scrollbar-thumb:hover,
+        :global(.dark) .community-scroll-column[data-scroll-active="true"]::-webkit-scrollbar-thumb:hover {
+          background: rgba(199, 237, 125, 0.52);
+        }
+        :global(.dark) .community-scroll-column::-webkit-scrollbar:hover {
+          background: rgba(26, 33, 28, 0.35);
+        }
+        .community-scroll-column--feed {
+          scrollbar-width: none;
+        }
+        .community-scroll-column--feed::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
+      <div
+        className={`community-scroll-column ${hideScrollbar ? "community-scroll-column--feed" : ""} ${className}`}
+        data-scroll-active={isScrolling ? "true" : "false"}
+        onScroll={handleScroll}
+        onMouseLeave={handleMouseLeave}
+      >
+        {children}
+      </div>
+    </>
+  );
+};

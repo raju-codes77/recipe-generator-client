@@ -22,9 +22,10 @@ export default function RecipeCollectionSection() {
 
   // Fetch latest 4 recipes from backend
   useEffect(() => {
+    const abortController = new AbortController();
     const fetchLatestRecipes = async () => {
       try {
-        const response = await fetch("http://localhost:5000/api/recipes");
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/recipes`, { signal: abortController.signal });
         const data = await response.json();
 
         // Jodi data array hoy ba object er vetor array thake (e.g. data.recipes)
@@ -32,7 +33,8 @@ export default function RecipeCollectionSection() {
         
         // Sesh 4ta latest recipe slice kore nilam
         setRecipes(recipeList.slice(0, 4));
-      } catch (error) {
+      } catch (error: any) {
+        if (error.name === "AbortError") return;
         console.error("Failed to fetch latest recipes:", error);
       } finally {
         setLoading(false);

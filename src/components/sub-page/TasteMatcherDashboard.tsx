@@ -127,9 +127,11 @@ const DEFAULT_RECIPES: Recipe[] = [
   },
 ];
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 export default function TasteMatcherDashboard() {
+  const requestRef = React.useRef(0);
+  const abortControllerRef = React.useRef<AbortController | null>(null);
   const [sweetness, setSweetness] = useState<number>(7);
   const [sourness, setSourness] = useState<number>(3);
   const [saltiness, setSaltiness] = useState<number>(5);
@@ -192,6 +194,9 @@ export default function TasteMatcherDashboard() {
 
   // Groq AI Match Function — APPENDS new batch to existing collection
   const handleMatchRecipes = async () => {
+    const reqId = ++requestRef.current;
+    if (abortControllerRef.current) abortControllerRef.current.abort();
+    abortControllerRef.current = new AbortController();
     setLoading(true);
     setErrorMsg(null);
 
@@ -203,16 +208,17 @@ export default function TasteMatcherDashboard() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sweetness, sourness, saltiness, umami, spiciness, likes, dislikes, cuisines }),
-        signal: controller.signal,
+        signal: abortControllerRef.current?.signal,
       });
 
-      clearTimeout(timeoutId);
+      
 
       let data: any = null;
       try {
         data = await response.json();
       } catch {}
 
+      if (reqId !== requestRef.current) return;
       if (response.ok && data?.success && Array.isArray(data?.recipes) && data.recipes.length > 0) {
         setRecipes((prev) => {
           // Re-number ids so a new batch never collides with existing cards'
@@ -417,35 +423,18 @@ export default function TasteMatcherDashboard() {
 
         </div>
 
-        {/* Right Column: Recipe Cards Grid */}
-        <div className="lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-          {recipes.map((recipe) => (
-            <motion.div
-              key={recipe.id}
-              whileHover={{ y: -6, transition: { duration: 0.2 } }}
-              className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-shadow flex flex-col group"
-            >
-              <div className="relative h-52 w-full overflow-hidden bg-gray-100 dark:bg-gray-800">
-                <Image
-                  src={recipe.image}
-                  alt={recipe.title}
-                  fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                  className="object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-                <button className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-md flex items-center justify-center text-gray-700 dark:text-gray-200 hover:text-rose-500 transition-colors shadow">
-                  <Heart className="w-4 h-4" />
-                </button>
-              </div>
-
+        {/* Right Column: Recipe Cards Grid + Pagination */}
+        <div id="recipe-grid-top" className="lg:col-span-8 flex flex-col gap-6">
           {recipes.length === 0 ? (
             <div className="flex flex-col items-center justify-center text-center py-20 border border-dashed border-gray-200 dark:border-gray-800 rounded-3xl">
               <ChefHat className="w-10 h-10 text-gray-300 dark:text-gray-700 mb-3" />
               <p className="text-sm text-gray-400 dark:text-gray-500">
-                No recipes yet. Adjust your palate and hit "Match Recipes".
+                No recipes yet. Adjust your palate and hit &quot;Match Recipes&quot;.
               </p>
             </div>
           ) : (
             <>
+              {/* Recipe cards — own 2-col grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {paginatedRecipes.map((recipe) => (
                   <motion.div
@@ -494,8 +483,9 @@ export default function TasteMatcherDashboard() {
                 ))}
               </div>
 
+              {/* Pagination — full-width row below ALL recipe cards */}
               {totalPages > 1 && (
-                <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-100 dark:border-gray-800">
+                <div className="w-full flex items-center justify-between pt-6 border-t border-gray-100 dark:border-gray-800">
                   <span className="text-xs text-gray-500 dark:text-gray-400">
                     Page {currentPage} of {totalPages} &middot; Showing {paginatedRecipes.length} of {recipes.length} recipes
                   </span>
@@ -538,6 +528,7 @@ export default function TasteMatcherDashboard() {
             </>
           )}
         </div>
+
 
       </div>
 

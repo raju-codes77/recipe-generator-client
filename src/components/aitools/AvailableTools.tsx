@@ -130,9 +130,9 @@ export default function AvailableTools() {
             Discover perfect ingredient and flavor combinations. Get AI-powered pairing suggestions to elevate your dishes.
           </p>
 
-          <button className="text-purple-700 dark:text-purple-500 font-semibold text-sm flex items-center gap-1.5 group-hover:gap-2 transition-all">
+          <Link href={"/ai-tools/flavor-pairing"} className="text-purple-700 dark:text-purple-500 font-semibold text-sm flex items-center gap-1.5 group-hover:gap-2 transition-all">
             Explore pairings <ArrowRight size={16} />
-          </button>
+          </Link>
 
           {/* Decorative Ingredients Circle */}
           <div className="absolute right-0 md:right-10 top-1/2 -translate-y-1/2 w-48 h-48 rounded-full border border-dashed border-purple-300 dark:border-purple-900/50 flex items-center justify-center hidden sm:flex">

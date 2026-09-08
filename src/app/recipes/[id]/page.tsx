@@ -93,7 +93,7 @@ export default function RecipeDetailsPage() {
     async function fetchRecipeDetails() {
       try {
         setLoading(true);
-        const response = await fetch(`http://localhost:5000/api/recipes/${id}`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/recipes/${id}`, {
           credentials: "include",
         });
         const data = await response.json();
@@ -129,7 +129,7 @@ export default function RecipeDetailsPage() {
     const checkStatuses = async () => {
       try {
         const favResponse = await fetch(
-          `http://localhost:5000/api/favorites/check?userId=${session.user.id}&recipeId=${id}`,
+          `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/favorites/check?userId=${session.user.id}&recipeId=${id}`,
           { credentials: "include" }
         );
         const favContentType = favResponse.headers.get("content-type");
@@ -175,7 +175,7 @@ export default function RecipeDetailsPage() {
 
     try {
       const method = previousState ? "DELETE" : "POST";
-      const response = await fetch("http://localhost:5000/api/favorites", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/favorites`, {
         method,
         headers: {
           "Content-Type": "application/json",
@@ -246,9 +246,24 @@ export default function RecipeDetailsPage() {
     if (!recipe?.id) return;
 
     setIsCollectionModalOpen(true);
-    setIsCreatingNew(false);
-    setNewCollectionName("");
-    await fetchCollections();
+    setLoadingCollections(true);
+
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/collections?userId=${session.user.id}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          setCollections(data.collections);
+        } else {
+          setCollections([]);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to fetch collections:", err);
+        toast.error("Failed to load collections");
+      })
+      .finally(() => {
+        setLoadingCollections(false);
+      });
   };
 
   // SAVE TO SPECIFIC COLLECTION WITH TOAST
@@ -256,7 +271,7 @@ export default function RecipeDetailsPage() {
     if (!recipe?.id) return;
 
     try {
-      const res = await fetch("http://localhost:5000/api/collections/add-recipe", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/collections/add-recipe`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ collectionId, recipeId: recipe.id }),
@@ -350,13 +365,24 @@ export default function RecipeDetailsPage() {
     );
   }
 
-  const formattedInstructions: string[] = typeof recipe.instructions === "string"
-    ? recipe.instructions.split("\n").filter(Boolean)
-    : Array.isArray(recipe.instructions)
-      ? recipe.instructions
-      : [];
-
-  const thumbnailList = recipe.images?.length ? recipe.images : [recipe.image];
+  const formattedInstructions: string[] = (() => {
+    const rawInstructions: unknown = recipe.instructions;
+    if (typeof rawInstructions === "string") {
+      try {
+        const parsed: unknown = JSON.parse(rawInstructions);
+        if (Array.isArray(parsed)) {
+          return parsed.flatMap((step) => typeof step === "string" ? [step] : step && typeof step === "object" && "instruction" in step && typeof step.instruction === "string" ? [step.instruction] : []);
+        }
+      } catch {
+        // Older recipes use newline-separated instructions.
+      }
+      return rawInstructions.split("\n").filter(Boolean);
+    }
+    if (Array.isArray(rawInstructions)) {
+      return rawInstructions.flatMap((step) => typeof step === "string" ? [step] : step && typeof step === "object" && "instruction" in step && typeof step.instruction === "string" ? [step.instruction] : []);
+    }
+    return [];
+  })();
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] text-gray-900 transition-colors duration-200 dark:bg-black dark:text-white pb-16">

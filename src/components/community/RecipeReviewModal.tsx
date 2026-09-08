@@ -13,13 +13,21 @@ interface RecipeReviewModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmitReview: (postId: string, review: Review) => void;
+  onLoadMoreReviews?: () => void;
+  hasMoreReviews?: boolean;
+  isLoadingMoreReviews?: boolean;
 }
+
+type RatingField = 'overall' | 'flavor' | 'ease' | 'presentation';
 
 export const RecipeReviewModal: React.FC<RecipeReviewModalProps> = ({
   post,
   isOpen,
   onClose,
   onSubmitReview,
+  onLoadMoreReviews,
+  hasMoreReviews = false,
+  isLoadingMoreReviews = false,
 }) => {
   const [overallRating, setOverallRating] = useState(5);
   const [flavorRating, setFlavorRating] = useState(5);
@@ -27,13 +35,22 @@ export const RecipeReviewModal: React.FC<RecipeReviewModalProps> = ({
   const [presentationRating, setPresentationRating] = useState(5);
   const [commentText, setCommentText] = useState('');
   const [cookingTips, setCookingTips] = useState('');
-  const [hoverStar, setHoverStar] = useState<number | null>(null);
+  const [validationError, setValidationError] = useState('');
+  const [hoverStars, setHoverStars] = useState<Record<RatingField, number | null>>({
+    overall: null,
+    flavor: null,
+    ease: null,
+    presentation: null,
+  });
 
   if (!isOpen || !post) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!commentText.trim()) return;
+    if (!commentText.trim()) {
+      setValidationError('Please write a review before submitting.');
+      return;
+    }
 
     const newReview: Review = {
       id: `rev_${Date.now()}`,
@@ -55,12 +72,14 @@ export const RecipeReviewModal: React.FC<RecipeReviewModalProps> = ({
     onSubmitReview(post.id, newReview);
     setCommentText('');
     setCookingTips('');
+    setValidationError('');
     onClose();
   };
 
   const renderInteractiveStars = (
     value: number,
     onChange: (val: number) => void,
+    field: RatingField,
     sizeClass = 'h-6 w-6'
   ) => {
     return (
@@ -72,13 +91,13 @@ export const RecipeReviewModal: React.FC<RecipeReviewModalProps> = ({
             whileTap={{ scale: 0.9 }}
             type="button"
             onClick={() => onChange(star)}
-            onMouseEnter={() => setHoverStar(star)}
-            onMouseLeave={() => setHoverStar(null)}
+            onMouseEnter={() => setHoverStars((current) => ({ ...current, [field]: star }))}
+            onMouseLeave={() => setHoverStars((current) => ({ ...current, [field]: null }))}
             className="p-0.5 text-neutral-300 transition"
           >
             <Star
               className={`${sizeClass} ${
-                star <= (hoverStar !== null ? hoverStar : value)
+                star <= (hoverStars[field] !== null ? hoverStars[field]! : value)
                   ? 'fill-amber-400 text-amber-400'
                   : 'text-neutral-300 dark:text-neutral-700'
               }`}
@@ -97,17 +116,33 @@ export const RecipeReviewModal: React.FC<RecipeReviewModalProps> = ({
         exit={{ opacity: 0, scale: 0.95, y: 10 }}
         className="relative my-8 w-full max-w-2xl rounded-3xl border border-slate-200 bg-white shadow-2xl dark:border-neutral-800 dark:bg-[#121212] max-h-[90vh] flex flex-col overflow-hidden"
       >
+        <style>{`
+          .recipe-review-scrollbar { scrollbar-width: thin; scrollbar-color: rgba(47, 143, 70, 0.42) transparent; }
+          .recipe-review-scrollbar::-webkit-scrollbar { width: 10px; }
+          .recipe-review-scrollbar::-webkit-scrollbar-track { background: transparent; }
+          .recipe-review-scrollbar::-webkit-scrollbar-thumb { background: rgba(47, 143, 70, 0.42); border: 3px solid transparent; background-clip: content-box; border-radius: 999px; }
+          .recipe-review-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(47, 143, 70, 0.68); border-width: 2px; }
+          .dark .recipe-review-scrollbar { scrollbar-color: rgba(183, 227, 95, 0.28) transparent; }
+          .dark .recipe-review-scrollbar::-webkit-scrollbar-thumb { background: rgba(183, 227, 95, 0.28); }
+          .dark .recipe-review-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(183, 227, 95, 0.48); }
+        `}</style>
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4 dark:border-neutral-800">
           <div className="flex items-center gap-3">
-            <img
-              src={post.imageUrl}
-              alt={post.recipe?.title}
-              className="h-12 w-12 rounded-xl object-cover ring-1 ring-emerald-200"
-            />
+            {post.imageUrl ? (
+              <img
+                src={post.imageUrl}
+                alt={post.recipe?.title || "Community post"}
+                className="h-12 w-12 rounded-xl object-cover ring-1 ring-emerald-200"
+              />
+            ) : (
+              <div aria-hidden="true" className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#EAF7E8] text-xs font-black text-[#2F8F46] dark:bg-emerald-950/50 dark:text-[#B7E35F]">
+                FC
+              </div>
+            )}
             <div>
               <h3 className="font-extrabold text-base text-neutral-900 dark:text-white">
-                Rate & Review Recipe
+                Rate & Review {post.recipe ? "Recipe" : "Post"}
               </h3>
               <p className="text-xs text-neutral-500 truncate max-w-sm">
                 {post.recipe?.title || post.caption.slice(0, 40)}
@@ -123,7 +158,7 @@ export const RecipeReviewModal: React.FC<RecipeReviewModalProps> = ({
         </div>
 
         {/* Modal Scroll Content */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        <div className="recipe-review-scrollbar flex-1 overflow-y-auto p-6 space-y-6">
           {/* Rating Summary Bar */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl bg-[#EAF7E8]/70 p-4.5 border border-emerald-100 dark:bg-neutral-900 dark:border-neutral-800">
             <div>
@@ -178,28 +213,28 @@ export const RecipeReviewModal: React.FC<RecipeReviewModalProps> = ({
                 <label className="block text-xs font-bold text-neutral-700 dark:text-neutral-300 mb-1.5">
                   Overall Experience *
                 </label>
-                {renderInteractiveStars(overallRating, setOverallRating, 'h-6 w-6')}
+                {renderInteractiveStars(overallRating, setOverallRating, 'overall', 'h-6 w-6')}
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-neutral-700 dark:text-neutral-300 mb-1.5">
                   Flavor & Taste Profile
                 </label>
-                {renderInteractiveStars(flavorRating, setFlavorRating, 'h-5 w-5')}
+                {renderInteractiveStars(flavorRating, setFlavorRating, 'flavor', 'h-5 w-5')}
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-neutral-700 dark:text-neutral-300 mb-1.5">
                   Ease of Recipe Steps
                 </label>
-                {renderInteractiveStars(easeRating, setEaseRating, 'h-5 w-5')}
+                {renderInteractiveStars(easeRating, setEaseRating, 'ease', 'h-5 w-5')}
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-neutral-700 dark:text-neutral-300 mb-1.5">
                   Visual Presentation
                 </label>
-                {renderInteractiveStars(presentationRating, setPresentationRating, 'h-5 w-5')}
+                {renderInteractiveStars(presentationRating, setPresentationRating, 'presentation', 'h-5 w-5')}
               </div>
             </div>
 
@@ -213,9 +248,10 @@ export const RecipeReviewModal: React.FC<RecipeReviewModalProps> = ({
                 rows={3}
                 placeholder="How did the dish turn out? Was the seasoning balanced? Did you or your family enjoy it?"
                 value={commentText}
-                onChange={(e) => setCommentText(e.target.value)}
+                onChange={(e) => { setCommentText(e.target.value); if (e.target.value.trim()) setValidationError(''); }}
                 className="w-full rounded-xl border border-slate-200 p-3 text-xs sm:text-sm text-neutral-900 placeholder-neutral-400 focus:border-[#2F8F46] focus:ring-2 focus:ring-[#2F8F46]/15 dark:border-neutral-700 dark:bg-[#18181b] dark:text-white"
               />
+              {validationError && <p className="mt-1.5 text-xs font-semibold text-rose-500">{validationError}</p>}
             </div>
 
             {/* Helpful Cooking Tips / Substitutions */}
@@ -244,8 +280,7 @@ export const RecipeReviewModal: React.FC<RecipeReviewModalProps> = ({
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 type="submit"
-                disabled={!commentText.trim()}
-                className="flex items-center gap-1.5 rounded-xl bg-[#2F8F46] px-6 py-2.5 text-xs font-bold text-white shadow-md shadow-emerald-800/15 transition hover:bg-[#176B35] disabled:opacity-40"
+                className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-[#2F8F46] px-6 py-2.5 text-xs font-bold text-white shadow-md shadow-emerald-800/15 transition hover:bg-[#176B35]"
               >
                 <Check className="h-4 w-4" />
                 <span>Submit Review</span>
@@ -256,7 +291,7 @@ export const RecipeReviewModal: React.FC<RecipeReviewModalProps> = ({
           {/* Existing Community Reviews Section */}
           <div className="border-t border-slate-100 pt-5 dark:border-neutral-800">
             <h4 className="font-bold text-xs uppercase tracking-wider text-neutral-500 mb-3">
-              Community Reviews ({post.reviews.length})
+              Community Reviews ({post.reviews.length} of {post.rating.totalReviews})
             </h4>
 
             {post.reviews.length === 0 ? (
@@ -316,6 +351,17 @@ export const RecipeReviewModal: React.FC<RecipeReviewModalProps> = ({
                   </div>
                 ))}
               </div>
+            )}
+
+            {hasMoreReviews && (
+              <button
+                type="button"
+                onClick={onLoadMoreReviews}
+                disabled={isLoadingMoreReviews}
+                className="mt-4 w-full rounded-xl border border-slate-200 px-4 py-2 text-xs font-bold text-[#176B35] transition hover:bg-[#EAF7E8] disabled:cursor-not-allowed disabled:opacity-60 dark:border-neutral-700 dark:text-[#B7E35F] dark:hover:bg-emerald-950/40"
+              >
+                {isLoadingMoreReviews ? "Loading reviews..." : "Load more reviews"}
+              </button>
             )}
           </div>
         </div>
