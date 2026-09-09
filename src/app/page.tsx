@@ -5,7 +5,7 @@ import RecipeCollectionSection from "@/components/RecipeCollection";
 import CommunitySection from "@/components/CommunitySection";
 import CounterProps from "@/components/CounterProps";
 import PantryToPlateSection from "@/components/PantryToPlate";
-
+  
 
 
 export default function Home() {
