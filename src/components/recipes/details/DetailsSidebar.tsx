@@ -28,7 +28,7 @@ interface DetailsSidebarProps {
 const FullSidebarSkeleton = () => {
   return (
     <div className="lg:col-span-4 flex flex-col gap-6 animate-pulse">
-      
+
       {/* 1. ABOUT THE AUTHOR SKELETON */}
       <div className="bg-white dark:bg-[#131B2E] p-5 rounded-[24px] border border-gray-100 dark:border-white/10 shadow-sm">
         <div className="h-3 bg-gray-200 dark:bg-white/10 rounded-md w-1/3 mb-4" />
@@ -120,7 +120,7 @@ const DetailsSidebar = ({ recipeId, recipeCategory, recipeImage, recipeUser }: D
         const categoryQuery = recipeCategory ? `category=${encodeURIComponent(recipeCategory)}` : "";
         const excludeQuery = recipeId ? `excludeId=${recipeId}` : "";
         const queryParams = [categoryQuery, excludeQuery, "limit=4"].filter(Boolean).join("&");
-        
+
         const res = await fetch(`${API_URL}/api/recipes?${queryParams}`);
         const contentType = res.headers.get("content-type");
         if (!contentType || !contentType.includes("application/json")) {
@@ -147,7 +147,7 @@ const DetailsSidebar = ({ recipeId, recipeCategory, recipeImage, recipeUser }: D
 
   return (
     <div className="lg:col-span-4 flex flex-col gap-6">
-      
+
       {/* ABOUT THE AUTHOR CARD */}
       <div className="bg-white dark:bg-[#131B2E] p-5 rounded-[24px] border border-gray-100 dark:border-white/10 shadow-sm">
         <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">About the Author</h3>
@@ -155,12 +155,12 @@ const DetailsSidebar = ({ recipeId, recipeCategory, recipeImage, recipeUser }: D
           <div className="flex items-center gap-3">
             <div className="relative h-12 w-12 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center shrink-0">
               {isValidAuthorImage(authorImage) ? (
-                <Image 
-                  src={authorImage!} 
-                  alt={authorName} 
-                  fill 
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" 
-                  className="object-cover" 
+                <Image
+                  src={authorImage!}
+                  alt={authorName}
+                  fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  className="object-cover"
                 />
               ) : (
                 <Users className="h-6 w-6 text-gray-500 dark:text-gray-400" />
@@ -208,18 +208,18 @@ const DetailsSidebar = ({ recipeId, recipeCategory, recipeImage, recipeUser }: D
         {relatedRecipes.length > 0 ? (
           <div className="flex flex-col gap-3">
             {relatedRecipes.map((item) => (
-              <Link 
-                key={item.id} 
+              <Link
+                key={item.id}
                 href={`/recipes/${item.id}`}
                 className="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 transition-colors cursor-pointer"
               >
                 <div className="relative h-12 w-12 rounded-xl overflow-hidden shrink-0 bg-gray-100 dark:bg-gray-800">
-                  <Image 
-                    src={item.image || defaultImage} 
-                    alt={item.title} 
-                    fill 
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" 
-                    className="object-cover" 
+                  <Image
+                    src={item.image || defaultImage}
+                    alt={item.title}
+                    fill
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    className="object-cover"
                   />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -246,9 +246,23 @@ const DetailsSidebar = ({ recipeId, recipeCategory, recipeImage, recipeUser }: D
         <p className="text-xs text-gray-600 dark:text-gray-300 mb-4 leading-relaxed">
           Generate recipes from your ingredients with AI.
         </p>
-        <button className="w-full py-2.5 rounded-xl bg-[#24733E] dark:bg-[#10B981] text-white dark:text-black text-xs font-bold hover:opacity-90 transition-opacity cursor-pointer shadow-sm">
-          Try Pantry-to-Plate AI
-        </button>
+        <Link
+          href="/ai-tools/pantry-to-plate"
+          className="group relative flex items-center justify-center gap-2 w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-[#24733E] via-[#2d8a4a] to-[#10B981] dark:from-[#10B981] dark:via-[#059669] dark:to-[#34D399] text-white dark:text-black text-xs font-bold shadow-lg shadow-emerald-900/10 hover:shadow-emerald-500/20 hover:scale-[1.01] active:scale-[0.99] transition-all duration-300 cursor-pointer overflow-hidden border border-emerald-400/20"
+        >
+          {/* Subtle background shine effect on hover */}
+          <div className="absolute inset-0 bg-white/20 dark:bg-black/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out pointer-events-none" />
+
+          {/* Sparkle / AI Icon */}
+          <span className="flex items-center justify-center p-1 rounded-lg bg-white/20 dark:bg-black/20 text-white dark:text-black group-hover:rotate-12 transition-transform duration-300">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2L13.09 8.26L19 9.27L14.5 13.97L15.18 20L12 17.27L8.82 20L9.5 13.97L5 9.27L10.91 8.26L12 2Z" />
+            </svg>
+          </span>
+
+          {/* Button Text */}
+          <span className="tracking-wide">Try Pantry-to-Plate AI</span>
+        </Link>
       </div>
 
     </div>
