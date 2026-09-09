@@ -1,69 +1,116 @@
-import Image from "next/image";
-import { CheckCircle, Trophy } from "lucide-react";
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
+import { authClient } from "@/lib/auth-client";
+import { getChallenges } from "@/lib/challengeApi";
+import { Challenge } from "@/types/challenge";
+import ChallengeCard from "./ChallengeCard";
+import Link from "next/link";
+import { ArrowRight, LogIn, Trophy, RotateCcw } from "lucide-react";
 
 export default function CompletedChallenges() {
-  const completed = [
-    {
-      id: 1,
-      title: "Vegan Week Challenge",
-      desc: "A full week of delicious and healthy plant-based meals.",
-      img: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=500&auto=format&fit=crop&q=80",
-      winner: "Sarah Ahmed",
-      participants: "3.2K",
-    },
-    {
-      id: 2,
-      title: "Zero Waste Cooking",
-      desc: "Creative ways to use kitchen scraps and reduce food waste.",
-      img: "https://images.unsplash.com/photo-1478145046317-39f10e56b5e9?w=500&auto=format&fit=crop&q=80",
-      winner: "Healthy Bites",
-      participants: "1.9K",
-    },
-  ];
+  const { data: session, isPending } = authClient.useSession();
+  const userId = session?.user?.id ?? null;
+
+  const [completed, setCompleted] = useState<Challenge[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchCompleted = useCallback(async (uid: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const data = await getChallenges({ mine: true, participantStatus: "COMPLETED", userId: uid });
+      setCompleted(data);
+    } catch {
+      setError("Unable to load your completed challenges.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isPending) {
+      if (userId) {
+        fetchCompleted(userId);
+      } else {
+        setIsLoading(false);
+      }
+    }
+  }, [isPending, userId, fetchCompleted]);
+
+  if (!isPending && !userId) {
+    return (
+      <div className="mb-12">
+        <h3 className="text-2xl font-bold text-green-950 mb-6">Completed Challenges</h3>
+        <div className="flex flex-col items-center justify-center py-16 px-6 bg-gray-50 rounded-2xl border border-dashed border-gray-200 text-center">
+          <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center mb-4">
+            <LogIn className="text-green-600" size={26} />
+          </div>
+          <h4 className="text-lg font-bold text-gray-900 mb-2">Sign in to view completed challenges</h4>
+          <p className="text-gray-500 text-sm mb-6">Your completed challenges will appear here once you're signed in.</p>
+          <Link href="/registrationProcess/login" className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-bold px-6 py-2.5 rounded-xl text-sm transition-colors">
+            Sign In <ArrowRight size={15} />
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (isLoading || isPending) {
+    return (
+      <div className="mb-12">
+        <h3 className="text-2xl font-bold text-green-950 mb-6">Completed Challenges</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="bg-white rounded-2xl border border-gray-100 h-64 animate-pulse"></div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="mb-12">
+        <h3 className="text-2xl font-bold text-green-950 mb-6">Completed Challenges</h3>
+        <div className="flex flex-col items-center justify-center py-14 px-6 bg-red-50 rounded-2xl border border-red-100 text-center">
+          <p className="text-red-600 font-semibold mb-4">{error}</p>
+          <button onClick={() => userId && fetchCompleted(userId)} className="inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white font-bold px-5 py-2 rounded-xl text-sm transition-colors">
+            <RotateCcw size={13} /> Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (completed.length === 0) {
+    return (
+      <div className="mb-12">
+        <h3 className="text-2xl font-bold text-green-950 mb-6">Completed Challenges</h3>
+        <div className="flex flex-col items-center justify-center py-16 px-6 bg-gray-50 rounded-2xl border border-dashed border-gray-200 text-center">
+          <div className="w-14 h-14 rounded-full bg-amber-100 flex items-center justify-center mb-4">
+            <Trophy className="text-amber-600" size={26} />
+          </div>
+          <h4 className="text-lg font-bold text-gray-900 mb-2">No Completed Challenges Yet</h4>
+          <p className="text-gray-500 text-sm mb-6">You haven't completed any challenges yet.<br />Keep pushing forward!</p>
+          <Link href="/challenges?tab=active" className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-bold px-6 py-2.5 rounded-xl text-sm transition-colors">
+            View Active Challenges <ArrowRight size={15} />
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="mb-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex justify-between items-end mb-6">
-        <h3 className="text-xl font-bold text-slate-900 dark:text-white">Completed Challenges</h3>
+    <div className="mb-12">
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="text-2xl font-bold text-green-950">Completed Challenges</h3>
       </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-        {completed.map((c) => (
-          <div key={c.id} className="bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-sm border border-slate-100 dark:border-slate-700/50 flex group">
-            
-            {/* Image (Left) */}
-            <div className="relative w-2/5 min-w-[120px] h-full overflow-hidden">
-              <Image
-                src={c.img}
-                alt={c.title}
-                fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                className="object-cover group-hover:scale-105 transition-transform duration-500 opacity-80"
-              />
-              <div className="absolute inset-0 bg-slate-900/20"></div>
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 dark:bg-slate-800/90 rounded-full flex items-center justify-center shadow-lg">
-                <CheckCircle size={20} className="text-green-600 dark:text-green-400" />
-              </div>
-            </div>
-
-            {/* Content (Right) */}
-            <div className="p-5 flex-1 flex flex-col justify-center">
-              <h4 className="font-bold text-slate-900 dark:text-white text-base mb-1">{c.title}</h4>
-              <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mb-4 leading-relaxed">
-                {c.desc}
-              </p>
-              
-              <div className="bg-orange-50 dark:bg-orange-950/30 p-2.5 rounded-xl flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-orange-100 dark:bg-orange-900/50 flex items-center justify-center">
-                  <Trophy size={14} className="text-orange-600 dark:text-orange-400" />
-                </div>
-                <div>
-                  <p className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold">Winner</p>
-                  <p className="text-sm font-bold text-slate-800 dark:text-slate-200">{c.winner}</p>
-                </div>
-              </div>
-            </div>
-            
-          </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {completed.map((challenge) => (
+          <ChallengeCard key={challenge.id} challenge={challenge} />
         ))}
       </div>
     </div>
