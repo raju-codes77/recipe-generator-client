@@ -187,12 +187,14 @@ export default function RecipeCard({
     }
   };
 
-  // FETCH COLLECTIONS HELPER
+  // FETCH COLLECTIONS HELPER (credentials: "include" যুক্ত করা হয়েছে)
   const fetchCollections = async () => {
     if (!session?.user?.id) return;
     setLoadingCollections(true);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/collections?userId=${session.user.id}`);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/collections?userId=${session.user.id}`, {
+        credentials: "include",
+      });
       const data = await res.json();
       if (data.success) {
         setCollections(data.collections);
@@ -222,12 +224,13 @@ export default function RecipeCard({
     await fetchCollections();
   };
 
-  // SAVE TO SPECIFIC COLLECTION WITH TOAST 
+  // SAVE TO SPECIFIC COLLECTION WITH TOAST (credentials: "include" যুক্ত করা হয়েছে)
   const handleAddToCollection = async (collectionId: string) => {
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/collections/add-recipe`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ collectionId, recipeId: recipe.id }),
       });
       const data = await res.json();
@@ -245,7 +248,7 @@ export default function RecipeCard({
     }
   };
 
-  // CREATE NEW COLLECTION FROM MODAL
+  // CREATE NEW COLLECTION FROM MODAL (credentials: "include" ও ডাইনামিক API URL যুক্ত করা হয়েছে)
   const handleCreateCollection = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCollectionName.trim()) {
@@ -257,9 +260,10 @@ export default function RecipeCard({
 
     setIsSubmittingNew(true);
     try {
-      const res = await fetch("http://localhost:5000/api/collections", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/collections`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           userId: session.user.id,
           name: newCollectionName.trim(),
@@ -271,7 +275,6 @@ export default function RecipeCard({
         toast.success("Collection created successfully!");
         setNewCollectionName("");
         setIsCreatingNew(false);
-        // Refresh list and optionally add the current recipe straight into this newly created collection
         await fetchCollections();
         if (data.collection?.id) {
           await handleAddToCollection(data.collection.id);

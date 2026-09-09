@@ -86,6 +86,11 @@ export default function RecipeDetailsPage() {
 
   const [activeTab, setActiveTab] = useState("Overview");
 
+  // THUMBNAIL LIST HELPER
+  const thumbnailList = recipe?.images && recipe.images.length > 0 
+    ? recipe.images 
+    : [recipe?.image, recipe?.image, recipe?.image, recipe?.image, recipe?.image].filter(Boolean);
+
   // FETCH RECIPE DETAILS
   useEffect(() => {
     if (!id) return;
@@ -221,7 +226,9 @@ export default function RecipeDetailsPage() {
     if (!session?.user?.id) return;
     setLoadingCollections(true);
     try {
-      const res = await fetch(`http://localhost:5000/api/collections?userId=${session.user.id}`);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/collections?userId=${session.user.id}`, {
+        credentials: "include",
+      });
       const data = await res.json();
       if (data.success) {
         setCollections(data.collections);
@@ -236,7 +243,7 @@ export default function RecipeDetailsPage() {
     }
   };
 
-  // OPEN COLLECTION MODAL
+  // OPEN COLLECTION MODAL 
   const handleOpenCollectionModal = async () => {
     if (!session?.user?.id) {
       toast.error("Please login first to save recipes to collections.");
@@ -246,27 +253,10 @@ export default function RecipeDetailsPage() {
     if (!recipe?.id) return;
 
     setIsCollectionModalOpen(true);
-    setLoadingCollections(true);
-
-    fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/collections?userId=${session.user.id}`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success) {
-          setCollections(data.collections);
-        } else {
-          setCollections([]);
-        }
-      })
-      .catch((err) => {
-        console.error("Failed to fetch collections:", err);
-        toast.error("Failed to load collections");
-      })
-      .finally(() => {
-        setLoadingCollections(false);
-      });
+    await fetchCollections();
   };
 
-  // SAVE TO SPECIFIC COLLECTION WITH TOAST
+  // SAVE TO SPECIFIC COLLECTION WITH TOAST 
   const handleAddToCollection = async (collectionId: string) => {
     if (!recipe?.id) return;
 
@@ -274,6 +264,7 @@ export default function RecipeDetailsPage() {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/collections/add-recipe`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ collectionId, recipeId: recipe.id }),
       });
       const data = await res.json();
@@ -291,7 +282,7 @@ export default function RecipeDetailsPage() {
     }
   };
 
-  // CREATE NEW COLLECTION FROM MODAL
+  // CREATE NEW COLLECTION FROM MODAL 
   const handleCreateCollection = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCollectionName.trim()) {
@@ -303,9 +294,10 @@ export default function RecipeDetailsPage() {
 
     setIsSubmittingNew(true);
     try {
-      const res = await fetch("http://localhost:5000/api/collections", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/collections`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           userId: session.user.id,
           name: newCollectionName.trim(),

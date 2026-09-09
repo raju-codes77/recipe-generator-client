@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import RecipeCard from "@/components/recipes/RecipeCard";
 import FilterCard from "@/components/recipes/FilterCard";
 import Pagination from "@/components/recipes/Pagination";
@@ -43,6 +43,8 @@ interface Collection {
   createdAt?: string;
 }
 
+const expectedSkeletonCount = 6;
+
 export default function ExploreRecipes() {
   const { data: session } = authClient.useSession();
 
@@ -76,40 +78,53 @@ export default function ExploreRecipes() {
   const [currentPage, setCurrentPage] = useState(1);
   const recipesPerPage = 12;
 
+  // ডাবল ফেচ বা রি-রিলোড লুপ আটকাতে প্রিভেন্টিভ রেফারেন্স
+  const isFetchingRef = useRef(false);
+
   // Initial fetch for collections on mount
   useEffect(() => {
-    const abortController = new AbortController();
-    async function fetchData() {
+    async function fetchCollectionsData() {
+      if (!session?.user?.id) {
+        setIsCollectionsLoading(false);
+        return;
+      }
+      try {
+        setIsCollectionsLoading(true);
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/collections?userId=${session.user.id}`,
+          { credentials: "include" }
+        );
+        const data = await response.json();
+        if (response.ok && data.success && Array.isArray(data.collections)) {
+          setCollections(data.collections);
+        }
+      } catch (err) {
+        console.error("Failed to fetch collections:", err);
+      } finally {
+        setIsCollectionsLoading(false);
+      }
+    }
+
+    fetchCollectionsData();
+  }, [session?.user?.id]);
+
+  // Initial fetch for recipes with debounce/ref check
+  useEffect(() => {
+    async function fetchRecipesData() {
+      if (isFetchingRef.current) return;
+      isFetchingRef.current = true;
+
       try {
         setError(null);
 
-        // If collection is selected and count is 0, skip loading and show empty directly
         if (activeTab === "My Collections" && selectedCollectionId) {
           const currentCollection = collections.find((c) => c.id === selectedCollectionId);
           if (currentCollection && (!currentCollection.recipes || currentCollection.recipes.length === 0)) {
             setRecipes([]);
             setIsRecipesLoading(false);
+            isFetchingRef.current = false;
             return;
           }
-
-          const response = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/collections?userId=${session.user.id}`,
-            { credentials: "include" }
-          );
-          const data = await response.json();
-
-          if (!response.ok) {
-            throw new Error(data.message || "Failed to fetch collections");
-          }
-
-          if (data.success && Array.isArray(data.collections)) {
-            setCollections(data.collections);
-          } else {
-            setCollections([]);
-          }
-          setRecipes([]);
-          setLoading(false);
-          return;
         }
 
         setIsRecipesLoading(true);
@@ -155,6 +170,7 @@ export default function ExploreRecipes() {
         if (activeTab === "My Collections" && !selectedCollectionId) {
           setRecipes([]);
           setIsRecipesLoading(false);
+          isFetchingRef.current = false;
           return;
         }
 
@@ -209,6 +225,7 @@ export default function ExploreRecipes() {
         setRecipes([]);
       } finally {
         setIsRecipesLoading(false);
+        isFetchingRef.current = false;
       }
     }
 
@@ -235,6 +252,7 @@ export default function ExploreRecipes() {
     maxCalories,
     minRating,
     sortBy,
+    currentPage,
   ]);
 
   // Event listener for collection updates
