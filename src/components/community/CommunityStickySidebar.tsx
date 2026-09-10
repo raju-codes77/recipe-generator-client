@@ -39,15 +39,18 @@ export const CommunityScrollColumn: React.FC<CommunityScrollColumnProps> = ({ ch
         }
         @media (min-width: 1024px) {
           .community-scroll-column:not(.community-scroll-column--feed) {
+            position: sticky;
+            top: 7rem;
             height: calc(100dvh - 7rem);
             overflow-y: auto;
             overscroll-behavior: contain;
             padding-right: 10px;
           }
           .community-scroll-column--feed {
-            height: calc(100dvh - 7rem);
-            overflow-y: auto;
-            overscroll-behavior: contain;
+            height: auto !important;
+            max-height: none !important;
+            overflow: visible !important;
+            overscroll-behavior: auto;
           }
         }
         .community-scroll-column::-webkit-scrollbar {

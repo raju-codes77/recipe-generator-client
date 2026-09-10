@@ -284,6 +284,31 @@ export const CommunitySidebarRight: React.FC<CommunitySidebarRightProps> = ({
           )}
         </div>
       </div>
+
+      {/* Compact footer links */}
+      <nav
+        aria-label="Community support and legal links"
+        className="px-1 pb-2 text-[11px] leading-5 text-neutral-400 dark:text-neutral-500"
+      >
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+          <Link className="transition hover:text-[#2F8F46] dark:hover:text-[#B7E35F]" href="/help">
+            Help Center
+          </Link>
+          <span aria-hidden="true">·</span>
+          <Link className="transition hover:text-[#2F8F46] dark:hover:text-[#B7E35F]" href="/terms">
+            Terms of Service
+          </Link>
+          <span aria-hidden="true">·</span>
+          <Link className="transition hover:text-[#2F8F46] dark:hover:text-[#B7E35F]" href="/privacy">
+            Privacy Policy
+          </Link>
+          <span aria-hidden="true">·</span>
+          <Link className="transition hover:text-[#2F8F46] dark:hover:text-[#B7E35F]" href="/cookie-policy">
+            Cookie Policy
+          </Link>
+        </div>
+        <p className="mt-1">© {new Date().getFullYear()} FoodCanvas. All rights reserved.</p>
+      </nav>
     </aside>
   );
 };

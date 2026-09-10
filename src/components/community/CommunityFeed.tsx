@@ -29,7 +29,7 @@ import { authClient } from "@/lib/auth-client";
 import Link from "next/link";
 
 const POSTS_PER_PAGE = 4;
-const API_POSTS_PER_PAGE = 12;
+const API_POSTS_PER_PAGE = 6;
 type CommunityFilter = "all" | "trending" | "following" | "quick" | "wellness" | "challenge" | "ai_sparks" | "saved" | "liked";
 
 interface CommunityCache {
@@ -584,10 +584,10 @@ export const CommunityFeed: React.FC = () => {
       </AnimatePresence>
 
       {/* Main Container Layout: 3 Columns (Enhanced sizing & comfortable spacing) */}
-      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 items-start gap-7 lg:grid-cols-12">
+      <main className="mx-auto max-w-[1440px] px-4 py-6 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 items-start gap-7 lg:grid-cols-12 xl:grid-cols-[minmax(0,1fr)_580px_minmax(0,1fr)]">
           {/* Column 1: Left Navigation & Profile */}
-          <CommunityScrollColumn className="hidden lg:col-span-3 lg:block">
+          <CommunityScrollColumn className="hidden lg:col-span-3 lg:block xl:col-span-1">
             <CommunitySidebarLeft
               activeFilter={activeFilter}
               setActiveFilter={(f) => {
@@ -607,7 +607,7 @@ export const CommunityFeed: React.FC = () => {
           </CommunityScrollColumn>
 
           {/* Column 2: Main Social Cooking Feed */}
-          <CommunityScrollColumn hideScrollbar className="lg:col-span-6 space-y-7">
+          <CommunityScrollColumn className="community-scroll-column--feed lg:col-span-6 space-y-7 xl:col-span-1">
             {/* Cooking Stories Carousel */}
             <StoriesBar
               stories={stories}
@@ -926,7 +926,7 @@ export const CommunityFeed: React.FC = () => {
           </CommunityScrollColumn>
 
           {/* Column 3: Right Sidebar */}
-          <CommunityScrollColumn className="hidden lg:col-span-3 lg:block">
+          <CommunityScrollColumn className="hidden lg:col-span-3 lg:block xl:col-span-1">
             <CommunitySidebarRight
               chefs={chefs}
               currentUserId={session?.user.id}
