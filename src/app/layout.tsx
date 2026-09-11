@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 };
 
 import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+import ConditionalFooter from "@/components/ConditionalFooter";
 import { Toaster } from "react-hot-toast";
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -34,7 +34,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             {children}
             <Toaster position="bottom-right" reverseOrder={false} />
           </main>
-          <Footer />
+          <ConditionalFooter />
         </div>
       </body>
     </html>

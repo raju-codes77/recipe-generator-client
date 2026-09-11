@@ -576,11 +576,8 @@ export const CommunityView: React.FC = () => {
                 chefs={chefs}
                 onToggleFollow={handleToggleFollow}
                 trendingPosts={posts}
+                posts={posts}
                 onSelectRecipe={(p) => setReviewModalPost(p)}
-                onOpenCreatePostWithAI={() => {
-                  setCreatePostInitialAI(true);
-                  setCreatePostOpen(true);
-                }}
               />
             </div>
           </div>

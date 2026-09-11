@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, type MouseEvent } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -81,6 +81,27 @@ export default function Navbar() {
     }
   };
 
+  const handleNavLinkClick = (
+    event: MouseEvent<HTMLAnchorElement>,
+    href: string,
+  ) => {
+    const isUnmodifiedLeftClick =
+      event.button === 0 &&
+      !event.metaKey &&
+      !event.ctrlKey &&
+      !event.shiftKey &&
+      !event.altKey;
+
+    if (
+      href === "/community" &&
+      pathname === "/community" &&
+      isUnmodifiedLeftClick
+    ) {
+      event.preventDefault();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
   const handleLogout = async () => {
     try {
       await authClient.signOut({
@@ -145,6 +166,7 @@ export default function Navbar() {
                 <Link
                   key={link.name}
                   href={link.href}
+                  onClick={(event) => handleNavLinkClick(event, link.href)}
                   className={`relative px-4 py-2 text-[15px] rounded-xl font-medium transition-all duration-200 ${isActive
                       ? "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-slate-800 font-semibold shadow-sm"
                       : "text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-slate-800/50"
@@ -283,7 +305,10 @@ export default function Navbar() {
                         ? "font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-slate-800"
                         : "font-medium text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800/50"
                       }`}
-                    onClick={() => setIsMobileMenuOpen(false)}
+                    onClick={(event) => {
+                      setIsMobileMenuOpen(false);
+                      handleNavLinkClick(event, link.href);
+                    }}
                   >
                     {link.name}
                   </Link>
