@@ -5,6 +5,7 @@ import { joinChallenge } from "@/lib/challengeApi";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
+import { toast } from "react-hot-toast";
 
 export default function JoinChallengeButton({ challengeId, onJoinSuccess }: { challengeId: string, onJoinSuccess?: (p: any) => void }) {
   const [isJoining, setIsJoining] = useState(false);
@@ -13,20 +14,20 @@ export default function JoinChallengeButton({ challengeId, onJoinSuccess }: { ch
 
   const handleJoin = async () => {
     if (!session?.user?.id) {
-      alert("You must be logged in to join a challenge.");
+      toast.error("You must be logged in to join a challenge.");
       return;
     }
 
     try {
       setIsJoining(true);
       const res = await joinChallenge(challengeId, session.user.id); 
-      alert("Successfully joined the challenge!");
+      toast.success("Successfully joined the challenge!");
       if (onJoinSuccess && res.participant) {
         onJoinSuccess(res.participant);
       }
       router.refresh();
     } catch (error: any) {
-      alert(error.message || "Failed to join challenge");
+      toast.error(error.message || "Failed to join challenge");
     } finally {
       setIsJoining(false);
     }

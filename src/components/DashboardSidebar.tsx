@@ -57,14 +57,18 @@ export default function DashboardSidebar() {
     { name: "Generate Recipe", icon: <FiCpu />, href: "/dashboard/users/ai-recepi-generator", badge: "AI" },
     { name: "Collections", icon: <FiFolder />, href: "/dashboard/users/static" },
     { name: "Challenges", icon: <FiAward />, href: "/challenges" },
-    { name: "AI Tools", icon: <FiCpu />, href: "/ai-tools" },
-    { name: "Nutrition", icon: <FiActivity />, href: "/ai-tools/nutrition-analyzer" },
+    { name: "All AI Tools", icon: <FiCpu />, href: "/ai-tools" },
   ];
 
-  const kitchenNavItems = [
-    { name: "Pantry", icon: <FiBox />, href: "/ai-tools/pantry-to-plate" },
-    { name: "Meal Plan", icon: <FiCalendar />, href: "/ai-tools/meal-tracker" },
-    { name: "Shopping List", icon: <FiShoppingCart />, href: "/dashboard/users/shopping-list" },
+  const aiToolsNavItems = [
+    { name: "Pantry → Plate", icon: <FiBox />, href: "/ai-tools/pantry-to-plate" },
+    { name: "Nutrition Analyzer", icon: <FiActivity />, href: "/ai-tools/nutrition-analyzer" },
+    { name: "Taste Matcher", icon: <FiActivity />, href: "/ai-tools/taste-matcher" },
+    { name: "AI Meal Planner", icon: <FiCalendar />, href: "/ai-tools/meal-planner" },
+    { name: "Shopping List", icon: <FiShoppingCart />, href: "/ai-tools/shopping-list" },
+    { name: "Leftover Rescue", icon: <FiBox />, href: "/ai-tools/leftover-rescue" },
+    { name: "Substitutions", icon: <FiBox />, href: "/ai-tools/ingredient-substitution" },
+    { name: "Budget Planner", icon: <FiCalendar />, href: "/ai-tools/budget-meal-planner" },
   ];
 
   const communityNavItems = [
@@ -240,11 +244,11 @@ export default function DashboardSidebar() {
                 </div>
               </div>
 
-              {/* MY KITCHEN Section */}
+              {/* AI TOOLS Section */}
               <div>
-                <p className="px-3 text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">My Kitchen</p>
+                <p className="px-3 text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">AI Tools</p>
                 <div className="space-y-1">
-                  {kitchenNavItems.map((item, idx) => {
+                  {aiToolsNavItems.map((item, idx) => {
                     const isActive = pathname === item.href;
                     return (
                       <Link

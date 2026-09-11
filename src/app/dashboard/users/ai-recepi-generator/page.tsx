@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FiSend, FiCpu, FiUser, FiRefreshCw, FiSparkles, FiArrowRight } from "react-icons/fi";
+import { FiSend, FiCpu, FiUser, FiRefreshCw, FiArrowRight } from "react-icons/fi";
 import { SparkleIcon } from "lucide-react";
 
 interface Message {
