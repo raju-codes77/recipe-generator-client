@@ -5,8 +5,8 @@ import { Recipe } from "@/components/aitools/Pantry-to-Plate AI/types";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
-export function usePantryToPlate() {
-  const [ingredients, setIngredients] = useState<string[]>(DEFAULT_INGREDIENTS);
+export function usePantryToPlate(leftoverMode: boolean = false, initialIngredients?: string[]) {
+  const [ingredients, setIngredients] = useState<string[]>(initialIngredients && initialIngredients.length > 0 ? initialIngredients : DEFAULT_INGREDIENTS);
   const [inputValue, setInputValue] = useState<string>("");
   const [recentIngredients, setRecentIngredients] = useState<string[]>([
     "Chicken",
@@ -21,7 +21,10 @@ export function usePantryToPlate() {
   const [cookingTime, setCookingTime] = useState<string>("Up to 30 min");
   const [diet, setDiet] = useState<string>("Vegetarian");
   const [servings, setServings] = useState<string>("1");
-  const [selectedOptions, setSelectedOptions] = useState<string[]>(["Reduce Food Waste"]);
+  // In leftover mode, auto-enable Reduce Food Waste
+  const [selectedOptions, setSelectedOptions] = useState<string[]>(
+    leftoverMode ? ["Reduce Food Waste"] : ["Reduce Food Waste"]
+  );
 
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [generatedRecipe, setGeneratedRecipe] = useState<Recipe | null>(null);

@@ -57,18 +57,17 @@ export default function DashboardSidebar() {
     { name: "Generate Recipe", icon: <FiCpu />, href: "/dashboard/users/ai-recepi-generator", badge: "AI" },
     { name: "Collections", icon: <FiFolder />, href: "/dashboard/users/static" },
     { name: "Challenges", icon: <FiAward />, href: "/challenges" },
+    { name: "Dietary Profile", icon: <FiSliders />, href: "/dashboard/users/dietary-profile" },
     { name: "All AI Tools", icon: <FiCpu />, href: "/ai-tools" },
   ];
 
   const aiToolsNavItems = [
-    { name: "Pantry → Plate", icon: <FiBox />, href: "/ai-tools/pantry-to-plate" },
+    { name: "Ingredient Rescue", icon: <FiBox />, href: "/ai-tools/ingredient-rescue" },
     { name: "Nutrition Analyzer", icon: <FiActivity />, href: "/ai-tools/nutrition-analyzer" },
+    { name: "Meal Tracker", icon: <FiActivity />, href: "/ai-tools/meal-tracker" },
     { name: "Taste Matcher", icon: <FiActivity />, href: "/ai-tools/taste-matcher" },
-    { name: "AI Meal Planner", icon: <FiCalendar />, href: "/ai-tools/meal-planner" },
+    { name: "Meal Planner", icon: <FiCalendar />, href: "/meal-planner" },
     { name: "Shopping List", icon: <FiShoppingCart />, href: "/ai-tools/shopping-list" },
-    { name: "Leftover Rescue", icon: <FiBox />, href: "/ai-tools/leftover-rescue" },
-    { name: "Substitutions", icon: <FiBox />, href: "/ai-tools/ingredient-substitution" },
-    { name: "Budget Planner", icon: <FiCalendar />, href: "/ai-tools/budget-meal-planner" },
   ];
 
   const communityNavItems = [

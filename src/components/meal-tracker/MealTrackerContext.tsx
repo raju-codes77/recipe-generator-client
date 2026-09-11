@@ -113,6 +113,8 @@ interface MealTrackerContextValue {
   isAnalyzing: boolean;
   setIsAnalyzing: (val: boolean) => void;
 
+  isLoading: boolean;
+
   analysisSteps: AnalysisStep[];
   analysisProgress: number;
   analysisComplete: boolean;
@@ -165,6 +167,8 @@ const defaultValue: MealTrackerContextValue = {
 
   isAnalyzing: false,
   setIsAnalyzing: () => { },
+
+  isLoading: true,
 
   analysisSteps: [
     { label: "Detecting food items", done: false },
@@ -238,75 +242,89 @@ export function MealTrackerProvider({
     useState<MealAnalysisResult | null>(null);
 
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [dailyGoalKcal, setDailyGoalKcal] = useState<number | null>(null);
   const [mealLog, setMealLog] = useState<Meal[]>([]);
 
   // ── Data isolation: reset + refetch whenever the authenticated user changes ─
   React.useEffect(() => {
-    // Do nothing while the session is still loading to avoid a flash of the
-    // previous user's data or a premature clear before we know who is logged in.
+    // Do nothing while the session is still loading
     if (isSessionPending) return;
 
-    // Step 1 — Immediately wipe all in-memory state.
-    // This guarantees that User A's meals/calories are NEVER shown to User B,
-    // even for a single render frame between logout and the next fetch.
-    setMealLog([]);
-    setDailyGoalKcal(null);
-    setAnalysisImage(null);
-    setAnalysisResult(null);
+    // If nobody is logged in, wipe state and stop.
+    if (!userId) {
+      setMealLog([]);
+      setDailyGoalKcal(null);
+      setAnalysisImage(null);
+      setAnalysisResult(null);
+      setIsLoading(false);
+      return;
+    }
 
-    // Step 2 — If nobody is logged in, stay empty and stop.
-    if (!userId) return;
+    // Set loading state before fetching new user data
+    setIsLoading(true);
 
-    // Step 3 — Fetch this user's data from the correct, isolated sources.
+    // Fetch this user's data from the correct, isolated sources.
     import("@/app/api/meal-tracker/meal-tracker").then(
       ({ getUserGoal, getMealLog }) => {
-        // getUserGoal calls /api/users/goal with credentials: "include".
-        // The backend reads the session cookie — no client-provided userId
-        // is sent, so this endpoint is already backend-authorised.
-        getUserGoal(userId).then((goal: number | null) => {
+        const localDate = new Date().toLocaleDateString("en-CA");
+        
+        Promise.all([
+          getUserGoal(userId),
+          getMealLog(userId, localDate)
+        ]).then(([goal, logs]) => {
           setDailyGoalKcal(typeof goal === "number" ? goal : 2000);
-        });
-
-        // getMealLog now requires a userId (no "default_user" fallback).
-        // It reads localStorage key `meal_log_<userId>`, which is unique
-        // per authenticated user, so User A's data is never visible to User B.
-        getMealLog(userId).then((logs: Meal[]) => {
+          
           if (Array.isArray(logs)) {
-            setMealLog(logs);
+            const mappedLogs = logs.map((log: any) => ({
+              type: "Meal", // Fallback, since DB doesn't store category
+              time: new Date(log.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+              name: log.name,
+              kcal: log.calories,
+              protein: log.protein,
+              carbs: log.carbs,
+              fat: log.fat,
+              img: log.imageUrl || "",
+            }));
+            setMealLog(mappedLogs);
           }
+          
+          // Clear previous analysis when loading existing data on refresh
+          setAnalysisImage(null);
+          setAnalysisResult(null);
+          
+          setIsLoading(false);
+        }).catch((err) => {
+          console.error("Failed to load user meal data", err);
+          setIsLoading(false);
         });
       }
     );
-
-  // Re-run whenever the authenticated user identity changes.
-  // Covers: first load, login (null → userId), logout (userId → null),
-  // and user switching (userIdA → userIdB).
-   
   }, [userId, isSessionPending]);
+
+  // Derived state
+  const consumedKcal = mealLog.reduce((acc: number, meal: any) => acc + (meal.kcal || meal.calories || 0), 0);
+  const remainingKcal = dailyGoalKcal ? Math.max(0, dailyGoalKcal - consumedKcal) : null;
+  const goalPercent = dailyGoalKcal ? Math.min(100, Math.round((consumedKcal / dailyGoalKcal) * 100)) : null;
 
   const value: MealTrackerContextValue = {
     ...defaultValue,
-
-    // Expose the authenticated userId so child components (e.g. UploadCard)
-    // can pass it to saveMealLog without needing to import authClient directly.
     userId,
-
     analysisImage,
     setAnalysisImage,
-
     analysisResult,
     setAnalysisResult,
-
     isAnalyzing,
     setIsAnalyzing,
-
+    isLoading,
     dailyGoalKcal,
     setDailyGoalKcal,
-
     mealLog,
     setMealLog,
+    consumedKcal,
+    remainingKcal,
+    goalPercent,
   };
 
   return (

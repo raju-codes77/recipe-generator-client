@@ -1,8 +1,11 @@
 "use client";
 
 import React, { useState } from "react";
-import { Replace, Search, Loader2, Info, AlertCircle } from "lucide-react";
+import { Replace, Search, Loader2, Info, Link2 } from "lucide-react";
 import toast from "react-hot-toast";
+import Link from "next/link";
+
+const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 export default function IngredientSubstitutionPage() {
   const [recipeContext, setRecipeContext] = useState("");
@@ -10,46 +13,43 @@ export default function IngredientSubstitutionPage() {
   const [isSearching, setIsSearching] = useState(false);
   const [results, setResults] = useState<any>(null);
 
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!missingIngredient.trim()) {
-      toast.error("Please enter the missing ingredient!");
+      toast.error("Please enter the ingredient to substitute!");
       return;
     }
 
     setIsSearching(true);
     setResults(null);
 
-    // Simulate search API
-    setTimeout(() => {
-      setResults([
-        {
-          id: 1,
-          name: "Milk + Butter",
-          amount: "1 cup milk + 2 tbsp melted butter",
-          taste: "Very similar, adds richness",
-          texture: "Slightly thinner than heavy cream",
-          notes: "Best for cooking and baking. Do not use if the recipe requires whipping."
-        },
-        {
-          id: 2,
-          name: "Greek Yogurt",
-          amount: "Equal parts (1:1 ratio)",
-          taste: "Adds a slight tanginess",
-          texture: "Thick and creamy",
-          notes: "Great for thickening sauces. Add off-heat to prevent curdling."
-        },
-        {
-          id: 3,
-          name: "Coconut Milk (Full Fat)",
-          amount: "Equal parts (1:1 ratio)",
-          taste: "Adds a subtle coconut flavor",
-          texture: "Rich and creamy, very similar",
-          notes: "Excellent dairy-free/vegan alternative. Shake can well before using."
-        }
-      ]);
+    try {
+      const res = await fetch(`${apiUrl}/api/ingredient-substitution`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ingredient: missingIngredient.trim(),
+          recipeContext: recipeContext.trim(),
+        }),
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || "Failed to find substitutes");
+      }
+
+      const data = await res.json();
+      if (!data.substitutes || data.substitutes.length === 0) {
+        toast.error("No substitutes found for this ingredient.");
+        return;
+      }
+      setResults(data.substitutes);
+    } catch (err: any) {
+      toast.error(err.message || "Something went wrong. Please try again.");
+    } finally {
       setIsSearching(false);
-    }, 1500);
+    }
   };
 
   return (
@@ -62,18 +62,32 @@ export default function IngredientSubstitutionPage() {
         <div className="text-center md:text-left flex-grow">
           <h1 className="text-3xl font-black text-slate-900 dark:text-white mb-2">Smart Ingredient Substitution</h1>
           <p className="text-slate-600 dark:text-slate-300">
-            Don't have an ingredient? Find smart alternatives that fit your recipe, diet, and what you have on hand.
+            Don't have an ingredient? Find smart AI alternatives tailored to your recipe and context.
           </p>
         </div>
+      </div>
+
+      {/* Tip banner */}
+      <div className="mb-6 p-4 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-800 dark:text-emerald-300 rounded-2xl text-sm flex items-center gap-3 border border-emerald-100 dark:border-emerald-800/30">
+        <Link2 size={16} className="shrink-0" />
+        <p>
+          <strong>Tip:</strong> Ingredient substitution is also available inline on every recipe result page —{" "}
+          <Link href="/ai-tools/ingredient-rescue" className="underline font-semibold hover:text-emerald-600">
+            try AI Ingredient Rescue
+          </Link>
+          {" "}and hover any ingredient to see substitutes.
+        </p>
       </div>
 
       <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 md:p-8 border border-slate-100 dark:border-slate-700 shadow-sm mb-8">
         <form onSubmit={handleSearch} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Missing Ingredient</label>
-              <input 
-                type="text" 
+              <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                Ingredient to Substitute *
+              </label>
+              <input
+                type="text"
                 value={missingIngredient}
                 onChange={(e) => setMissingIngredient(e.target.value)}
                 placeholder="e.g. Heavy Cream, Eggs, Buttermilk..."
@@ -81,9 +95,11 @@ export default function IngredientSubstitutionPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Recipe Context (Optional)</label>
-              <input 
-                type="text" 
+              <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                Recipe Context (Optional)
+              </label>
+              <input
+                type="text"
                 value={recipeContext}
                 onChange={(e) => setRecipeContext(e.target.value)}
                 placeholder="e.g. Chicken Alfredo, Baking a cake..."
@@ -92,7 +108,7 @@ export default function IngredientSubstitutionPage() {
             </div>
           </div>
 
-          <button 
+          <button
             type="submit"
             disabled={isSearching}
             className="w-full py-4 bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white font-bold rounded-xl shadow-md transition-all flex items-center justify-center gap-2"
@@ -103,9 +119,9 @@ export default function IngredientSubstitutionPage() {
         </form>
       </div>
 
-      {/* Results Section */}
+      {/* Results */}
       {results && !isSearching && (
-        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-2">
             Best alternatives for <span className="text-rose-600 dark:text-rose-500">{missingIngredient}</span>
           </h2>
@@ -117,32 +133,20 @@ export default function IngredientSubstitutionPage() {
 
           <div className="space-y-4">
             {results.map((sub: any, idx: number) => (
-              <div key={sub.id} className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-100 dark:border-slate-700 shadow-sm flex flex-col md:flex-row gap-6">
+              <div key={idx} className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-100 dark:border-slate-700 shadow-sm flex flex-col md:flex-row gap-6">
                 <div className="md:w-16 shrink-0 flex md:flex-col items-center gap-2">
                   <div className="w-12 h-12 bg-rose-100 dark:bg-rose-900/30 text-rose-600 font-black text-xl rounded-full flex items-center justify-center">
                     #{idx + 1}
                   </div>
                 </div>
-                
-                <div className="flex-grow space-y-4">
+
+                <div className="flex-grow space-y-3">
                   <div>
                     <h3 className="text-xl font-bold text-slate-900 dark:text-white">{sub.name}</h3>
                     <p className="text-sm font-semibold text-rose-600 dark:text-rose-400 mt-1">Use: {sub.amount}</p>
                   </div>
-                  
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                    <div className="bg-slate-50 dark:bg-slate-900/50 p-3 rounded-lg border border-slate-100 dark:border-slate-700/50">
-                      <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Taste Impact</span>
-                      <span className="text-slate-700 dark:text-slate-300">{sub.taste}</span>
-                    </div>
-                    <div className="bg-slate-50 dark:bg-slate-900/50 p-3 rounded-lg border border-slate-100 dark:border-slate-700/50">
-                      <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Texture Impact</span>
-                      <span className="text-slate-700 dark:text-slate-300">{sub.texture}</span>
-                    </div>
-                  </div>
-                  
                   <p className="text-sm text-slate-600 dark:text-slate-400 bg-amber-50 dark:bg-amber-900/10 p-3 rounded-lg border border-amber-100 dark:border-amber-900/20 italic">
-                    <span className="font-bold">Note:</span> {sub.notes}
+                    {sub.reason}
                   </p>
                 </div>
               </div>
@@ -150,14 +154,6 @@ export default function IngredientSubstitutionPage() {
           </div>
         </div>
       )}
-
-      {/* Simulated UI disclaimer */}
-      <div className="mt-8 p-4 bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300 rounded-2xl text-xs sm:text-sm flex flex-col sm:flex-row items-start sm:items-center gap-3 border border-blue-100 dark:border-blue-800/30">
-        <AlertCircle size={20} className="shrink-0" />
-        <p className="font-medium">
-          <strong>UI Prototype:</strong> This page simulates backend responses. The full version will generate context-aware substitutions based on AI models.
-        </p>
-      </div>
     </div>
   );
 }

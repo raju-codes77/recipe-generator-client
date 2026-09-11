@@ -71,6 +71,17 @@ export default function NutritionAnalyzer() {
             </button>
           </div>
           <AnalysisResult result={result} />
+          {/* Cross-link to Meal Tracker */}
+          <div className="flex items-center gap-3 p-4 bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800/40 rounded-2xl text-sm">
+            <span className="text-2xl">📊</span>
+            <div className="flex-1">
+              <p className="font-semibold text-orange-800 dark:text-orange-300">Want to log this meal?</p>
+              <p className="text-orange-700 dark:text-orange-400 text-xs mt-0.5">Use the Meal Tracker to snap a photo and track it directly against your daily calorie goal.</p>
+            </div>
+            <a href="/ai-tools/meal-tracker" className="shrink-0 px-3 py-2 bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold rounded-xl transition">
+              Go to Tracker →
+            </a>
+          </div>
         </div>
       ) : isBusy ? (
         <div className="flex flex-col items-center justify-center rounded-xl border border-neutral-200 bg-white p-12 text-center dark:border-neutral-800 dark:bg-neutral-900">
