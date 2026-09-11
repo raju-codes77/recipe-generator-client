@@ -10,6 +10,7 @@ import {
   Flame, Clock, Users, Gift, ArrowRight,
   Loader2, RotateCcw, CheckCircle2, Trophy,
 } from "lucide-react";
+import { toast } from "react-hot-toast";
 
 // ─── Skeleton ──────────────────────────────────────────────────────────────────
 function SkeletonCard() {
@@ -29,7 +30,7 @@ function SkeletonCard() {
   );
 }
 
-// ─── Individual discovery card ─────────────────────────────────────────────────
+// ─── Individual discovery card ────────────────────────────────────────────
 function DiscoveryChallengeCard({
   challenge,
   userId,
@@ -60,7 +61,7 @@ function DiscoveryChallengeCard({
       const res = await joinChallenge(challenge.id, userId);
       onJoinSuccess(challenge.id, res.participant);
     } catch (err: any) {
-      alert(err.message || "Failed to join challenge");
+      toast.error(err.message || "Failed to join challenge");
     } finally {
       setIsJoining(false);
     }
@@ -306,17 +307,16 @@ export default function AllChallengesClient({
           >
             Previous
           </button>
-          
+
           <div className="flex items-center gap-1 mx-2">
             {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map(p => (
               <button
                 key={p}
                 onClick={() => setPage(p)}
-                className={`w-8 h-8 flex items-center justify-center text-sm font-bold rounded-md transition-colors ${
-                  page === p 
-                    ? "bg-green-600 text-white" 
+                className={`w-8 h-8 flex items-center justify-center text-sm font-bold rounded-md transition-colors ${page === p
+                    ? "bg-green-600 text-white"
                     : "text-gray-600 hover:bg-gray-100"
-                }`}
+                  }`}
               >
                 {p}
               </button>

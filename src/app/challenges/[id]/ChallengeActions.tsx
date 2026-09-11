@@ -6,6 +6,7 @@ import { authClient } from "@/lib/auth-client";
 import { Loader2, CheckCircle2, Lock, ArrowRight, Gift, Trophy } from "lucide-react";
 import JoinChallengeButton from "./JoinChallengeButton";
 import { useRouter } from "next/navigation";
+import { toast } from "react-hot-toast";
 
 export default function ChallengeActions({ challenge }: { challenge: any }) {
   const { data: session, isPending } = authClient.useSession();
@@ -39,10 +40,10 @@ export default function ChallengeActions({ challenge }: { challenge: any }) {
       setIsCompleting(true);
       const res = await completeChallengeDay(challenge.id, dayId, session.user.id);
       setParticipant(res.participant);
-      alert("Day completed! +XP earned!");
+      toast.success("Day completed! +XP earned!");
       router.refresh();
     } catch (error: any) {
-      alert(error.message || "Failed to complete day");
+      toast.error(error.message || "Failed to complete day");
     } finally {
       setIsCompleting(false);
     }

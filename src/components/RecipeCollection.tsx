@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Sparkles } from "lucide-react";
 import Link from "next/link";
 import RecipeCard from "./recipes/RecipeCard";
 
@@ -45,56 +45,58 @@ export default function RecipeCollectionSection() {
   }, []);
 
   return (
-    <section className="w-full py-24 px-4 md:px-8 bg-gradient-to-b from-gray-50/50 via-white to-gray-50/50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 text-gray-900 dark:text-white transition-colors duration-300">
-      <div className="max-w-7xl mx-auto flex flex-col items-center">
+    <section className="w-full py-16 lg:py-20 px-6 md:px-8 bg-white dark:bg-[#0b0f19] text-stone-900 dark:text-white transition-colors duration-300 relative">
+      
+      {/* Decorative Glow */}
+      <div className="absolute top-20 left-0 w-[400px] h-[400px] bg-emerald-50 dark:bg-emerald-900/10 rounded-full blur-[80px] pointer-events-none -z-10"></div>
+
+      <div className="max-w-[1440px] mx-auto flex flex-col items-center z-10 relative">
         
         {/* Section Header */}
-        <div className="text-center mb-16 max-w-2xl">
-          <span className="text-xs font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950/60 px-3.5 py-1.5 rounded-full mb-4 inline-block border border-emerald-200 dark:border-emerald-800/50 shadow-sm">
-            Featured Recipes
+        <div className="text-center mb-12 max-w-2xl">
+          <span className="text-[11px] font-black uppercase tracking-[0.15em] text-emerald-700 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-500/10 px-3 py-1.5 rounded-full mb-4 inline-flex items-center gap-1.5 border border-emerald-100 dark:border-emerald-800/30 shadow-sm">
+            <Sparkles size={12} />
+            Trending Recipes
           </span>
-          <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight mb-4">
-            Explore Popular <span className="text-emerald-600 dark:text-emerald-400">Recipes</span>
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-black tracking-tight mb-4 leading-tight text-stone-900 dark:text-white">
+            Trending in the <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-700 to-emerald-500 dark:from-emerald-400 dark:to-teal-300">Community</span>
           </h2>
-          <p className="text-base text-gray-500 dark:text-gray-400 font-medium">
-            Discover and collect amazing recipes curated for smarter cooking.
+          <p className="text-base text-stone-500 dark:text-slate-400 font-medium leading-relaxed">
+            Discover what home cooks and AI are creating right now. Handpicked recipes for taste, health, and simplicity.
           </p>
         </div>
 
         {/* Dynamic Cards Grid */}
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 w-full mb-16">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 w-full mb-12">
             {[1, 2, 3, 4].map((n) => (
-              <div key={n} className="h-80 w-full bg-gray-100 dark:bg-gray-800/50 rounded-[24px] animate-pulse" />
+              <div key={n} className="h-80 w-full bg-stone-100 dark:bg-slate-800/50 rounded-2xl animate-pulse" />
             ))}
           </div>
         ) : recipes.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 w-full mb-16">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 w-full mb-12">
             {recipes.map((recipe, idx) => (
               <RecipeCard key={recipe.id} recipe={recipe} index={idx} />
             ))}
           </div>
         ) : (
-          <p className="text-sm text-gray-400 mb-16">No recipes found.</p>
+          <p className="text-sm text-stone-400 mb-12">No recipes found.</p>
         )}
 
-        {/* Browse All Recipes Button with Floating Animation */}
+        {/* Browse All Recipes Button */}
         <motion.div
-          animate={{ y: [0, -8, 0] }}
-          transition={{
-            duration: 2.5,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-          whileHover={{ scale: 1.08, y: -4 }}
-          whileTap={{ scale: 0.95 }}
+          whileHover={{ scale: 1.01 }}
+          whileTap={{ scale: 0.98 }}
+          className="mt-2"
         >
           <Link
             href="/recipes"
-            className="inline-flex items-center gap-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 px-8 rounded-full shadow-lg shadow-emerald-600/30 transition-all duration-300 text-sm md:text-base group"
+            className="inline-flex items-center gap-2 bg-stone-900 hover:bg-stone-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white font-bold py-3.5 px-7 rounded-full shadow-sm transition-all duration-300 text-[15px] group"
           >
             <span>Browse All Recipes</span>
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
+            <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center group-hover:bg-white/30 transition-colors">
+              <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+            </div>
           </Link>
         </motion.div>
 

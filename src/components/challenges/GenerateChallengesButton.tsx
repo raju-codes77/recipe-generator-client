@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Sparkles, Loader2 } from "lucide-react";
 import { generateChallenges } from "@/lib/challengeApi";
 import { useRouter } from "next/navigation";
+import { toast } from "react-hot-toast";
 
 export default function GenerateChallengesButton() {
   const [isGenerating, setIsGenerating] = useState(false);
@@ -19,10 +20,10 @@ export default function GenerateChallengesButton() {
         // Standard router refresh as backup
         router.refresh();
       }
-      alert("Successfully generated new AI challenges!");
+      toast.success("Successfully generated new AI challenges!");
     } catch (error) {
       console.error(error);
-      alert("Unable to generate new challenges. Please try again.");
+      toast.error("Unable to generate new challenges. Please try again.");
     } finally {
       setIsGenerating(false);
     }
