@@ -20,7 +20,7 @@ import DailyGoalCard from "./DailyGoalCard";
 import DetectedFoodItems from "./DetectedFoodItems";
 import NutritionFacts from "./NutritionFacts";
 import MacrosBreakdown from "./MacrosBreakdown";
-import NutrientDistribution from "./NutrientDistribution";
+
 import TodaysMealLog from "./TodaysMealLog";
 import CalorieTrend from "./CalorieTrend";
 import TipsInsights from "./TipsInsights";
@@ -102,11 +102,10 @@ function DashboardInner() {
         </div>
 
         {/* ── ROW 2 ── */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
           <DetectedFoodItems />
           <NutritionFacts />
           <MacrosBreakdown />
-          <NutrientDistribution />
         </div>
 
         {/* ── ROW 3 ── */}

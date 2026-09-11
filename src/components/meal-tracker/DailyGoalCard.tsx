@@ -6,7 +6,7 @@ import { updateUserGoal } from "@/app/api/meal-tracker/meal-tracker";
 import { useMealTracker } from "./MealTrackerContext";
 
 export default function DailyGoalCard() {
-  const { dailyGoalKcal, setDailyGoalKcal, mealLog, userId } = useMealTracker();
+  const { dailyGoalKcal, setDailyGoalKcal, mealLog, userId, isLoading } = useMealTracker();
 
   const [isEditing, setIsEditing] = useState(false);
   const [tempGoal, setTempGoal] = useState<string | number>(dailyGoalKcal ?? 2000);
@@ -48,10 +48,10 @@ export default function DailyGoalCard() {
 
   const RADIUS = 64;
   const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
-  const progress = goalPercent ?? 0;
+  const progress = isLoading ? 0 : (goalPercent ?? 0);
   const strokeDashoffset = CIRCUMFERENCE * (1 - progress / 100);
 
-  const fmt = (v: number | null) => (v !== null ? v.toLocaleString() : "--");
+  const fmt = (v: number | null) => (isLoading ? "--" : v !== null ? v.toLocaleString() : "--");
 
   return (
     <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm p-5 flex flex-col gap-4">

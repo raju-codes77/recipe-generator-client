@@ -53,18 +53,21 @@ export default function DashboardSidebar() {
   // User Navigation Items (Screenshot onujayi grouped sections)
   const mainNavItems = [
     { name: "Dashboard", icon: <FiHome />, href: "/dashboard/users" },
-    { name: "My Recipes", icon: <FiBookOpen />, href: "/dashboard/users/myRecipes" },
-    { name: "Generate Recipe", icon: <FiCpu />, href: "/dashboard/users/ai-generate", badge: "AI" },
-    { name: "Collections", icon: <FiFolder />, href: "/dashboard/users/collectionsDs" },
+    { name: "My Recipes", icon: <FiBookOpen />, href: "/recipes" },
+    { name: "Generate Recipe", icon: <FiCpu />, href: "/dashboard/users/ai-recepi-generator", badge: "AI" },
+    { name: "Collections", icon: <FiFolder />, href: "/dashboard/users/static" },
     { name: "Challenges", icon: <FiAward />, href: "/challenges" },
-    { name: "AI Tools", icon: <FiCpu />, href: "/ai-tools" },
-    { name: "Nutrition", icon: <FiActivity />, href: "/ai-tools/nutrition-analyzer" },
+    { name: "Dietary Profile", icon: <FiSliders />, href: "/dashboard/users/dietary-profile" },
+    { name: "All AI Tools", icon: <FiCpu />, href: "/ai-tools" },
   ];
 
-  const kitchenNavItems = [
-    { name: "Pantry", icon: <FiBox />, href: "/ai-tools/pantry-to-plate" },
-    { name: "Meal Plan", icon: <FiCalendar />, href: "/ai-tools/meal-tracker" },
-    { name: "Shopping List", icon: <FiShoppingCart />, href: "/dashboard/users/shopping-list" },
+  const aiToolsNavItems = [
+    { name: "Ingredient Rescue", icon: <FiBox />, href: "/ai-tools/ingredient-rescue" },
+    { name: "Nutrition Analyzer", icon: <FiActivity />, href: "/ai-tools/nutrition-analyzer" },
+    { name: "Meal Tracker", icon: <FiActivity />, href: "/ai-tools/meal-tracker" },
+    { name: "Taste Matcher", icon: <FiActivity />, href: "/ai-tools/taste-matcher" },
+    { name: "Meal Planner", icon: <FiCalendar />, href: "/meal-planner" },
+    { name: "Shopping List", icon: <FiShoppingCart />, href: "/ai-tools/shopping-list" },
   ];
 
   const communityNavItems = [
@@ -240,11 +243,11 @@ export default function DashboardSidebar() {
                 </div>
               </div>
 
-              {/* MY KITCHEN Section */}
+              {/* AI TOOLS Section */}
               <div>
-                <p className="px-3 text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">My Kitchen</p>
+                <p className="px-3 text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">AI Tools</p>
                 <div className="space-y-1">
-                  {kitchenNavItems.map((item, idx) => {
+                  {aiToolsNavItems.map((item, idx) => {
                     const isActive = pathname === item.href;
                     return (
                       <Link
@@ -315,24 +318,7 @@ export default function DashboardSidebar() {
             </div>
           )}
 
-          <div className="flex items-center justify-between px-2 pt-2 border-t border-gray-200 dark:border-[#89986D]/20">
-            <div className="flex items-center space-x-3">
-              <div className="w-9 h-9 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-800">
-                <img src="/brooke-lark-4J059aGa5s4-unsplash.jpg" alt="Profile" className="w-full h-full object-cover" />
-              </div>
-              <div className="overflow-hidden">
-                <h4 className="text-xs font-bold text-gray-900 dark:text-[#F6F0D7] truncate">
-                  {isAdmin ? "Admin User" : "John Doe"}
-                </h4>
-                <p className="text-[10px] text-gray-400 dark:text-[#F6F0D7]/60 truncate">
-                  {isAdmin ? "Admin" : "Chef"}
-                </p>
-              </div>
-            </div>
-            <Link href="/dashboard/settings" className="text-gray-400 hover:text-gray-600 dark:hover:text-[#F6F0D7] p-1 transition-colors">
-              <FiSettings size={16} />
-            </Link>
-          </div>
+         
         </div>
       </aside>
     </>

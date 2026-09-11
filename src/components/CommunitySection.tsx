@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { motion } from "framer-motion";
 
 export default function CommunitySection() {
   const avatars = [
@@ -12,58 +13,62 @@ export default function CommunitySection() {
   ];
 
   return (
-    <section className="w-full max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 py-10 lg:py-16">
-      <div className="relative w-full bg-[#f8f9f5] dark:bg-slate-900/50 rounded-3xl overflow-hidden shadow-sm border border-emerald-50 dark:border-slate-800 flex flex-col items-center justify-center py-16 px-6 lg:py-24 text-center">
+    <section className="w-full py-16 lg:py-20 px-6 lg:px-8 flex justify-center bg-[#FCFBF8] dark:bg-[#0b0f19]">
+      <div className="relative w-full max-w-[1200px] bg-stone-900 dark:bg-slate-900 rounded-3xl overflow-hidden shadow-lg flex flex-col items-center justify-center py-16 px-6 lg:py-20 text-center border border-stone-800">
         
+        {/* Glow Effects */}
+        <div className="absolute top-0 left-1/4 w-[400px] h-[400px] bg-emerald-500/10 rounded-full blur-[100px] pointer-events-none mix-blend-screen" />
+        <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-orange-500/5 rounded-full blur-[100px] pointer-events-none mix-blend-screen" />
+
         {/* Left Decorative Image */}
-        <div className="absolute top-0 left-0 w-32 h-32 md:w-48 md:h-48 lg:w-64 lg:h-64 pointer-events-none">
-          <div className="relative w-full h-full -translate-x-1/4 -translate-y-1/4 opacity-90">
+        <div className="absolute top-0 left-0 w-24 h-24 md:w-56 md:h-56 pointer-events-none">
+          <div className="relative w-full h-full -translate-x-1/4 -translate-y-1/4 opacity-30">
              <Image 
                 src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=400&auto=format&fit=crop&q=80" 
                 alt="Decorative leaf and food" 
                 fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" 
-                className="object-cover rounded-full mix-blend-multiply dark:mix-blend-lighten"
+                className="object-cover rounded-full mix-blend-overlay"
              />
           </div>
         </div>
 
         {/* Right Decorative Image */}
-        <div className="absolute bottom-0 right-0 w-32 h-32 md:w-48 md:h-48 lg:w-72 lg:h-72 pointer-events-none">
-          <div className="relative w-full h-full translate-x-1/4 translate-y-1/4 opacity-90">
+        <div className="absolute bottom-0 right-0 w-24 h-24 md:w-64 md:h-64 pointer-events-none">
+          <div className="relative w-full h-full translate-x-1/4 translate-y-1/4 opacity-30">
              <Image 
                 src="https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400&auto=format&fit=crop&q=80" 
                 alt="Decorative bowl and leaf" 
                 fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" 
-                className="object-cover rounded-full mix-blend-multiply dark:mix-blend-lighten"
+                className="object-cover rounded-full mix-blend-overlay"
              />
           </div>
         </div>
 
         {/* Main Content */}
         <div className="relative z-10 max-w-2xl mx-auto flex flex-col items-center">
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-4">
-            Join a Community of Food Lovers
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-black text-white tracking-tight mb-5 leading-tight">
+            Join a Community of <span className="text-emerald-500">Food Lovers</span>
           </h2>
-          <p className="text-slate-600 dark:text-slate-400 text-sm md:text-base font-medium mb-8 max-w-md">
-            Share recipes, get inspired and grow together.
+          <p className="text-stone-400 text-base font-medium mb-10 max-w-md leading-relaxed">
+            Share your AI-generated creations, rate community recipes, and discover daily inspiration from thousands of active home cooks.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center gap-6 sm:gap-8">
+          <div className="flex flex-col sm:flex-row items-center gap-6">
             
             {/* Avatars */}
             <div className="flex -space-x-3">
               {avatars.map((avatar, index) => (
-                <div key={index} className="relative w-10 h-10 md:w-12 md:h-12 rounded-full border-2 border-white dark:border-slate-900 overflow-hidden shadow-sm hover:-translate-y-1 transition-transform z-0">
+                <div key={index} className="relative w-10 h-10 md:w-12 md:h-12 rounded-full border-2 border-stone-900 overflow-hidden shadow-sm hover:-translate-y-1 transition-transform duration-300 z-0">
                   <Image src={avatar} alt="Community member" fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" className="object-cover" />
                 </div>
               ))}
             </div>
 
             {/* CTA Button */}
-            <Link href="/community">
-              <button className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 px-6 rounded-full shadow-lg shadow-emerald-600/30 transition-all hover:scale-105 active:scale-95 text-sm md:text-base">
+            <Link href="/community" className="group">
+              <div className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3.5 px-7 rounded-full shadow-sm transition-all group-hover:scale-105 active:scale-95 text-[15px] flex items-center gap-2">
                 Join the Community
-              </button>
+              </div>
             </Link>
 
           </div>
