@@ -1,10 +1,14 @@
-export const analyzeMeal = async (file: File) => {
+export const analyzeMeal = async (file: File, userId?: string) => {
     const formData = new FormData();
     formData.append("image", file);
     
     // Add localDate for timezone-aware grouping
     const localDate = new Date().toLocaleDateString("en-CA"); // "YYYY-MM-DD" in local timezone
     formData.append("localDate", localDate);
+
+    if (userId) {
+        formData.append("userId", userId);
+    }
 
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
     const response = await fetch(`${apiUrl}/api/meals/analyze`, {
@@ -56,7 +60,7 @@ const fetchApi = async (path: string, options: RequestInit = {}) => {
 export const getUserGoal = async (userId: string) => {
     try {
         if (!userId) return null;
-        const data = await fetchApi("/api/users/goal");
+        const data = await fetchApi(`/api/users/goal?userId=${userId}`);
         return data?.dailyKcal || null;
     } catch (error) {
         console.error("Error fetching user goal:", error);
@@ -69,7 +73,7 @@ export const updateUserGoal = async (goal: number, userId: string) => {
         if (!userId) throw new Error("Unauthorized");
         const data = await fetchApi("/api/users/goal", {
             method: "PUT",
-            body: JSON.stringify({ dailyKcal: goal }),
+            body: JSON.stringify({ dailyKcal: goal, userId }),
         });
         return data;
     } catch (error) {
@@ -81,7 +85,7 @@ export const updateUserGoal = async (goal: number, userId: string) => {
 export const getMealLog = async (userId: string, date?: string) => {
     try {
         if (!userId) return [];
-        const query = date ? `?date=${date}` : "";
+        const query = date ? `?date=${date}&userId=${userId}` : `?userId=${userId}`;
         const data = await fetchApi(`/api/users/meals${query}`);
         return Array.isArray(data) ? data : [];
     } catch (error) {
@@ -107,7 +111,7 @@ export interface DayEntry {
 export const getDailyHistory = async (userId: string): Promise<Record<string, DayEntry>> => {
     try {
         if (!userId) return {};
-        const data = await fetchApi("/api/users/daily-history");
+        const data = await fetchApi(`/api/users/daily-history?userId=${userId}`);
         return data || {};
     } catch (error) {
         console.error("Error fetching daily history:", error);
@@ -124,6 +128,7 @@ export const saveDayEntry = async (entry: DayEntry, userId: string): Promise<voi
                 date: entry.date,
                 kcal: entry.kcal,
                 protein: entry.protein,
+                userId,
             }),
         });
     } catch (error) {

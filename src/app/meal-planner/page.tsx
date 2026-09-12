@@ -8,6 +8,7 @@ import {
   CalendarDays, Activity, ChevronDown, ChevronUp, Clock, X, Info, AlertCircle, ArrowLeft, Heart, Flame, LayoutDashboard, Store
 } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
+import { authClient } from "@/lib/auth-client";
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
@@ -83,7 +84,7 @@ const ChipInput = ({
 };
 
 // ── Profile Onboarding Component ──────────────────────────────────────────
-function MealProfileOnboarding({ profile, onSave }: { profile: MealProfile | null, onSave: (p: MealProfile) => void }) {
+function MealProfileOnboarding({ profile, onSave, userId }: { profile: MealProfile | null, onSave: (p: MealProfile) => void, userId?: string }) {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState<MealProfile>(profile || {
     foodPreference: "Non-Vegetarian",
@@ -125,11 +126,14 @@ function MealProfileOnboarding({ profile, onSave }: { profile: MealProfile | nul
   const submit = async () => {
     setSaving(true);
     try {
+      const payload = { ...formData };
+      if (userId) (payload as any).userId = userId;
+
       const res = await fetch(`${apiUrl}/api/meal-profile`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(payload)
       });
       if (!res.ok) {
         const errJson = await res.json().catch(() => ({}));
@@ -678,6 +682,9 @@ const NearbyStores = ({ ingredients = [], aiStores = [] }: { ingredients?: strin
 
 // ── Main Page Component ────────────────────────────────────────────────────
 export default function MealPlannerPage() {
+  const { data: session } = authClient.useSession();
+  const userId = session?.user?.id;
+
   const [tab, setTab] = useState<"standard" | "budget">("standard");
   const [profile, setProfile] = useState<MealProfile | null>(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
@@ -705,14 +712,15 @@ export default function MealPlannerPage() {
   const currency = currencies[country] || "$";
 
   useEffect(() => {
-    fetch(`${apiUrl}/api/meal-profile`, { credentials: "include" })
+    const url = userId ? `${apiUrl}/api/meal-profile?userId=${userId}` : `${apiUrl}/api/meal-profile`;
+    fetch(url, { credentials: "include" })
       .then(res => res.json())
       .then(data => {
         if (data && data.foodPreference) setProfile(data);
         setLoadingProfile(false);
       })
       .catch(() => setLoadingProfile(false));
-  }, []);
+  }, [userId]);
 
   const generatePlan = async () => {
     if (generating) return;
@@ -721,9 +729,11 @@ export default function MealPlannerPage() {
     setApiError(null);
     try {
       const endpoint = tab === "standard" ? "/api/meal-planner/generate" : "/api/meal-planner/generate-budget";
-      const payload = tab === "standard" 
+      const payload: any = tab === "standard" 
         ? { days: selectedDays, peopleCount }
         : { country, city, currency, budget, days: selectedDays, peopleCount };
+
+      if (userId) payload.userId = userId;
 
       const res = await fetch(`${apiUrl}${endpoint}`, {
         method: "POST", credentials: "include", headers: {"Content-Type": "application/json"},
@@ -819,7 +829,7 @@ export default function MealPlannerPage() {
     return (
       <div className="bg-slate-50 dark:bg-slate-950 min-h-screen pt-8 px-4 pb-24">
         <Toaster />
-        <MealProfileOnboarding profile={profile} onSave={(p) => { setProfile(p); setEditProfile(false); }} />
+        <MealProfileOnboarding profile={profile} onSave={(p) => { setProfile(p); setEditProfile(false); }} userId={userId} />
       </div>
     );
   }

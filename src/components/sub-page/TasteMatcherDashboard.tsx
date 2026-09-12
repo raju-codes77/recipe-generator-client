@@ -71,7 +71,8 @@ export default function TasteMatcherDashboard() {
         return;
       }
       try {
-        const response = await fetch(`${API_BASE_URL}/api/taste-profile`, {
+        const userId = session.user.id;
+        const response = await fetch(`${API_BASE_URL}/api/taste-profile?userId=${userId}`, {
           credentials: "include",
         });
         const data = await response.json();
@@ -169,7 +170,8 @@ export default function TasteMatcherDashboard() {
           sweetness, sourness, saltiness, umami, spiciness, 
           likedIngredients: likes, 
           dislikedIngredients: dislikes, 
-          preferredCuisines 
+          preferredCuisines,
+          userId: session.user.id
         }),
         signal: abortControllerRef.current?.signal,
       });

@@ -204,9 +204,9 @@ export const CommunityFeed: React.FC = () => {
       if (session?.user) {
         try {
           const [loadedCollections, loadedNotifications, loadedFeedCounts] = await Promise.all([
-            communityApi.listCollections(),
-            communityApi.listNotifications(),
-            communityApi.getFeedCounts(),
+            communityApi.listCollections(session.user.id),
+            communityApi.listNotifications(session.user.id),
+            communityApi.getFeedCounts(session.user.id),
           ]);
           setCollections(loadedCollections);
           setNotifications(loadedNotifications);
@@ -366,19 +366,24 @@ export const CommunityFeed: React.FC = () => {
   );
 
   // Handle Likes
-  const handleToggleLike = (postId: string) =>
-    void runMutation(() => communityApi.toggleLike(postId), "Updated recipe like");
+  const handleToggleLike = (postId: string) => {
+    if (!session?.user?.id) return requireAuthentication("like a recipe");
+    void runMutation(() => communityApi.toggleLike(postId, session.user.id), "Updated recipe like");
+  };
 
   // Handle Save / Bookmark
   const handleToggleSave = (postId: string) => {
+    if (!session?.user?.id) return requireAuthentication("save a recipe");
     const post = posts.find((p) => p.id === postId);
     if (!post) return;
     if (post.isSaved) setUnsaveModalPost(post);
     else setSaveModalPost(post);
   };
 
-  const handleDeletePost = (postId: string) =>
-    runMutation(() => communityApi.deletePost(postId), "Post deleted");
+  const handleDeletePost = (postId: string) => {
+    if (!session?.user?.id) return requireAuthentication("delete a post");
+    runMutation(() => communityApi.deletePost(postId, session.user.id), "Post deleted");
+  };
 
   const handleEditPost = (post: Post) => {
     setEditPost(post);
@@ -388,9 +393,10 @@ export const CommunityFeed: React.FC = () => {
 
   const handleSubmitEditPost = async () => {
     if (!editPost || !editCaption.trim() || isSavingEdit) return;
+    if (!session?.user?.id) return requireAuthentication("edit a post");
     setIsSavingEdit(true);
     try {
-      await communityApi.updatePost(editPost.id, { caption: editCaption.trim(), tags: parseCommunityTags(editTags) });
+      await communityApi.updatePost(editPost.id, { caption: editCaption.trim(), tags: parseCommunityTags(editTags) }, session.user.id);
       await loadCommunity();
       setEditPost(null);
       showToast("Post updated");
@@ -401,34 +407,47 @@ export const CommunityFeed: React.FC = () => {
     }
   };
 
-  const handleSaveToCollection = (collectionId: string, postId: string) =>
-    void runMutation(() => communityApi.savePost(postId, collectionId), "Saved recipe to your collection!");
+  const handleSaveToCollection = (collectionId: string, postId: string) => {
+    if (!session?.user?.id) return requireAuthentication("save to collection");
+    void runMutation(() => communityApi.savePost(postId, collectionId, session.user.id), "Saved recipe to your collection!");
+  };
 
   const handleConfirmUnsave = () => {
     if (!unsaveModalPost) return;
+    if (!session?.user?.id) return requireAuthentication("unsave a recipe");
     const postId = unsaveModalPost.id;
-    void runMutation(() => communityApi.savePost(postId), "Removed post from Saved")
+    void runMutation(() => communityApi.savePost(postId, undefined, session.user.id), "Removed post from Saved")
       .finally(() => setUnsaveModalPost(null));
   };
 
-  const handleCreateCollection = (name: string, description: string) =>
-    void runMutation(() => communityApi.createCollection(name, description), `Created collection "${name}"`);
+  const handleCreateCollection = (name: string, description: string) => {
+    if (!session?.user?.id) return requireAuthentication("create a collection");
+    void runMutation(() => communityApi.createCollection(name, description, session.user.id), `Created collection "${name}"`);
+  };
 
   // Handle Comments
-  const handleAddComment = (postId: string, content: string) =>
-    void runMutation(() => communityApi.addComment(postId, content), "Comment posted!");
+  const handleAddComment = (postId: string, content: string) => {
+    if (!session?.user?.id) return requireAuthentication("comment on a post");
+    void runMutation(() => communityApi.addComment(postId, content, session.user.id), "Comment posted!");
+  };
 
   // Handle Reviews & Ratings
-  const handleSubmitReview = (postId: string, review: Review) =>
-    void runMutation(() => communityApi.saveReview(postId, review), "Recipe review submitted!");
+  const handleSubmitReview = (postId: string, review: Review) => {
+    if (!session?.user?.id) return requireAuthentication("review a recipe");
+    void runMutation(() => communityApi.saveReview(postId, review, session.user.id), "Recipe review submitted!");
+  };
 
   // Handle "I Made This!"
-  const handleMadeIt = (postId: string) =>
-    void runMutation(() => communityApi.toggleMadeIt(postId), "Updated your cooking history");
+  const handleMadeIt = (postId: string) => {
+    if (!session?.user?.id) return requireAuthentication("mark as made");
+    void runMutation(() => communityApi.toggleMadeIt(postId, session.user.id), "Updated your cooking history");
+  };
 
   // Handle Follow / Unfollow
-  const handleToggleFollow = (authorId: string) =>
-    void runMutation(() => communityApi.toggleFollow(authorId), "Updated chef following status");
+  const handleToggleFollow = (authorId: string) => {
+    if (!session?.user?.id) return requireAuthentication("follow a chef");
+    void runMutation(() => communityApi.toggleFollow(authorId, session.user.id), "Updated chef following status");
+  };
 
   // Handle Share (link copy)
   const handleShare = (post: Post) => {
@@ -446,9 +465,10 @@ export const CommunityFeed: React.FC = () => {
 
   const confirmShareToProfile = async (caption: string) => {
     if (!shareModalPost || isSharingPost) return;
+    if (!session?.user?.id) return requireAuthentication("share a post");
     setIsSharingPost(true);
     try {
-      await runMutation(() => communityApi.sharePost(shareModalPost.id, caption), "Post shared to your profile");
+      await runMutation(() => communityApi.sharePost(shareModalPost.id, caption, session.user.id), "Post shared to your profile");
       setShareModalPost(null);
     } finally {
       setIsSharingPost(false);
@@ -996,8 +1016,8 @@ export const CommunityFeed: React.FC = () => {
         initialUseAI={createPostInitialAI}
         initialMode={createPostMode}
         onPublishPost={async (newPost, imageFile) => {
-          const imageUrl = imageFile ? await communityApi.uploadImage(imageFile, "posts") : newPost.imageUrl;
-          const createdPost = await communityApi.createPost({ ...newPost, imageUrl });
+          const imageUrl = imageFile ? await communityApi.uploadImage(imageFile, "posts", session?.user?.id!) : newPost.imageUrl;
+          const createdPost = await communityApi.createPost({ ...newPost, imageUrl }, session?.user?.id!);
           setPosts((currentPosts) => {
             const updatedPosts = [createdPost, ...currentPosts.filter((post) => post.id !== createdPost.id)];
             communityCache = {
@@ -1034,7 +1054,7 @@ export const CommunityFeed: React.FC = () => {
         isOpen={!!reportModalPost}
         onClose={() => setReportModalPost(null)}
         onSubmitReport={async (postId, reason, details) => {
-          await communityApi.reportPost(postId, reason, details);
+          await communityApi.reportPost(postId, reason, details, session?.user?.id!);
           showToast("Report submitted for moderation");
         }}
       />
@@ -1079,7 +1099,7 @@ export const CommunityFeed: React.FC = () => {
           setDmModalOpen(true);
         }}
         onDeleteStory={async (storyId) => {
-          await communityApi.deleteStory(storyId);
+          await communityApi.deleteStory(storyId, session?.user?.id!);
           await loadCommunity();
           setViewingStory(null);
           showToast("Story deleted");
@@ -1103,8 +1123,8 @@ export const CommunityFeed: React.FC = () => {
         isOpen={!!storyEditorFile}
         onClose={() => setStoryEditorFile(null)}
         onShare={async (editedFile, caption) => {
-          const imageUrl = await communityApi.uploadImage(editedFile, "stories");
-          await communityApi.createStory(imageUrl, caption);
+          const imageUrl = await communityApi.uploadImage(editedFile, "stories", session?.user?.id!);
+          await communityApi.createStory(imageUrl, caption, session?.user?.id!);
           await loadCommunity();
           showToast("Story published for 24 hours");
         }}
