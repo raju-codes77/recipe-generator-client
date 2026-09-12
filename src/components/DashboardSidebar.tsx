@@ -31,40 +31,28 @@ export default function DashboardSidebar() {
     { name: "Dashboard", icon: <FiHome />, href: "/dashboard/admin" },
     { name: "Users", icon: <FiUsers />, href: "/dashboard/admin/users" },
     { name: "Recipes", icon: <FiBookOpen />, href: "/dashboard/admin/recipes" },
-    { name: "Collections", icon: <FiFolder />, href: "/dashboard/admin/collections" },
     { name: "Challenges", icon: <FiAward />, href: "/dashboard/admin/challenges" },
-    { name: "Community Posts", icon: <FiMessageSquare />, href: "/dashboard/admin/posts" },
-    { name: "Reports", icon: <FiAlertCircle />, href: "/dashboard/admin/reports" },
-  ];
-
-  const adminToolsItems = [
-    { name: "AI Tools", icon: <FiCpu />, href: "/dashboard/admin/ai-tools" },
-    { name: "Moderation", icon: <FiShield />, href: "/dashboard/admin/moderation" },
-    { name: "Nutrition Analyzer", icon: <FiSliders />, href: "/dashboard/admin/nutrition" },
-  ];
-
-  const adminSettingsItems = [
-    { name: "Settings", icon: <FiSettings />, href: "/dashboard/admin/settings" },
-    { name: "Roles & Permissions", icon: <FiLock />, href: "/dashboard/admin/roles" },
-    { name: "System Logs", icon: <FiServer />, href: "/dashboard/admin/logs" },
-    { name: "Support Tickets", icon: <FiHeadphones />, href: "/dashboard/admin/support" },
+    { name: "Community Posts", icon: <FiMessageSquare />, href: "/dashboard/admin/posts" }
   ];
 
   // User Navigation Items (Screenshot onujayi grouped sections)
   const mainNavItems = [
     { name: "Dashboard", icon: <FiHome />, href: "/dashboard/users" },
-    { name: "My Recipes", icon: <FiBookOpen />, href: "/dashboard/users/myRecipes" },
-    { name: "Generate Recipe", icon: <FiCpu />, href: "/dashboard/users/ai-generate", badge: "AI" },
-    { name: "Collections", icon: <FiFolder />, href: "/dashboard/users/collectionsDs" },
+    { name: "My Recipes", icon: <FiBookOpen />, href: "/recipes" },
+    { name: "Generate Recipe", icon: <FiCpu />, href: "/dashboard/users/ai-recepi-generator", badge: "AI" },
+    { name: "Collections", icon: <FiFolder />, href: "/dashboard/users/static" },
     { name: "Challenges", icon: <FiAward />, href: "/challenges" },
-    { name: "AI Tools", icon: <FiCpu />, href: "/ai-tools" },
-    { name: "Nutrition", icon: <FiActivity />, href: "/ai-tools/nutrition-analyzer" },
+    { name: "Dietary Profile", icon: <FiSliders />, href: "/dashboard/users/dietary-profile" },
+    { name: "All AI Tools", icon: <FiCpu />, href: "/ai-tools" },
   ];
 
-  const kitchenNavItems = [
-    { name: "Pantry", icon: <FiBox />, href: "/ai-tools/pantry-to-plate" },
-    { name: "Meal Plan", icon: <FiCalendar />, href: "/ai-tools/meal-tracker" },
-    { name: "Shopping List", icon: <FiShoppingCart />, href: "/dashboard/users/shopping-list" },
+  const aiToolsNavItems = [
+    { name: "Ingredient Rescue", icon: <FiBox />, href: "/ai-tools/ingredient-rescue" },
+    { name: "Nutrition Analyzer", icon: <FiActivity />, href: "/ai-tools/nutrition-analyzer" },
+    { name: "Meal Tracker", icon: <FiActivity />, href: "/ai-tools/meal-tracker" },
+    { name: "Taste Matcher", icon: <FiActivity />, href: "/ai-tools/taste-matcher" },
+    { name: "Meal Planner", icon: <FiCalendar />, href: "/meal-planner" },
+    { name: "Shopping List", icon: <FiShoppingCart />, href: "/ai-tools/shopping-list" },
   ];
 
   const communityNavItems = [
@@ -155,52 +143,6 @@ export default function DashboardSidebar() {
                   );
                 })}
               </div>
-
-              {/* AI & TOOLS */}
-              <div className="space-y-1 pt-2">
-                <p className="px-2 text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-[#F6F0D7]/40 mb-2">AI & Tools</p>
-                {adminToolsItems.map((item, idx) => {
-                  const isActive = pathname === item.href;
-                  return (
-                    <Link
-                      key={idx}
-                      href={item.href}
-                      onClick={() => setMobileOpen(false)}
-                      className={`flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-medium transition-all ${
-                        isActive 
-                          ? "bg-[#2F8F46] text-white shadow-md shadow-[#2F8F46]/20 font-semibold" 
-                          : "text-gray-600 dark:text-[#F6F0D7]/70 hover:bg-[#EAF7E8] dark:hover:bg-[#89986D]/15 hover:text-[#2F8F46] dark:hover:text-[#F6F0D7]"
-                      }`}
-                    >
-                      <span className="text-base">{item.icon}</span>
-                      <span>{item.name}</span>
-                    </Link>
-                  );
-                })}
-              </div>
-
-              {/* SETTINGS */}
-              <div className="space-y-1 pt-2">
-                <p className="px-2 text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-[#F6F0D7]/40 mb-2">Settings</p>
-                {adminSettingsItems.map((item, idx) => {
-                  const isActive = pathname === item.href;
-                  return (
-                    <Link
-                      key={idx}
-                      href={item.href}
-                      onClick={() => setMobileOpen(false)}
-                      className={`flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-medium transition-all ${
-                        isActive 
-                          ? "bg-[#2F8F46] text-white shadow-md shadow-[#2F8F46]/20 font-semibold" 
-                          : "text-gray-600 dark:text-[#F6F0D7]/70 hover:bg-[#EAF7E8] dark:hover:bg-[#89986D]/15 hover:text-[#2F8F46] dark:hover:text-[#F6F0D7]"
-                      }`}
-                    >
-                      <span className="text-base">{item.icon}</span>
-                      <span>{item.name}</span>
-                    </Link>
-                  );
-                })}
-              </div>
             </>
           ) : (
             <div className="space-y-6">
@@ -240,11 +182,11 @@ export default function DashboardSidebar() {
                 </div>
               </div>
 
-              {/* MY KITCHEN Section */}
+              {/* AI TOOLS Section */}
               <div>
-                <p className="px-3 text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">My Kitchen</p>
+                <p className="px-3 text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">AI Tools</p>
                 <div className="space-y-1">
-                  {kitchenNavItems.map((item, idx) => {
+                  {aiToolsNavItems.map((item, idx) => {
                     const isActive = pathname === item.href;
                     return (
                       <Link
@@ -315,24 +257,7 @@ export default function DashboardSidebar() {
             </div>
           )}
 
-          <div className="flex items-center justify-between px-2 pt-2 border-t border-gray-200 dark:border-[#89986D]/20">
-            <div className="flex items-center space-x-3">
-              <div className="w-9 h-9 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-800">
-                <img src="/brooke-lark-4J059aGa5s4-unsplash.jpg" alt="Profile" className="w-full h-full object-cover" />
-              </div>
-              <div className="overflow-hidden">
-                <h4 className="text-xs font-bold text-gray-900 dark:text-[#F6F0D7] truncate">
-                  {isAdmin ? "Admin User" : "John Doe"}
-                </h4>
-                <p className="text-[10px] text-gray-400 dark:text-[#F6F0D7]/60 truncate">
-                  {isAdmin ? "Admin" : "Chef"}
-                </p>
-              </div>
-            </div>
-            <Link href="/dashboard/settings" className="text-gray-400 hover:text-gray-600 dark:hover:text-[#F6F0D7] p-1 transition-colors">
-              <FiSettings size={16} />
-            </Link>
-          </div>
+         
         </div>
       </aside>
     </>

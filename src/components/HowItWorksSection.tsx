@@ -2,113 +2,125 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import { CalendarPlus, ChefHat, BarChart3, Heart } from "lucide-react";
+import { Camera, Sparkles, UtensilsCrossed } from "lucide-react";
 
 interface StepItem {
-  stepNumber: number;
+  stepNumber: string;
   icon: React.ReactNode;
   title: string;
   description: string;
-  colorClass: string;
-  badgeBg: string;
 }
 
 export default function HowItWorksSection() {
   const steps: StepItem[] = [
     {
-      stepNumber: 1,
-      icon: <CalendarPlus className="w-7 h-7 text-emerald-600 dark:text-emerald-400" />,
+      stepNumber: "01",
+      icon: <Camera className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />,
       title: "Add Ingredients",
-      description: "Enter ingredients you have or upload a food photo.",
-      colorClass: "from-emerald-500 to-teal-600",
-      badgeBg: "bg-emerald-600",
+      description: "Snap a photo of your fridge or type what you have. We organize your pantry instantly.",
     },
     {
-      stepNumber: 2,
-      icon: <ChefHat className="w-7 h-7 text-orange-500" />,
-      title: "AI Generates Recipes",
-      description: "Our AI creates personalized recipes just for you.",
-      colorClass: "from-orange-400 to-amber-500",
-      badgeBg: "bg-orange-500",
+      stepNumber: "02",
+      icon: <Sparkles className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />,
+      title: "Let AI Create",
+      description: "Our AI generates perfect recipe matches tailored to your diet, goals, and taste profile.",
     },
     {
-      stepNumber: 3,
-      icon: <BarChart3 className="w-7 h-7 text-emerald-600 dark:text-emerald-400" />,
-      title: "Get Nutrition Insights",
-      description: "See detailed nutrition and health benefits.",
-      colorClass: "from-emerald-500 to-teal-600",
-      badgeBg: "bg-emerald-600",
-    },
-    {
-      stepNumber: 4,
-      icon: <Heart className="w-7 h-7 text-orange-500" />,
-      title: "Cook, Save & Share",
-      description: "Cook, save your favorites and share with community.",
-      colorClass: "from-orange-400 to-amber-500",
-      badgeBg: "bg-orange-500",
+      stepNumber: "03",
+      icon: <UtensilsCrossed className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />,
+      title: "Cook & Enjoy",
+      description: "Follow easy, step-by-step instructions. Eat healthier, save money, and reduce food waste.",
     },
   ];
 
   return (
-    <section className="w-full py-24 px-4 md:px-8 bg-gradient-to-b from-gray-50/50 via-white to-gray-50/50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 text-gray-900 dark:text-white transition-colors duration-300 relative overflow-hidden">
+    <section className="w-full py-16 lg:py-20 px-6 md:px-8 bg-white dark:bg-[#080B12] transition-colors duration-300 relative overflow-hidden">
       
       {/* Background Decorative Glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-emerald-500/5 dark:bg-emerald-500/10 blur-[120px] rounded-full pointer-events-none"></div>
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-emerald-500/5 dark:bg-emerald-500/10 blur-[120px] rounded-[100%] pointer-events-none" />
 
-      <div className="max-w-7xl mx-auto flex flex-col items-center relative z-10">
+      <div className="max-w-[1200px] mx-auto flex flex-col items-center relative z-10">
         
         {/* Section Header */}
-        <div className="text-center mb-20 max-w-2xl">
-          <span className="text-xs font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950/60 px-3.5 py-1.5 rounded-full mb-4 inline-block border border-emerald-200 dark:border-emerald-800/50 shadow-sm">
-            Seamless Workflow
-          </span>
-          <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight mb-4">
-            How <span className="text-emerald-600 dark:text-emerald-400">FoodCanvas</span> Works
+        <div className="text-center mb-14 max-w-2xl flex flex-col items-center">
+          <div className="inline-flex items-center gap-2 bg-stone-100 dark:bg-white/5 backdrop-blur-md border border-stone-200 dark:border-white/10 text-emerald-600 dark:text-emerald-400 px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-[0.2em] mb-5 shadow-sm">
+            <span>Seamless Workflow</span>
+          </div>
+          
+          <h2 className="text-3xl md:text-4xl lg:text-[48px] font-black tracking-tight mb-5 text-stone-900 dark:text-white leading-[1.1]">
+            How <br className="md:hidden" />
+            <span 
+              className="drop-shadow-sm"
+              style={{
+                background: 'linear-gradient(90deg, #154D31 0%, #24733E 50%, #10B981 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+              }}
+            >
+              FoodCanvas
+            </span> Works
           </h2>
-          <p className="text-base text-gray-500 dark:text-gray-400 font-medium">
-            Transform your daily cooking experience with four simple, intelligent steps.
+          
+          <p className="text-base text-stone-500 dark:text-stone-400 font-medium leading-relaxed max-w-md">
+            Transform your daily cooking experience with three simple, intelligent steps. No more guessing what's for dinner.
           </p>
         </div>
 
         {/* Steps Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 relative w-full">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 lg:gap-8 relative w-full">
+          
+          {/* Animated Connector Line (Desktop Only) */}
+          <div className="hidden md:block absolute top-[4rem] left-[15%] right-[15%] h-[2px] bg-gradient-to-r from-transparent via-emerald-200 dark:via-emerald-900/50 to-transparent z-0 overflow-hidden">
+            <motion.div 
+              className="w-1/3 h-full bg-gradient-to-r from-transparent via-emerald-500 to-transparent opacity-50"
+              animate={{ x: ["-100%", "300%"] }}
+              transition={{ repeat: Infinity, duration: 3, ease: "linear" }}
+            />
+          </div>
+
           {steps.map((item, idx) => (
             <motion.div
               key={idx}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: idx * 0.15 }}
-              whileHover={{ 
-                y: -10, 
-                scale: 1.02,
-                transition: { duration: 0.2 } 
-              }}
-              className="flex flex-col items-center text-center relative group p-6 rounded-3xl bg-white/70 dark:bg-gray-900/60 backdrop-blur-xl border border-gray-100 dark:border-gray-800/80 shadow-lg shadow-gray-100/50 dark:shadow-none hover:shadow-2xl hover:border-emerald-500/40 dark:hover:border-emerald-500/40 transition-all duration-300 cursor-pointer"
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.6, delay: idx * 0.15 }}
+              whileHover={{ y: -6 }}
+              className="group relative flex flex-col p-6 lg:p-8 rounded-[28px] bg-[#F8FAF8] dark:bg-white/5 backdrop-blur-xl border border-stone-200/80 dark:border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.04)] dark:shadow-none hover:shadow-[0_20px_50px_rgba(20,80,40,0.08)] transition-all duration-500 z-10 overflow-hidden text-left"
             >
-              {/* Step Icon Container with Badge */}
-              <div className="relative mb-6 mt-2">
+              
+              {/* Giant Faded Number Background */}
+              <div className="absolute -top-4 -right-4 text-[90px] font-black text-emerald-900/5 dark:text-white/5 select-none pointer-events-none transition-transform duration-500 group-hover:scale-110 group-hover:-translate-x-2 group-hover:translate-y-2">
+                {item.stepNumber}
+              </div>
+
+              {/* Step Icon Container */}
+              <div className="relative mb-6 z-10 inline-flex">
                 <motion.div 
-                  whileHover={{ rotate: 5, scale: 1.1 }}
-                  transition={{ type: "spring", stiffness: 300, damping: 15 }}
-                  className="w-20 h-20 rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 border border-gray-200/60 dark:border-gray-700 shadow-inner flex items-center justify-center"
+                  className="w-16 h-16 rounded-2xl bg-white dark:bg-slate-800 border border-stone-100 dark:border-white/5 flex items-center justify-center shadow-lg group-hover:shadow-emerald-500/20 transition-all duration-500 relative overflow-hidden"
                 >
-                  {item.icon}
+                  <div className="absolute inset-0 bg-gradient-to-br from-emerald-100 to-transparent dark:from-emerald-900/40 dark:to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  <motion.div
+                    whileHover={{ rotate: [0, -10, 10, -5, 5, 0] }}
+                    transition={{ duration: 0.5 }}
+                    className="relative z-10"
+                  >
+                    {item.icon}
+                  </motion.div>
                 </motion.div>
                 
-                {/* Step Number Badge */}
-                <span
-                  className={`absolute -top-3 -right-3 w-8 h-8 rounded-xl ${item.badgeBg} text-white font-black text-xs flex items-center justify-center shadow-md shadow-black/10 border-2 border-white dark:border-gray-900`}
-                >
-                  0{item.stepNumber}
+                {/* Badge Number */}
+                <span className="absolute -bottom-2.5 -right-2.5 w-7 h-7 rounded-full bg-emerald-600 text-white font-black text-[12px] flex items-center justify-center shadow-md border-4 border-[#F8FAF8] dark:border-[#131B2E] transition-colors duration-300">
+                  {parseInt(item.stepNumber)}
                 </span>
               </div>
 
               {/* Step Content */}
-              <h3 className="text-lg font-bold mb-2 text-gray-900 dark:text-gray-100 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+              <h3 className="text-lg font-bold mb-2.5 text-stone-900 dark:text-white relative z-10 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors">
                 {item.title}
               </h3>
-              <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
+              <p className="text-[14px] text-stone-500 dark:text-stone-400 leading-relaxed font-medium relative z-10">
                 {item.description}
               </p>
             </motion.div>

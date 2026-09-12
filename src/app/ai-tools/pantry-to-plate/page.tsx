@@ -1,18 +1,14 @@
 "use client";
 
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { Toaster } from "react-hot-toast";
-// import { usePantryToPlate } from "../../hooks/usePantryToPlate";
 import RecipeResultView from "@/components/aitools/Pantry-to-Plate AI/RecipeResultView";
 import Hero from "@/components/aitools/Pantry-to-Plate AI/Hero";
 import PantryPanel from "@/components/aitools/Pantry-to-Plate AI/PantryPanel";
 import PreferencesPanel from "@/components/aitools/Pantry-to-Plate AI/PreferencesPanel";
 import GenerateButton from "@/components/aitools/Pantry-to-Plate AI/GenerateButton";
 import { usePantryToPlate } from "@/hooks/usePantryToPlate";
-// import Hero from "../../components/Hero";
-// import PantryPanel from "../../components/PantryPanel";
-// import PreferencesPanel from "../../components/PreferencesPanel";
-// import GenerateButton from "../../components/GenerateButton";
-// import RecipeResultView from "../../components/RecipeResultView";
 
 export default function PantryToPlatePage() {
   const {
@@ -40,23 +36,38 @@ export default function PantryToPlatePage() {
     generatedRecipe,
     handleGenerateRecipe,
     resetRecipe,
+    handleRefineRecipe,   // NEW
+    refiningOption,          // NEW
   } = usePantryToPlate();
 
   return (
     <div className="min-h-screen bg-emerald-50/20 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 transition-colors duration-200 p-4 sm:p-6 md:p-10">
-      <Toaster position="top-center" reverseOrder={false} />
+      <Toaster position="top-right" reverseOrder={false} />
 
       <div className="max-w-6xl mx-auto space-y-6">
-        <div className="flex items-center text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 gap-2">
-          <span>AI Tools</span>
-          <span>&gt;</span>
-          <span className="font-medium text-emerald-600 dark:text-emerald-400">
-            Pantry-to-Plate AI
-          </span>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/ai-tools"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-2xs hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 transition"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            Back to AI Tools
+          </Link>
+          <div className="flex items-center text-xs sm:text-sm text-zinc-400 gap-1.5">
+            <span>/</span>
+            <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+              Pantry-to-Plate AI
+            </span>
+          </div>
         </div>
 
         {generatedRecipe ? (
-          <RecipeResultView recipe={generatedRecipe} onBack={resetRecipe} />
+          <RecipeResultView
+            recipe={generatedRecipe}
+            onBack={resetRecipe}
+            onRefine={handleRefineRecipe}
+            refiningOption={refiningOption}
+          />
         ) : (
           <>
             <Hero

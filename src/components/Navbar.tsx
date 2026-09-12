@@ -1,18 +1,25 @@
-
 "use client";
 
 import { useState, useEffect, type MouseEvent } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Bell, Menu, X, Sun, Moon, LogOut } from "lucide-react";
+import { Bell, Menu, X, Sun, Moon, LogOut, ChevronRight } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { authClient } from "@/lib/auth-client";
 import toast from "react-hot-toast";
+import { Fredoka } from "next/font/google";
+
+const fredoka = Fredoka({ 
+  subsets: ["latin"], 
+  weight: ["500", "600", "700"],
+  display: "swap"
+});
 
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
 
   const pathname = usePathname();
   const router = useRouter();
@@ -36,15 +43,12 @@ export default function Navbar() {
   const dashboardHref =
     userRole === "admin" ? "/dashboard/admin" : "/dashboard/users";
 
-  // Add the Dashboard link only for authenticated users.
   const navLinks = user
     ? [...baseNavLinks, { name: "Dashboard", href: dashboardHref }]
     : baseNavLinks;
 
-  // Generate initials from the user's name when no profile image is available.
   const getInitials = (name?: string) => {
     if (!name) return "FC";
-
     return name
       .split(" ")
       .map((n) => n[0])
@@ -52,6 +56,14 @@ export default function Navbar() {
       .toUpperCase()
       .substring(0, 2);
   };
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 10);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   useEffect(() => {
     if (
@@ -120,163 +132,158 @@ export default function Navbar() {
   };
 
   return (
-    <div className="w-full sticky top-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-gray-100 dark:border-slate-800 transition-colors duration-300">
-      <header className="flex items-center justify-between px-6 lg:px-10 py-3 lg:py-4">
+    <div
+      className={`w-full sticky top-0 z-50 transition-all duration-300 ${scrolled
+          ? "bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-gray-100/50 dark:border-slate-800/50 shadow-sm"
+          : "bg-transparent border-b border-transparent"
+        }`}
+    >
+      <header className="max-w-[1440px] mx-auto flex items-center justify-between px-6 lg:px-12 py-4 lg:py-5">
 
         {/* Left Section */}
-        <div className="flex items-center gap-10 lg:gap-12">
-          <div className="flex items-center gap-2">
-            <Link
-              href="/"
-              className="flex items-center gap-2.5 group"
-              aria-label="FoodCanvas - Go to homepage"
-            >
-              <div className="relative w-12 h-12 lg:w-14 lg:h-14 shrink-0 transition-transform duration-200 group-hover:scale-105">
-                <Image
-                  src="/logohere.png"
-                  alt="FoodCanvas Logo"
-                  fill
-                  className="object-contain"
-                  priority
-                  sizes="(max-width: 1024px) 48px, 56px"
-                />
-              </div>
-
-              <div className="flex flex-col leading-none">
-                <span className="text-xl lg:text-2xl font-extrabold tracking-tight">
-                  <span className="text-[#2F8F46] dark:text-[#4ADE80]">
-                    Food
-                  </span>
-                  <span className="text-[#FF6B35]">Canvas</span>
-                </span>
-
-                <span className="text-[10px] tracking-[0.15em] uppercase font-semibold text-slate-400 dark:text-slate-500 mt-1">
-                  Ignite Your Taste
-                </span>
-              </div>
-            </Link>
-          </div>
+        <div className="flex items-center gap-10 lg:gap-14">
+          <Link
+            href="/"
+            className="flex items-center gap-2 h-12 shrink-0 group"
+            aria-label="FoodCanvas - Go to homepage"
+          >
+            {/* Icon Container */}
+            <div className="flex shrink-0 transition-transform duration-300 group-hover:scale-105">
+              <img
+                src="/navbar_logo.png"
+                alt="FoodCanvas Logo"
+                className="w-[34px] h-[34px] md:w-[38px] md:h-[38px] lg:w-[42px] lg:h-[42px] object-contain"
+              />
+            </div>
+            {/* Brand Text */}
+            <div className="relative flex items-center h-full">
+              <span 
+                className={`${fredoka.className} text-[24px] md:text-[26px] lg:text-[28px] font-semibold tracking-wide`}
+                style={{
+                  background: 'linear-gradient(90deg, #176B4D 0%, #65A947 45%, #F2B84B 75%, #F08A35 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                }}
+              >
+                FoodCanvas
+              </span>
+              <svg 
+                className="absolute -top-1 -right-3 w-4 h-4 text-[#65A947] opacity-90 transform rotate-12" 
+                viewBox="0 0 24 24" 
+                fill="currentColor"
+              >
+                <path d="M17.05,20.28c0.8,0.76,2.06,0.67,2.78-0.12c1.78-1.92,3.31-5.61,1.52-11.41C18.66,0.1,6.58-1.8,2.7,2.2c0,0-1.83,6.31,1.4,11.23c1.78,2.71,5.32,4.64,8.55,4.64c0.88,0,1.76-0.15,2.61-0.45l2.42,2.3c0.76,0.73,1.96,0.65,2.62-0.16c0.55-0.66,0.5-1.63-0.09-2.22L17.05,20.28z M12.65,15.65c-2.42,0-5.18-1.46-6.55-3.53C3.59,8.34,4.95,3.33,4.95,3.33c2.9-2.9,12.28-1.5,14.63,6.17c1.37,4.45,0.18,7.38-1.12,8.79C16.94,19.86,14.77,15.65,12.65,15.65z"/>
+              </svg>
+            </div>
+          </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-2 lg:gap-3">
+          <nav className="hidden md:flex items-center gap-1.5 lg:gap-2">
             {navLinks.map((link) => {
               const isActive = pathname === link.href;
 
               return (
                 <Link
-                  key={link.name}
-                  href={link.href}
-                  onClick={(event) => handleNavLinkClick(event, link.href)}
-                  className={`relative px-4 py-2 text-[15px] rounded-xl font-medium transition-all duration-200 ${isActive
-                      ? "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-slate-800 font-semibold shadow-sm"
-                      : "text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-slate-800/50"
-                    }`}
-                >
-                  {link.name}
-
-                  {isActive && (
-                    <motion.div
-                      layoutId="activeIndicator"
-                      className="absolute bottom-0 left-3 right-3 h-0.5 bg-emerald-600 dark:bg-emerald-400 rounded-full"
-                    />
-                  )}
-                </Link>
+  key={link.name}
+  href={link.href}
+  onClick={(event) => handleNavLinkClick(event, link.href)}
+  className={`relative px-4 py-2.5 text-[15px] rounded-full transition-all duration-300 ${
+    isActive
+      ? "text-emerald-700 dark:text-emerald-400 font-bold bg-emerald-50/80 dark:bg-emerald-500/10"
+      : "text-slate-600 dark:text-slate-300 font-medium hover:text-emerald-600 dark:hover:text-emerald-300 hover:bg-slate-50 dark:hover:bg-slate-800/50"
+  }`}
+>
+  {link.name}
+</Link>
               );
             })}
           </nav>
         </div>
 
         {/* Right Section */}
-        <div className="flex items-center gap-4 sm:gap-6">
+        <div className="flex items-center gap-3 sm:gap-5">
 
           {/* Theme Toggle */}
           <button
             onClick={toggleTheme}
-            className="p-2 text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors relative"
+            className="p-2.5 text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all duration-200"
             aria-label="Toggle Dark Mode"
           >
-            {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+            {isDarkMode ? <Sun size={18} strokeWidth={2.5} /> : <Moon size={18} strokeWidth={2.5} />}
           </button>
 
           {/* Authentication Section */}
           {isPending ? (
-            // Show a loading skeleton while the session is being checked.
-            <div className="w-24 h-9 bg-gray-200 dark:bg-slate-800 animate-pulse rounded-full" />
+            <div className="w-28 h-10 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-full" />
           ) : user ? (
-            // Authenticated users see notifications, profile, and logout.
             <>
               {/* Notifications */}
               <button
-                onClick={() =>
-                  toast("You have no new notifications", { icon: "🔔" })
-                }
-                className="p-2 text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors relative"
+                onClick={() => toast("You have no new notifications", { icon: "🔔" })}
+                className="p-2.5 text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all duration-200 relative"
                 aria-label="Notifications"
               >
-                <Bell size={20} />
-
-                <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full" />
+                <Bell size={18} strokeWidth={2.5} />
+                <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-slate-900" />
               </button>
 
               {/* User Profile and Logout */}
-              <div className="hidden sm:flex items-center gap-3">
-                <div className="flex items-center gap-2.5 bg-gray-50 dark:bg-slate-800/60 py-1.5 px-3 rounded-full border border-gray-100 dark:border-slate-800">
-
-                  {/* Display the profile image or user initials. */}
-                  <div className="h-8 w-8 rounded-full overflow-hidden border border-emerald-500/30 flex-shrink-0 relative bg-emerald-600 text-white font-bold flex items-center justify-center text-xs">
+              <div className="hidden sm:flex items-center gap-4 pl-2 border-l border-slate-200 dark:border-slate-700/50">
+                <div className="flex items-center gap-3">
+                  <div className="h-9 w-9 rounded-full overflow-hidden border-2 border-white dark:border-slate-800 shadow-sm relative bg-gradient-to-br from-emerald-500 to-teal-600 text-white font-bold flex items-center justify-center text-xs">
                     {user.image ? (
-                      <Image
-                        src={user.image}
-                        alt={user.name || "User profile"}
-                        fill
-                        sizes="32px"
-                        className="object-cover"
-                      />
+                      <Image src={user.image} alt={user.name || "User profile"} fill sizes="36px" className="object-cover" />
                     ) : (
                       <span>{getInitials(user.name)}</span>
                     )}
                   </div>
-
-                  <span className="text-sm font-semibold text-gray-700 dark:text-slate-200 max-w-[100px] truncate">
+                  <span className="text-[14px] font-semibold text-slate-700 dark:text-slate-200 max-w-[120px] truncate">
                     {user.name}
                   </span>
                 </div>
 
                 <button
                   onClick={handleLogout}
-                  className="flex items-center gap-1.5 px-3.5 py-2 bg-red-50 hover:bg-red-100 text-red-600 dark:bg-slate-800 dark:text-red-400 dark:hover:bg-slate-700 text-sm font-semibold rounded-full transition-colors shadow-sm"
+                  className="p-2.5 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-full transition-all duration-200"
+                  aria-label="Logout"
+                  title="Logout"
                 >
-                  <LogOut size={16} />
-                  Logout
+                  <LogOut size={18} strokeWidth={2.5} />
                 </button>
               </div>
             </>
           ) : (
-            // Unauthenticated users see Login and Sign Up.
-            <div className="hidden sm:flex items-center gap-3">
+            <div className="hidden sm:flex items-center gap-2">
               <Link
                 href="/registrationProcess/login"
-                className="px-4 py-2 text-gray-700 dark:text-slate-200 hover:text-emerald-600 text-sm font-semibold transition-colors"
+                className="px-5 py-2.5 text-slate-600 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 text-[15px] font-bold transition-colors"
               >
                 Log in
               </Link>
-
               <Link
                 href="/registrationProcess/register"
-                className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-full transition-colors shadow-sm shadow-emerald-600/20"
+                className="group relative px-6 py-2.5 text-white text-[15px] font-bold rounded-full transition-all duration-300 shadow-lg hover:shadow-xl flex items-center gap-2"
+                style={{
+                  background: 'linear-gradient(90deg, #154D31 0%, #24733E 50%, #10B981 100%)',
+                  backgroundSize: '200% 100%',
+                  transition: 'background-position 0.3s ease',
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundPosition = 'right center'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundPosition = 'left center'}
               >
-                Sign Up
+                <span>Sign Up</span>
+                <ChevronRight size={16} strokeWidth={3} className="opacity-70 group-hover:translate-x-0.5 transition-transform" />
               </Link>
             </div>
           )}
 
           {/* Mobile Menu Button */}
           <button
-            className="md:hidden p-2 text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors"
+            className="md:hidden p-2.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             aria-label="Toggle mobile menu"
           >
-            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            {isMobileMenuOpen ? <X size={24} strokeWidth={2.5} /> : <Menu size={24} strokeWidth={2.5} />}
           </button>
         </div>
       </header>
@@ -285,25 +292,22 @@ export default function Navbar() {
       <AnimatePresence>
         {isMobileMenuOpen && (
           <motion.div
-            initial={{ opacity: 0, y: -10, height: 0 }}
-            animate={{ opacity: 1, y: 0, height: "auto" }}
-            exit={{ opacity: 0, y: -10, height: 0 }}
-            transition={{ duration: 0.3, ease: "easeInOut" }}
-            className="md:hidden absolute top-full left-0 w-full bg-white dark:bg-slate-900 shadow-xl px-6 z-50 rounded-b-2xl overflow-hidden border-b border-gray-100 dark:border-slate-800"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
+            className="md:hidden absolute top-full left-0 w-full bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl shadow-2xl px-6 pb-6 pt-2 z-50 rounded-b-3xl border-b border-slate-100 dark:border-slate-800"
           >
-            <div className="flex flex-col gap-2 py-4">
-
-              {/* Mobile Navigation Links */}
+            <div className="flex flex-col gap-1.5">
               {navLinks.map((link) => {
                 const isActive = pathname === link.href;
-
                 return (
                   <Link
                     key={link.name}
                     href={link.href}
-                    className={`text-[15px] px-4 py-2.5 rounded-xl transition-colors ${isActive
-                        ? "font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-slate-800"
-                        : "font-medium text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800/50"
+                    className={`text-[16px] px-5 py-3.5 rounded-2xl transition-all ${isActive
+                      ? "font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10"
+                      : "font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/50"
                       }`}
                     onClick={(event) => {
                       setIsMobileMenuOpen(false);
@@ -315,57 +319,49 @@ export default function Navbar() {
                 );
               })}
 
-              {/* Mobile Authentication Section */}
-              <div className="pt-3 mt-2 border-t border-gray-100 dark:border-slate-800 flex flex-col gap-3">
+              <div className="pt-4 mt-2 border-t border-slate-100 dark:border-slate-800/60 flex flex-col gap-3">
                 {user ? (
-                  // Authenticated mobile users see their profile and logout.
-                  <div className="flex flex-col gap-3">
-
-                    {/* Mobile User Profile */}
-                    <div className="flex items-center gap-3 py-1">
-                      <div className="h-9 w-9 rounded-full overflow-hidden border border-emerald-500/30 flex-shrink-0 relative bg-emerald-600 text-white font-bold flex items-center justify-center text-xs">
+                  <div className="flex flex-col gap-4">
+                    <div className="flex items-center gap-4 px-2">
+                      <div className="h-12 w-12 rounded-full overflow-hidden border-2 border-emerald-500/30 flex-shrink-0 relative bg-emerald-600 text-white font-bold flex items-center justify-center text-sm">
                         {user.image ? (
-                          <Image
-                            src={user.image}
-                            alt={user.name || "User profile"}
-                            fill
-                            sizes="36px"
-                            className="object-cover"
-                          />
+                          <Image src={user.image} alt={user.name || "User"} fill sizes="48px" className="object-cover" />
                         ) : (
                           <span>{getInitials(user.name)}</span>
                         )}
                       </div>
-
-                      <span className="text-sm font-bold text-gray-800 dark:text-slate-100 truncate">
+                      <span className="text-[16px] font-bold text-slate-800 dark:text-slate-100">
                         {user.name}
                       </span>
                     </div>
-
-                    {/* Mobile Logout */}
                     <button
                       onClick={handleLogout}
-                      className="flex items-center justify-center gap-2 w-full py-2.5 bg-red-50 hover:bg-red-100 text-red-600 dark:bg-slate-800 dark:text-red-400 dark:hover:bg-slate-700 text-sm font-semibold rounded-full transition-colors"
+                      className="flex items-center justify-center gap-2 w-full py-3.5 bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-500/10 dark:text-red-400 dark:hover:bg-red-500/20 text-[15px] font-bold rounded-2xl transition-colors"
                     >
-                      <LogOut size={16} />
+                      <LogOut size={18} strokeWidth={2.5} />
                       Logout
                     </button>
                   </div>
                 ) : (
-                  // Unauthenticated mobile users see Login and Sign Up.
-                  <div className="flex flex-col gap-2">
+                  <div className="flex flex-col gap-3">
                     <Link
                       href="/registrationProcess/login"
-                      className="flex items-center justify-center w-full py-2.5 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-200 text-sm font-semibold rounded-full transition-colors"
+                      className="flex items-center justify-center w-full py-3.5 bg-slate-50 dark:bg-slate-800/50 text-slate-800 dark:text-white text-[15px] font-bold rounded-2xl transition-colors"
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
                       Log in
                     </Link>
-
                     <Link
                       href="/registrationProcess/register"
-                      className="flex items-center justify-center w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-full transition-colors"
+                      className="flex items-center justify-center w-full py-3.5 text-white text-[15px] font-bold rounded-2xl transition-all shadow-lg"
+                      style={{
+                        background: 'linear-gradient(90deg, #154D31 0%, #24733E 50%, #10B981 100%)',
+                        backgroundSize: '200% 100%',
+                        transition: 'background-position 0.3s ease',
+                      }}
                       onClick={() => setIsMobileMenuOpen(false)}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundPosition = 'right center'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundPosition = 'left center'}
                     >
                       Sign Up
                     </Link>

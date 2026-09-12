@@ -50,7 +50,11 @@ const getCommunityChefs = (communityPosts: Post[], viewerId?: string) => {
 export const CommunityFeed: React.FC = () => {
   const router = useRouter();
   const { data: session, isPending: isSessionPending } = authClient.useSession();
-  const isAuthenticated = Boolean(session?.user);
+  const [isHydrated, setIsHydrated] = useState(false);
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
+  const isAuthenticated = isHydrated && Boolean(session?.user);
 
   // Community data state
   const [posts, setPosts] = useState<Post[]>(() => communityCache?.posts ?? []);
@@ -253,6 +257,7 @@ export const CommunityFeed: React.FC = () => {
         await loadCommunity();
         showToast(success);
       } catch (error) {
+        setHasMoreServerPosts(false);
         showToast(error instanceof Error ? error.message : "Community action failed");
       }
     },

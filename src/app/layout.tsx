@@ -20,8 +20,13 @@ export const metadata: Metadata = {
 import Navbar from "@/components/Navbar";
 import ConditionalFooter from "@/components/ConditionalFooter";
 import { Toaster } from "react-hot-toast";
+import AIAssistantPopup from "@/components/AIAssistantPopup";
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html
       lang="en"
@@ -30,6 +35,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col bg-slate-100 dark:bg-slate-950 transition-colors duration-300">
         <div className="">
           <Navbar />
+          <AIAssistantPopup/>
           <main className="flex-1">
             {children}
             <Toaster position="bottom-right" reverseOrder={false} />

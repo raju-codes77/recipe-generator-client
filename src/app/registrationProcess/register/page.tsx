@@ -92,7 +92,8 @@ export default function RegisterPage() {
         email: email.trim(),
         password,
         image: photo.trim() || undefined,
-      });
+        role: role,
+      } as any);
 
       if (error) {
         console.error("Signup error:", error);
