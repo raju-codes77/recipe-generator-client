@@ -50,7 +50,7 @@ export default function ExploreRecipes() {
 
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [collections, setCollections] = useState<Collection[]>([]);
-  
+
   const [isCollectionsLoading, setIsCollectionsLoading] = useState<boolean>(true);
   const [isRecipesLoading, setIsRecipesLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -78,7 +78,7 @@ export default function ExploreRecipes() {
   const [currentPage, setCurrentPage] = useState(1);
   const recipesPerPage = 12;
 
-  // ডাবল ফেচ বা রি-রিলোড লুপ আটকাতে প্রিভেন্টিভ রেফারেন্স
+  // double-check to prevent multiple fetches at the same time
   const isFetchingRef = useRef(false);
 
   // Initial fetch for collections on mount
@@ -131,8 +131,8 @@ export default function ExploreRecipes() {
 
         const params = new URLSearchParams();
 
-        params.append('page', String(currentPage));
-        params.append('limit', String(recipesPerPage));
+        params.append("page", String(currentPage));
+        params.append("limit", String(recipesPerPage));
 
         if (searchQuery.trim()) {
           params.append("search", searchQuery.trim());
@@ -324,12 +324,12 @@ export default function ExploreRecipes() {
 
   const isFiltered = Boolean(
     searchQuery ||
-      selectedCuisine !== "All" ||
-      selectedCategory !== "All" ||
-      maxTime < 60 ||
-      maxCalories < 1000 ||
-      minRating > 0 ||
-      sortBy !== "Latest"
+    selectedCuisine !== "All" ||
+    selectedCategory !== "All" ||
+    maxTime < 60 ||
+    maxCalories < 1000 ||
+    minRating > 0 ||
+    sortBy !== "Latest"
   );
 
   if (error) {
@@ -349,7 +349,7 @@ export default function ExploreRecipes() {
   return (
     <div className="min-h-screen bg-white text-gray-900 transition-colors duration-200 dark:bg-black dark:text-white">
       <div className="mx-auto max-w-7xl px-4 py-8">
-        
+
         {/* FILTER CARD */}
         <div className="mb-8 w-full">
           <FilterCard
@@ -380,7 +380,7 @@ export default function ExploreRecipes() {
           <div className="lg:col-span-8 flex flex-col w-full min-w-0">
 
             <div className="mb-6 flex flex-col gap-4 border-b border-gray-200 dark:border-white/10 sm:flex-row sm:items-center sm:justify-between">
-              
+
               {/* TABS */}
               <div className="no-scrollbar flex items-center gap-6 overflow-x-auto">
                 {[
@@ -399,11 +399,10 @@ export default function ExploreRecipes() {
                       }
                       setCurrentPage(1);
                     }}
-                    className={`relative cursor-pointer whitespace-nowrap pb-3 text-sm font-semibold transition-colors ${
-                      activeTab === tab
-                        ? "text-[#24733E] dark:text-[#10B981]"
-                        : "text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
-                    }`}
+                    className={`relative cursor-pointer whitespace-nowrap pb-3 text-sm font-semibold transition-colors ${activeTab === tab
+                      ? "text-[#24733E] dark:text-[#10B981]"
+                      : "text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                      }`}
                   >
                     {tab === "My Collections" && selectedCollectionName
                       ? `Collection: ${selectedCollectionName}`
@@ -427,21 +426,19 @@ export default function ExploreRecipes() {
                   <div className="flex items-center gap-1 rounded-xl border border-[#E2EBE4] bg-white p-1 dark:border-white/10 dark:bg-[#131B2E]">
                     <button
                       onClick={() => setViewMode("grid")}
-                      className={`cursor-pointer rounded-lg p-1.5 transition-colors ${
-                        viewMode === "grid"
-                          ? "bg-[#EAF4EB] text-[#24733E] dark:bg-[#10B981]/20 dark:text-[#10B981]"
-                          : "text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
-                      }`}
+                      className={`cursor-pointer rounded-lg p-1.5 transition-colors ${viewMode === "grid"
+                        ? "bg-[#EAF4EB] text-[#24733E] dark:bg-[#10B981]/20 dark:text-[#10B981]"
+                        : "text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                        }`}
                     >
                       <LayoutGrid className="h-4 w-4" />
                     </button>
                     <button
                       onClick={() => setViewMode("list")}
-                      className={`cursor-pointer rounded-lg p-1.5 transition-colors ${
-                        viewMode === "list"
-                          ? "bg-[#EAF4EB] text-[#24733E] dark:bg-[#10B981]/20 dark:text-[#10B981]"
-                          : "text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
-                      }`}
+                      className={`cursor-pointer rounded-lg p-1.5 transition-colors ${viewMode === "list"
+                        ? "bg-[#EAF4EB] text-[#24733E] dark:bg-[#10B981]/20 dark:text-[#10B981]"
+                        : "text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                        }`}
                     >
                       <List className="h-4 w-4" />
                     </button>
@@ -525,7 +522,7 @@ export default function ExploreRecipes() {
               </div>
             ) : (
               <div className="flex flex-col w-full">
-                
+
                 {/* BACK BUTTON */}
                 {activeTab === "My Collections" && selectedCollectionId && (
                   <button
@@ -546,8 +543,8 @@ export default function ExploreRecipes() {
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
                       {currentRecipes.map((recipe, index) => (
                         <div key={recipe.id} className="w-full min-w-0">
-                          <RecipeCard 
-                            recipe={recipe} 
+                          <RecipeCard
+                            recipe={recipe}
                             index={index}
                             onFavoriteRemoved={(removedId) => {
                               if (activeTab === "Favorite Recipes") {
@@ -621,17 +618,17 @@ export default function ExploreRecipes() {
                       {activeTab === "My Recipes"
                         ? "You haven't created any recipes yet"
                         : activeTab === "Favorite Recipes"
-                        ? "No favorite recipes yet"
-                        : activeTab === "My Collections"
-                        ? "No recipes in this collection yet"
-                        : "No recipes found"}
+                          ? "No favorite recipes yet"
+                          : activeTab === "My Collections"
+                            ? "No recipes in this collection yet"
+                            : "No recipes found"}
                     </h3>
                     <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
                       {activeTab === "Favorite Recipes"
                         ? "Love a recipe to save it here."
                         : activeTab === "My Collections"
-                        ? "Add recipes to this collection to see them here."
-                        : "Try adjusting your search or selecting a different filter."}
+                          ? "Add recipes to this collection to see them here."
+                          : "Try adjusting your search or selecting a different filter."}
                     </p>
                     {activeTab === "All Recipes" && (
                       <button

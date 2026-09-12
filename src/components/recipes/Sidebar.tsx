@@ -2,14 +2,15 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { 
-  ChevronRight, 
+import {
+  ChevronRight,
   Plus,
   Folder,
   X
 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { toast } from "react-hot-toast";
+import Link from "next/link";
 
 interface SidebarProps {
   selectedCollectionId?: string | null;
@@ -22,7 +23,7 @@ export default function Sidebar({ selectedCollectionId, onSelectCollection }: Si
 
   const [collections, setCollections] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newCollectionName, setNewCollectionName] = useState("");
   const [creating, setCreating] = useState(false);
@@ -55,11 +56,11 @@ export default function Sidebar({ selectedCollectionId, onSelectCollection }: Si
     }
   }, [userId, session]);
 
-  
+
   useEffect(() => {
     const handleCollectionUpdate = () => {
       if (userId) {
-        fetchCollections(); 
+        fetchCollections();
       }
     };
 
@@ -100,10 +101,10 @@ export default function Sidebar({ selectedCollectionId, onSelectCollection }: Si
 
   return (
     <div className="space-y-6">
-      
+
       {/* MY COLLECTIONS CARD */}
       <div className="rounded-[28px] border border-[#E2EBE4] bg-white p-6 shadow-sm dark:border-white/10 dark:bg-[#131B2E]">
-        
+
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-bold text-gray-900 dark:text-white">My Collections</h3>
           <span className="text-xs font-bold text-gray-400">
@@ -126,11 +127,10 @@ export default function Sidebar({ selectedCollectionId, onSelectCollection }: Si
                       onSelectCollection(col.id, col.name);
                     }
                   }}
-                  className={`group flex items-center justify-between p-2 rounded-2xl transition-colors cursor-pointer ${
-                    selectedCollectionId === col.id 
-                      ? "bg-[#EAF4EB] dark:bg-[#10B981]/20 border border-[#24733E]/30 dark:border-[#10B981]/30" 
+                  className={`group flex items-center justify-between p-2 rounded-2xl transition-colors cursor-pointer ${selectedCollectionId === col.id
+                      ? "bg-[#EAF4EB] dark:bg-[#10B981]/20 border border-[#24733E]/30 dark:border-[#10B981]/30"
                       : "hover:bg-gray-50 dark:hover:bg-white/5"
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center gap-3">
                     <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-xl bg-[#EAF4EB] text-[#24733E] dark:bg-[#10B981]/10 dark:text-[#10B981] flex items-center justify-center">
@@ -156,7 +156,7 @@ export default function Sidebar({ selectedCollectionId, onSelectCollection }: Si
           )}
         </div>
 
-        <button 
+        <button
           onClick={() => {
             if (!userId) {
               toast.error("Please login first to create collections.");
