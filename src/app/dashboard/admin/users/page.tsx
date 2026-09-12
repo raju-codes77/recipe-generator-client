@@ -1,8 +1,11 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { FiTrash2, FiUserX, FiUserCheck, FiUsers, FiShield } from "react-icons/fi";
+import { FiTrash2, FiUserX, FiUserCheck, FiUsers, FiShield, FiArrowLeft } from "react-icons/fi";
+import Link from "next/link";
 import toast from "react-hot-toast";
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 interface User {
   id: string;
@@ -17,14 +20,22 @@ export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Users fetched data
+  const [pagination, setPagination] = useState<any>(null);
+  const [page, setPage] = useState(1);
+
   const fetchUsers = async () => {
+    setLoading(true);
     try {
-      const res = await fetch("http://localhost:5000/api/admin/users");
+      const res = await fetch(`${API_BASE_URL}/api/admin/users?page=${page}&limit=20`, {
+        credentials: "include"
+      });
       const data = await res.json();
-      if (data.success) {
-        setUsers(data.users);
-      }
+      setUsers(data.users || []);
+      setPagination({
+        page: data.page,
+        totalPages: data.totalPages,
+        total: data.total
+      });
     } catch (error) {
       console.error("Error fetching users:", error);
       toast.error("Failed to load users");
@@ -35,23 +46,23 @@ export default function AdminUsersPage() {
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [page]);
 
   // users status (Suspend / Active) 
   const handleStatusChange = async (id: string, currentStatus: string) => {
-    const newStatus = currentStatus === "ACTIVE" ? "SUSPENDED" : "ACTIVE";
+    const newStatus = currentStatus === "ACTIVE" ? "BLOCKED" : "ACTIVE";
     try {
-      const res = await fetch(`http://localhost:5000/api/admin/users/${id}/status`, {
+      const res = await fetch(`${API_BASE_URL}/api/admin/users/${id}/status`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ status: newStatus }),
       });
-      const data = await res.json();
-      if (data.success) {
+      if (res.ok) {
         toast.success(`User ${newStatus.toLowerCase()} successfully`);
-        fetchUsers(); // refreshing our list
+        setUsers(users.map(u => u.id === id ? { ...u, status: newStatus } : u));
       } else {
-        toast.error(data.message || "Action failed");
+        toast.error("Action failed");
       }
     } catch (error) {
       console.error("Status update error:", error);
@@ -61,18 +72,18 @@ export default function AdminUsersPage() {
 
   //users delete function
   const handleDeleteUser = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this user?")) return;
+    if (!confirm("Are you sure you want to permanently delete this user?")) return;
 
     try {
-      const res = await fetch(`http://localhost:5000/api/admin/users/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/admin/users/${id}`, {
         method: "DELETE",
+        credentials: "include"
       });
-      const data = await res.json();
-      if (data.success) {
+      if (res.ok) {
         toast.success("User deleted successfully");
         setUsers(users.filter((user) => user.id !== id));
       } else {
-        toast.error(data.message || "Delete failed");
+        toast.error("Delete failed");
       }
     } catch (error) {
       console.error("Delete error:", error);
@@ -91,11 +102,14 @@ export default function AdminUsersPage() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
           <div>
+            <Link href="/dashboard/admin" className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-[#2F8F46] mb-3 transition-colors">
+              <FiArrowLeft className="mr-2 w-4 h-4" /> Back to Dashboard
+            </Link>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-[#F6F0D7] flex items-center gap-2">
-              <FiUsers className="text-[#2F8F46]" /> Admin User Management
+              <FiUsers className="text-[#2F8F46]" /> User Management
             </h1>
             <p className="text-xs sm:text-sm text-gray-500 dark:text-[#F6F0D7]/60 mt-1">
-              Total registered users: <span className="font-bold text-[#2F8F46]">{users.length}</span>
+              Total registered users: <span className="font-bold text-[#2F8F46]">{pagination?.total || users.length}</span>
             </p>
           </div>
         </div>
@@ -145,14 +159,14 @@ export default function AdminUsersPage() {
                       {/* Suspend / Active Toggle Button */}
                       <button
                         onClick={() => handleStatusChange(user.id, user.status || "ACTIVE")}
-                        title={user.status === "SUSPENDED" ? "Activate User" : "Suspend User"}
+                        title={user.status === "BLOCKED" ? "Activate User" : "Block User"}
                         className={`p-2 rounded-xl transition ${
-                          user.status === "SUSPENDED"
+                          user.status === "BLOCKED"
                             ? "bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-950/50 dark:text-green-300"
                             : "bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-950/50 dark:text-amber-300"
                         }`}
                       >
-                        {user.status === "SUSPENDED" ? <FiUserCheck size={14} /> : <FiUserX size={14} />}
+                        {user.status === "BLOCKED" ? <FiUserCheck size={14} /> : <FiUserX size={14} />}
                       </button>
 
                       {/* Delete Button */}
@@ -176,6 +190,30 @@ export default function AdminUsersPage() {
               </tbody>
             </table>
           </div>
+          {/* Pagination */}
+          {pagination && pagination.totalPages > 1 && (
+            <div className="px-6 py-4 border-t border-gray-200 dark:border-[#89986D]/20 flex items-center justify-between">
+              <span className="text-xs text-gray-500">
+                Showing page {pagination.page} of {pagination.totalPages}
+              </span>
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                  className="px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-200 dark:border-[#89986D]/20 text-gray-700 dark:text-[#F6F0D7] hover:bg-gray-50 dark:hover:bg-[#89986D]/10 disabled:opacity-50 transition-colors"
+                >
+                  Previous
+                </button>
+                <button 
+                  onClick={() => setPage(p => Math.min(pagination.totalPages, p + 1))}
+                  disabled={page === pagination.totalPages}
+                  className="px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-200 dark:border-[#89986D]/20 text-gray-700 dark:text-[#F6F0D7] hover:bg-gray-50 dark:hover:bg-[#89986D]/10 disabled:opacity-50 transition-colors"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
       </div>

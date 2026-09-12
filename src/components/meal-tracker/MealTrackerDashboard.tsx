@@ -54,7 +54,16 @@ function DashboardInner() {
               <BarChart2 className="w-6 h-6 text-green-600" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Meal Tracker</h1>
+              <h1 
+                className="text-2xl font-extrabold tracking-tight"
+                style={{
+                  background: 'linear-gradient(90deg, #0F432B 0%, #4AB741 40%, #154D31 80%, #082E1A 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                }}
+              >
+                Meal Tracker
+              </h1>
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 Upload your meal photo and get AI-powered nutrition analysis
               </p>
