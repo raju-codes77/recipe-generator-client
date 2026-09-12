@@ -15,6 +15,10 @@ import {
   Folder,
   ArrowLeft,
   Trash2,
+  ChefHat,
+  Sparkles,
+  UtensilsCrossed,
+  Star,
 } from "lucide-react";
 import Image from "next/image";
 import { authClient } from "@/lib/auth-client";
@@ -348,33 +352,100 @@ export default function ExploreRecipes() {
 
   return (
     <div className="min-h-screen bg-white text-gray-900 transition-colors duration-200 dark:bg-black dark:text-white">
-      <div className="mx-auto max-w-7xl px-4 py-8">
 
-        {/* FILTER CARD */}
-        <div className="mb-8 w-full">
-          <FilterCard
-            searchQuery={searchQuery}
-            setSearchQuery={(q) => { setSearchQuery(q); setCurrentPage(1); }}
-            selectedCategory={selectedCategory}
-            setSelectedCategory={(c) => { setSelectedCategory(c); setCurrentPage(1); }}
-            selectedCuisine={selectedCuisine}
-            setSelectedCuisine={(c) => { setSelectedCuisine(c); setCurrentPage(1); }}
-            sortBy={sortBy}
-            setSortBy={(s) => { setSortBy(s); setCurrentPage(1); }}
-            showAdvancedFilters={showAdvancedFilters}
-            setShowAdvancedFilters={setShowAdvancedFilters}
-            maxTime={maxTime}
-            setMaxTime={(t) => { setMaxTime(t); setCurrentPage(1); }}
-            maxCalories={maxCalories}
-            setMaxCalories={(c) => { setMaxCalories(c); setCurrentPage(1); }}
-            minRating={minRating}
-            setMinRating={(r) => { setMinRating(r); setCurrentPage(1); }}
-            resetFilters={resetFilters}
-            isFiltered={isFiltered}
-            availableCategories={availableCategories}
-            availableCuisines={availableCuisines}
-          />
+      {/* ── HERO HEADER ── */}
+      <div className="relative w-full overflow-hidden min-h-[480px] lg:h-[480px]">
+        {/* Background food image */}
+        <Image
+          src="/hero3.png"
+          alt="Recipe Collection"
+          fill
+          priority
+          className="object-cover object-center"
+          sizes="100vw"
+        />
+
+        {/* Dark overlay gradient — left-heavy for text legibility, lighter for more image visibility */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background: 'linear-gradient(to right, rgba(5,15,5,0.65) 0%, rgba(5,15,5,0.45) 40%, rgba(5,15,5,0.15) 65%, rgba(5,15,5,0.0) 100%)'
+          }}
+        />
+        {/* Bottom fade — starts lower so top of image stays vibrant */}
+        <div className="absolute left-0 right-0 bottom-0 h-20 bg-gradient-to-t from-white dark:from-black to-transparent pointer-events-none" />
+
+        {/* Content */}
+        <div className="relative z-10 flex flex-col justify-center h-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 pt-16">
+          <div className="flex-1 flex flex-col justify-center">
+            {/* Badge */}
+            <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md border border-white/30 text-white px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-widest mb-4 w-fit shadow-sm">
+              <UtensilsCrossed size={12} />
+              <span>Recipe Collection</span>
+            </div>
+
+            {/* Gradient headline — brighter gradient with drop shadow for visibility */}
+            <h1
+              className="text-4xl sm:text-5xl lg:text-[56px] font-black tracking-tight leading-[1.05] mb-4 drop-shadow-lg"
+              style={{
+                background: 'linear-gradient(90deg, #4AB741 0%, #10B981 50%, #059669 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+              }}
+            >
+              Explore Recipes
+            </h1>
+
+            <p className="text-white/80 text-base sm:text-lg max-w-xl font-medium leading-relaxed mb-6">
+              Discover thousands of AI-curated recipes — filter by cuisine, diet, time, and nutrition to find your perfect meal.
+            </p>
+
+            {/* Stats row */}
+            <div className="flex flex-wrap items-center gap-3">
+              {[
+                { icon: <ChefHat size={14} />, label: 'Chef-Approved' },
+                { icon: <Sparkles size={14} />, label: 'AI-Curated' },
+                { icon: <Star size={14} />, label: 'Top Rated' },
+                { icon: <Clock size={14} />, label: 'Quick & Easy' },
+              ].map(({ icon, label }) => (
+                <div key={label} className="flex items-center gap-1.5 bg-white/10 backdrop-blur-sm border border-white/15 text-white/90 px-3 py-1 rounded-full text-[11px] font-semibold">
+                  {icon}
+                  <span>{label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* ── FILTER BAR INSIDE HEADER ── */}
+          <div className="mt-8 w-full max-w-5xl">
+            <FilterCard
+              searchQuery={searchQuery}
+              setSearchQuery={(q) => { setSearchQuery(q); setCurrentPage(1); }}
+              selectedCategory={selectedCategory}
+              setSelectedCategory={(c) => { setSelectedCategory(c); setCurrentPage(1); }}
+              selectedCuisine={selectedCuisine}
+              setSelectedCuisine={(c) => { setSelectedCuisine(c); setCurrentPage(1); }}
+              sortBy={sortBy}
+              setSortBy={(s) => { setSortBy(s); setCurrentPage(1); }}
+              showAdvancedFilters={showAdvancedFilters}
+              setShowAdvancedFilters={setShowAdvancedFilters}
+              maxTime={maxTime}
+              setMaxTime={(t) => { setMaxTime(t); setCurrentPage(1); }}
+              maxCalories={maxCalories}
+              setMaxCalories={(c) => { setMaxCalories(c); setCurrentPage(1); }}
+              minRating={minRating}
+              setMinRating={(r) => { setMinRating(r); setCurrentPage(1); }}
+              resetFilters={resetFilters}
+              isFiltered={isFiltered}
+              availableCategories={availableCategories}
+              availableCuisines={availableCuisines}
+            />
+          </div>
         </div>
+      </div>
+
+      <div className="mx-auto max-w-7xl px-4 py-8">
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           <div className="lg:col-span-8 flex flex-col w-full min-w-0">

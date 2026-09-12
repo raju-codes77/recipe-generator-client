@@ -14,60 +14,60 @@ import {
 const SLIDES = [
   {
     id: 0,
-    badge: "Cook Smarter. Eat Healthier.",
-    headline: ["Good Food.", "Better You."],
+    badge: "Smart Recipe Discovery",
+    headline: ["Discover Recipes.", "Track Your Nutrition."],
     headlineHighlight: -1,
-    sub: "FoodCanvas is your AI-powered culinary companion — turning ingredients, budgets, and goals into perfectly crafted meals.",
-    ctaPrimary: { label: "Start Cooking Free", href: "/ai-tools" },
-    ctaSecondary: { label: "Explore Features", href: "/recipes" },
+    sub: "Get AI-curated recipes with full macro breakdowns — protein, carbs, fat and health scores — so every meal works toward your goals.",
+    ctaPrimary: { label: "Explore Recipes", href: "/recipes" },
+    ctaSecondary: { label: "Try AI Tools", href: "/ai-tools" },
     accentColor: "emerald",
     bgImage: "/hero1.png",
     bgPos: "center right",
   },
   {
     id: 1,
-    badge: "Good Food. Better You.",
-    headline: ["Your Personal", "AI Food Assistant", "for a Healthier Life"],
+    badge: "Your AI Food Companion",
+    headline: ["One App.", "Every Tool", "You Need."],
     headlineHighlight: 1,
-    sub: "From what's in your pantry to what's on your plate — FoodCanvas helps you plan, cook, track and enjoy better meals, every day.",
+    sub: "Plan meals, rescue ingredients, build smart shopping lists, and track your nutrition — all inside one beautifully designed AI assistant.",
     ctaPrimary: { label: "Start For Free", href: "/ai-tools" },
-    ctaSecondary: { label: "Explore Features", href: "/recipes" },
+    ctaSecondary: { label: "View Dashboard", href: "/dashboard/users" },
     accentColor: "emerald",
     bgImage: "/hero2.png",
     bgPos: "center right",
   },
   {
     id: 2,
-    badge: "The FoodCanvas Experience",
-    headline: ["Your Complete", "Culinary AI Assistant."],
-    headlineHighlight: 1,
-    sub: "From ingredient rescue to nutrition tracking, access all our intelligent tools in one seamless interface.",
+    badge: "Complete AI Toolkit",
+    headline: ["All Your Tools.", "One Smart Kitchen."],
+    headlineHighlight: -1,
+    sub: "From ingredient rescue to nutrition tracking — FoodCanvas puts every AI-powered cooking tool at your fingertips in one seamless app.",
     ctaPrimary: { label: "Get Started Free", href: "/ai-tools" },
-    ctaSecondary: { label: "Explore Features", href: "/dashboard/users" },
+    ctaSecondary: { label: "View Dashboard", href: "/dashboard/users" },
     accentColor: "emerald",
     bgImage: "/hero3.png",
     bgPos: "right center",
   },
   {
     id: 3,
-    badge: "Good Food. Better You.",
-    headline: ["Cook Smarter.", "Eat Healthier.", "With FoodCanvas."],
-    headlineHighlight: -1,
-    sub: "Your personal AI-powered food assistant. Plan, cook, track and enjoy better meals — every day.",
-    ctaPrimary: { label: "Start Cooking →", href: "/ai-tools" },
-    ctaSecondary: { label: "Explore Features", href: "/recipes" },
+    badge: "AI Taste Matcher",
+    headline: ["Discover Perfect", "Flavor Pairings."],
+    headlineHighlight: 0,
+    sub: "Let AI reveal the best ingredient combinations for your palate — from spicy & umami to floral & earthy, every dish becomes a masterpiece.",
+    ctaPrimary: { label: "Try Taste Matcher", href: "/ai-tools/taste-matcher" },
+    ctaSecondary: { label: "Explore Recipes", href: "/recipes" },
     accentColor: "emerald",
     bgImage: "/hero4.png",
     bgPos: "center",
   },
   {
     id: 4,
-    badge: "AI Ingredient Rescue",
-    headline: ["Turn Pantry & Leftovers", "Into Gourmet Meals."],
+    badge: "AI Meal Planner",
+    headline: ["Plan Smarter.", "Eat Better."],
     headlineHighlight: -1,
-    sub: "Stop food waste. FoodCanvas turns your available ingredients into satisfying, zero-waste recipes.",
-    ctaPrimary: { label: "Rescue Ingredients", href: "/ai-tools/ingredient-rescue" },
-    ctaSecondary: { label: "View Dashboard", href: "/dashboard/users" },
+    sub: "Build your full weekly meal plan on a budget, then let Smart Meal Matcher serve up personalized recipe recommendations just for you.",
+    ctaPrimary: { label: "Plan My Meals", href: "/ai-tools/budget-meal-planner" },
+    ctaSecondary: { label: "Find My Match", href: "/ai-tools/taste-matcher" },
     accentColor: "teal",
     bgImage: "/hero5.png",
     bgPos: "center right",
@@ -75,33 +75,40 @@ const SLIDES = [
 ];
 
 // ─── Floating Card wrapper ─────────────────────────────────────────────────────
-function FloatingCard({
-  children, delay, offsetX, offsetY, floatDir = "down", className = "", zIndex = "z-20"
-}: {
-  children: React.ReactNode;
-  delay: number;
-  offsetX: string;
-  offsetY: string;
-  floatDir?: "up" | "down" | "none";
-  className?: string;
-  zIndex?: string;
+function FloatingCard({ children, delay = 0, offsetX, offsetY, floatDir = "down", className = "", zIndex = "z-10" }: {
+  children: React.ReactNode; delay?: number; offsetX: string; offsetY: string; floatDir?: "up" | "down" | "none"; className?: string; zIndex?: string;
 }) {
+  // Determine floating offsets
+  const yOffset = floatDir === "up" ? -12 : (floatDir === "down" ? 12 : 0);
+  const rotOffset = floatDir === "up" ? -1 : (floatDir === "down" ? 1 : 0);
+  
   return (
     <motion.div
-      className={`absolute ${offsetX} ${offsetY} ${zIndex} bg-white/90 dark:bg-slate-800/95 backdrop-blur-md shadow-xl border border-white/40 dark:border-slate-600/70 rounded-2xl p-4 pointer-events-auto ${className}`}
-      initial={{ opacity: 0, y: 20, scale: 0.95 }}
-      animate={{ 
-        opacity: 1, 
-        y: floatDir === "none" ? 0 : (floatDir === "down" ? [-4, 4, -4] : [4, -4, 4]),
-        scale: 1
-      }}
+      className={`absolute ${offsetX} ${offsetY} ${zIndex} pointer-events-auto`}
+      initial={{ opacity: 0, scale: 0.8, y: floatDir === "none" ? 0 : (floatDir === "down" ? -30 : 30) }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
       transition={{
-        opacity: { delay, duration: 0.6 },
-        scale: { delay, duration: 0.6 },
-        y: floatDir === "none" ? { delay, duration: 0.6 } : { repeat: Infinity, duration: 6, ease: "easeInOut", delay: delay + 0.6 },
+        type: "spring",
+        stiffness: 100,
+        damping: 15,
+        delay: delay,
       }}
     >
-      {children}
+      <motion.div
+        className={`bg-white/90 dark:bg-slate-800/95 backdrop-blur-md rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.4)] p-4 border border-white/40 dark:border-slate-600/70 will-change-transform ${className}`}
+        animate={floatDir === "none" ? {} : {
+          y: [0, yOffset, 0],
+          rotate: [0, rotOffset, -rotOffset, 0]
+        }}
+        transition={floatDir === "none" ? {} : {
+          duration: 6,
+          repeat: Infinity,
+          ease: "easeInOut",
+          delay: delay + 0.5, // Start float after entrance
+        }}
+      >
+        {children}
+      </motion.div>
     </motion.div>
   );
 }
@@ -165,8 +172,8 @@ function Slide0Visual() { // hero1.png - "Good Food. Better You."
       {/* ── Large Central Recipe Card ── */}
       <FloatingCard
         delay={0.3}
-        offsetX="right-[22%] 2xl:right-[27%]"
-        offsetY="top-[14%]"
+        offsetX="right-[24%] 2xl:right-[27%]"
+        offsetY="top-[18%]"
         floatDir="down"
         className="w-[230px] p-0 overflow-hidden shadow-2xl"
         zIndex="z-20"
@@ -236,7 +243,7 @@ function Slide0Visual() { // hero1.png - "Good Food. Better You."
         iconBg="bg-emerald-600"
         title="AI Ingredient Rescue"
         desc="Turn your pantry & leftovers into delicious meals."
-        delay={0.5} offsetX="right-[41%] 2xl:right-[47%]" offsetY="top-[12%]"
+        delay={0.5} offsetX="right-[48%] 2xl:right-[52%]" offsetY="top-[6%]"
         floatDir="up"
         href="/ai-tools/ingredient-rescue"
       />
@@ -246,7 +253,7 @@ function Slide0Visual() { // hero1.png - "Good Food. Better You."
         iconBg="bg-indigo-600"
         title="AI Meal Planner"
         desc="Plan your weekly meals with your budget."
-        delay={0.65} offsetX="right-[6%] 2xl:right-[8%]" offsetY="top-[12%]"
+        delay={0.65} offsetX="right-[0%] 2xl:right-[2%]" offsetY="top-[6%]"
         floatDir="down"
         href="/ai-tools/meal-planner"
       />
@@ -256,7 +263,7 @@ function Slide0Visual() { // hero1.png - "Good Food. Better You."
         iconBg="bg-orange-500"
         title="Nutrition & Meal Tracker"
         desc="Track your nutrition, reach your goals."
-        delay={0.8} offsetX="right-[41%] 2xl:right-[47%]" offsetY="bottom-[12%]"
+        delay={0.8} offsetX="right-[48%] 2xl:right-[52%]" offsetY="bottom-[8%]"
         floatDir="up"
         href="/ai-tools/meal-tracker"
       />
@@ -266,7 +273,7 @@ function Slide0Visual() { // hero1.png - "Good Food. Better You."
         iconBg="bg-teal-600"
         title="Smart Shopping List"
         desc="Get everything you need, within your budget."
-        delay={0.95} offsetX="right-[6%] 2xl:right-[8%]" offsetY="bottom-[12%]"
+        delay={0.95} offsetX="right-[0%] 2xl:right-[2%]" offsetY="bottom-[8%]"
         floatDir="down"
         href="/ai-tools/shopping-list"
       />
@@ -1061,9 +1068,22 @@ export default function Banner() {
                   </span>
                 </motion.div>
 
-                <motion.h1 custom={1} variants={prefersReduced ? {} : textVariants} initial="enter" animate="center" exit="exit" className="text-4xl sm:text-5xl lg:text-[64px] font-black text-stone-900 dark:text-white tracking-tight leading-[1.05] mb-6">
+                <motion.h1
+                  custom={1}
+                  variants={prefersReduced ? {} : textVariants}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
+                  className="text-4xl sm:text-5xl lg:text-[64px] font-black tracking-tight leading-[1.05] mb-6"
+                  style={{
+                    background: 'linear-gradient(90deg, #0F432B 0%, #4AB741 40%, #154D31 80%, #082E1A 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                  }}
+                >
                   {slide.headline.map((line, i) => (
-                    <span key={i} className={i === slide.headlineHighlight ? "text-emerald-700 dark:text-emerald-400" : ""}>
+                    <span key={i}>
                       {line}{i < slide.headline.length - 1 ? <br /> : null}
                     </span>
                   ))}
