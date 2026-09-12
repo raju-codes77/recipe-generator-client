@@ -89,7 +89,7 @@ export default function RecipeDetailsPage() {
   // THUMBNAIL LIST HELPER
   const thumbnailList = recipe?.images && recipe.images.length > 0 
     ? recipe.images 
-    : [recipe?.image, recipe?.image, recipe?.image, recipe?.image, recipe?.image].filter(Boolean);
+    : ([recipe?.image, recipe?.image, recipe?.image, recipe?.image, recipe?.image].filter(Boolean) as string[]);
 
   // FETCH RECIPE DETAILS
   useEffect(() => {
