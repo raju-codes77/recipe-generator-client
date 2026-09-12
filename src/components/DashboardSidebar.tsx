@@ -30,24 +30,9 @@ export default function DashboardSidebar() {
   const adminNavItems = [
     { name: "Dashboard", icon: <FiHome />, href: "/dashboard/admin" },
     { name: "Users", icon: <FiUsers />, href: "/dashboard/admin/users" },
-    { name: "Recipes", icon: <FiBookOpen />, href: "/recipes" },
-    { name: "Collections", icon: <FiFolder />, href: "/dashboard/admin/collections" },
+    { name: "Recipes", icon: <FiBookOpen />, href: "/dashboard/admin/recipes" },
     { name: "Challenges", icon: <FiAward />, href: "/dashboard/admin/challenges" },
-    { name: "Community Posts", icon: <FiMessageSquare />, href: "/dashboard/admin/posts" },
-    { name: "Reports", icon: <FiAlertCircle />, href: "/dashboard/admin/reports" },
-  ];
-
-  const adminToolsItems = [
-    { name: "AI Tools", icon: <FiCpu />, href: "/dashboard/admin/ai-tools" },
-    { name: "Moderation", icon: <FiShield />, href: "/dashboard/admin/moderation" },
-    { name: "Nutrition Analyzer", icon: <FiSliders />, href: "/dashboard/admin/nutrition" },
-  ];
-
-  const adminSettingsItems = [
-    { name: "Settings", icon: <FiSettings />, href: "/dashboard/admin/settings" },
-    { name: "Roles & Permissions", icon: <FiLock />, href: "/dashboard/admin/roles" },
-    { name: "System Logs", icon: <FiServer />, href: "/dashboard/admin/logs" },
-    { name: "Support Tickets", icon: <FiHeadphones />, href: "/dashboard/admin/support" },
+    { name: "Community Posts", icon: <FiMessageSquare />, href: "/dashboard/admin/posts" }
   ];
 
   // User Navigation Items (Screenshot onujayi grouped sections)
@@ -140,52 +125,6 @@ export default function DashboardSidebar() {
               <div className="space-y-1">
                 <p className="px-2 text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-[#F6F0D7]/40 mb-2">Manage</p>
                 {adminNavItems.map((item, idx) => {
-                  const isActive = pathname === item.href;
-                  return (
-                    <Link
-                      key={idx}
-                      href={item.href}
-                      onClick={() => setMobileOpen(false)}
-                      className={`flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-medium transition-all ${
-                        isActive 
-                          ? "bg-[#2F8F46] text-white shadow-md shadow-[#2F8F46]/20 font-semibold" 
-                          : "text-gray-600 dark:text-[#F6F0D7]/70 hover:bg-[#EAF7E8] dark:hover:bg-[#89986D]/15 hover:text-[#2F8F46] dark:hover:text-[#F6F0D7]"
-                      }`}
-                    >
-                      <span className="text-base">{item.icon}</span>
-                      <span>{item.name}</span>
-                    </Link>
-                  );
-                })}
-              </div>
-
-              {/* AI & TOOLS */}
-              <div className="space-y-1 pt-2">
-                <p className="px-2 text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-[#F6F0D7]/40 mb-2">AI & Tools</p>
-                {adminToolsItems.map((item, idx) => {
-                  const isActive = pathname === item.href;
-                  return (
-                    <Link
-                      key={idx}
-                      href={item.href}
-                      onClick={() => setMobileOpen(false)}
-                      className={`flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-medium transition-all ${
-                        isActive 
-                          ? "bg-[#2F8F46] text-white shadow-md shadow-[#2F8F46]/20 font-semibold" 
-                          : "text-gray-600 dark:text-[#F6F0D7]/70 hover:bg-[#EAF7E8] dark:hover:bg-[#89986D]/15 hover:text-[#2F8F46] dark:hover:text-[#F6F0D7]"
-                      }`}
-                    >
-                      <span className="text-base">{item.icon}</span>
-                      <span>{item.name}</span>
-                    </Link>
-                  );
-                })}
-              </div>
-
-              {/* SETTINGS */}
-              <div className="space-y-1 pt-2">
-                <p className="px-2 text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-[#F6F0D7]/40 mb-2">Settings</p>
-                {adminSettingsItems.map((item, idx) => {
                   const isActive = pathname === item.href;
                   return (
                     <Link

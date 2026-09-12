@@ -1,7 +1,8 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { 
   FiBookOpen, FiFolder, FiAward, FiPieChart, FiPlusCircle, 
@@ -9,8 +10,10 @@ import {
 } from "react-icons/fi";
 import { ResponsiveContainer, AreaChart, Area, XAxis, Tooltip, CartesianGrid } from "recharts";
 
-// Mock Data for User Calorie/Nutrition Intake Trend
-const calorieData = [
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
+// Mock Data for User Calorie/Nutrition Intake Trend fallback
+const fallbackCalorieData = [
   { day: "Mon", calories: 1650 },
   { day: "Tue", calories: 1820 },
   { day: "Wed", calories: 1950 },
@@ -21,6 +24,34 @@ const calorieData = [
 ];
 
 export default function UserDashboardPage() {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchDashboard() {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/dashboard/user/overview`, {
+          credentials: "include"
+        });
+        if (res.ok) {
+          const json = await res.json();
+          setData(json);
+        }
+      } catch (err) {
+        console.error("Failed to load dashboard data", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchDashboard();
+  }, []);
+
+  const stats = data?.stats || { recipes: 0, collections: 0, activeChallenges: 0, badges: 0 };
+  const nutrition = data?.nutrition || { avgKcal: 0, maxKcal: 0, minKcal: 0, targetKcal: 2000, chartData: fallbackCalorieData };
+  const chartData = data?.nutrition?.chartData?.length > 0 ? data.nutrition.chartData : fallbackCalorieData;
+  const userLevel = data?.userLevel || 1;
+  const streak = data?.streak || 0;
+
   return (
     <div className="space-y-6">
       {/* 1. Welcome Header Banner */}
@@ -49,9 +80,9 @@ export default function UserDashboardPage() {
               </p>
               
               <div className="flex items-center gap-4 mt-4 text-[11px] font-bold text-gray-700 dark:text-gray-200">
-                <span className="flex items-center gap-1.5"><span className="text-orange-500 text-sm">🔥</span> 12 Day Streak</span>
+                <span className="flex items-center gap-1.5"><span className="text-orange-500 text-sm">🔥</span> {streak} Day Streak</span>
                 <span className="text-gray-300 dark:text-gray-600">|</span>
-                <span className="flex items-center gap-1.5"><span className="text-yellow-500 text-sm">⭐</span> Level 4 Chef</span>
+                <span className="flex items-center gap-1.5"><span className="text-yellow-500 text-sm">⭐</span> Level {userLevel} Chef</span>
               </div>
             </div>
           </div>
@@ -81,7 +112,7 @@ export default function UserDashboardPage() {
               </div>
               <div>
                 <h4 className="text-[11px] text-gray-500 dark:text-[#F6F0D7]/60 font-semibold uppercase tracking-wider">My Recipes</h4>
-                <h2 className="text-2xl font-black text-gray-900 dark:text-[#F6F0D7] leading-none mt-0.5">24 <span className="text-xs font-semibold text-gray-400">Items</span></h2>
+                <h2 className="text-2xl font-black text-gray-900 dark:text-[#F6F0D7] leading-none mt-0.5">{loading ? "..." : stats.recipes} <span className="text-xs font-semibold text-gray-400">Items</span></h2>
               </div>
             </div>
           </div>
@@ -104,7 +135,7 @@ export default function UserDashboardPage() {
               </div>
               <div>
                 <h4 className="text-[11px] text-gray-500 dark:text-[#F6F0D7]/60 font-semibold uppercase tracking-wider">Collections</h4>
-                <h2 className="text-2xl font-black text-gray-900 dark:text-[#F6F0D7] leading-none mt-0.5">8 <span className="text-xs font-semibold text-gray-400">Folders</span></h2>
+                <h2 className="text-2xl font-black text-gray-900 dark:text-[#F6F0D7] leading-none mt-0.5">{loading ? "..." : stats.collections} <span className="text-xs font-semibold text-gray-400">Folders</span></h2>
               </div>
             </div>
           </div>
@@ -127,12 +158,12 @@ export default function UserDashboardPage() {
               </div>
               <div>
                 <h4 className="text-[11px] text-gray-500 dark:text-[#F6F0D7]/60 font-semibold uppercase tracking-wider">Avg. Calories</h4>
-                <h2 className="text-2xl font-black text-gray-900 dark:text-[#F6F0D7] leading-none mt-0.5">1,980 <span className="text-xs font-semibold text-gray-400">kcal</span></h2>
+                <h2 className="text-2xl font-black text-gray-900 dark:text-[#F6F0D7] leading-none mt-0.5">{loading ? "..." : nutrition.avgKcal.toLocaleString()} <span className="text-xs font-semibold text-gray-400">kcal</span></h2>
               </div>
             </div>
           </div>
           <div className="flex items-end justify-between mt-2">
-            <p className="text-[10px] text-gray-400 dark:text-[#F6F0D7]/40 font-medium">Target: 2,000 kcal/day</p>
+            <p className="text-[10px] text-gray-400 dark:text-[#F6F0D7]/40 font-medium">Target: {nutrition.targetKcal.toLocaleString()} kcal/day</p>
             {/* Mock Sparkline */}
             <svg className="w-16 h-6 text-orange-500" viewBox="0 0 100 30" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="0,15 20,20 40,10 60,15 80,5 100,10" />
@@ -150,7 +181,7 @@ export default function UserDashboardPage() {
               </div>
               <div>
                 <h4 className="text-[11px] text-gray-500 dark:text-[#F6F0D7]/60 font-semibold uppercase tracking-wider">Challenges</h4>
-                <h2 className="text-2xl font-black text-gray-900 dark:text-[#F6F0D7] leading-none mt-0.5">2 <span className="text-xs font-semibold text-gray-400">Active</span></h2>
+                <h2 className="text-2xl font-black text-gray-900 dark:text-[#F6F0D7] leading-none mt-0.5">{loading ? "..." : stats.activeChallenges} <span className="text-xs font-semibold text-gray-400">Active</span></h2>
               </div>
             </div>
           </div>
@@ -181,7 +212,7 @@ export default function UserDashboardPage() {
           
           <div className="h-64 w-full relative">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={calorieData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorCalories" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#117A38" stopOpacity={0.2}/>
@@ -208,39 +239,38 @@ export default function UserDashboardPage() {
             
             {/* Custom Target Line Label Overlay (Mocked) */}
             <div className="absolute right-0 top-14 text-[9px] font-bold text-gray-400 flex flex-col items-end">
-              <span>Target: 2,000 kcal</span>
+              <span>Target: {nutrition.targetKcal.toLocaleString()} kcal</span>
               <div className="w-16 border-t border-dashed border-gray-300 mt-1"></div>
             </div>
           </div>
 
-          {/* Stats Bar under chart */}
           <div className="flex items-center justify-between mt-6 pt-5 border-t border-gray-100 dark:border-gray-800">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center text-gray-500">📊</div>
               <div>
                 <p className="text-[10px] text-gray-400 font-semibold uppercase">Avg. Intake</p>
-                <p className="text-sm font-bold text-gray-900 dark:text-white">1,880 <span className="text-[10px] text-gray-400">kcal</span></p>
+                <p className="text-sm font-bold text-gray-900 dark:text-white">{loading ? "..." : nutrition.avgKcal.toLocaleString()} <span className="text-[10px] text-gray-400">kcal</span></p>
               </div>
             </div>
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center text-orange-500">🔥</div>
               <div>
                 <p className="text-[10px] text-gray-400 font-semibold uppercase">Highest Day</p>
-                <p className="text-sm font-bold text-gray-900 dark:text-white">2,100 <span className="text-[10px] text-gray-400">kcal</span></p>
+                <p className="text-sm font-bold text-gray-900 dark:text-white">{loading ? "..." : nutrition.maxKcal.toLocaleString()} <span className="text-[10px] text-gray-400">kcal</span></p>
               </div>
             </div>
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-500">💧</div>
               <div>
                 <p className="text-[10px] text-gray-400 font-semibold uppercase">Lowest Day</p>
-                <p className="text-sm font-bold text-gray-900 dark:text-white">1,650 <span className="text-[10px] text-gray-400">kcal</span></p>
+                <p className="text-sm font-bold text-gray-900 dark:text-white">{loading ? "..." : nutrition.minKcal.toLocaleString()} <span className="text-[10px] text-gray-400">kcal</span></p>
               </div>
             </div>
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-full border-4 border-[#117A38] border-r-gray-100 flex items-center justify-center"></div>
               <div>
                 <p className="text-[10px] text-gray-400 font-semibold uppercase">Consistency</p>
-                <p className="text-sm font-bold text-gray-900 dark:text-white">85%</p>
+                <p className="text-sm font-bold text-gray-900 dark:text-white">{nutrition.avgKcal > 0 ? Math.min(100, Math.round((nutrition.avgKcal / nutrition.targetKcal) * 100)) : 0}%</p>
               </div>
             </div>
           </div>
@@ -255,43 +285,41 @@ export default function UserDashboardPage() {
             </div>
             
             <div className="space-y-6">
-              {/* Challenge 1 */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-bold text-gray-900 dark:text-[#F6F0D7]">7-Day Healthy Eating</span>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xs font-bold text-[#117A38] dark:text-[#B7E35F]">5 / 7</span>
-                    <span className="text-[10px] text-gray-400 font-medium">Days</span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-full h-2.5 bg-gray-100 dark:bg-[#89986D]/20 rounded-full overflow-hidden">
-                    <div className="h-full bg-[#117A38] rounded-full" style={{ width: "71%" }}></div>
-                  </div>
-                  <div className="w-8 h-8 rounded-full bg-[#EAF7E8] flex items-center justify-center shrink-0 shadow-sm border border-white">
-                    🥗
-                  </div>
-                </div>
-              </div>
+              {loading ? (
+                <p className="text-xs text-gray-500">Loading challenges...</p>
+              ) : data?.activeChallengesList?.length > 0 ? (
+                data.activeChallengesList.map((cp: any, idx: number) => {
+                  const percent = cp.totalDays > 0 ? Math.round((cp.completedDays / cp.totalDays) * 100) : 0;
+                  const colors = [
+                    { bg: "bg-[#117A38]", text: "text-[#117A38]", iconBg: "bg-[#EAF7E8]" },
+                    { bg: "bg-[#FF9F43]", text: "text-[#FF9F43]", iconBg: "bg-orange-50" },
+                    { bg: "bg-blue-500", text: "text-blue-500", iconBg: "bg-blue-50" }
+                  ];
+                  const c = colors[idx % colors.length];
 
-              {/* Challenge 2 */}
-              <div className="pt-2">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-bold text-gray-900 dark:text-[#F6F0D7]">Sugar Detox Challenge</span>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xs font-bold text-[#FF9F43]">300 / 500</span>
-                    <span className="text-[10px] text-gray-400 font-medium">pts</span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-full h-2.5 bg-gray-100 dark:bg-[#89986D]/20 rounded-full overflow-hidden">
-                    <div className="h-full bg-[#FF9F43] rounded-full" style={{ width: "60%" }}></div>
-                  </div>
-                  <div className="w-8 h-8 rounded-full bg-orange-50 flex items-center justify-center shrink-0 shadow-sm border border-white">
-                    🍹
-                  </div>
-                </div>
-              </div>
+                  return (
+                    <div key={cp.id} className={idx > 0 ? "pt-2" : ""}>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-bold text-gray-900 dark:text-[#F6F0D7] truncate max-w-[150px]">{cp.challenge.title}</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className={`text-xs font-bold ${c.text}`}>{cp.completedDays} / {cp.totalDays || cp.challenge.durationDays}</span>
+                          <span className="text-[10px] text-gray-400 font-medium">Days</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="w-full h-2.5 bg-gray-100 dark:bg-[#89986D]/20 rounded-full overflow-hidden">
+                          <div className={`h-full ${c.bg} rounded-full`} style={{ width: `${percent}%` }}></div>
+                        </div>
+                        <div className={`w-8 h-8 rounded-full ${c.iconBg} flex items-center justify-center shrink-0 shadow-sm border border-white text-xs`}>
+                          🏆
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="text-sm text-gray-500">No active challenges. Join one today!</div>
+              )}
             </div>
           </div>
 
@@ -311,13 +339,139 @@ export default function UserDashboardPage() {
         </div>
       </div>
 
-      {/* 4. Bottom Section: Recent AI Generated Recipes & Quick Tips */}
+      {/* 4. Monthly Tracker Calendar (Synced with Meal Tracker) */}
+      <div className="bg-white dark:bg-slate-800 rounded-3xl border border-gray-100 dark:border-slate-700 shadow-sm p-6">
+        {(() => {
+          const history = (data?.monthlyDailyEntries || []).reduce((acc: any, curr: any) => {
+            acc[curr.date] = curr;
+            return acc;
+          }, {});
+          
+          const year = new Date().getFullYear();
+          const month = new Date().getMonth();
+          const monthName = new Date().toLocaleString("default", { month: "long" });
+          const todayStr = new Date().toISOString().split("T")[0];
+          const firstDay = new Date(year, month, 1).getDay();
+          const daysInMonth = new Date(year, month + 1, 0).getDate();
+          const targetKcal = data?.nutrition?.targetKcal || 2000;
+          
+          const getStatus = (entry: any, isToday: boolean) => {
+            if (!entry || entry.kcal === 0) return "empty";
+            const pct = entry.kcal / targetKcal;
+            if (pct <= 0.75) return "under";
+            if (pct <= 1.05) return "on-track";
+            return "over";
+          };
+          
+          const statusStyle: any = {
+            empty: "bg-gray-50 dark:bg-slate-700/50 text-gray-300",
+            under: "bg-blue-50 text-blue-700 border border-blue-200",
+            "on-track": "bg-green-50 text-green-700 border border-green-200",
+            over: "bg-orange-50 text-orange-700 border border-orange-200",
+          };
+          
+          const monthEntries = Object.entries(history).filter(([d]) => d.startsWith(`${year}-${String(month + 1).padStart(2, "0")}`));
+          const daysLogged = monthEntries.length;
+          
+          const todayEntry = history[todayStr];
+          const todayKcal = todayEntry ? todayEntry.kcal : 0;
+          const todayProtein = todayEntry ? todayEntry.protein : 0;
+
+          const onTrackDays = monthEntries.filter(([, e]: any) => {
+            const pct = e.kcal / targetKcal;
+            return pct > 0.75 && pct <= 1.05;
+          }).length;
+
+          return (
+            <div className="flex flex-col gap-5">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white">Monthly Tracker</h3>
+                <div className="flex items-center gap-2">
+                  <button className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 transition">
+                    <FiChevronLeft className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                  </button>
+                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-300 w-32 text-center">
+                    {monthName} {year}
+                  </span>
+                  <button className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 transition">
+                    <FiChevronRight className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-7 gap-2">
+                {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map(d => (
+                  <div key={d} className="text-[11px] font-semibold text-gray-400 text-center">{d}</div>
+                ))}
+                
+                {Array.from({ length: firstDay }).map((_, i) => (
+                  <div key={`pad-${i}`} />
+                ))}
+
+                {Array.from({ length: daysInMonth }).map((_, i) => {
+                  const day = i + 1;
+                  const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+                  const entry = history[dateStr];
+                  const isToday = dateStr === todayStr;
+                  const status = getStatus(entry, isToday);
+
+                  return (
+                    <div
+                      key={dateStr}
+                      title={entry ? `${entry.kcal} kcal · ${entry.protein}g protein` : "No data"}
+                      className={`relative flex flex-col items-center justify-start rounded-xl p-1.5 cursor-default transition group h-12 sm:h-14 ${statusStyle[status]} ${isToday ? "ring-2 ring-green-500 ring-offset-2 dark:ring-offset-slate-800" : ""}`}
+                    >
+                      <span className={`text-xs font-bold leading-tight ${isToday ? "text-green-700 dark:text-green-400" : ""}`}>
+                        {day}
+                      </span>
+                      {entry && entry.kcal > 0 && (
+                        <span className="text-[10px] leading-tight font-medium opacity-80 mt-auto">
+                          {entry.kcal >= 1000 ? `${(entry.kcal / 1000).toFixed(1)}k` : entry.kcal}
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="flex items-center gap-4 flex-wrap mt-2">
+                <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-blue-200" /><span className="text-xs text-gray-500 dark:text-gray-400">Under goal</span></div>
+                <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-green-200" /><span className="text-xs text-gray-500 dark:text-gray-400">On track</span></div>
+                <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-orange-200" /><span className="text-xs text-gray-500 dark:text-gray-400">Over goal</span></div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2 pt-4 border-t border-gray-100 dark:border-slate-700">
+                <div className="text-center">
+                  <p className="text-xl font-extrabold text-gray-900 dark:text-white">{daysLogged}</p>
+                  <p className="text-[11px] text-gray-400 font-medium">Days Logged</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-xl font-extrabold text-green-600">{todayKcal > 0 ? `${todayKcal}` : "--"}</p>
+                  <p className="text-[11px] text-gray-400 font-medium">Today's kcal</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-xl font-extrabold text-blue-600">{todayProtein > 0 ? `${todayProtein}g` : "--"}</p>
+                  <p className="text-[11px] text-gray-400 font-medium">Today's protein</p>
+                </div>
+              </div>
+
+              {daysLogged > 0 && (
+                <p className="text-xs text-center text-gray-400 mt-2">
+                  🎯 {onTrackDays} of {daysLogged} days on target this month
+                </p>
+              )}
+            </div>
+          );
+        })()}
+      </div>
+
+      {/* 5. Bottom Section: Recent AI Generated Recipes & Quick Tips */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         {/* Recent AI Generations (Spans 2 cols) */}
         <div className="xl:col-span-2 p-6 rounded-3xl bg-white dark:bg-black/40 border border-gray-100 dark:border-[#89986D]/20 shadow-sm">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-bold text-gray-900 dark:text-[#F6F0D7]">Recent AI Recipe Generations</h3>
-            <a href="#" className="text-xs font-bold text-[#117A38] hover:underline">View All</a>
+            <Link href="/dashboard/users/ai-recipes" className="text-xs font-bold text-[#117A38] hover:underline">View All</Link>
           </div>
           
           <div className="relative flex items-center group">
@@ -328,31 +482,37 @@ export default function UserDashboardPage() {
 
             {/* Horizontal Scroll Container */}
             <div className="flex gap-4 overflow-x-auto pb-4 pt-2 px-1 snap-x snap-mandatory hide-scrollbar w-full">
-              {[
-                { title: "Avocado Lime Wellness Bowl", time: "20 min", cal: "350 kcal", category: "High Protein", img: "/recipe_bowl_1788270757820.jpg" },
-                { title: "Creamy Spinach Pasta", time: "25 min", cal: "420 kcal", category: "Comfort Food", img: "/recipe_pasta_1788270770231.jpg" },
-                { title: "Berry Boost Smoothie", time: "10 min", cal: "280 kcal", category: "Low Calorie", img: "/recipe_smoothie_1788270782693.jpg" },
-              ].map((rec, i) => (
-                <div key={i} className="min-w-[240px] sm:min-w-[280px] bg-white dark:bg-gray-800 rounded-2xl p-3 shadow-sm border border-gray-100 hover:shadow-md transition-shadow snap-start flex items-center gap-4">
-                  <div className="relative w-20 h-20 rounded-xl overflow-hidden shrink-0 shadow-inner">
-                    <Image src={rec.img} alt={rec.title} fill className="object-cover" />
-                    <div className="absolute top-1 left-1 px-1.5 py-0.5 bg-green-500 text-white text-[8px] font-bold rounded uppercase tracking-wider shadow-sm">
-                      NEW
+              {loading ? (
+                <p className="text-xs text-gray-500">Loading recipes...</p>
+              ) : data?.recentAiRecipes?.length > 0 ? (
+                data.recentAiRecipes.map((rec: any, i: number) => (
+                  <div key={rec.id || i} className="min-w-[240px] sm:min-w-[280px] bg-white dark:bg-gray-800 rounded-2xl p-3 shadow-sm border border-gray-100 hover:shadow-md transition-shadow snap-start flex items-center gap-4">
+                    <div className="relative w-20 h-20 rounded-xl overflow-hidden shrink-0 shadow-inner bg-gray-100 flex items-center justify-center">
+                      {rec.image ? (
+                        <Image src={rec.image} alt={rec.title} fill className="object-cover" />
+                      ) : (
+                        <span className="text-2xl">🍽️</span>
+                      )}
+                      <div className="absolute top-1 left-1 px-1.5 py-0.5 bg-green-500 text-white text-[8px] font-bold rounded uppercase tracking-wider shadow-sm">
+                        NEW
+                      </div>
+                    </div>
+                    <div className="flex-1 overflow-hidden">
+                      <h4 className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white leading-tight mb-1 truncate">{rec.title}</h4>
+                      <div className="flex items-center gap-2 text-[10px] text-gray-500 font-medium mb-1.5">
+                        <span>{rec.kcal ? `${rec.kcal} kcal` : "N/A"}</span>
+                        <span>•</span>
+                        <span>{rec.time || rec.cookingTime || "20 min"}</span>
+                      </div>
+                      <span className="inline-block text-[9px] font-bold px-2 py-0.5 rounded-md bg-gray-100 text-gray-600 truncate max-w-full">
+                        {rec.cuisine || rec.category || "AI Generated"}
+                      </span>
                     </div>
                   </div>
-                  <div className="flex-1">
-                    <h4 className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white leading-tight mb-1">{rec.title}</h4>
-                    <div className="flex items-center gap-2 text-[10px] text-gray-500 font-medium mb-1.5">
-                      <span>{rec.cal}</span>
-                      <span>•</span>
-                      <span>{rec.time}</span>
-                    </div>
-                    <span className="inline-block text-[9px] font-bold px-2 py-0.5 rounded-md bg-gray-100 text-gray-600">
-                      {rec.category}
-                    </span>
-                  </div>
-                </div>
-              ))}
+                ))
+              ) : (
+                <p className="text-sm text-gray-500">No AI recipes generated yet.</p>
+              )}
             </div>
 
             {/* Right Arrow */}
