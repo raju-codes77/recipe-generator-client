@@ -9,7 +9,6 @@ import {
   X
 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
-import { toast } from "react-hot-toast";
 import Link from "next/link";
 
 interface SidebarProps {
