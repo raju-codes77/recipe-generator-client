@@ -927,7 +927,6 @@ export const CommunityFeed: React.FC = () => {
               currentUserId={session?.user.id}
               onToggleFollow={handleToggleFollow}
               trendingPosts={trendingPosts}
-              posts={posts}
               onSelectRecipe={(p) => {
                 if (!isAuthenticated) {
                   requireAuthentication("rate and review recipes");

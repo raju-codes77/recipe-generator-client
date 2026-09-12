@@ -4,15 +4,12 @@ import Link from "next/link";
 import { UserPlus, UserCheck, Trophy, Sparkles, TrendingUp, Star } from "lucide-react";
 import { Author, Post } from "./types";
 import { CommunityAvatar } from "./CommunityAvatar";
-import { CommunityKitchenToolkit } from "./CommunityKitchenToolkit";
-import { CommunitySeasonalKitchen } from "./CommunitySeasonalKitchen";
 
 interface CommunitySidebarRightProps {
   chefs: Author[];
   currentUserId?: string;
   onToggleFollow: (chefId: string) => void;
   trendingPosts: Post[];
-  posts: Post[];
   onSelectRecipe: (post: Post) => void;
   isAuthenticated?: boolean;
   onRequireAuthentication?: (action: string) => void;
@@ -23,7 +20,6 @@ export const CommunitySidebarRight: React.FC<CommunitySidebarRightProps> = ({
   currentUserId,
   onToggleFollow,
   trendingPosts,
-  posts,
   onSelectRecipe,
   isAuthenticated = true,
   onRequireAuthentication = () => undefined,
@@ -188,9 +184,6 @@ export const CommunitySidebarRight: React.FC<CommunitySidebarRightProps> = ({
           ))}
         </div>
       </div>
-
-      <CommunityKitchenToolkit posts={posts} />
-      <CommunitySeasonalKitchen posts={posts} onSelectRecipe={onSelectRecipe} />
 
       {/* Compact footer links */}
       <nav
