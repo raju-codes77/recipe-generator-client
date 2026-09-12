@@ -159,7 +159,7 @@ export default function Sidebar({ selectedCollectionId, onSelectCollection }: Si
         <button 
           onClick={() => {
             if (!userId) {
-              alert("Please login first to create collections.");
+              toast.error("Please login first to create collections.");
               return;
             }
             setIsModalOpen(true);

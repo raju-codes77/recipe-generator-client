@@ -6,7 +6,7 @@ import Image from "next/image";
 import { useMealTracker } from "./MealTrackerContext";
 
 export default function TodaysMealLog() {
-  const { mealLog } = useMealTracker();
+  const { mealLog, isLoading } = useMealTracker();
 
   const totalKcal = mealLog.reduce((s, m) => s + m.kcal, 0);
   const totalProtein = mealLog.reduce((s, m) => s + m.protein, 0);
@@ -22,7 +22,12 @@ export default function TodaysMealLog() {
         </button>
       </div>
 
-      {mealLog.length > 0 ? (
+      {isLoading ? (
+        <div className="flex flex-col items-center justify-center py-10 gap-3 text-gray-400 animate-pulse">
+          <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-slate-700"></div>
+          <p className="text-xs text-center">Loading meals...</p>
+        </div>
+      ) : mealLog.length > 0 ? (
         <>
           <div className="flex flex-col gap-3">
             {mealLog.map((meal, index) => (

@@ -16,6 +16,7 @@ import {
 } from "react-icons/fi";
 import { Sparkles, Utensils, ChefHat } from "lucide-react";
 import Link from "next/link";
+import { toast } from "react-hot-toast";
 
 // ডেমো কালেকশন ডাটা
 const initialCollections = [
@@ -172,7 +173,7 @@ export default function CollectionsPage() {
               {/* Card Footer Action */}
               <div className="px-5 pb-5 pt-0">
                 <button 
-                  onClick={() => alert(`Opening collection: ${col.title}`)}
+                  onClick={() => toast.success(`Opening collection: ${col.title}`)}
                   className="w-full py-2.5 rounded-xl bg-gray-50 dark:bg-[#89986D]/10 hover:bg-[#2F8F46] hover:text-white text-slate-700 dark:text-[#F6F0D7] text-xs font-bold transition flex items-center justify-center gap-2"
                 >
                   <span>View Recipes</span>

@@ -30,7 +30,7 @@ const CustomTooltip = ({ active, payload, label, todayName }: any) => {
 
 export default function CalorieTrend() {
   const [range] = useState("7 Days");
-  const { mealLog, userId } = useMealTracker();
+  const { mealLog, userId, isLoading } = useMealTracker();
   const [history, setHistory] = useState<Record<string, DayEntry>>({});
 
   useEffect(() => {
@@ -116,7 +116,7 @@ export default function CalorieTrend() {
   });
 
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm p-5 flex flex-col gap-4">
+    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm p-5 flex flex-col gap-4 relative">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-bold text-gray-900 dark:text-white">Calorie Trend</h3>
         <select
@@ -128,6 +128,12 @@ export default function CalorieTrend() {
           <option>30 Days</option>
         </select>
       </div>
+
+      {isLoading && (
+        <div className="absolute inset-0 z-10 bg-white/60 dark:bg-slate-800/60 backdrop-blur-[1px] flex items-center justify-center rounded-2xl">
+          <div className="w-8 h-8 rounded-full border-2 border-green-500 border-t-transparent animate-spin"></div>
+        </div>
+      )}
 
       <ResponsiveContainer width="100%" height={180}>
         <LineChart data={dynamicData} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>

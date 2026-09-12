@@ -76,52 +76,78 @@ export default function UploadCard() {
       setLoading(true);
       setIsAnalyzing(true);
 
-      const result = await analyzeMeal(selectedFile);
+      const rawResult = await analyzeMeal(selectedFile);
 
-      console.log("Meal analysis result:", result);
+      console.log("Raw Meal analysis result:", rawResult);
 
-      if (!result.success) {
-        toast.error(result.message || "Meal analysis failed.");
+      if (!rawResult.success) {
+        toast.error(rawResult.message || "Meal analysis failed.");
         return;
       }
 
+      // Map raw backend response to frontend MealAnalysisResult interface
+      const getMacro = (label: string) =>
+        rawResult.macros?.find((m: any) => m.label.toLowerCase() === label.toLowerCase())?.grams || 0;
+      const getMicro = (label: string) =>
+        parseInt(rawResult.micros?.find((m: any) => m.label.toLowerCase() === label.toLowerCase())?.value || "0") || 0;
+
+      const mappedResult = {
+        success: rawResult.success,
+        isFood: rawResult.isFood,
+        imageUrl: rawResult.imageUrl,
+        message: rawResult.message,
+        confidenceScore: rawResult.confidenceScore || 0,
+        detectedFoods: (rawResult.detectedItems || []).map((item: any) => ({
+          name: item.name,
+          portion: item.portion || "1 serving",
+          emoji: item.icon || "🍽️",
+          color: "#4ade80", // Default green color for dot
+        })),
+        nutritionFacts: {
+          kcal: rawResult.calories || 0,
+          protein: getMacro("protein"),
+          carbs: getMacro("carbs"),
+          fat: getMacro("fat"),
+          fiber: getMicro("fiber"),
+          sugar: getMicro("sugar"),
+          sodium: getMicro("sodium"),
+          cholesterol: getMicro("cholesterol"),
+        },
+        mealName: rawResult.foodName || rawResult.mealName || "Analyzed Meal",
+        category: rawResult.tag || rawResult.category || "Meal",
+        insightHeading: "Health Score: " + (rawResult.healthScoreLabel || "Good"),
+        insightMessage: "Score: " + (rawResult.healthScore || "N/A"),
+        tips: (rawResult.recommendations || []).map((r: any) => ({
+          emoji: "💡",
+          tip: r.description,
+        })),
+      };
+
       // Save API result in Context
-      setAnalysisResult(result);
+      setAnalysisResult(mappedResult);
 
       // Create a Meal object and add to log
       const newMeal = {
-        type: result.category || "Meal",
+        type: mappedResult.category,
         time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        name: result.mealName || "Analyzed Meal",
-        kcal: result.nutritionFacts?.kcal || 0,
-        protein: result.nutritionFacts?.protein || 0,
-        carbs: result.nutritionFacts?.carbs || 0,
-        fat: result.nutritionFacts?.fat || 0,
-        img: result.imageUrl || previewUrl || "",
+        name: mappedResult.mealName,
+        kcal: mappedResult.nutritionFacts.kcal,
+        protein: mappedResult.nutritionFacts.protein,
+        carbs: mappedResult.nutritionFacts.carbs,
+        fat: mappedResult.nutritionFacts.fat,
+        img: mappedResult.imageUrl || previewUrl || "",
       };
 
       const updated = [...mealLog, newMeal];
       setMealLog(updated);
 
-      // Persist meal log and daily history to server
-      import("@/app/api/meal-tracker/meal-tracker").then(({ saveMealLog, saveDayEntry }) => {
-        // saveMealLog requires the authenticated userId to write to the correct
-        // localStorage key (meal_log_<userId>), isolating each user's data.
-        if (userId) {
-          saveMealLog(updated, userId);
-        }
-        const todayKcal = updated.reduce((sum: number, m: any) => sum + (m.kcal || 0), 0);
-        const todayProtein = updated.reduce((sum: number, m: any) => sum + (m.protein || 0), 0);
-        const todayDate = new Date().toISOString().split("T")[0];
-        if (userId) {
-          saveDayEntry({ date: todayDate, kcal: todayKcal, protein: todayProtein }, userId);
-        }
-      });
+      // Persist meal log and daily history to server is now handled entirely
+      // by the backend /api/meals/analyze endpoint to prevent data duplication.
 
-      console.log("Meal name:", result.mealName);
-      console.log("Foods:", result.detectedFoods);
-      console.log("Nutrition:", result.nutritionFacts);
-      console.log("Image URL:", result.imageUrl);
+      console.log("Meal name:", mappedResult.mealName);
+      console.log("Foods:", mappedResult.detectedFoods);
+      console.log("Nutrition:", mappedResult.nutritionFacts);
+      console.log("Image URL:", mappedResult.imageUrl);
 
       toast.success("Meal analyzed successfully!");
     } catch (error) {
