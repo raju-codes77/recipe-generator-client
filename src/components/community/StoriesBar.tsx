@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import { motion } from "motion/react";
 import Link from "next/link";
-import { LockKeyhole, Plus, Flame, Sparkles } from "lucide-react";
+import { LockKeyhole, Plus, Sparkles } from "lucide-react";
 import { StoryItem } from "./types";
 
 interface StoriesBarProps {
@@ -114,11 +114,6 @@ export const StoriesBar: React.FC<StoriesBarProps> = ({
                     className="h-full w-full object-cover transition group-hover:scale-110 duration-300"
                   />
                 </div>
-                {story.tag?.includes("Challenge") && (
-                  <span className="absolute -bottom-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-[#FF9F43] text-white ring-2 ring-white dark:ring-[#121212]">
-                    <Flame className="h-3 w-3" />
-                  </span>
-                )}
               </div>
               <span className="text-xs font-medium text-neutral-700 dark:text-neutral-300 max-w-[70px] truncate text-center">
                 {story.author.name.split(" ")[0]}

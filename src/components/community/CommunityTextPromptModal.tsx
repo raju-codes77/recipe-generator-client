@@ -63,7 +63,7 @@ export const CommunityTextPromptModal: React.FC<CommunityTextPromptModalProps> =
         </label>
         <div className="mt-6 flex justify-end gap-3">
           <button type="button" onClick={onClose} disabled={isSubmitting} className="rounded-xl px-4 py-2.5 text-sm font-bold text-neutral-400 transition hover:bg-white/5 hover:text-white disabled:opacity-50">Cancel</button>
-          <button type="submit" disabled={isSubmitting || !value.trim()} className="rounded-xl bg-[#2F8F46] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#176B35] disabled:cursor-not-allowed disabled:opacity-50">{isSubmitting ? "Saving..." : submitLabel}</button>
+          <button type="submit" disabled={isSubmitting} className="rounded-xl bg-[#2F8F46] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#176B35] disabled:cursor-not-allowed disabled:opacity-50">{isSubmitting ? "Saving..." : submitLabel}</button>
         </div>
       </form>
     </div>

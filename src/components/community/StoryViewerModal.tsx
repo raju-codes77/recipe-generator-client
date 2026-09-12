@@ -163,6 +163,28 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-[70] flex h-dvh w-screen items-center justify-center overflow-hidden bg-[#F5F7F2] text-neutral-900 shadow-none dark:bg-black dark:text-white">
+      <style>{`
+        .story-notifications-scrollbar {
+          scrollbar-width: thin;
+          scrollbar-color: rgba(156, 163, 175, 0.8) transparent;
+        }
+        .story-notifications-scrollbar::-webkit-scrollbar {
+          width: 8px;
+        }
+        .story-notifications-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .story-notifications-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(107, 114, 128, 0.78);
+          border: 2px solid transparent;
+          background-clip: padding-box;
+          border-radius: 999px;
+        }
+        .story-notifications-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: rgba(156, 163, 175, 0.95);
+          background-clip: padding-box;
+        }
+      `}</style>
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -177,7 +199,7 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
             <X className="h-5 w-5" />
           </button>
           <button type="button" onClick={() => navigateFromStory('/')} aria-label="Go to FoodCanvas home" className="rounded-full transition hover:scale-105">
-            <img src="/logohere.png" alt="FoodCanvas" className="h-10 w-10 rounded-full object-cover" />
+            <img src="/navbar_logo.png" alt="FoodCanvas" className="h-11 w-11 rounded-full object-contain" />
           </button>
         </div>
 
@@ -199,7 +221,7 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
             {isNotificationsOpen && (
               <div className="absolute right-0 top-[calc(100%+0.75rem)] w-[min(320px,calc(100vw-2.5rem))] overflow-hidden rounded-2xl border border-neutral-200 bg-white text-left shadow-2xl dark:border-white/10 dark:bg-[#171C1A]">
                 <div className="border-b border-neutral-200 px-4 py-3 dark:border-white/10"><p className="text-sm font-black text-neutral-900 dark:text-white">Notifications</p></div>
-                <div className="max-h-80 space-y-3 overflow-y-auto p-3">
+                <div className="story-notifications-scrollbar max-h-80 space-y-3 overflow-y-auto p-3">
                   {notifications.length === 0 ? <p className="px-3 py-5 text-center text-xs text-neutral-400">No notifications yet.</p> : notifications.slice(0, 8).map((notification) => <div key={notification.id} className={`rounded-xl px-4 py-3 text-xs shadow-sm ${notification.read ? "bg-neutral-50 text-neutral-500 dark:bg-white/[0.03] dark:text-neutral-400" : "bg-[#EEF5EC] text-neutral-900 dark:bg-white/8 dark:text-white"}`}><p className="font-semibold">{notification.user.name}</p><p className="mt-1 leading-5">{notification.text}</p><p className="mt-1.5 text-[10px] text-neutral-500">{notification.timeAgo}</p></div>)}
                 </div>
               </div>

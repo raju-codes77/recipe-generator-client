@@ -21,6 +21,8 @@ import { CommunityShareModal } from "@/components/community/CommunityShareModal"
 import { formatCommunityTags, parseCommunityTags } from "@/components/community/community-tags";
 import type { Author, Post, PublicCommunityProfile, Review, StoryItem } from "@/components/community/types";
 
+const PROFILE_POSTS_PER_PAGE = 3;
+
 function ProfileSkeleton() {
   return (
     <main className="min-h-screen bg-[#F1F5F0] px-0 pb-10 dark:bg-[#090B0A] sm:px-6 sm:pt-5">
@@ -106,6 +108,7 @@ export default function CommunityUserProfilePage() {
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const storyInputRef = useRef<HTMLInputElement>(null);
   const profileMenuRef = useRef<HTMLDivElement>(null);
+  const postsLoadMoreRef = useRef<HTMLDivElement>(null);
   const hasLoadedProfileRef = useRef(false);
 
   useEffect(() => {
@@ -125,7 +128,7 @@ export default function CommunityUserProfilePage() {
     setError(null);
 
     try {
-      const loadedProfile = await communityApi.getPublicProfile(userId, { take: 6, skip });
+      const loadedProfile = await communityApi.getPublicProfile(userId, { take: PROFILE_POSTS_PER_PAGE, skip });
       setProfile((currentProfile) => append && currentProfile ? { ...loadedProfile, posts: [...currentProfile.posts, ...loadedProfile.posts] } : loadedProfile);
       hasLoadedProfileRef.current = true;
       if (!append) {
@@ -163,6 +166,20 @@ export default function CommunityUserProfilePage() {
       setIsLoadingMorePosts(false);
     }
   };
+
+  useEffect(() => {
+    const loadMoreTarget = postsLoadMoreRef.current;
+    if (!loadMoreTarget || !hasMorePosts || isLoadingMorePosts) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) void loadMorePosts();
+      },
+      { rootMargin: "240px 0px" },
+    );
+    observer.observe(loadMoreTarget);
+    return () => observer.disconnect();
+  }, [hasMorePosts, isLoadingMorePosts, profile?.posts.length]);
 
   useEffect(() => {
     hasLoadedProfileRef.current = false;
@@ -324,11 +341,11 @@ export default function CommunityUserProfilePage() {
     setShareModalPost(post);
   };
 
-  const confirmShareToProfile = async (caption: string) => {
+  const confirmShareToProfile = async (caption: string, tags: string[]) => {
     if (!shareModalPost || isSharingPost) return;
     setIsSharingPost(true);
     try {
-      await communityApi.sharePost(shareModalPost.id, caption);
+      await communityApi.sharePost(shareModalPost.id, caption, tags);
       setShareModalPost(null);
       await loadProfile();
     } finally {
@@ -571,8 +588,8 @@ export default function CommunityUserProfilePage() {
             </div>}
 
             <div className="rounded-3xl border border-slate-200 bg-white p-5 dark:border-neutral-800 dark:bg-[#121614] sm:p-6">
-              <div className="mb-5 flex items-center justify-between"><div><p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#2F8F46]">{activeTab === "My Recipes" ? "Recipe shelf" : "Personal activity"}</p><h2 className="mt-1 text-xl font-black">{activeTab === "My Recipes" ? "My recipes" : "Recent posts"}</h2></div><button type="button" onClick={() => void loadMorePosts()} disabled={!hasMorePosts || isLoadingMorePosts} className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold text-neutral-600 transition hover:border-[#2F8F46] hover:text-[#2F8F46] disabled:cursor-default disabled:opacity-50 dark:border-neutral-700 dark:text-neutral-300">{isLoadingMorePosts ? "Loading..." : hasMorePosts ? "View all" : "All posts loaded"}</button></div>
-              {visiblePosts.length === 0 ? <div className="rounded-2xl border border-dashed border-slate-300 p-10 text-center text-sm text-neutral-500 dark:border-neutral-700">{activeTab === "My Recipes" ? "No recipes shared yet." : "No public posts yet."}</div> : <div className="space-y-7">{visiblePosts.map((post) => <div key={post.id} className="profile-post"><PostCard post={post} onLike={(postId) => void updateProfile(() => communityApi.toggleLike(postId))} onSave={handleProfileSave} onShare={(postToShare) => void sharePost(postToShare)} onShareToProfile={(postToShare) => shareToProfile(postToShare)} onRate={(postToRate) => void openReview(postToRate)} onReport={() => undefined} onDelete={(postId) => updateProfile(() => communityApi.deletePost(postId))} onEdit={openPostCaptionEditor} onTogglePin={(postId, isPinned) => void updateProfile(() => communityApi.updatePost(postId, { isPinned }))} onDirectMessage={handleOpenDM} onToggleFollow={() => void updateProfile(() => communityApi.toggleFollow(profile.user.id))} onAddComment={(postId, content) => void updateProfile(() => communityApi.addComment(postId, content))} onLoadInteractions={loadPostInteractions} onMadeIt={(postId) => void updateProfile(() => communityApi.toggleMadeIt(postId))} currentUserId={session?.user?.id} isAuthenticated={Boolean(session?.user)} onRequireAuthentication={requireAuthentication} hasActiveStory={hasStories} onAuthorAvatarClick={hasStories ? () => setViewingStory(storyGroup[0] ?? null) : undefined} onImageClick={(imagePost) => setSelectedImage({ src: imagePost.imageUrl, alt: imagePost.recipe?.title || "FoodCanvas post" })} /></div>)}</div>}
+              <div className="mb-5"><p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#2F8F46]">{activeTab === "My Recipes" ? "Recipe shelf" : "Personal activity"}</p><h2 className="mt-1 text-xl font-black">{activeTab === "My Recipes" ? "My recipes" : "Recent posts"}</h2></div>
+              {visiblePosts.length === 0 ? <div className="rounded-2xl border border-dashed border-slate-300 p-10 text-center text-sm text-neutral-500 dark:border-neutral-700">{activeTab === "My Recipes" ? "No recipes shared yet." : "No public posts yet."}</div> : <><div className="space-y-7">{visiblePosts.map((post) => <div key={post.id} className="profile-post"><PostCard post={post} onLike={(postId) => void updateProfile(() => communityApi.toggleLike(postId))} onSave={handleProfileSave} onShare={(postToShare) => void sharePost(postToShare)} onShareToProfile={(postToShare) => shareToProfile(postToShare)} onRate={(postToRate) => void openReview(postToRate)} onReport={() => undefined} onDelete={(postId) => updateProfile(() => communityApi.deletePost(postId))} onEdit={openPostCaptionEditor} onTogglePin={(postId, isPinned) => void updateProfile(() => communityApi.updatePost(postId, { isPinned }))} onDirectMessage={handleOpenDM} onToggleFollow={() => void updateProfile(() => communityApi.toggleFollow(profile.user.id))} onAddComment={(postId, content) => void updateProfile(() => communityApi.addComment(postId, content))} onLoadInteractions={loadPostInteractions} onMadeIt={(postId) => void updateProfile(() => communityApi.toggleMadeIt(postId))} currentUserId={session?.user?.id} isAuthenticated={Boolean(session?.user)} onRequireAuthentication={requireAuthentication} hasActiveStory={hasStories} onAuthorAvatarClick={hasStories ? () => setViewingStory(storyGroup[0] ?? null) : undefined} onImageClick={(imagePost) => setSelectedImage({ src: imagePost.imageUrl, alt: imagePost.recipe?.title || "FoodCanvas post" })} /></div>)}</div><div ref={postsLoadMoreRef} className="flex min-h-12 items-center justify-center pt-2 text-xs font-semibold text-neutral-500 dark:text-neutral-400">{isLoadingMorePosts ? "Loading more posts..." : hasMorePosts ? "" : "You have reached the end of this profile's posts."}</div></>}
             </div>
           </div>
         </section>)}

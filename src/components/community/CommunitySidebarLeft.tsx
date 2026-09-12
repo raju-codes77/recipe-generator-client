@@ -3,17 +3,12 @@ import Link from "next/link";
 import { motion } from "motion/react";
 import {
   Compass,
-  TrendingUp,
   Users,
   Clock,
   Salad,
-  Trophy,
-  Sparkles,
   Bookmark,
   Heart,
   ChefHat,
-  ChevronRight,
-  ShieldCheck,
 } from "lucide-react";
 import { CURRENT_USER } from "./mockData";
 import { Author, RecipeCollection } from "./types";
@@ -22,7 +17,7 @@ import { CommunityAvatar } from "./CommunityAvatar";
 interface CommunitySidebarLeftProps {
   activeFilter: string;
   setActiveFilter: (filter: string) => void;
-  collections: RecipeCollection[];
+  collections?: RecipeCollection[];
   savedPostsCount: number;
   likedPostsCount: number;
   currentUser?: Author | null;
@@ -35,7 +30,6 @@ interface CommunitySidebarLeftProps {
 export const CommunitySidebarLeft: React.FC<CommunitySidebarLeftProps> = ({
   activeFilter,
   setActiveFilter,
-  collections,
   savedPostsCount,
   likedPostsCount,
   currentUser = CURRENT_USER,
@@ -46,17 +40,9 @@ export const CommunitySidebarLeft: React.FC<CommunitySidebarLeftProps> = ({
 }) => {
   const filterCategories = [
     { id: "all", label: "All Community Posts", icon: Compass },
-    { id: "trending", label: "Trending & Top Rated", icon: TrendingUp, badge: "Hot" },
     { id: "following", label: "Following Cooks", icon: Users },
     { id: "quick", label: "Quick 15-Min Meals", icon: Clock },
     { id: "wellness", label: "High Protein & Healthy", icon: Salad },
-    {
-      id: "challenge",
-      label: "Summer Salad Challenge",
-      icon: Trophy,
-      badge: "500 XP",
-    },
-    { id: "ai_sparks", label: "AI Generated Sparks", icon: Sparkles },
     ...(isAuthenticated
       ? [
           {
@@ -229,55 +215,6 @@ export const CommunitySidebarLeft: React.FC<CommunitySidebarLeftProps> = ({
         </nav>
       </div>
 
-      {/* Recipe Collections Box */}
-      {isAuthenticated && (
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs dark:border-neutral-800 dark:bg-[#121212]">
-          <div className="flex items-center justify-between pb-3">
-            <h4 className="text-[11px] font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
-              My Collections
-            </h4>
-            <span className="cursor-pointer text-xs font-semibold text-[#2F8F46] hover:underline dark:text-[#B7E35F]">
-              + New
-            </span>
-          </div>
-
-          <div className="space-y-2">
-            {collections.map((col) => (
-              <motion.div
-                key={col.id}
-                whileHover={{ x: 3 }}
-                onClick={() => setActiveFilter("saved")}
-                className="group flex cursor-pointer items-center justify-between rounded-xl p-2 transition hover:bg-neutral-50 dark:hover:bg-neutral-900"
-              >
-                <div className="flex items-center gap-3 overflow-hidden">
-                  <img
-                    src={col.coverImage}
-                    alt={col.name}
-                    className="h-10 w-10 rounded-lg object-cover"
-                  />
-
-                  <div className="truncate">
-                    <p className="truncate text-xs font-bold text-neutral-800 group-hover:text-[#2F8F46] dark:text-neutral-200">
-                      {col.name}
-                    </p>
-                    <p className="text-[11px] text-neutral-400">
-                      {col.recipeCount} recipes
-                    </p>
-                  </div>
-                </div>
-
-                <ChevronRight className="h-4 w-4 text-neutral-400 transition-transform group-hover:text-[#2F8F46]" />
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Community Safety Note */}
-      <div className="flex items-center gap-2.5 rounded-xl bg-neutral-50 px-3.5 py-2.5 text-xs text-neutral-500 dark:bg-neutral-900/50 dark:text-neutral-400">
-        <ShieldCheck className="h-4 w-4 shrink-0 text-[#2F8F46]" />
-        <span>FoodCanvas 24/7 moderation active for recipe safety.</span>
-      </div>
     </aside>
   );
 };
