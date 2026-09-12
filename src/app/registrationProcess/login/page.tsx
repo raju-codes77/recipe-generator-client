@@ -90,8 +90,7 @@ export default function LoginPage() {
       const successMsg = "Login successful! Redirecting...";
       setSuccess(successMsg);
       toast.success(successMsg);
-      router.push("/");
-      router.refresh();
+      window.location.href = "/";
     } catch (err) {
       console.error("Login error:", err);
       toast.dismiss("login");

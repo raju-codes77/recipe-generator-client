@@ -76,7 +76,7 @@ export default function UploadCard() {
       setLoading(true);
       setIsAnalyzing(true);
 
-      const rawResult = await analyzeMeal(selectedFile);
+      const rawResult = await analyzeMeal(selectedFile, userId ?? undefined);
 
       console.log("Raw Meal analysis result:", rawResult);
 

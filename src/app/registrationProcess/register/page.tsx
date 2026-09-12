@@ -107,8 +107,7 @@ export default function RegisterPage() {
       setSuccessMessage("Account created successfully! Redirecting...");
 
       setTimeout(() => {
-        router.refresh();
-        router.push("/");
+        window.location.href = "/";
       }, 1000);
     } catch (error) {
       console.error("Unexpected signup error:", error);
