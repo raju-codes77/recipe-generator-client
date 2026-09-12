@@ -239,7 +239,14 @@ export default function Navbar() {
               </Link>
               <Link
                 href="/registrationProcess/register"
-                className="group relative px-6 py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 text-[15px] font-bold rounded-full transition-all duration-300 shadow-lg hover:shadow-xl flex items-center gap-2"
+                className="group relative px-6 py-2.5 text-white text-[15px] font-bold rounded-full transition-all duration-300 shadow-lg hover:shadow-xl flex items-center gap-2"
+                style={{
+                  background: 'linear-gradient(90deg, #154D31 0%, #24733E 50%, #10B981 100%)',
+                  backgroundSize: '200% 100%',
+                  transition: 'background-position 0.3s ease',
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundPosition = 'right center'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundPosition = 'left center'}
               >
                 <span>Sign Up</span>
                 <ChevronRight size={16} strokeWidth={3} className="opacity-70 group-hover:translate-x-0.5 transition-transform" />
@@ -320,8 +327,15 @@ export default function Navbar() {
                     </Link>
                     <Link
                       href="/registrationProcess/register"
-                      className="flex items-center justify-center w-full py-3.5 bg-emerald-600 text-white text-[15px] font-bold rounded-2xl transition-colors shadow-lg shadow-emerald-600/20"
+                      className="flex items-center justify-center w-full py-3.5 text-white text-[15px] font-bold rounded-2xl transition-all shadow-lg"
+                      style={{
+                        background: 'linear-gradient(90deg, #154D31 0%, #24733E 50%, #10B981 100%)',
+                        backgroundSize: '200% 100%',
+                        transition: 'background-position 0.3s ease',
+                      }}
                       onClick={() => setIsMobileMenuOpen(false)}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundPosition = 'right center'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundPosition = 'left center'}
                     >
                       Sign Up
                     </Link>
