@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import Link from "next/link";
+import toast from "react-hot-toast";
 
 interface SidebarProps {
   selectedCollectionId?: string | null;
