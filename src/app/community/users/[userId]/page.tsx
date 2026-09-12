@@ -177,9 +177,9 @@ export default function CommunityUserProfilePage() {
       setIsLoadingSavedPosts(true);
       setSavedPostsError(null);
     }, 0);
-    void communityApi.listSavedPosts({ take: 30 })
-      .then((response) => {
-        if (!cancelled) setSavedPosts(response.posts);
+    void communityApi.listPosts({ take: 30, skip: 0, filter: "saved" })
+      .then((posts) => {
+        if (!cancelled) setSavedPosts(posts);
       })
       .catch((loadError) => {
         if (!cancelled) setSavedPostsError(loadError instanceof Error ? loadError.message : "Unable to load saved posts");
