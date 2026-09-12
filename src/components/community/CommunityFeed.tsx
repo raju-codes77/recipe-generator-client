@@ -30,6 +30,7 @@ import Link from "next/link";
 
 const POSTS_PER_PAGE = 4;
 const API_POSTS_PER_PAGE = 6;
+const PUBLIC_PREVIEW_POSTS = 3;
 type CommunityFilter = "all" | "trending" | "following" | "quick" | "wellness" | "challenge" | "ai_sparks" | "saved" | "liked";
 
 interface CommunityCache {
@@ -176,25 +177,25 @@ export const CommunityFeed: React.FC = () => {
     setLoadError(null);
     try {
       const [loadedPosts, loadedTrendingPosts, loadedStories, ownProfile] = await Promise.all([
-        communityApi.listPosts({ take: API_POSTS_PER_PAGE, skip: 0, filter: activeFilter as CommunityFilter }),
-        communityApi.listPosts({ take: 3, skip: 0, filter: "trending" }),
-        communityApi.listStories(),
+        communityApi.listPosts({ take: isAuthenticated ? API_POSTS_PER_PAGE : PUBLIC_PREVIEW_POSTS, skip: 0, filter: activeFilter as CommunityFilter }),
+        isAuthenticated ? communityApi.listPosts({ take: 3, skip: 0, filter: "trending" }) : Promise.resolve([]),
+        isAuthenticated ? communityApi.listStories() : Promise.resolve([]),
         session?.user?.id ? communityApi.getPublicProfile(session.user.id, { take: 1 }).catch(() => null) : Promise.resolve(null),
       ]);
       setCurrentUserRecipeCount(ownProfile?.user.recipesCount ?? 0);
       setPosts(loadedPosts);
       setTrendingPosts(loadedTrendingPosts);
       setStories(loadedStories);
-      setHasMoreServerPosts(loadedPosts.length === API_POSTS_PER_PAGE);
+      setHasMoreServerPosts(isAuthenticated && loadedPosts.length === API_POSTS_PER_PAGE);
       setVisiblePostCount(POSTS_PER_PAGE);
       setChefs(getCommunityChefs(loadedPosts, session?.user.id));
       communityCache = {
         posts: loadedPosts,
         trendingPosts: loadedTrendingPosts,
         stories: loadedStories,
-        hasMorePosts: loadedPosts.length === API_POSTS_PER_PAGE,
+        hasMorePosts: isAuthenticated && loadedPosts.length === API_POSTS_PER_PAGE,
       };
-      try {
+      if (isAuthenticated) try {
         const suggestedChefs = await communityApi.listSuggestedChefs();
         setChefs(suggestedChefs);
       } catch {
@@ -229,7 +230,7 @@ export const CommunityFeed: React.FC = () => {
     } finally {
       setIsInitialLoading(false);
     }
-  }, [activeFilter, session?.user?.id]);
+  }, [activeFilter, isAuthenticated, session?.user?.id]);
 
   useEffect(() => {
     void loadCommunity();
@@ -259,7 +260,7 @@ export const CommunityFeed: React.FC = () => {
   );
 
   const loadMorePosts = useCallback(async () => {
-    if (isLoadingMorePosts || !hasMoreServerPosts) return;
+    if (!isAuthenticated || isLoadingMorePosts || !hasMoreServerPosts) return;
 
     setIsLoadingMorePosts(true);
     try {
@@ -286,7 +287,7 @@ export const CommunityFeed: React.FC = () => {
     } finally {
       setIsLoadingMorePosts(false);
     }
-  }, [activeFilter, hasMoreServerPosts, isLoadingMorePosts, posts.length, showToast, stories, trendingPosts]);
+  }, [activeFilter, hasMoreServerPosts, isAuthenticated, isLoadingMorePosts, posts.length, showToast, stories, trendingPosts]);
 
   const loadPostInteractions = useCallback(async (
     postId: string,
@@ -358,10 +359,10 @@ export const CommunityFeed: React.FC = () => {
   }, [isLoadingMoreReviews, reviewModalPost, showToast]);
 
   const requireAuthentication = useCallback(
-    (action: string) => {
-      showToast(`Log in to ${action}.`);
+    (_action: string) => {
+      router.push("/registrationProcess/login");
     },
-    [showToast],
+    [router],
   );
 
   // Handle Likes
@@ -518,9 +519,13 @@ export const CommunityFeed: React.FC = () => {
       .slice(0, 4);
   }, [posts, searchQuery]);
 
-  const visiblePosts = useMemo(() => filteredPosts.slice(0, visiblePostCount), [filteredPosts, visiblePostCount]);
-  const hasMoreLoadedPosts = visiblePostCount < filteredPosts.length;
-  const hasMorePosts = hasMoreLoadedPosts || hasMoreServerPosts;
+  const visiblePosts = useMemo(
+    () => filteredPosts.slice(0, isAuthenticated ? visiblePostCount : PUBLIC_PREVIEW_POSTS),
+    [filteredPosts, isAuthenticated, visiblePostCount],
+  );
+  const hasMoreLoadedPosts = isAuthenticated && visiblePostCount < filteredPosts.length;
+  const hasMorePosts = isAuthenticated && (hasMoreLoadedPosts || hasMoreServerPosts);
+  const showGuestFeedGate = !isAuthenticated && visiblePosts.length === PUBLIC_PREVIEW_POSTS;
 
   const handleLoadMore = useCallback(() => {
     if (hasMoreLoadedPosts) {
@@ -899,6 +904,21 @@ export const CommunityFeed: React.FC = () => {
                     }
                   />
                 ))}
+              </div>
+            )}
+
+            {showGuestFeedGate && (
+              <div className="rounded-3xl border border-emerald-200 bg-gradient-to-r from-[#EAF7E8] to-white p-6 text-center shadow-xs dark:border-emerald-900/60 dark:from-emerald-950/30 dark:to-[#121212]">
+                <h3 className="text-sm font-extrabold text-neutral-900 dark:text-white">There is more to discover</h3>
+                <p className="mx-auto mt-1.5 max-w-sm text-xs leading-relaxed text-neutral-600 dark:text-neutral-300">
+                  Log in to explore more Community recipes, follow cooks, and join the conversation.
+                </p>
+                <Link
+                  href="/registrationProcess/login"
+                  className="mt-4 inline-flex items-center justify-center rounded-xl bg-[#2F8F46] px-5 py-2.5 text-xs font-bold text-white transition hover:bg-[#176B35]"
+                >
+                  Log in to continue
+                </Link>
               </div>
             )}
 

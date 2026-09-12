@@ -1,7 +1,7 @@
 import React from "react";
 import { motion } from "motion/react";
 import Link from "next/link";
-import { UserPlus, UserCheck, Trophy, Sparkles, TrendingUp, Star } from "lucide-react";
+import { UserPlus, UserCheck, Trophy, Sparkles, TrendingUp, Star, LockKeyhole } from "lucide-react";
 import { Author, Post } from "./types";
 import { CommunityAvatar } from "./CommunityAvatar";
 
@@ -51,6 +51,8 @@ export const CommunitySidebarRight: React.FC<CommunitySidebarRightProps> = ({
         </div>
       </div>
 
+      {isAuthenticated ? (
+        <>
       {/* Top Chefs to Follow */}
       <div className="rounded-2xl border border-slate-200 bg-white p-4.5 shadow-xs dark:border-neutral-800 dark:bg-[#121212]">
         <div className="flex items-center justify-between pb-3">
@@ -184,6 +186,28 @@ export const CommunitySidebarRight: React.FC<CommunitySidebarRightProps> = ({
           ))}
         </div>
       </div>
+
+        </>
+      ) : (
+        <>
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs dark:border-neutral-800 dark:bg-[#121212]">
+            <div className="flex items-center gap-2.5 text-neutral-700 dark:text-neutral-200">
+              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#EAF7E8] text-[#2F8F46] dark:bg-emerald-950/60 dark:text-[#B7E35F]"><LockKeyhole className="h-4 w-4" /></span>
+              <h4 className="text-[11px] font-bold uppercase tracking-wider">Top Community Chefs</h4>
+            </div>
+            <p className="mt-3 text-xs leading-relaxed text-neutral-500 dark:text-neutral-400">Log in to discover and follow FoodCanvas chefs.</p>
+            <Link href="/registrationProcess/login" className="mt-3 inline-flex w-full items-center justify-center rounded-xl bg-[#2F8F46] px-3 py-2 text-xs font-bold text-white transition hover:bg-[#176B35]">Log in to explore</Link>
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs dark:border-neutral-800 dark:bg-[#121212]">
+            <div className="flex items-center gap-2.5 text-neutral-700 dark:text-neutral-200">
+              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#FFF0DD] text-[#FF9F43] dark:bg-amber-950/50 dark:text-amber-300"><LockKeyhole className="h-4 w-4" /></span>
+              <h4 className="text-[11px] font-bold uppercase tracking-wider">Trending in Kitchens</h4>
+            </div>
+            <p className="mt-3 text-xs leading-relaxed text-neutral-500 dark:text-neutral-400">Log in to see what the Community is cooking right now.</p>
+            <Link href="/registrationProcess/login" className="mt-3 inline-flex w-full items-center justify-center rounded-xl border border-[#2F8F46] px-3 py-2 text-xs font-bold text-[#176B35] transition hover:bg-[#EAF7E8] dark:text-[#B7E35F] dark:hover:bg-emerald-950/40">Log in to view trends</Link>
+          </div>
+        </>
+      )}
 
       {/* Compact footer links */}
       <nav
