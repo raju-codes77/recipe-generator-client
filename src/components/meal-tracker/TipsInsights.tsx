@@ -6,7 +6,7 @@ import { getDailyHistory, DayEntry } from "@/app/api/meal-tracker/meal-tracker";
 import { useMealTracker } from "./MealTrackerContext";
 
 export default function MonthlyCalendarTracker() {
-  const { mealLog, dailyGoalKcal, userId } = useMealTracker();
+  const { mealLog, dailyGoalKcal, userId, isLoading } = useMealTracker();
   const [viewDate, setViewDate] = useState(new Date());
   const [history, setHistory] = useState<Record<string, DayEntry>>({});
 
@@ -72,7 +72,13 @@ export default function MonthlyCalendarTracker() {
   }).length;
 
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm p-5 flex flex-col gap-4 h-full">
+    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm p-5 flex flex-col gap-4 h-full relative">
+      {isLoading && (
+        <div className="absolute inset-0 z-10 bg-white/60 dark:bg-slate-800/60 backdrop-blur-[1px] flex items-center justify-center rounded-2xl">
+          <div className="w-8 h-8 rounded-full border-2 border-green-500 border-t-transparent animate-spin"></div>
+        </div>
+      )}
+      
       {/* Header */}
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-bold text-gray-900 dark:text-white">Monthly Tracker</h3>

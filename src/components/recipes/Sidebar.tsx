@@ -9,7 +9,7 @@ import {
   X
 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
-import Link from "next/link";
+import { toast } from "react-hot-toast";
 
 interface SidebarProps {
   selectedCollectionId?: string | null;
@@ -159,7 +159,7 @@ export default function Sidebar({ selectedCollectionId, onSelectCollection }: Si
         <button 
           onClick={() => {
             if (!userId) {
-              alert("Please login first to create collections.");
+              toast.error("Please login first to create collections.");
               return;
             }
             setIsModalOpen(true);

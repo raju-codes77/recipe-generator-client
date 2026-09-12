@@ -27,14 +27,6 @@ export default function UsageOverview() {
       color: "text-blue-600 bg-blue-50 dark:bg-blue-900/30",
     },
     {
-      id: 4,
-      label: "Flavor Pairings",
-      value: "892",
-      trend: "9.8%",
-      icon: Sparkles,
-      color: "text-purple-600 bg-purple-50 dark:bg-purple-900/30",
-    },
-    {
       id: 5,
       label: "Taste Matches",
       value: "624",

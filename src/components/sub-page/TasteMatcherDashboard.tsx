@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import {
@@ -13,147 +13,95 @@ import {
   Loader2,
   ChevronLeft,
   ChevronRight,
+  Clock,
+  Flame,
 } from "lucide-react";
+import { authClient } from "@/lib/auth-client";
+import Link from "next/link";
 
 interface Recipe {
-  id: number;
+  id: string;
   title: string;
   image: string;
   matchScore: number;
-  description: string;
-  basedOn: string;
+  cuisine?: string;
+  time?: number;
+  calories?: number;
+  rating?: number;
+  matchReasons: string[];
 }
 
 const RECIPES_PER_PAGE = 4;
-
-// 12 default recipes so pagination (3 pages) is visible right from page load,
-// even before the user clicks "Match Recipes".
-const DEFAULT_RECIPES: Recipe[] = [
-  {
-    id: 1,
-    title: "Spicy Lime Avocado Chicken",
-    image: "https://images.unsplash.com/photo-1598515214146-dab39da1243d?auto=format&fit=crop&w=600&q=80",
-    matchScore: 96,
-    description: "Low on Cilantro, Medium Spicy, High Umami",
-    basedOn: "Likes: Garlic, Avocado, Lime | Dislikes: Cilantro",
-  },
-  {
-    id: 2,
-    title: "Garlic Pesto Pasta with Shrimp",
-    image: "https://images.unsplash.com/photo-1551183053-bf91a1d81141?auto=format&fit=crop&w=600&q=80",
-    matchScore: 94,
-    description: "Low Sweetness, High Umami, Low Spicy",
-    basedOn: "Likes: Garlic, Basil, Shrimp | Dislikes: Cilantro",
-  },
-  {
-    id: 3,
-    title: "Mediterranean Chickpea Salad",
-    image: "https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=600&q=80",
-    matchScore: 92,
-    description: "High Sourness, Medium Umami, Low Sweetness",
-    basedOn: "Likes: Lemon, Olive oil | Dislikes: Blue Cheese",
-  },
-  {
-    id: 4,
-    title: "Creamy Truffle Mushroom Risotto",
-    image: "https://images.unsplash.com/photo-1633964913295-ceb43826e7c9?auto=format&fit=crop&w=600&q=80",
-    matchScore: 90,
-    description: "Rich Umami, Low Spiciness, Creamy Texture",
-    basedOn: "Likes: Mushroom, Garlic, Butter | Dislikes: None",
-  },
-  {
-    id: 5,
-    title: "Grilled Basil Lemon Salmon",
-    image: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=600&q=80",
-    matchScore: 93,
-    description: "High Umami, Medium Sourness, Low Sweetness",
-    basedOn: "Likes: Basil, Lemon, Salmon | Dislikes: Cilantro",
-  },
-  {
-    id: 6,
-    title: "Thai Basil Avocado Stir-fry",
-    image: "https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=600&q=80",
-    matchScore: 91,
-    description: "High Spiciness, Medium Umami, Low Sweetness",
-    basedOn: "Likes: Basil, Avocado, Garlic | Dislikes: Cilantro",
-  },
-  {
-    id: 7,
-    title: "Roasted Garlic Tomato Soup",
-    image: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=600&q=80",
-    matchScore: 89,
-    description: "Medium Sourness, High Umami, Low Spiciness",
-    basedOn: "Likes: Garlic, Tomato | Dislikes: Blue Cheese",
-  },
-  {
-    id: 8,
-    title: "Avocado Chickpea Buddha Bowl",
-    image: "https://images.unsplash.com/photo-1476224203421-9ac39bcb3327?auto=format&fit=crop&w=600&q=80",
-    matchScore: 88,
-    description: "Balanced Profile, Low Spiciness, Medium Umami",
-    basedOn: "Likes: Avocado, Chickpea | Dislikes: Cilantro",
-  },
-  {
-    id: 9,
-    title: "Basil Garlic Butter Shrimp",
-    image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=600&q=80",
-    matchScore: 95,
-    description: "High Umami, Medium Saltiness, Low Sweetness",
-    basedOn: "Likes: Basil, Garlic, Shrimp | Dislikes: Blue Cheese",
-  },
-  {
-    id: 10,
-    title: "Mediterranean Lemon Orzo Salad",
-    image: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80",
-    matchScore: 87,
-    description: "High Sourness, Low Spiciness, Medium Umami",
-    basedOn: "Likes: Lemon, Olive oil | Dislikes: Cilantro",
-  },
-  {
-    id: 11,
-    title: "Spicy Garlic Avocado Toast",
-    image: "https://images.unsplash.com/photo-1467003909585-2f8a72700288?auto=format&fit=crop&w=600&q=80",
-    matchScore: 90,
-    description: "Medium Spiciness, High Umami, Low Sweetness",
-    basedOn: "Likes: Garlic, Avocado | Dislikes: Cilantro",
-  },
-  {
-    id: 12,
-    title: "Creamy Basil Mushroom Pasta",
-    image: "https://images.unsplash.com/photo-1455619452474-d2be8b1e70cd?auto=format&fit=crop&w=600&q=80",
-    matchScore: 92,
-    description: "High Umami, Creamy Texture, Low Spiciness",
-    basedOn: "Likes: Basil, Mushroom, Garlic | Dislikes: None",
-  },
-];
-
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 export default function TasteMatcherDashboard() {
+  const { data: session } = authClient.useSession();
   const requestRef = React.useRef(0);
   const abortControllerRef = React.useRef<AbortController | null>(null);
-  const [sweetness, setSweetness] = useState<number>(7);
-  const [sourness, setSourness] = useState<number>(3);
-  const [saltiness, setSaltiness] = useState<number>(5);
-  const [umami, setUmami] = useState<number>(8);
-  const [spiciness, setSpiciness] = useState<number>(3);
 
-  const [likes, setLikes] = useState<string[]>(["Garlic", "Avocado", "Basil"]);
-  const [dislikes, setDislikes] = useState<string[]>(["Cilantro", "Blue Cheese"]);
+  const [sweetness, setSweetness] = useState<number>(5);
+  const [sourness, setSourness] = useState<number>(5);
+  const [saltiness, setSaltiness] = useState<number>(5);
+  const [umami, setUmami] = useState<number>(5);
+  const [spiciness, setSpiciness] = useState<number>(5);
+
+  const [likes, setLikes] = useState<string[]>([]);
+  const [dislikes, setDislikes] = useState<string[]>([]);
   const [likeInput, setLikeInput] = useState<string>("");
   const [dislikeInput, setDislikeInput] = useState<string>("");
 
   const [cuisines, setCuisines] = useState({
-    thai: true,
+    thai: false,
     mexican: false,
-    mediterranean: true,
+    mediterranean: false,
     italian: false,
   });
 
   const [loading, setLoading] = useState<boolean>(false);
+  const [fetchingProfile, setFetchingProfile] = useState<boolean>(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [recipes, setRecipes] = useState<Recipe[]>(DEFAULT_RECIPES);
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [currentPage, setCurrentPage] = useState<number>(1);
+  const [hasSearched, setHasSearched] = useState(false);
+
+  useEffect(() => {
+    async function fetchProfile() {
+      if (!session?.user) {
+        setFetchingProfile(false);
+        return;
+      }
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/taste-profile`, {
+          credentials: "include",
+        });
+        const data = await response.json();
+        if (data.success && data.profile) {
+          const p = data.profile;
+          setSweetness(p.sweetness);
+          setSourness(p.sourness);
+          setSaltiness(p.saltiness);
+          setUmami(p.umami);
+          setSpiciness(p.spiciness);
+          setLikes(p.likedIngredients || []);
+          setDislikes(p.dislikedIngredients || []);
+          
+          if (p.preferredCuisines) {
+            setCuisines({
+              thai: p.preferredCuisines.includes("Thai"),
+              mexican: p.preferredCuisines.includes("Mexican"),
+              mediterranean: p.preferredCuisines.includes("Mediterranean"),
+              italian: p.preferredCuisines.includes("Italian"),
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Failed to load profile", error);
+      } finally {
+        setFetchingProfile(false);
+      }
+    }
+    fetchProfile();
+  }, [session]);
 
   const totalPages = Math.max(1, Math.ceil(recipes.length / RECIPES_PER_PAGE));
 
@@ -192,26 +140,39 @@ export default function TasteMatcherDashboard() {
 
   const removeDislike = (item: string) => setDislikes(dislikes.filter((d) => d !== item));
 
-  // Groq AI Match Function — APPENDS new batch to existing collection
   const handleMatchRecipes = async () => {
+    if (!session?.user) {
+      setErrorMsg("Please log in to save your profile and find matches.");
+      return;
+    }
+
     const reqId = ++requestRef.current;
     if (abortControllerRef.current) abortControllerRef.current.abort();
     abortControllerRef.current = new AbortController();
     setLoading(true);
     setErrorMsg(null);
+    setHasSearched(true);
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000);
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+    const preferredCuisines = Object.entries(cuisines)
+      .filter(([_, active]) => active)
+      .map(([name]) => name.charAt(0).toUpperCase() + name.slice(1));
 
     try {
       const response = await fetch(`${API_BASE_URL}/api/match-recipes`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sweetness, sourness, saltiness, umami, spiciness, likes, dislikes, cuisines }),
+        credentials: "include",
+        body: JSON.stringify({ 
+          sweetness, sourness, saltiness, umami, spiciness, 
+          likedIngredients: likes, 
+          dislikedIngredients: dislikes, 
+          preferredCuisines 
+        }),
         signal: abortControllerRef.current?.signal,
       });
-
-      
 
       let data: any = null;
       try {
@@ -219,25 +180,9 @@ export default function TasteMatcherDashboard() {
       } catch {}
 
       if (reqId !== requestRef.current) return;
-      if (response.ok && data?.success && Array.isArray(data?.recipes) && data.recipes.length > 0) {
-        setRecipes((prev) => {
-          // Re-number ids so a new batch never collides with existing cards'
-          // ids (the AI restarts numbering from 1 every call).
-          const startId = prev.length > 0 ? Math.max(...prev.map((r) => r.id)) + 1 : 1;
-          const newBatch: Recipe[] = data.recipes.map((r: Recipe, idx: number) => ({
-            ...r,
-            id: startId + idx,
-          }));
-
-          const updated = [...prev, ...newBatch];
-
-          // Jump to the page where the first newly-added card lands
-          const firstNewIndex = prev.length;
-          const targetPage = Math.floor(firstNewIndex / RECIPES_PER_PAGE) + 1;
-          setCurrentPage(targetPage);
-
-          return updated;
-        });
+      if (response.ok && data?.success && Array.isArray(data?.recipes)) {
+        setRecipes(data.recipes);
+        setCurrentPage(1);
 
         setTimeout(() => {
           document.getElementById("recipe-grid-top")?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -250,7 +195,7 @@ export default function TasteMatcherDashboard() {
       if (error.name === "AbortError") {
         setErrorMsg("Request timed out. Please try again.");
       } else {
-        setErrorMsg("Could not reach the backend. Make sure the server is running on " + API_BASE_URL);
+        setErrorMsg("Could not reach the matching service.");
       }
       console.error("Network error:", error);
     } finally {
@@ -258,35 +203,45 @@ export default function TasteMatcherDashboard() {
     }
   };
 
+  if (fetchingProfile) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-emerald-600" />
+      </div>
+    );
+  }
 
   return (
     <div className="w-full max-w-7xl mx-auto px-4 py-8 bg-white dark:bg-[#0b0f19] text-gray-900 dark:text-gray-100 transition-colors duration-300">
 
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4 border-b border-gray-100 dark:border-gray-800 pb-6">
         <div>
-          <h1 className="text-2xl md:text-3xl font-black tracking-tight">Define Your Palate</h1>
+          <h1 className="text-2xl md:text-3xl font-black tracking-tight">Taste Matcher</h1>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            Adjust your flavor profile to get personalized AI culinary recommendations.
+            Discover real recipes perfectly tailored to your palate and nutritional goals.
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <h2 className="text-xl md:text-2xl font-bold">
-            Personalized Recommendations <span className="text-emerald-600 dark:text-emerald-400 text-lg">({recipes.length} Found)</span>
-          </h2>
+          {session ? (
+            <h2 className="text-xl md:text-2xl font-bold">
+              Personalized Recommendations <span className="text-emerald-600 dark:text-emerald-400 text-lg">({recipes.length} Found)</span>
+            </h2>
+          ) : (
+            <Link href="/login" className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors">
+              Log in to match recipes
+            </Link>
+          )}
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-
+        {/* Left Column: Palate Settings */}
         <div className="lg:col-span-4 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 rounded-3xl p-6 shadow-sm space-y-6">
 
           <div className="flex items-center justify-between">
             <h3 className="font-bold text-sm tracking-wide uppercase text-gray-800 dark:text-gray-200 flex items-center gap-2">
-              <Sliders className="w-4 h-4 text-emerald-600" /> Palate Sliders
+              <Sliders className="w-4 h-4 text-emerald-600" /> Taste Profile
             </h3>
-            <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-1 rounded-full border border-emerald-200 dark:border-emerald-800/40">
-              75% Profile Completed
-            </span>
           </div>
 
           <div className="space-y-4">
@@ -405,13 +360,13 @@ export default function TasteMatcherDashboard() {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={handleMatchRecipes}
-            disabled={loading}
-            className="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-3.5 px-4 rounded-2xl text-xs transition-colors shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2 disabled:opacity-50"
+            disabled={loading || !session}
+            className="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-3.5 px-4 rounded-2xl text-xs transition-colors shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Groq AI is cooking a new recipe...</span>
+                <span>Analyzing recipes...</span>
               </>
             ) : (
               <>
@@ -425,11 +380,20 @@ export default function TasteMatcherDashboard() {
 
         {/* Right Column: Recipe Cards Grid + Pagination */}
         <div id="recipe-grid-top" className="lg:col-span-8 flex flex-col gap-6">
-          {recipes.length === 0 ? (
+          {!hasSearched && recipes.length === 0 ? (
+             <div className="flex flex-col items-center justify-center text-center py-20 border border-dashed border-gray-200 dark:border-gray-800 rounded-3xl">
+              <ChefHat className="w-10 h-10 text-gray-300 dark:text-gray-700 mb-3" />
+              <h3 className="text-lg font-bold mb-1">Find Your Perfect Match</h3>
+              <p className="text-sm text-gray-400 dark:text-gray-500 max-w-sm">
+                Adjust your taste palate, favorite ingredients, and let the algorithm rank the best recipes for you.
+              </p>
+            </div>
+          ) : recipes.length === 0 ? (
             <div className="flex flex-col items-center justify-center text-center py-20 border border-dashed border-gray-200 dark:border-gray-800 rounded-3xl">
               <ChefHat className="w-10 h-10 text-gray-300 dark:text-gray-700 mb-3" />
-              <p className="text-sm text-gray-400 dark:text-gray-500">
-                No recipes yet. Adjust your palate and hit &quot;Match Recipes&quot;.
+              <h3 className="text-lg font-bold mb-1">No strong matches found</h3>
+              <p className="text-sm text-gray-400 dark:text-gray-500 max-w-sm">
+                Try relaxing your dislikes or selecting more cuisines.
               </p>
             </div>
           ) : (
@@ -446,7 +410,7 @@ export default function TasteMatcherDashboard() {
                   >
                     <div className="relative h-52 w-full overflow-hidden bg-gray-100 dark:bg-gray-800">
                       <Image
-                        src={recipe.image}
+                        src={recipe.image || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c"}
                         alt={recipe.title}
                         fill
                         sizes="(max-width: 768px) 100vw, 50vw"
@@ -465,17 +429,27 @@ export default function TasteMatcherDashboard() {
                         <span>{recipe.matchScore}% Taste Match</span>
                       </div>
 
-                      <p className="text-xs text-gray-600 dark:text-gray-300 font-medium leading-relaxed">{recipe.description}</p>
+                      <ul className="text-xs text-gray-600 dark:text-gray-300 font-medium leading-relaxed list-disc list-inside space-y-1">
+                        {recipe.matchReasons.slice(0, 3).map((reason, i) => (
+                          <li key={i}>{reason}</li>
+                        ))}
+                        {recipe.matchReasons.length > 3 && (
+                          <li className="text-gray-400 list-none text-[11px]">+ {recipe.matchReasons.length - 3} more reasons</li>
+                        )}
+                      </ul>
 
-                      <p className="text-[11px] text-gray-400 dark:text-gray-500 pt-1 border-t border-gray-100 dark:border-gray-800">{recipe.basedOn}</p>
+                      <div className="flex flex-wrap gap-2 text-[11px] font-semibold text-gray-500 dark:text-gray-400 pt-2 border-t border-gray-100 dark:border-gray-800">
+                        {recipe.time && <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {recipe.time} min</span>}
+                        {recipe.calories && <span className="flex items-center gap-1"><Flame className="w-3 h-3" /> {recipe.calories} kcal</span>}
+                        {recipe.cuisine && <span>• {recipe.cuisine}</span>}
+                      </div>
 
                       <div className="flex items-center justify-between pt-2 mt-auto">
-                        <span className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 flex items-center gap-1 cursor-pointer hover:underline">
+                        <Link href={`/dashboard/recipes/${recipe.id}`} className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 flex items-center gap-1 cursor-pointer hover:underline">
                           <ChefHat className="w-3.5 h-3.5" /> View Recipe Details
-                        </span>
+                        </Link>
                         <div className="flex items-center gap-2 text-gray-400">
-                          <button className="hover:text-amber-500 transition-colors">⭐</button>
-                          <button className="hover:text-rose-500 transition-colors"><Heart className="w-4 h-4" /></button>
+                          {recipe.rating && <span className="text-xs font-medium text-amber-500">⭐ {recipe.rating}</span>}
                         </div>
                       </div>
                     </div>
