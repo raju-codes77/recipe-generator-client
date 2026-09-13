@@ -18,6 +18,7 @@ import QuickActions from "@/components/aitools/shopping-list/QuickActions";
 import AISmartSuggestion from "@/components/aitools/shopping-list/AISmartSuggestion";
 import PantryCard from "@/components/aitools/shopping-list/PantryCard";
 import ShoppingListNote from "@/components/aitools/shopping-list/ShoppingListNote";
+import Link from "next/link";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
@@ -240,10 +241,9 @@ export default function ShoppingListPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 py-6 ">
       {/* Breadcrumb */}
-      <div className="flex items-center gap-1.5 text-sm text-[#8A948D] dark:text-[#A6B0A9] mb-5">
-        <HomeIcon size={14} />
-        <span>Home</span>
-        <ChevronRight size={14} />
+      <div className="flex items-center gap-1.5 text-sm text-[#8A948D] dark:text-[#A6B0A9] mb-5"><Link className="flex justify-center items-center gap-1 hover:text-[#16A34A] cursor-pointer " href='/ai-tools'>
+        <span>AI Tools</span>
+        <ChevronRight size={14} /></Link>
         <span className="text-[#17211D] dark:text-[#F4F7F4] font-medium">Shopping List</span>
       </div>
 
