@@ -6,6 +6,13 @@ import { FiMail, FiSend, FiHeart } from "react-icons/fi";
 // Thik library use korle icon asbe, nicher icons gulo standard use kora holo
 import { FaFaceAngry, FaInstagram, FaYoutube } from "react-icons/fa6";
 import { FaTwitterSquare } from "react-icons/fa";
+import { Fredoka } from "next/font/google";
+
+const fredoka = Fredoka({ 
+  subsets: ["latin"], 
+  weight: ["500", "600", "700"],
+  display: "swap"
+});
 
 export default function Footer() {
     return (
@@ -19,28 +26,40 @@ export default function Footer() {
                     <div className="lg:col-span-2 space-y-4">
                         <Link
                             href="/"
-                            className="flex items-center gap-2.5 group"
+                            className="flex items-center gap-2 group w-fit"
                             aria-label="FoodCanvas - Go to homepage"
                         >
-                            {/* Logo Image */}
-                            <div className="relative w-12 h-12 lg:w-14 lg:h-14 shrink-0 transition-transform duration-200 group-hover:scale-105">
-                                <Image
-                                    src="/logohere.png"
+                            {/* Icon Container */}
+                            <div className="flex shrink-0 transition-transform duration-300 group-hover:scale-105">
+                                <img
+                                    src="/navbar_logo.png"
                                     alt="FoodCanvas Logo"
-                                    fill
-                                    className="object-contain"
-                                    priority
-                                    sizes="(max-width: 1024px) 48px, 56px"
+                                    className="w-[34px] h-[34px] md:w-[38px] md:h-[38px] lg:w-[42px] lg:h-[42px] object-contain"
                                 />
                             </div>
 
                             {/* Brand Name */}
                             <div className="flex flex-col leading-none">
-                                <span className="text-xl lg:text-2xl font-extrabold tracking-tight">
-                                    <span className="text-[#2F8F46] dark:text-[#4ADE80]">Food</span>
-                                    <span className="text-[#FF6B35]">Canvas</span>
-                                </span>
-                                <span className="text-[10px] tracking-[0.15em] uppercase font-semibold text-slate-400 dark:text-slate-500 mt-1">
+                                <div className="relative flex items-center">
+                                    <span 
+                                        className={`${fredoka.className} text-[24px] md:text-[26px] lg:text-[28px] font-semibold tracking-wide`}
+                                        style={{
+                                            background: 'linear-gradient(90deg, #176B4D 0%, #65A947 45%, #F2B84B 75%, #F08A35 100%)',
+                                            WebkitBackgroundClip: 'text',
+                                            WebkitTextFillColor: 'transparent',
+                                        }}
+                                    >
+                                        FoodCanvas
+                                    </span>
+                                    <svg 
+                                        className="absolute -top-1 -right-3 w-4 h-4 text-[#65A947] opacity-90 transform rotate-12" 
+                                        viewBox="0 0 24 24" 
+                                        fill="currentColor"
+                                    >
+                                        <path d="M17.05,20.28c0.8,0.76,2.06,0.67,2.78-0.12c1.78-1.92,3.31-5.61,1.52-11.41C18.66,0.1,6.58-1.8,2.7,2.2c0,0-1.83,6.31,1.4,11.23c1.78,2.71,5.32,4.64,8.55,4.64c0.88,0,1.76-0.15,2.61-0.45l2.42,2.3c0.76,0.73,1.96,0.65,2.62-0.16c0.55-0.66,0.5-1.63-0.09-2.22L17.05,20.28z M12.65,15.65c-2.42,0-5.18-1.46-6.55-3.53C3.59,8.34,4.95,3.33,4.95,3.33c2.9-2.9,12.28-1.5,14.63,6.17c1.37,4.45,0.18,7.38-1.12,8.79C16.94,19.86,14.77,15.65,12.65,15.65z"/>
+                                    </svg>
+                                </div>
+                                <span className="text-[10px] tracking-[0.15em] uppercase font-semibold text-slate-400 dark:text-slate-500 mt-1 pl-0.5">
                                     Ignite Your Taste
                                 </span>
                             </div>
