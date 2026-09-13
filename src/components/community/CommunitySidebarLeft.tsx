@@ -27,6 +27,14 @@ interface CommunitySidebarLeftProps {
   onOpenSaved?: () => void;
 }
 
+interface FilterCategory {
+  id: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  count?: number;
+  badge?: string;
+}
+
 export const CommunitySidebarLeft: React.FC<CommunitySidebarLeftProps> = ({
   activeFilter,
   setActiveFilter,
@@ -38,7 +46,7 @@ export const CommunitySidebarLeft: React.FC<CommunitySidebarLeftProps> = ({
   onOpenFollowers = () => undefined,
   onOpenSaved = () => undefined,
 }) => {
-  const filterCategories = [
+  const filterCategories: FilterCategory[] = [
     { id: "all", label: "All Community Posts", icon: Compass },
     { id: "following", label: "Following Cooks", icon: Users },
     { id: "quick", label: "Quick 15-Min Meals", icon: Clock },

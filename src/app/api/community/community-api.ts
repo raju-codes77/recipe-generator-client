@@ -126,8 +126,6 @@ export const communityApi = {
         additionalImages: post.additionalImages,
         recipe: post.recipe,
         tags: post.tags,
-        isChallengeEntry: post.isChallengeEntry,
-        challengeName: post.challengeName,
         userId,
       }),
     });
