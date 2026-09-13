@@ -1,12 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, type MouseEvent } from "react";
 import Image from "next/image";
+
 import Link from "next/link";
+
 import { usePathname, useRouter } from "next/navigation";
 import { Bell, Menu, X, Sun, Moon, LogOut, ChevronRight } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
+
 import { authClient } from "@/lib/auth-client";
+
 import toast from "react-hot-toast";
 import { Fredoka } from "next/font/google";
 
@@ -16,46 +20,83 @@ const fredoka = Fredoka({
   display: "swap"
 });
 
+
+
 export default function Navbar() {
+
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
+
+
   const pathname = usePathname();
+
   const router = useRouter();
 
+
+
   const { data: session, isPending } = authClient.useSession();
+
   const user = session?.user;
 
+
+
   const userRole =
+
     user && typeof user === "object" && "role" in user
+
       ? String((user as any).role).toLowerCase()
+
       : "user";
 
+
+
   const baseNavLinks = [
+
     { name: "Home", href: "/" },
+
     { name: "Recipes", href: "/recipes" },
+
     { name: "AI Tools", href: "/ai-tools" },
+
     { name: "Community", href: "/community" },
+
     { name: "Challenges", href: "/challenges" },
+
   ];
 
+
+
   const dashboardHref =
+
     userRole === "admin" ? "/dashboard/admin" : "/dashboard/users";
 
   const navLinks = user
+
     ? [...baseNavLinks, { name: "Dashboard", href: dashboardHref }]
+
     : baseNavLinks;
 
   const getInitials = (name?: string) => {
+
     if (!name) return "FC";
     return name
+
       .split(" ")
+
       .map((n) => n[0])
+
       .join("")
+
       .toUpperCase()
+
       .substring(0, 2);
+
   };
+
+
 
   useEffect(() => {
     const handleScroll = () => {
@@ -67,48 +108,112 @@ export default function Navbar() {
 
   useEffect(() => {
     if (
+
       localStorage.theme === "dark" ||
+
       (!("theme" in localStorage) &&
+
         window.matchMedia("(prefers-color-scheme: dark)").matches)
+
     ) {
+
       setIsDarkMode(true);
+
       document.documentElement.classList.add("dark");
+
     } else {
+
       setIsDarkMode(false);
+
       document.documentElement.classList.remove("dark");
+
     }
+
   }, []);
 
+
+
   const toggleTheme = () => {
+
     if (isDarkMode) {
+
       document.documentElement.classList.remove("dark");
+
       localStorage.theme = "light";
+
       setIsDarkMode(false);
+
       toast("Light mode activated ☀️", { icon: "🔆" });
+
     } else {
+
       document.documentElement.classList.add("dark");
+
       localStorage.theme = "dark";
+
       setIsDarkMode(true);
+
       toast("Dark mode activated 🌙", { icon: "🌙" });
+
+    }
+
+  };
+
+  const handleNavLinkClick = (
+    event: MouseEvent<HTMLAnchorElement>,
+    href: string,
+  ) => {
+    const isUnmodifiedLeftClick =
+      event.button === 0 &&
+      !event.metaKey &&
+      !event.ctrlKey &&
+      !event.shiftKey &&
+      !event.altKey;
+
+    if (
+      href === "/community" &&
+      pathname === "/community" &&
+      isUnmodifiedLeftClick
+    ) {
+      event.preventDefault();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      window.dispatchEvent(new Event("community:refresh"));
     }
   };
 
   const handleLogout = async () => {
+
     try {
+
       await authClient.signOut({
+
         fetchOptions: {
+
           onSuccess: () => {
+
             setIsMobileMenuOpen(false);
+
             toast.success("Successfully logged out!");
+
             router.push("/");
+
             router.refresh();
+
           },
+
         },
+
       });
+
     } catch (error) {
+
       toast.error("Failed to log out. Please try again.");
+
     }
+
   };
+
+
 
   return (
     <div
@@ -118,6 +223,8 @@ export default function Navbar() {
         }`}
     >
       <header className="max-w-[1440px] mx-auto flex items-center justify-between px-6 lg:px-12 py-4 lg:py-5">
+
+
 
         {/* Left Section */}
         <div className="flex items-center gap-10 lg:gap-14">
@@ -156,53 +263,79 @@ export default function Navbar() {
             </div>
           </Link>
 
+
+
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-1.5 lg:gap-2">
             {navLinks.map((link) => {
+
               const isActive = pathname === link.href;
 
+
+
               return (
+
                 <Link
-                  key={link.name}
-                  href={link.href}
-                  className={`relative px-4 py-2.5 text-[15px] rounded-full transition-all duration-300 ${isActive
-                    ? "text-emerald-700 dark:text-emerald-400 font-bold bg-emerald-50/80 dark:bg-emerald-500/10"
-                    : "text-slate-600 dark:text-slate-300 font-medium hover:text-emerald-600 dark:hover:text-emerald-300 hover:bg-slate-50 dark:hover:bg-slate-800/50"
-                    }`}
-                >
-                  {link.name}
-                </Link>
+  key={link.name}
+  href={link.href}
+  onClick={(event) => handleNavLinkClick(event, link.href)}
+  className={`relative px-4 py-2.5 text-[15px] rounded-full transition-all duration-300 ${
+    isActive
+      ? "text-emerald-700 dark:text-emerald-400 font-bold bg-emerald-50/80 dark:bg-emerald-500/10"
+      : "text-slate-600 dark:text-slate-300 font-medium hover:text-emerald-600 dark:hover:text-emerald-300 hover:bg-slate-50 dark:hover:bg-slate-800/50"
+  }`}
+>
+  {link.name}
+</Link>
               );
+
             })}
+
           </nav>
+
         </div>
+
+
 
         {/* Right Section */}
         <div className="flex items-center gap-3 sm:gap-5">
 
+
+
           {/* Theme Toggle */}
+
           <button
+
             onClick={toggleTheme}
             className="p-2.5 text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all duration-200"
             aria-label="Toggle Dark Mode"
+
           >
             {isDarkMode ? <Sun size={18} strokeWidth={2.5} /> : <Moon size={18} strokeWidth={2.5} />}
           </button>
 
+
+
           {/* Authentication Section */}
+
           {isPending ? (
             <div className="w-28 h-10 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-full" />
           ) : user ? (
             <>
+
               {/* Notifications */}
+
               <button
                 onClick={() => toast("You have no new notifications", { icon: "🔔" })}
                 className="p-2.5 text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all duration-200 relative"
                 aria-label="Notifications"
+
               >
                 <Bell size={18} strokeWidth={2.5} />
                 <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-slate-900" />
               </button>
+
+
 
               {/* User Profile and Logout */}
               <div className="hidden sm:flex items-center gap-4 pl-2 border-l border-slate-200 dark:border-slate-700/50">
@@ -211,15 +344,23 @@ export default function Navbar() {
                     {user.image ? (
                       <Image src={user.image} alt={user.name || "User profile"} fill sizes="36px" className="object-cover" />
                     ) : (
+
                       <span>{getInitials(user.name)}</span>
+
                     )}
+
                   </div>
                   <span className="text-[14px] font-semibold text-slate-700 dark:text-slate-200 max-w-[120px] truncate">
                     {user.name}
+
                   </span>
+
                 </div>
 
+
+
                 <button
+
                   onClick={handleLogout}
                   className="p-2.5 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-full transition-all duration-200"
                   aria-label="Logout"
@@ -227,8 +368,11 @@ export default function Navbar() {
                 >
                   <LogOut size={18} strokeWidth={2.5} />
                 </button>
+
               </div>
+
             </>
+
           ) : (
             <div className="hidden sm:flex items-center gap-2">
               <Link
@@ -251,23 +395,51 @@ export default function Navbar() {
                 <span>Sign Up</span>
                 <ChevronRight size={16} strokeWidth={3} className="opacity-70 group-hover:translate-x-0.5 transition-transform" />
               </Link>
+
+
+
+              <Link
+
+                href="/registrationProcess/register"
+
+                className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-full transition-colors shadow-sm shadow-emerald-600/20"
+
+              >
+
+                Sign Up
+
+              </Link>
+
             </div>
+
           )}
 
+
+
           {/* Mobile Menu Button */}
+
           <button
             className="md:hidden p-2.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+
             aria-label="Toggle mobile menu"
+
           >
             {isMobileMenuOpen ? <X size={24} strokeWidth={2.5} /> : <Menu size={24} strokeWidth={2.5} />}
           </button>
+
         </div>
+
       </header>
 
+
+
       {/* Mobile Menu Dropdown */}
+
       <AnimatePresence>
+
         {isMobileMenuOpen && (
+
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -277,20 +449,31 @@ export default function Navbar() {
           >
             <div className="flex flex-col gap-1.5">
               {navLinks.map((link) => {
+
                 const isActive = pathname === link.href;
                 return (
+
                   <Link
+
                     key={link.name}
+
                     href={link.href}
                     className={`text-[16px] px-5 py-3.5 rounded-2xl transition-all ${isActive
                       ? "font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10"
                       : "font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/50"
                       }`}
-                    onClick={() => setIsMobileMenuOpen(false)}
+                    onClick={(event) => {
+                      setIsMobileMenuOpen(false);
+                      handleNavLinkClick(event, link.href);
+                    }}
                   >
+
                     {link.name}
+
                   </Link>
+
                 );
+
               })}
 
               <div className="pt-4 mt-2 border-t border-slate-100 dark:border-slate-800/60 flex flex-col gap-3">
@@ -301,21 +484,30 @@ export default function Navbar() {
                         {user.image ? (
                           <Image src={user.image} alt={user.name || "User"} fill sizes="48px" className="object-cover" />
                         ) : (
+
                           <span>{getInitials(user.name)}</span>
+
                         )}
+
                       </div>
                       <span className="text-[16px] font-bold text-slate-800 dark:text-slate-100">
                         {user.name}
+
                       </span>
+
                     </div>
                     <button
+
                       onClick={handleLogout}
                       className="flex items-center justify-center gap-2 w-full py-3.5 bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-500/10 dark:text-red-400 dark:hover:bg-red-500/20 text-[15px] font-bold rounded-2xl transition-colors"
                     >
                       <LogOut size={18} strokeWidth={2.5} />
                       Logout
+
                     </button>
+
                   </div>
+
                 ) : (
                   <div className="flex flex-col gap-3">
                     <Link
@@ -337,15 +529,27 @@ export default function Navbar() {
                       onMouseEnter={(e) => e.currentTarget.style.backgroundPosition = 'right center'}
                       onMouseLeave={(e) => e.currentTarget.style.backgroundPosition = 'left center'}
                     >
+
                       Sign Up
+
                     </Link>
+
                   </div>
+
                 )}
+
               </div>
+
             </div>
+
           </motion.div>
+
         )}
+
       </AnimatePresence>
+
     </div>
+
   );
+
 }

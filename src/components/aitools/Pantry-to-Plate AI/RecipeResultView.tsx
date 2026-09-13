@@ -7,6 +7,7 @@ import { ArrowLeft, Sparkles, Bookmark, Share2, RotateCcw, Replace, ChevronDown,
 import { Recipe } from "./types";
 import RefineChips from "./RefineChips";
 import HealthScoreCard from "./HealthScoreCard";
+import Link from "next/link";
 
 const DEFAULT_FOOD_IMAGE =
   "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=1200&q=80";
@@ -216,16 +217,48 @@ export default function RecipeResultView({ recipe, onBack, onRefine, refiningOpt
           <RefineChips onRefine={onRefine} refiningOption={refiningOption} />
 
           <div className="pt-2 space-y-3">
+            <Link href="/ai-tools/shopping-list">
+              <button
+                onClick={async () => {
+                  if (!recipe?.id) {
+                    toast.error("Recipe ID is missing");
+                    return;
+                  }
+                  const toastId = toast.loading("Comparing recipe with your pantry...");
+                  try {
+                    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+                    const res = await fetch(`${apiUrl}/api/shopping-list/from-recipe`, {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ recipeId: recipe.id }),
+                      credentials: "include",
+                    });
+
+                    if (!res.ok) throw new Error("Failed to add missing ingredients");
+                    const data = await res.json();
+                    toast.success(
+                      data.message || "Missing ingredients added to your shopping list!",
+                      { id: toastId }
+                    );
+                  } catch (err: any) {
+                    toast.error(err.message || "Failed to add to shopping list", { id: toastId });
+                  }
+                }}
+                className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-sm flex items-center justify-center gap-2 transition shadow-sm hover:shadow-md cursor-pointer"
+              >
+                <Sparkles className="w-4 h-4" /> Add Missing Ingredients to Shopping List
+              </button>
+            </Link>
             <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={() => toast.success("Recipe saved!")}
-                className="w-full py-3 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm flex items-center justify-center gap-2 transition"
+                className="w-full py-3 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm flex items-center justify-center gap-2 transition cursor-pointer"
               >
                 <Bookmark className="w-4 h-4" /> Save Recipe
               </button>
               <button
                 onClick={() => toast.success("Publish link copied!")}
-                className="w-full py-3 px-4 rounded-2xl bg-zinc-900 hover:bg-black dark:bg-zinc-100 dark:hover:bg-white dark:text-zinc-900 text-white font-semibold text-sm flex items-center justify-center gap-2 transition"
+                className="w-full py-3 px-4 rounded-2xl bg-zinc-900 hover:bg-black dark:bg-zinc-100 dark:hover:bg-white dark:text-zinc-900 text-white font-semibold text-sm flex items-center justify-center gap-2 transition cursor-pointer"
               >
                 <Share2 className="w-4 h-4" /> Publish
               </button>
@@ -233,7 +266,7 @@ export default function RecipeResultView({ recipe, onBack, onRefine, refiningOpt
             <div className="text-center">
               <button
                 onClick={onBack}
-                className="text-xs text-zinc-500 dark:text-zinc-400 hover:underline inline-flex items-center gap-1"
+                className="text-xs text-zinc-500 dark:text-zinc-400 hover:underline inline-flex items-center gap-1 cursor-pointer"
               >
                 <RotateCcw className="w-3 h-3" /> Start over
               </button>

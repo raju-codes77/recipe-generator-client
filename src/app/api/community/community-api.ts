@@ -75,7 +75,7 @@ export interface CommunityMessagesPageOptions {
 export interface CommunityPostsPageOptions {
   take?: number;
   skip?: number;
-  filter?: "all" | "trending" | "following" | "quick" | "wellness" | "challenge" | "ai_sparks" | "saved" | "liked";
+  filter?: "all" | "trending" | "following" | "quick" | "wellness" | "ai_sparks" | "saved" | "liked";
 }
 
 export interface CommunityPostInteractions {
@@ -104,6 +104,12 @@ export const communityApi = {
   async listSuggestedChefs(): Promise<Author[]> {
     const response = await request<{ chefs: Author[] }>("/suggested-chefs");
     return response.chefs;
+  },
+
+  async listSuggestedTags(search: string): Promise<string[]> {
+    const query = new URLSearchParams({ search });
+    const response = await request<{ tags: string[] }>(`/suggested-tags?${query.toString()}`);
+    return response.tags;
   },
 
   getFeedCounts(userId?: string) {
@@ -155,10 +161,10 @@ export const communityApi = {
     return request<{ active: boolean }>(`/users/${userIdToFollow}/follow`, { method: "POST", body: JSON.stringify({ userId }) });
   },
 
-  async sharePost(postId: string, caption: string | undefined, userId: string): Promise<Post> {
+  async sharePost(postId: string, caption?: string, userId?: string, tags?: string[]): Promise<Post> {
     const response = await request<{ post: Post }>(`/posts/${postId}/share`, {
       method: "POST",
-      body: JSON.stringify({ caption, userId }),
+      body: JSON.stringify({ caption, tags, userId }),
     });
     return response.post;
   },
