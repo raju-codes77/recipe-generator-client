@@ -3,9 +3,10 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import toast from "react-hot-toast";
-import { ArrowLeft, Sparkles, Bookmark, Share2, RotateCcw } from "lucide-react";
+import { ArrowLeft, Sparkles, Bookmark, Share2, RotateCcw, Replace, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
 import { Recipe } from "./types";
 import RefineChips from "./RefineChips";
+import HealthScoreCard from "./HealthScoreCard";
 
 const DEFAULT_FOOD_IMAGE =
   "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=1200&q=80";
@@ -20,9 +21,86 @@ function sanitizeImageUrl(url?: string): string {
 interface RecipeResultViewProps {
   recipe: Recipe;
   onBack: () => void;
-  onRefine: (refinement: string) => void;      // NEW
-  refiningOption: string | null;                     // NEW
+  onRefine: (refinement: string) => void;
+  refiningOption: string | null;
 }
+
+// ─── Inline Ingredient Substitution ──────────────────────────────────────────
+
+interface SubResult {
+  name: string;
+  amount: string;
+  reason: string;
+}
+
+function IngredientSubPanel({ ingredient, recipeTitle }: { ingredient: string; recipeTitle: string }) {
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [subs, setSubs] = useState<SubResult[] | null>(null);
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
+  const fetchSubs = async () => {
+    if (subs) { setOpen((o) => !o); return; }
+    setOpen(true);
+    setLoading(true);
+    try {
+      const res = await fetch(`${apiUrl}/api/ingredient-substitution`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ingredient, recipeContext: recipeTitle }),
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed");
+      const data = await res.json();
+      setSubs(data.substitutes || []);
+    } catch {
+      toast.error(`Could not find substitutes for ${ingredient}`);
+      setOpen(false);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <li className="space-y-1">
+      <div className="flex items-center gap-2 group">
+        <span className="w-2 h-2 rounded-full bg-emerald-500 mt-1.5 flex-shrink-0" />
+        <span className="flex-1 text-sm text-zinc-600 dark:text-zinc-300">{ingredient}</span>
+        <button
+          onClick={fetchSubs}
+          title={`Find substitutes for ${ingredient}`}
+          className="opacity-0 group-hover:opacity-100 transition flex items-center gap-1 text-[10px] text-rose-500 hover:text-rose-700 font-semibold px-1.5 py-0.5 rounded-md border border-rose-200 dark:border-rose-800/50 hover:bg-rose-50 dark:hover:bg-rose-950/30"
+        >
+          <Replace className="w-3 h-3" /> Sub
+        </button>
+      </div>
+
+      {open && (
+        <div className="ml-5 bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-800/40 rounded-xl p-3 space-y-2">
+          {loading ? (
+            <div className="flex items-center gap-2 text-xs text-zinc-400">
+              <Loader2 className="w-3 h-3 animate-spin" /> Finding substitutes...
+            </div>
+          ) : subs && subs.length > 0 ? (
+            <div className="space-y-2">
+              <p className="text-[10px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider">Substitutes for {ingredient}</p>
+              {subs.map((s, i) => (
+                <div key={i} className="text-xs space-y-0.5">
+                  <p className="font-semibold text-zinc-800 dark:text-zinc-100">{s.name} <span className="text-rose-600 dark:text-rose-400 font-normal">— {s.amount}</span></p>
+                  <p className="text-zinc-500 dark:text-zinc-400 italic">{s.reason}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-zinc-400">No substitutes found.</p>
+          )}
+        </div>
+      )}
+    </li>
+  );
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function RecipeResultView({ recipe, onBack, onRefine, refiningOption }: RecipeResultViewProps) {
   const [imgSrc, setImgSrc] = useState<string>(() => sanitizeImageUrl(recipe?.image));
@@ -43,9 +121,28 @@ export default function RecipeResultView({ recipe, onBack, onRefine, refiningOpt
       </button>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+        {/* Left column — image + stats + health score */}
         <div className="space-y-5">
-          <div className="relative w-full h-64 sm:h-80 rounded-2xl overflow-hidden shadow-md border border-zinc-200/60 dark:border-zinc-800">
-            <Image src={recipe.image} alt={recipe.title} fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" className="object-cover" priority />
+          <div className="relative w-full h-64 sm:h-80 rounded-2xl overflow-hidden shadow-md border border-zinc-200/60 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-800">
+            <Image
+              src={imgSrc}
+              alt={recipe?.title || "Recipe Image"}
+              fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              className={`object-cover transition-opacity duration-300 ${isLoading ? "opacity-0" : "opacity-100"}`}
+              priority
+              unoptimized
+              onLoadingComplete={() => setIsLoading(false)}
+              onError={() => {
+                setImgSrc(DEFAULT_FOOD_IMAGE);
+                setIsLoading(false);
+              }}
+            />
+            {isLoading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 animate-pulse">
+                <span className="text-xs text-zinc-400 font-medium">Loading AI generated photo...</span>
+              </div>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -65,6 +162,16 @@ export default function RecipeResultView({ recipe, onBack, onRefine, refiningOpt
             <Stat label="Protein" value={recipe.protein} />
           </div>
 
+          {/* ─── Health Score ─── */}
+          <HealthScoreCard
+            kcal={recipe.kcal}
+            protein={recipe.protein}
+            time={recipe.time}
+            level={recipe.level}
+            instructions={recipe.instructions}
+            ingredients={recipe.ingredients}
+          />
+
           <div className="bg-purple-50/60 dark:bg-purple-950/30 border border-purple-200/60 dark:border-purple-800/50 p-4 rounded-2xl space-y-1.5">
             <div className="flex items-center gap-1.5 text-purple-700 dark:text-purple-300 font-semibold text-xs sm:text-sm">
               <Sparkles className="w-4 h-4" />
@@ -76,15 +183,18 @@ export default function RecipeResultView({ recipe, onBack, onRefine, refiningOpt
           </div>
         </div>
 
+        {/* Right column — ingredients (with substitution) + instructions + actions */}
         <div className="space-y-6">
           <div className="space-y-3">
-            <h3 className="text-lg font-bold">Ingredients</h3>
-            <ul className="space-y-2 text-sm text-zinc-600 dark:text-zinc-300">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-bold">Ingredients</h3>
+              <span className="text-[10px] text-zinc-400 font-medium flex items-center gap-1">
+                <Replace className="w-3 h-3" /> Hover an ingredient to substitute
+              </span>
+            </div>
+            <ul className="space-y-2">
               {recipe.ingredients.map((item, idx) => (
-                <li key={idx} className="flex items-start gap-2.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 mt-1.5 flex-shrink-0" />
-                  <span>{item}</span>
-                </li>
+                <IngredientSubPanel key={idx} ingredient={item} recipeTitle={recipe.title} />
               ))}
             </ul>
           </div>

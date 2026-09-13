@@ -4,7 +4,6 @@ import { Cpu, Leaf, HeartPulse, Activity } from "lucide-react";
 export default function AIToolsHeader() {
   return (
     <div className="relative w-full flex flex-col md:flex-row items-center justify-between py-2 md:py-2 mb-1 overflow-hidden">
-
       {/* Left Content */}
       <div className="w-full md:w-1/2 z-10 mb-6 md:mb-0 relative">
         <div className="inline-flex items-center gap-2 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800 px-3 py-1 rounded-full text-[11px] uppercase tracking-wider font-bold mb-3">
@@ -12,8 +11,15 @@ export default function AIToolsHeader() {
           <span>AI Tools</span>
         </div>
 
-        <h1 className="text-2xl md:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white leading-tight tracking-tight mb-3">
-          <span className="text-green-700 dark:text-green-500">AI-Powered</span> Cooking Assistant
+        <h1 
+          className="text-2xl md:text-3xl lg:text-4xl font-extrabold leading-tight tracking-tight mb-3"
+          style={{
+            background: 'linear-gradient(90deg, #0F432B 0%, #4AB741 40%, #154D31 80%, #082E1A 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+          }}
+        >
+          AI-Powered Cooking Assistant
         </h1>
 
         <p className="text-slate-600 dark:text-slate-400 text-sm md:text-base leading-relaxed max-w-lg">

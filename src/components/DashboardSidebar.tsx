@@ -1,26 +1,20 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { 
   FiHome, FiUsers, FiBookOpen, FiFolder, FiAward, FiMessageSquare, 
   FiAlertCircle, FiCpu, FiShield, FiSliders, FiSettings, FiLock, 
-  FiServer, FiHeadphones, FiMenu, FiX, FiLogOut, FiActivity,
+  FiServer, FiHeadphones, FiMenu, FiX, FiActivity,
   FiBox, FiCalendar, FiShoppingCart, FiList, FiGrid
 } from "react-icons/fi";
+import { FaDochub } from "react-icons/fa6";
 
 export default function DashboardSidebar() {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [darkMode, setDarkMode] = useState(true);
   const pathname = usePathname();
-
-  useEffect(() => {
-    if (document.documentElement.classList.contains("dark")) {
-      setDarkMode(true);
-    }
-  }, []);
 
 
   const isAdmin = pathname?.includes("/admin");
@@ -53,18 +47,22 @@ export default function DashboardSidebar() {
   // User Navigation Items (Screenshot onujayi grouped sections)
   const mainNavItems = [
     { name: "Dashboard", icon: <FiHome />, href: "/dashboard/users" },
+    {name: "Nutritionist", icon:<FaDochub/>,  href:"/dashboard/users/example"},
     { name: "My Recipes", icon: <FiBookOpen />, href: "/recipes" },
     { name: "Generate Recipe", icon: <FiCpu />, href: "/dashboard/users/ai-recepi-generator", badge: "AI" },
     { name: "Collections", icon: <FiFolder />, href: "/dashboard/users/static" },
     { name: "Challenges", icon: <FiAward />, href: "/challenges" },
-    { name: "AI Tools", icon: <FiCpu />, href: "/ai-tools" },
-    { name: "Nutrition", icon: <FiActivity />, href: "/ai-tools/nutrition-analyzer" },
+    { name: "Dietary Profile", icon: <FiSliders />, href: "/dashboard/users/dietary-profile" },
+    { name: "All AI Tools", icon: <FiCpu />, href: "/ai-tools" },
   ];
 
-  const kitchenNavItems = [
-    { name: "Pantry", icon: <FiBox />, href: "/ai-tools/pantry-to-plate" },
-    { name: "Meal Plan", icon: <FiCalendar />, href: "/ai-tools/meal-tracker" },
-    { name: "Shopping List", icon: <FiShoppingCart />, href: "/dashboard/users/shopping-list" },
+  const aiToolsNavItems = [
+    { name: "Ingredient Rescue", icon: <FiBox />, href: "/ai-tools/ingredient-rescue" },
+    { name: "Nutrition Analyzer", icon: <FiActivity />, href: "/ai-tools/nutrition-analyzer" },
+    { name: "Meal Tracker", icon: <FiActivity />, href: "/ai-tools/meal-tracker" },
+    { name: "Taste Matcher", icon: <FiActivity />, href: "/ai-tools/taste-matcher" },
+    { name: "Meal Planner", icon: <FiCalendar />, href: "/meal-planner" },
+    { name: "Shopping List", icon: <FiShoppingCart />, href: "/ai-tools/shopping-list" },
   ];
 
   const communityNavItems = [
@@ -78,17 +76,19 @@ export default function DashboardSidebar() {
     
     <>
       {/* Mobile Header with Hamburger Button */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between p-4 bg-white dark:bg-black border-b border-gray-200 dark:border-[#89986D]/20 shadow-sm">
+      <div className="fixed left-0 right-0 top-0 z-50 flex items-center justify-between border-b border-[#dfe8da] bg-[#fbfdf9]/95 p-3.5 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-[#101611]/95 lg:hidden">
         <div className="flex items-center space-x-2">
-          <div className="w-8 h-8 rounded-lg bg-[#2F8F46] flex items-center justify-center text-white font-bold">F</div>
-          <span className="text-lg font-bold text-gray-900 dark:text-[#F6F0D7]">FoodCanvas</span>
-          <span className="text-[10px] px-2 py-0.5 rounded uppercase font-semibold bg-[#2F8F46]/20 text-[#2F8F46] dark:text-[#B7E35F]">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#2F8F46] text-base font-black text-white shadow-md shadow-[#2F8F46]/20">F</div>
+          <span className="text-base font-black tracking-tight text-gray-900 dark:text-[#F6F0D7]">FoodCanvas</span>
+          <span className="rounded-full bg-[#2F8F46]/10 px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-[#2F8F46] dark:bg-[#B7E35F]/10 dark:text-[#B7E35F]">
             {role}
           </span>
         </div>
         <button 
-          onClick={() => setMobileOpen(!mobileOpen)}
-          className="p-2 rounded-xl bg-gray-100 dark:bg-[#89986D]/10 text-gray-800 dark:text-[#F6F0D7] focus:outline-none"
+          onClick={() => setMobileOpen((open) => !open)}
+          aria-label={mobileOpen ? "Close dashboard menu" : "Open dashboard menu"}
+          aria-expanded={mobileOpen}
+          className="rounded-xl bg-[#edf4e9] p-2.5 text-[#235f31] transition hover:bg-[#dfeeda] focus:outline-none dark:bg-white/10 dark:text-[#b7df86]"
         >
           {mobileOpen ? <FiX size={24} /> : <FiMenu size={24} />}
         </button>
@@ -102,7 +102,7 @@ export default function DashboardSidebar() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setMobileOpen(false)}
-            className="fixed inset-0 z-40 bg-black/60 lg:hidden backdrop-blur-sm"
+            className="fixed inset-0 z-40 bg-[#102016]/55 backdrop-blur-sm lg:hidden"
           />
         )}
       </AnimatePresence>
@@ -110,20 +110,20 @@ export default function DashboardSidebar() {
       {/* Sidebar Container */}
       <aside className={`
         fixed lg:static inset-y-0 left-0 z-50 w-64 flex flex-col justify-between
-        bg-white dark:bg-black border-r border-gray-200 dark:border-[#89986D]/20 p-5 transition-transform duration-300 ease-in-out
+        border-r border-[#dfe8da] bg-[#fbfdf9] p-4 shadow-[8px_0_30px_rgba(40,70,45,0.04)] transition-transform duration-300 ease-in-out dark:border-white/10 dark:bg-[#101611] lg:p-5
         ${mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
       `}>
-        <div className="overflow-y-auto space-y-6 pt-14 lg:pt-0">
+        <div className="space-y-6 overflow-y-auto pt-14 lg:pt-0">
           
           {/* Logo & Brand */}
           {isAdmin && (
-            <div className="flex items-center space-x-3 px-2 mb-2">
-              <div className="w-9 h-9 rounded-xl bg-[#2F8F46] flex items-center justify-center text-white font-bold text-lg shadow-md shadow-[#2F8F46]/30">
+              <div className="mb-3 flex items-center space-x-3 px-2">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#2F8F46] text-lg font-black text-white shadow-md shadow-[#2F8F46]/30">
                 F
               </div>
               <div>
-                <h1 className="text-base font-bold tracking-wide text-gray-900 dark:text-[#F6F0D7]">FoodCanvas</h1>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#EAF7E8] dark:bg-[#EAF7E8]/10 text-[#2F8F46] dark:text-[#B7E35F] capitalize font-medium">
+                <h1 className="text-base font-black tracking-tight text-gray-900 dark:text-[#F6F0D7]">FoodCanvas</h1>
+                <span className="rounded-full bg-[#EAF7E8] px-2 py-1 text-[9px] font-bold capitalize tracking-wider text-[#2F8F46] dark:bg-[#EAF7E8]/10 dark:text-[#B7E35F]">
                   {role} Panel
                 </span>
               </div>
@@ -143,10 +143,10 @@ export default function DashboardSidebar() {
                       key={idx}
                       href={item.href}
                       onClick={() => setMobileOpen(false)}
-                      className={`flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-medium transition-all ${
+                      className={`group flex items-center space-x-3 rounded-2xl px-3 py-2.5 text-xs font-medium transition-all ${
                         isActive 
-                          ? "bg-[#2F8F46] text-white shadow-md shadow-[#2F8F46]/20 font-semibold" 
-                          : "text-gray-600 dark:text-[#F6F0D7]/70 hover:bg-[#EAF7E8] dark:hover:bg-[#89986D]/15 hover:text-[#2F8F46] dark:hover:text-[#F6F0D7]"
+                          ? "bg-[#2F8F46] font-semibold text-white shadow-md shadow-[#2F8F46]/20" 
+                          : "text-gray-600 hover:bg-[#edf6e9] hover:text-[#2F8F46] dark:text-[#F6F0D7]/70 dark:hover:bg-white/10 dark:hover:text-[#F6F0D7]"
                       }`}
                     >
                       <span className="text-base">{item.icon}</span>
@@ -166,10 +166,10 @@ export default function DashboardSidebar() {
                       key={idx}
                       href={item.href}
                       onClick={() => setMobileOpen(false)}
-                      className={`flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-medium transition-all ${
+                      className={`group flex items-center space-x-3 rounded-2xl px-3 py-2.5 text-xs font-medium transition-all ${
                         isActive 
-                          ? "bg-[#2F8F46] text-white shadow-md shadow-[#2F8F46]/20 font-semibold" 
-                          : "text-gray-600 dark:text-[#F6F0D7]/70 hover:bg-[#EAF7E8] dark:hover:bg-[#89986D]/15 hover:text-[#2F8F46] dark:hover:text-[#F6F0D7]"
+                          ? "bg-[#2F8F46] font-semibold text-white shadow-md shadow-[#2F8F46]/20" 
+                          : "text-gray-600 hover:bg-[#edf6e9] hover:text-[#2F8F46] dark:text-[#F6F0D7]/70 dark:hover:bg-white/10 dark:hover:text-[#F6F0D7]"
                       }`}
                     >
                       <span className="text-base">{item.icon}</span>
@@ -189,10 +189,10 @@ export default function DashboardSidebar() {
                       key={idx}
                       href={item.href}
                       onClick={() => setMobileOpen(false)}
-                      className={`flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-medium transition-all ${
+                      className={`group flex items-center space-x-3 rounded-2xl px-3 py-2.5 text-xs font-medium transition-all ${
                         isActive 
-                          ? "bg-[#2F8F46] text-white shadow-md shadow-[#2F8F46]/20 font-semibold" 
-                          : "text-gray-600 dark:text-[#F6F0D7]/70 hover:bg-[#EAF7E8] dark:hover:bg-[#89986D]/15 hover:text-[#2F8F46] dark:hover:text-[#F6F0D7]"
+                          ? "bg-[#2F8F46] font-semibold text-white shadow-md shadow-[#2F8F46]/20" 
+                          : "text-gray-600 hover:bg-[#edf6e9] hover:text-[#2F8F46] dark:text-[#F6F0D7]/70 dark:hover:bg-white/10 dark:hover:text-[#F6F0D7]"
                       }`}
                     >
                       <span className="text-base">{item.icon}</span>
@@ -216,14 +216,14 @@ export default function DashboardSidebar() {
                         key={idx}
                         href={item.href}
                         onClick={() => setMobileOpen(false)}
-                        className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-xs transition-all ${
+                        className={`group flex items-center justify-between rounded-2xl px-3 py-2.5 text-xs transition-all ${
                           isActive 
-                            ? "bg-[#EAF7E8] dark:bg-[#2F8F46]/20 font-bold text-[#176B35] dark:text-[#B7E35F]" 
-                            : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-[#89986D]/10 font-medium"
+                            ? "bg-[#eaf7e8] font-bold text-[#176B35] shadow-sm dark:bg-[#2F8F46]/20 dark:text-[#B7E35F]" 
+                            : "font-medium text-gray-600 hover:bg-[#f0f6ed] dark:text-gray-400 dark:hover:bg-white/10"
                         }`}
                       >
                         <div className="flex items-center gap-3">
-                          <span className="text-base">{item.icon}</span>
+                            <span className={`text-base transition-transform group-hover:scale-105 ${isActive ? "text-[#2F8F46] dark:text-[#b7df86]" : ""}`}>{item.icon}</span>
                           <span>{item.name}</span>
                         </div>
                         <div className="flex items-center gap-2">
@@ -240,24 +240,24 @@ export default function DashboardSidebar() {
                 </div>
               </div>
 
-              {/* MY KITCHEN Section */}
+              {/* AI TOOLS Section */}
               <div>
-                <p className="px-3 text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">My Kitchen</p>
+                <p className="px-3 text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">AI Tools</p>
                 <div className="space-y-1">
-                  {kitchenNavItems.map((item, idx) => {
+                  {aiToolsNavItems.map((item, idx) => {
                     const isActive = pathname === item.href;
                     return (
                       <Link
                         key={idx}
                         href={item.href}
                         onClick={() => setMobileOpen(false)}
-                        className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium transition-all ${
+                        className={`group flex items-center gap-3 rounded-2xl px-3 py-2.5 text-xs font-medium transition-all ${
                           isActive 
-                            ? "bg-[#EAF7E8] dark:bg-[#2F8F46]/20 font-bold text-[#176B35] dark:text-[#B7E35F]" 
-                            : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-[#89986D]/10"
+                            ? "bg-[#eaf7e8] font-bold text-[#176B35] shadow-sm dark:bg-[#2F8F46]/20 dark:text-[#B7E35F]" 
+                            : "text-gray-600 hover:bg-[#f0f6ed] dark:text-gray-400 dark:hover:bg-white/10"
                         }`}
                       >
-                        <span className="text-base">{item.icon}</span>
+                        <span className={`text-base transition-transform group-hover:scale-105 ${isActive ? "text-[#2F8F46] dark:text-[#b7df86]" : ""}`}>{item.icon}</span>
                         <span>{item.name}</span>
                       </Link>
                     );
@@ -276,13 +276,13 @@ export default function DashboardSidebar() {
                         key={idx}
                         href={item.href}
                         onClick={() => setMobileOpen(false)}
-                        className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium transition-all ${
+                        className={`group flex items-center gap-3 rounded-2xl px-3 py-2.5 text-xs font-medium transition-all ${
                           isActive 
-                            ? "bg-[#EAF7E8] dark:bg-[#2F8F46]/20 font-bold text-[#176B35] dark:text-[#B7E35F]" 
-                            : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-[#89986D]/10"
+                            ? "bg-[#eaf7e8] font-bold text-[#176B35] shadow-sm dark:bg-[#2F8F46]/20 dark:text-[#B7E35F]" 
+                            : "text-gray-600 hover:bg-[#f0f6ed] dark:text-gray-400 dark:hover:bg-white/10"
                         }`}
                       >
-                        <span className="text-base">{item.icon}</span>
+                        <span className={`text-base transition-transform group-hover:scale-105 ${isActive ? "text-[#2F8F46] dark:text-[#b7df86]" : ""}`}>{item.icon}</span>
                         <span>{item.name}</span>
                       </Link>
                     );
@@ -300,7 +300,7 @@ export default function DashboardSidebar() {
         
         <div className="mt-auto space-y-4 pt-6">
           {!isAdmin && (
-            <div className="bg-[#EAF7E8] dark:bg-[#2F8F46]/10 rounded-2xl p-4 border border-[#2F8F46]/20">
+            <div className="rounded-[22px] border border-[#cce2c4] bg-[#edf7e9] p-4 shadow-sm dark:border-[#2F8F46]/20 dark:bg-[#2F8F46]/10">
               <div className="flex items-center gap-2 mb-2">
                 <span className="text-lg">👑</span>
                 <h4 className="font-bold text-gray-900 dark:text-[#F6F0D7] text-xs">Upgrade to Pro</h4>

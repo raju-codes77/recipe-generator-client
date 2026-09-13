@@ -20,7 +20,7 @@ import DailyGoalCard from "./DailyGoalCard";
 import DetectedFoodItems from "./DetectedFoodItems";
 import NutritionFacts from "./NutritionFacts";
 import MacrosBreakdown from "./MacrosBreakdown";
-import NutrientDistribution from "./NutrientDistribution";
+
 import TodaysMealLog from "./TodaysMealLog";
 import CalorieTrend from "./CalorieTrend";
 import TipsInsights from "./TipsInsights";
@@ -54,7 +54,16 @@ function DashboardInner() {
               <BarChart2 className="w-6 h-6 text-green-600" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Meal Tracker</h1>
+              <h1 
+                className="text-2xl font-extrabold tracking-tight"
+                style={{
+                  background: 'linear-gradient(90deg, #0F432B 0%, #4AB741 40%, #154D31 80%, #082E1A 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                }}
+              >
+                Meal Tracker
+              </h1>
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 Upload your meal photo and get AI-powered nutrition analysis
               </p>
@@ -102,11 +111,10 @@ function DashboardInner() {
         </div>
 
         {/* ── ROW 2 ── */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
           <DetectedFoodItems />
           <NutritionFacts />
           <MacrosBreakdown />
-          <NutrientDistribution />
         </div>
 
         {/* ── ROW 3 ── */}

@@ -2,10 +2,11 @@
 
 import React from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { 
   FiBookOpen, FiFolder, FiAward, FiPieChart, FiPlusCircle, 
-  FiTrendingUp, FiCheckCircle, FiChevronRight, FiChevronLeft
+  FiTrendingUp, FiCheckCircle, FiChevronRight, FiChevronLeft, FiHeart, FiArrowRight, FiCpu
 } from "react-icons/fi";
 import { ResponsiveContainer, AreaChart, Area, XAxis, Tooltip, CartesianGrid } from "recharts";
 
@@ -66,6 +67,25 @@ export default function UserDashboardPage() {
             <div className="absolute -right-8 -top-8 text-[#117A38]/40 dark:text-[#B7E35F]/40 font-cursive text-sm rotate-12 pointer-events-none group-hover:rotate-6 transition-transform">
               Let AI cook~
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Expert consultation banner */}
+      <div className="relative overflow-hidden rounded-[26px] border border-[#dfe9d7] bg-[#f2f8ed] p-5 shadow-sm dark:border-[#89986D]/20 dark:bg-[#1a291d] sm:p-6">
+        <div className="absolute -right-8 -top-12 h-36 w-36 rounded-full border-18 border-[#b7df86]/25" />
+        <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex items-start gap-4">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#2F8F46] text-white shadow-md shadow-[#2F8F46]/20"><FiHeart size={21} /></div>
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#2F8F46] dark:text-[#b7df86]">Personal support, when you need it</p>
+              <h2 className="mt-1 text-xl font-black tracking-tight text-slate-900 dark:text-white sm:text-2xl">Your next healthy choice can start with an expert.</h2>
+              <p className="mt-1.5 max-w-2xl text-xs leading-5 text-slate-600 dark:text-white/60">Book a consultation with a nutritionist for guidance tailored to your goals, routine, and favorite foods.</p>
+            </div>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row lg:shrink-0">
+            <Link href="/dashboard/users/example" className="flex items-center justify-center gap-2 rounded-xl bg-[#2F8F46] px-4 py-3 text-xs font-bold text-white shadow-md shadow-[#2F8F46]/15 transition hover:bg-[#235f31]">Find a nutritionist <FiArrowRight size={15} /></Link>
+            <Link href="/dashboard/users/ai-recepi-generator" className="flex items-center justify-center gap-2 rounded-xl border border-[#cbdcc1] bg-white/75 px-4 py-3 text-xs font-bold text-[#2F8F46] transition hover:bg-white dark:border-white/10 dark:bg-white/5 dark:text-[#b7df86]">Ask free AI <FiCpu size={15} /></Link>
           </div>
         </div>
       </div>

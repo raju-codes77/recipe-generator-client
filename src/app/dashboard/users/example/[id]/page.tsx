@@ -2,7 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { FiArrowLeft, FiCalendar, FiClock, FiDollarSign, FiUser, FiMail, FiPhone, FiCheckCircle } from 'react-icons/fi';
+import Image from 'next/image';
+import { FiArrowLeft, FiCalendar, FiClock, FiDollarSign, FiUser, FiMail, FiPhone } from 'react-icons/fi';
+import toast, { Toaster } from 'react-hot-toast';
 
 interface NutritionistType {
   id: string;
@@ -14,7 +16,6 @@ interface NutritionistType {
   image_url: string;
 }
 
-// Next.js asynchronous params handling
 interface PageProps {
   params: Promise<{
     id: string;
@@ -24,14 +25,12 @@ interface PageProps {
 export default function NutritionistDetailPage({ params }: PageProps) {
   const router = useRouter();
   
-  // Unwrap params using React.use() or async unwrap
   const resolvedParams = React.use(params);
   const id = resolvedParams.id;
 
   const [nutritionist, setNutritionist] = useState<NutritionistType | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [submitting, setSubmitting] = useState<boolean>(false);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
@@ -41,12 +40,6 @@ export default function NutritionistDetailPage({ params }: PageProps) {
     appointmentDate: '',
     slotTime: '',
   });
-
-  useEffect(() => {
-    if (id) {
-      fetchNutritionistDetails(id);
-    }
-  }, [id]);
 
   const fetchNutritionistDetails = async (nutritionistId: string) => {
     try {
@@ -69,6 +62,12 @@ export default function NutritionistDetailPage({ params }: PageProps) {
     }
   };
 
+  useEffect(() => {
+    if (id) {
+      fetchNutritionistDetails(id);
+    }
+  }, [id]);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -76,7 +75,6 @@ export default function NutritionistDetailPage({ params }: PageProps) {
   const handleBookingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
-    setSuccessMessage(null);
 
     try {
       const res = await fetch('http://localhost:5000/api/appointments', {
@@ -93,14 +91,14 @@ export default function NutritionistDetailPage({ params }: PageProps) {
       const result = await res.json();
 
       if (result.success) {
-        setSuccessMessage('Your appointment has been successfully booked!');
+        toast.success('Your appointment has been successfully booked!');
         setFormData({ patientName: '', email: '', phone: '', appointmentDate: '', slotTime: '' });
       } else {
-        alert('Failed to book appointment: ' + (result.message || 'Please try again'));
+        toast.error('Failed to book appointment: ' + (result.message || 'Please try again'));
       }
     } catch (err) {
       console.error('Booking error:', err);
-      alert('A server error occurred, please try again later.');
+      toast.error('A server error occurred, please try again later.');
     } finally {
       setSubmitting(false);
     }
@@ -108,19 +106,19 @@ export default function NutritionistDetailPage({ params }: PageProps) {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex justify-center items-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-green-600"></div>
+      <div className="flex min-h-screen items-center justify-center bg-[#f7f8f3] dark:bg-[#101611]">
+        <div className="h-12 w-12 animate-spin rounded-full border-4 border-[#dce8d4] border-t-[#2F8F46]"></div>
       </div>
     );
   }
 
   if (error || !nutritionist) {
     return (
-      <div className="min-h-screen flex flex-col justify-center items-center gap-4">
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[#f7f8f3] px-4 dark:bg-[#101611]">
         <p className="text-red-500 font-medium">{error || 'Nutritionist not found'}</p>
         <button 
           onClick={() => router.back()} 
-          className="px-4 py-2 bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl text-sm font-medium transition"
+          className="rounded-xl bg-[#2F8F46] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#235f31]"
         >
           Go Back
         </button>
@@ -129,140 +127,146 @@ export default function NutritionistDetailPage({ params }: PageProps) {
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-10 mt-20">
-      <button
-        onClick={() => router.back()}
-        className="flex items-center gap-2 text-gray-600 dark:text-gray-300 hover:text-green-600 mb-8 transition"
-      >
-        <FiArrowLeft size={18} /> Back to List
-      </button>
+    <div className="min-h-screen bg-[#f7f8f3] px-4 pb-16 pt-24 text-slate-900 dark:bg-[#101611] dark:text-white sm:px-6 lg:px-8">
+      {/* Toaster Container */}
+      <Toaster position="top-right" reverseOrder={false} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-3xl p-6 shadow-lg h-fit">
-          <img
-            src={nutritionist.image_url || "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=400&q=80"}
-            alt={nutritionist.name}
-            className="w-28 h-28 rounded-2xl object-cover mx-auto mb-4 border-2 border-green-600 shadow-md"
-          />
-          <h2 className="text-xl font-bold text-center text-gray-800 dark:text-gray-100">{nutritionist.name}</h2>
-          <p className="text-xs text-center text-green-600 font-semibold mt-1">{nutritionist.specialty}</p>
-          <p className="text-xs text-center text-gray-400 mt-1">{nutritionist.education}</p>
+      <div className="mx-auto max-w-5xl">
+        <button
+          onClick={() => router.back()}
+          className="mb-7 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500 transition hover:text-[#2F8F46] dark:text-white/50"
+        >
+          <FiArrowLeft size={18} /> Back to List
+        </button>
 
-          <div className="mt-6 pt-6 border-t border-gray-100 dark:border-gray-800 space-y-3 text-sm">
-            <div className="flex items-center justify-between text-gray-600 dark:text-gray-300">
-              <span className="flex items-center gap-1.5"><FiClock size={16} className="text-green-600" /> Timing:</span>
-              <span className="font-medium text-xs">{nutritionist.available_time || "10:00 AM - 04:00 PM"}</span>
-            </div>
-            <div className="flex items-center justify-between text-gray-600 dark:text-gray-300">
-              <span className="flex items-center gap-1.5"><FiDollarSign size={16} className="text-green-600" /> Consultation Fee:</span>
-              <span className="font-bold text-green-600">৳{nutritionist.fees}</span>
-            </div>
-          </div>
+        <div className="mb-8 rounded-[28px] bg-[#1f6a3a] p-6 text-white shadow-xl shadow-[#1f6a3a]/15 sm:p-8">
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#c8e59f]">Personal consultation</p>
+          <h1 className="mt-3 max-w-2xl text-3xl font-black tracking-tight sm:text-4xl">Build a healthier routine with expert guidance.</h1>
+          <p className="mt-3 max-w-xl text-sm leading-6 text-white/65">Choose a time below and take the next step toward food choices that work in real life.</p>
         </div>
 
-        <div className="lg:col-span-2 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-3xl p-8 shadow-lg">
-          <h3 className="text-2xl font-extrabold text-gray-800 dark:text-gray-100 mb-2">Book an Appointment</h3>
-          <p className="text-xs text-gray-500 mb-6">Fill out the form below with valid information to schedule a consultation.</p>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <div className="h-fit rounded-[26px] border border-[#e1e7dc] bg-white p-6 shadow-sm dark:border-white/10 dark:bg-white/5 sm:p-7">
+            <Image
+              width={112}
+              height={112}
+              src={(nutritionist.image_url || "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=400&q=80").trimEnd()}
+              alt={nutritionist.name}
+              className="mx-auto mb-4 h-28 w-28 rounded-3xl border-2 border-[#b7df86] object-cover shadow-md"
+            />
+            <h2 className="text-center text-xl font-bold text-slate-900 dark:text-white">{nutritionist.name}</h2>
+            <p className="mt-1 text-center text-xs font-semibold text-[#2F8F46] dark:text-[#b7df86]">{nutritionist.specialty}</p>
+            <p className="mt-1 text-center text-xs text-slate-400 dark:text-white/40">{nutritionist.education}</p>
 
-          {successMessage && (
-            <div className="mb-6 p-4 rounded-2xl bg-green-50 dark:bg-green-900/20 border border-green-200 text-green-700 dark:text-green-300 text-sm flex items-center gap-2">
-              <FiCheckCircle size={20} />
-              <span>{successMessage}</span>
-            </div>
-          )}
-
-          <form onSubmit={handleBookingSubmit} className="space-y-4">
-            <div>
-              <label className="block text-xs font-bold text-gray-600 dark:text-gray-300 mb-1.5">Your Name</label>
-              <div className="relative flex items-center">
-                <span className="absolute left-4 text-gray-400"><FiUser size={16} /></span>
-                <input
-                  type="text"
-                  name="patientName"
-                  required
-                  value={formData.patientName}
-                  onChange={handleInputChange}
-                  placeholder="e.g. John Doe"
-                  className="w-full pl-11 pr-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm focus:outline-none focus:border-green-600 text-gray-800 dark:text-gray-100"
-                />
+            <div className="mt-6 space-y-3 border-t border-[#edf0e9] pt-6 text-sm dark:border-white/10">
+              <div className="flex items-center justify-between text-gray-600 dark:text-gray-300">
+                <span className="flex items-center gap-1.5"><FiClock size={16} className="text-[#2F8F46]" /> Timing:</span>
+                <span className="font-medium text-xs">{nutritionist.available_time || "10:00 AM - 04:00 PM"}</span>
+              </div>
+              <div className="flex items-center justify-between text-gray-600 dark:text-gray-300">
+                <span className="flex items-center gap-1.5"><FiDollarSign size={16} className="text-[#e6923b]" /> Consultation Fee:</span>
+                <span className="font-bold text-[#2F8F46]">৳{nutritionist.fees}</span>
               </div>
             </div>
+          </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-gray-600 dark:text-gray-300 mb-1.5">Email Address</label>
-                <div className="relative flex items-center">
-                  <span className="absolute left-4 text-gray-400"><FiMail size={16} /></span>
-                  <input
-                    type="email"
-                    name="email"
-                    required
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    placeholder="example@gmail.com"
-                    className="w-full pl-11 pr-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm focus:outline-none focus:border-green-600 text-gray-800 dark:text-gray-100"
-                  />
-                </div>
-              </div>
+          <div className="rounded-[26px] border border-[#e1e7dc] bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/5 sm:p-8 lg:col-span-2">
+            <h3 className="text-2xl font-extrabold text-slate-900 dark:text-white">Book an appointment</h3>
+            <p className="mb-6 mt-2 text-xs leading-5 text-slate-500 dark:text-white/50">Tell us where to reach you and select a convenient time for your consultation.</p>
 
+            <form onSubmit={handleBookingSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-gray-600 dark:text-gray-300 mb-1.5">Mobile Number</label>
+                <label className="mb-1.5 block text-xs font-bold text-slate-600 dark:text-white/70">Your Name</label>
                 <div className="relative flex items-center">
-                  <span className="absolute left-4 text-gray-400"><FiPhone size={16} /></span>
-                  <input
-                    type="tel"
-                    name="phone"
-                    required
-                    value={formData.phone}
-                    onChange={handleInputChange}
-                    placeholder="017xxxxxxxx"
-                    className="w-full pl-11 pr-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm focus:outline-none focus:border-green-600 text-gray-800 dark:text-gray-100"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-gray-600 dark:text-gray-300 mb-1.5">Select Date</label>
-                <div className="relative flex items-center">
-                  <span className="absolute left-4 text-gray-400"><FiCalendar size={16} /></span>
-                  <input
-                    type="date"
-                    name="appointmentDate"
-                    required
-                    value={formData.appointmentDate}
-                    onChange={handleInputChange}
-                    className="w-full pl-11 pr-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm focus:outline-none focus:border-green-600 text-gray-800 dark:text-gray-100"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-gray-600 dark:text-gray-300 mb-1.5">Time Slot</label>
-                <div className="relative flex items-center">
-                  <span className="absolute left-4 text-gray-400"><FiClock size={16} /></span>
+                  <span className="absolute left-4 text-gray-400"><FiUser size={16} /></span>
                   <input
                     type="text"
-                    name="slotTime"
+                    name="patientName"
                     required
-                    value={formData.slotTime}
+                    value={formData.patientName}
                     onChange={handleInputChange}
-                    placeholder="e.g. 03:30 PM - 04:00 PM"
-                    className="w-full pl-11 pr-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm focus:outline-none focus:border-green-600 text-gray-800 dark:text-gray-100"
+                    placeholder="e.g. John Doe"
+                    className="w-full rounded-xl border border-[#dfe5da] bg-[#f8faf6] py-3 pl-11 pr-4 text-sm text-slate-800 outline-none transition focus:border-[#7fb35c] focus:ring-2 focus:ring-[#b7df86]/25 dark:border-white/10 dark:bg-black/20 dark:text-white"
                   />
                 </div>
               </div>
-            </div>
 
-            <button
-              type="submit"
-              disabled={submitting}
-              className="w-full mt-4 py-3.5 rounded-xl bg-green-600 hover:bg-green-700 text-white font-bold text-sm transition shadow-lg disabled:opacity-50 flex items-center justify-center gap-2"
-            >
-              {submitting ? 'Processing Booking...' : 'Confirm Appointment'}
-            </button>
-          </form>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="mb-1.5 block text-xs font-bold text-slate-600 dark:text-white/70">Email Address</label>
+                  <div className="relative flex items-center">
+                    <span className="absolute left-4 text-gray-400"><FiMail size={16} /></span>
+                    <input
+                      type="email"
+                      name="email"
+                      required
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      placeholder="example@gmail.com"
+                      className="w-full rounded-xl border border-[#dfe5da] bg-[#f8faf6] py-3 pl-11 pr-4 text-sm text-slate-800 outline-none transition focus:border-[#7fb35c] focus:ring-2 focus:ring-[#b7df86]/25 dark:border-white/10 dark:bg-black/20 dark:text-white"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="mb-1.5 block text-xs font-bold text-slate-600 dark:text-white/70">Mobile Number</label>
+                  <div className="relative flex items-center">
+                    <span className="absolute left-4 text-gray-400"><FiPhone size={16} /></span>
+                    <input
+                      type="tel"
+                      name="phone"
+                      required
+                      value={formData.phone}
+                      onChange={handleInputChange}
+                      placeholder="017xxxxxxxx"
+                      className="w-full rounded-xl border border-[#dfe5da] bg-[#f8faf6] py-3 pl-11 pr-4 text-sm text-slate-800 outline-none transition focus:border-[#7fb35c] focus:ring-2 focus:ring-[#b7df86]/25 dark:border-white/10 dark:bg-black/20 dark:text-white"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="mb-1.5 block text-xs font-bold text-slate-600 dark:text-white/70">Select Date</label>
+                  <div className="relative flex items-center">
+                    <span className="absolute left-4 text-gray-400"><FiCalendar size={16} /></span>
+                    <input
+                      type="date"
+                      name="appointmentDate"
+                      required
+                      value={formData.appointmentDate}
+                      onChange={handleInputChange}
+                      className="w-full rounded-xl border border-[#dfe5da] bg-[#f8faf6] py-3 pl-11 pr-4 text-sm text-slate-800 outline-none transition focus:border-[#7fb35c] focus:ring-2 focus:ring-[#b7df86]/25 dark:border-white/10 dark:bg-black/20 dark:text-white"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="mb-1.5 block text-xs font-bold text-slate-600 dark:text-white/70">Time Slot</label>
+                  <div className="relative flex items-center">
+                    <span className="absolute left-4 text-gray-400"><FiClock size={16} /></span>
+                    <input
+                      type="text"
+                      name="slotTime"
+                      required
+                      value={formData.slotTime}
+                      onChange={handleInputChange}
+                      placeholder="e.g. 03:30 PM - 04:00 PM"
+                      className="w-full rounded-xl border border-[#dfe5da] bg-[#f8faf6] py-3 pl-11 pr-4 text-sm text-slate-800 outline-none transition focus:border-[#7fb35c] focus:ring-2 focus:ring-[#b7df86]/25 dark:border-white/10 dark:bg-black/20 dark:text-white"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={submitting}
+                className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-[#2F8F46] py-3.5 text-sm font-bold text-white shadow-lg shadow-[#2F8F46]/15 transition hover:bg-[#235f31] disabled:opacity-50"
+              >
+                {submitting ? 'Processing Booking...' : 'Confirm Appointment'}
+              </button>
+            </form>
+          </div>
         </div>
       </div>
     </div>

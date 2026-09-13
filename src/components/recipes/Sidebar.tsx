@@ -9,6 +9,7 @@ import {
   X
 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
+import Link from "next/link";
 
 interface SidebarProps {
   selectedCollectionId?: string | null;
@@ -30,7 +31,9 @@ export default function Sidebar({ selectedCollectionId, onSelectCollection }: Si
   const fetchCollections = async () => {
     if (!userId) return;
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/collections?userId=${userId}`);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/collections?userId=${userId}`, {
+        credentials: "include",
+      });
       const data = await res.json();
       if (data.success) {
         setCollections(data.collections || []);
@@ -52,11 +55,11 @@ export default function Sidebar({ selectedCollectionId, onSelectCollection }: Si
     }
   }, [userId, session]);
 
-  // কাস্টম ইভেন্ট লিসেনার: কালেকশন তৈরি বা রেসিপি অ্যাড হলেই সাথে সাথে কল হবে
+  
   useEffect(() => {
     const handleCollectionUpdate = () => {
       if (userId) {
-        fetchCollections(); // পেজ রিলোড ছাড়াই সাথে সাথে নতুন ডেটা নিয়ে আসবে
+        fetchCollections(); 
       }
     };
 
@@ -66,7 +69,7 @@ export default function Sidebar({ selectedCollectionId, onSelectCollection }: Si
     };
   }, [userId]);
 
-  // নতুন কালেকশন তৈরির ফাংশন
+  // new collection
   const handleCreateCollection = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCollectionName.trim() || !userId) return;
@@ -76,14 +79,17 @@ export default function Sidebar({ selectedCollectionId, onSelectCollection }: Si
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/collections`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ userId, name: newCollectionName }),
       });
       const data = await res.json();
       if (data.success) {
         setNewCollectionName("");
         setIsModalOpen(false);
-        // ইভেন্ট ট্রিগার করে সাথে সাথে সাইডবার আপডেট করে দেওয়া হলো
+        // sidebar update
         window.dispatchEvent(new Event("collectionUpdated"));
+      } else {
+        alert(data.message || "Failed to create collection");
       }
     } catch (error) {
       console.error("Failed to create collection:", error);
@@ -153,7 +159,7 @@ export default function Sidebar({ selectedCollectionId, onSelectCollection }: Si
         <button 
           onClick={() => {
             if (!userId) {
-              alert("Please login first to create collections.");
+              toast.error("Please login first to create collections.");
               return;
             }
             setIsModalOpen(true);
@@ -202,7 +208,7 @@ export default function Sidebar({ selectedCollectionId, onSelectCollection }: Si
         <div className="max-w-[70%]">
           <h3 className="font-bold text-gray-900 dark:text-white text-sm mb-1">Can&apos;t find what you want?</h3>
           <p className="text-xs text-gray-600 dark:text-gray-300 mb-4 leading-relaxed">Generate recipes from your ingredients with AI</p>
-          <button className="cursor-pointer px-4 py-2.5 rounded-xl bg-[#24733E] text-white text-xs font-bold hover:bg-[#1e5d32] transition-colors shadow-sm">Try Pantry-to-Plate AI</button>
+          <Link href="/ai-tools/pantry-to-plate" className="cursor-pointer px-4 py-2.5 rounded-xl bg-[#24733E] text-white text-xs font-bold hover:bg-[#1e5d32] transition-colors shadow-sm">Try Pantry-to-Plate AI</Link>
         </div>
         <div className="absolute -bottom-4 -right-4 w-32 h-32 pointer-events-none opacity-90">
           <Image src="https://images.unsplash.com/photo-1540420773420-3366772f4999?w=300&auto=format&fit=crop&q=60" alt="AI Vegetables Bowl" fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" className="object-contain" />

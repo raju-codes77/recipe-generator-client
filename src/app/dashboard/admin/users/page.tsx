@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { FiTrash2, FiUserX, FiUserCheck, FiUsers, FiShield } from "react-icons/fi";
+import { FiTrash2, FiUserX, FiUserCheck, FiUsers, FiShield, FiChevronLeft, FiChevronRight, FiUserPlus } from "react-icons/fi";
 import toast from "react-hot-toast";
 
 interface User {
@@ -16,6 +16,8 @@ interface User {
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
 
   // Users fetched data
   const fetchUsers = async () => {
@@ -36,6 +38,14 @@ export default function AdminUsersPage() {
   useEffect(() => {
     fetchUsers();
   }, []);
+
+  const totalPages = Math.max(1, Math.ceil(users.length / itemsPerPage));
+  const firstUserIndex = (currentPage - 1) * itemsPerPage;
+  const visibleUsers = users.slice(firstUserIndex, firstUserIndex + itemsPerPage);
+
+  useEffect(() => {
+    setCurrentPage((page) => Math.min(page, totalPages));
+  }, [totalPages]);
 
   // users status (Suspend / Active) 
   const handleStatusChange = async (id: string, currentStatus: string) => {
@@ -85,23 +95,31 @@ export default function AdminUsersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#121212] p-6 sm:p-10 font-sans">
+    <div className="min-h-screen bg-[#f6f8f3] p-4 font-sans text-slate-900 dark:bg-[#101611] dark:text-[#F6F0D7] sm:p-6 lg:p-10">
       <div className="max-w-6xl mx-auto">
         
         {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+        <div className="mb-8 flex flex-col items-start justify-between gap-5 sm:flex-row sm:items-center">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-[#F6F0D7] flex items-center gap-2">
-              <FiUsers className="text-[#2F8F46]" /> Admin User Management
+            <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[#2F8F46] dark:text-[#b7df86]">Admin workspace</p>
+            <h1 className="flex items-center gap-2 text-2xl font-black tracking-tight text-gray-900 dark:text-[#F6F0D7] sm:text-3xl">
+              <FiUsers className="text-[#2F8F46]" /> User management
             </h1>
-            <p className="text-xs sm:text-sm text-gray-500 dark:text-[#F6F0D7]/60 mt-1">
-              Total registered users: <span className="font-bold text-[#2F8F46]">{users.length}</span>
+            <p className="mt-1 text-xs text-gray-500 dark:text-[#F6F0D7]/60 sm:text-sm">
+              Review account access and activity. <span className="font-bold text-[#2F8F46]">{users.length} total users</span>
             </p>
+          </div>
+          <div className="flex items-center gap-2 rounded-2xl border border-[#dce8d6] bg-white px-4 py-3 text-xs font-semibold text-slate-600 shadow-sm dark:border-white/10 dark:bg-white/5 dark:text-white/65">
+            <FiUserPlus className="text-[#e6923b]" /> Live directory
           </div>
         </div>
 
         {/* Users Table */}
-        <div className="bg-white dark:bg-[#181818] border border-gray-200 dark:border-[#89986D]/20 rounded-3xl shadow-xl overflow-hidden">
+        <div className="overflow-hidden rounded-[26px] border border-[#e1e7dc] bg-white shadow-xl shadow-slate-900/5 dark:border-[#89986D]/20 dark:bg-[#181818]">
+          <div className="flex flex-col justify-between gap-2 border-b border-[#edf0e9] px-5 py-4 dark:border-white/10 sm:flex-row sm:items-center sm:px-6">
+            <div><h2 className="text-sm font-bold">Directory</h2><p className="mt-0.5 text-[11px] text-slate-400">{users.length === 0 ? "No accounts" : `Showing ${firstUserIndex + 1}-${Math.min(firstUserIndex + itemsPerPage, users.length)} of ${users.length}`}</p></div>
+            <span className="w-fit rounded-full bg-[#f0f8e9] px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-[#2F8F46] dark:bg-[#2F8F46]/15 dark:text-[#b7df86]">Protected actions</span>
+          </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
@@ -114,7 +132,7 @@ export default function AdminUsersPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-[#89986D]/10 text-xs">
-                {users.map((user) => (
+                {visibleUsers.map((user) => (
                   <tr key={user.id} className="hover:bg-gray-50/50 dark:hover:bg-[#89986D]/5 transition">
                     <td className="py-4 px-6">
                       <div className="font-bold text-gray-900 dark:text-[#F6F0D7]">{user.name}</div>
@@ -176,6 +194,18 @@ export default function AdminUsersPage() {
               </tbody>
             </table>
           </div>
+          {users.length > 0 && (
+            <div className="flex flex-col gap-3 border-t border-[#edf0e9] px-5 py-4 dark:border-white/10 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+              <p className="text-[11px] text-slate-400 dark:text-white/45">Page <span className="font-bold text-slate-700 dark:text-white">{currentPage}</span> of {totalPages}</p>
+              <div className="flex items-center gap-1.5">
+                <button type="button" onClick={() => setCurrentPage((page) => Math.max(1, page - 1))} disabled={currentPage === 1} aria-label="Previous page" className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#dfe7da] text-slate-500 transition hover:border-[#9ec47a] hover:text-[#2F8F46] disabled:cursor-not-allowed disabled:opacity-35 dark:border-white/10"><FiChevronLeft size={16} /></button>
+                {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
+                  <button type="button" key={page} onClick={() => setCurrentPage(page)} aria-label={`Go to page ${page}`} aria-current={currentPage === page ? "page" : undefined} className={`h-9 min-w-9 rounded-xl px-2 text-xs font-bold transition ${currentPage === page ? "bg-[#2F8F46] text-white shadow-md shadow-[#2F8F46]/20" : "border border-transparent text-slate-500 hover:border-[#dfe7da] hover:text-[#2F8F46] dark:text-white/55 dark:hover:border-white/10"}`}>{page}</button>
+                ))}
+                <button type="button" onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))} disabled={currentPage === totalPages} aria-label="Next page" className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#dfe7da] text-slate-500 transition hover:border-[#9ec47a] hover:text-[#2F8F46] disabled:cursor-not-allowed disabled:opacity-35 dark:border-white/10"><FiChevronRight size={16} /></button>
+              </div>
+            </div>
+          )}
         </div>
 
       </div>
