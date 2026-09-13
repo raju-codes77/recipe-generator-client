@@ -67,7 +67,7 @@ const TOOLS = [
     border: "border-indigo-100 dark:border-slate-700",
     linkColor: "text-indigo-700 dark:text-indigo-500",
     badge: { text: "AI Powered", color: "bg-indigo-100 text-indigo-700 border-indigo-200" },
-    title: "Budget AI Meal Planner",
+    title: "Smart Meal Planner",
     description:
       "Generate a multi-day meal plan with estimated costs, then auto-build your complete shopping list — all from one tool.",
     cta: "Plan & Shop",

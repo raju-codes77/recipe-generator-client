@@ -707,7 +707,7 @@ export default function MealPlannerPage() {
   const [budget, setBudget] = useState(150);
 
   const currencies: Record<string, string> = {
-    "Bangladesh": "৳", "United States": "$", "United Kingdom": "£", "India": "₹", "Canada": "$", "Australia": "$"
+    "Bangladesh": "৳", "United States": "$", "United Kingdom": "£", "India": "₹", "Canada": "$", "Australia": "$", "Italy": "€"
   };
   const currency = currencies[country] || "$";
 

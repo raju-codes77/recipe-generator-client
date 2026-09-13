@@ -9,7 +9,7 @@ export default function BudgetMealPlannerRedirect() {
   }, [router]);
   return (
     <div className="min-h-screen flex items-center justify-center text-zinc-400 text-sm">
-      Redirecting to Budget AI Meal Planner...
+      Redirecting to Smart Meal Planner...
     </div>
   );
 }

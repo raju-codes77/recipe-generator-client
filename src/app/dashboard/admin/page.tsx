@@ -11,6 +11,7 @@ import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, 
   PieChart, Pie, Cell 
 } from "recharts";
+import { authClient } from "@/lib/auth-client";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
@@ -35,11 +36,20 @@ const fallbackPieData = [
 export default function AdminDashboardPage() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const { data: session, isPending } = authClient.useSession();
 
   useEffect(() => {
+    if (isPending) return;
+
     async function fetchDashboard() {
       try {
-        const res = await fetch(`${API_BASE_URL}/api/dashboard/admin/overview`, {
+        const userId = session?.user?.id;
+        const url = new URL(`${API_BASE_URL}/api/dashboard/admin/overview`);
+        if (userId) {
+          url.searchParams.append("userId", userId);
+        }
+
+        const res = await fetch(url.toString(), {
           credentials: "include"
         });
         if (res.ok) {
@@ -53,7 +63,7 @@ export default function AdminDashboardPage() {
       }
     }
     fetchDashboard();
-  }, []);
+  }, [isPending, session]);
 
   const stats = data?.stats || {
     users: { total: 0, delta: 0 },
