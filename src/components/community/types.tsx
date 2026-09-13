@@ -107,8 +107,6 @@ export interface Post {
   hasMadeIt?: boolean;
   tags: string[];
   createdAt: string;
-  isChallengeEntry?: boolean;
-  challengeName?: string;
   isPinned?: boolean;
   sharedFrom?: Author;
   sharedOriginal?: {
@@ -157,7 +155,7 @@ export interface ReportReason {
 
 export interface NotificationItem {
   id: string;
-  type: 'like' | 'comment' | 'review' | 'follow' | 'challenge' | 'mention';
+  type: 'like' | 'comment' | 'review' | 'follow' | 'mention';
   user: Author;
   text: string;
   targetPostId?: string;

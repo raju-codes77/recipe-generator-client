@@ -302,8 +302,6 @@ export const CommunityView: React.FC = () => {
               post.recipe.dietaryTags.includes('Vegan') ||
               post.recipe.nutrition.protein >= 25)
           );
-        case 'challenge':
-          return post.isChallengeEntry;
         case 'ai_sparks':
           return post.recipe?.sourceType === 'ai_generated' || post.recipe?.sourceType === 'mealdb';
         case 'saved':
@@ -356,7 +354,6 @@ export const CommunityView: React.FC = () => {
                   setActiveFilter(f);
                   setCurrentPage(1);
                 }}
-                collections={collections}
                 savedPostsCount={savedPostsCount}
                 likedPostsCount={likedPostsCount}
               />
@@ -449,8 +446,6 @@ export const CommunityView: React.FC = () => {
                     ? '🌟 Trending Recipes'
                     : activeFilter === 'following'
                     ? '👥 Recipes by Chefs You Follow'
-                    : activeFilter === 'challenge'
-                    ? '🏆 Challenge Submissions'
                     : activeFilter === 'saved'
                     ? '🔖 My Saved Recipes'
                     : activeFilter === 'liked'
@@ -577,10 +572,6 @@ export const CommunityView: React.FC = () => {
                 onToggleFollow={handleToggleFollow}
                 trendingPosts={posts}
                 onSelectRecipe={(p) => setReviewModalPost(p)}
-                onOpenCreatePostWithAI={() => {
-                  setCreatePostInitialAI(true);
-                  setCreatePostOpen(true);
-                }}
               />
             </div>
           </div>

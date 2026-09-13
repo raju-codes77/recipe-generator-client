@@ -54,38 +54,11 @@ export default function FilterCard({
   const isSortActive = sortBy !== "Latest";
 
   return (
-    <div className="relative mb-6 overflow-hidden rounded-[24px] border border-gray-200 dark:border-white/10 bg-white dark:bg-[#131B2E] p-5 md:p-6 shadow-[0_8px_20px_rgba(37,83,49,0.03)] dark:shadow-none transition-colors duration-300">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        
-        {/* Left Text Content */}
-        <div className="max-w-xl">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="px-2.5 py-1 bg-[#EAF4EB] dark:bg-[#132A26] text-[#24733E] dark:text-[#10B981] rounded-lg text-[11px] font-bold flex items-center gap-1.5">
-              📖 Recipe Collection
-            </span>
-          </div>
-          <h1 className="text-xl md:text-2xl font-extrabold tracking-tight text-[#17231A] dark:text-white mb-1.5">
-            Recipe Collection
-          </h1>
-          <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
-            Discover and collect amazing recipes from our community. Save your favorites, organize in collections, and never lose a great recipe again.
-          </p>
-        </div>
-
-        {/* Right Banner Image (Compact height) */}
-        <div className="relative w-full md:w-[320px] h-[100px] md:h-[110px] rounded-xl overflow-hidden shrink-0 flex items-center justify-end">
-          <img 
-            src="https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=800&q=80" 
-            alt="Recipe Collection Banner" 
-            className="w-full h-full object-cover opacity-90 dark:opacity-75"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-white dark:from-[#131B2E] via-transparent to-transparent md:w-24" />
-        </div>
-
-      </div>
+    <div className="relative overflow-hidden rounded-[24px] border border-white/40 dark:border-white/10 bg-white/70 dark:bg-[#131B2E]/70 backdrop-blur-xl px-5 py-4 shadow-lg dark:shadow-none transition-colors duration-300">
 
       {/* SEARCH & SINGLE ROW FILTER BAR */}
-      <div className="mt-5 pt-4 border-t border-gray-100 dark:border-white/10 flex flex-wrap items-center gap-2.5">
+      <div className="flex flex-wrap items-center gap-2.5">
+
         
         {/* Search Input */}
         <div className="relative flex-1 min-w-[240px]">
@@ -95,7 +68,7 @@ export default function FilterCard({
             placeholder="Search recipes, ingredients, cuisines..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 rounded-[12px] border border-gray-200 dark:border-white/10 bg-[#F8FAF8] dark:bg-[#0B0F19] text-xs text-gray-800 dark:text-white placeholder-gray-400 focus:outline-none focus:border-[#24733E] dark:focus:border-[#10B981] transition-all"
+            className="w-full pl-10 pr-4 py-2.5 rounded-[12px] border border-white/50 dark:border-white/10 bg-white/60 dark:bg-black/40 backdrop-blur-sm text-xs text-gray-800 dark:text-white placeholder-gray-500 focus:outline-none focus:border-[#24733E] dark:focus:border-[#10B981] transition-all"
           />
         </div>
 
@@ -107,10 +80,10 @@ export default function FilterCard({
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className={`appearance-none pl-9 pr-7 py-2.5 rounded-[12px] border text-xs font-semibold focus:outline-none cursor-pointer transition-all ${
+            className={`appearance-none pl-9 pr-7 py-2.5 rounded-[12px] border text-xs font-semibold focus:outline-none cursor-pointer transition-all backdrop-blur-sm ${
               isCategoryActive
                 ? "border-[#24733E] dark:border-[#10B981] bg-[#EAF4EB] dark:bg-[#132A26] text-[#24733E] dark:text-[#10B981]"
-                : "border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] text-gray-700 dark:text-gray-300 hover:border-gray-300"
+                : "border-white/50 dark:border-white/10 bg-white/60 dark:bg-black/40 text-gray-800 dark:text-gray-200 hover:border-gray-300 dark:hover:border-white/20"
             }`}
           >
             <option value="All" className="bg-white dark:bg-[#131B2E]">All Categories</option>
@@ -130,10 +103,10 @@ export default function FilterCard({
           <select
             value={selectedCuisine}
             onChange={(e) => setSelectedCuisine(e.target.value)}
-            className={`appearance-none pl-9 pr-7 py-2.5 rounded-[12px] border text-xs font-semibold focus:outline-none cursor-pointer transition-all ${
+            className={`appearance-none pl-9 pr-7 py-2.5 rounded-[12px] border text-xs font-semibold focus:outline-none cursor-pointer transition-all backdrop-blur-sm ${
               isCuisineActive
                 ? "border-[#24733E] dark:border-[#10B981] bg-[#EAF4EB] dark:bg-[#132A26] text-[#24733E] dark:text-[#10B981]"
-                : "border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] text-gray-700 dark:text-gray-300 hover:border-gray-300"
+                : "border-white/50 dark:border-white/10 bg-white/60 dark:bg-black/40 text-gray-800 dark:text-gray-200 hover:border-gray-300 dark:hover:border-white/20"
             }`}
           >
             <option value="All" className="bg-white dark:bg-[#131B2E]">All Cuisines</option>
@@ -148,10 +121,10 @@ export default function FilterCard({
         {/* Filters Toggle Button */}
         <button
           onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-          className={`flex items-center gap-1.5 px-3.5 py-2.5 rounded-[12px] border text-xs font-semibold transition-colors cursor-pointer ${
+          className={`flex items-center gap-1.5 px-3.5 py-2.5 rounded-[12px] border text-xs font-semibold transition-colors cursor-pointer backdrop-blur-sm ${
             showAdvancedFilters 
               ? "border-[#24733E] dark:border-[#10B981] bg-[#EAF4EB] dark:bg-[#132A26] text-[#24733E] dark:text-[#10B981]" 
-              : "border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5"
+              : "border-white/50 dark:border-white/10 bg-white/60 dark:bg-black/40 text-gray-800 dark:text-gray-200 hover:bg-white/80 dark:hover:bg-white/10"
           }`}
         >
           <Filter className="w-3.5 h-3.5" />
@@ -163,10 +136,10 @@ export default function FilterCard({
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
-            className={`appearance-none pl-3.5 pr-7 py-2.5 rounded-[12px] border text-xs font-semibold focus:outline-none cursor-pointer transition-all ${
+            className={`appearance-none pl-3.5 pr-7 py-2.5 rounded-[12px] border text-xs font-semibold focus:outline-none cursor-pointer transition-all backdrop-blur-sm ${
               isSortActive
                 ? "border-[#24733E] dark:border-[#10B981] bg-[#EAF4EB] dark:bg-[#132A26] text-[#24733E] dark:text-[#10B981]"
-                : "border-gray-200 dark:border-white/10 bg-white dark:bg-[#0B0F19] text-gray-700 dark:text-gray-300 hover:border-gray-300"
+                : "border-white/50 dark:border-white/10 bg-white/60 dark:bg-black/40 text-gray-800 dark:text-gray-200 hover:border-gray-300 dark:hover:border-white/20"
             }`}
           >
             <option value="Latest" className="bg-white dark:bg-[#131B2E]">Latest</option>

@@ -18,6 +18,7 @@ import { Post, RecipeDetail, Ingredient, CookingStep } from "./types";
 import { parseCommunityTags } from "./community-tags";
 import { CURRENT_USER } from "./mockData";
 import { fetchMealDbRecipes } from "./mealDbService";
+import { communityApi } from "@/app/api/community/community-api";
 
 interface CreatePostModalProps {
   isOpen: boolean;
@@ -25,6 +26,7 @@ interface CreatePostModalProps {
   onPublishPost: (post: Post, imageFile?: File) => Promise<void> | void;
   initialUseAI?: boolean;
   initialMode?: "quick" | "recipe" | "ai_import";
+  suggestedTags?: string[];
 }
 
 const PRESET_FOOD_PHOTOS = [
@@ -39,7 +41,6 @@ const PRESET_FOOD_PHOTOS = [
 // Stored in the existing imageUrl field so text-only posts need no schema change.
 // The API normalizes this marker back to an empty imageUrl for clients.
 const TEXT_ONLY_POST_IMAGE = "__foodcanvas_text_only__";
-const DEFAULT_RECIPE_TAGS = "#PantryToPlate, #HealthyDinner, #FoodCanvas";
 
 export const CreatePostModal: React.FC<CreatePostModalProps> = ({
   isOpen,
@@ -47,6 +48,7 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
   onPublishPost,
   initialUseAI = false,
   initialMode,
+  suggestedTags = [],
 }) => {
   const [postMode, setPostMode] = useState<"quick" | "recipe">(initialMode === "recipe" || initialMode === "ai_import" ? "recipe" : "quick");
   const [activeTab, setActiveTab] = useState<"standard" | "ai_import">(initialUseAI ? "ai_import" : "standard");
@@ -63,15 +65,52 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
   const [customPhotoUrl, setCustomPhotoUrl] = useState("");
   const [imageFile, setImageFile] = useState<File | undefined>();
   const [isPublishing, setIsPublishing] = useState(false);
-  const [tagsInput, setTagsInput] = useState(DEFAULT_RECIPE_TAGS);
-  const [isChallengeEntry, setIsChallengeEntry] = useState(false);
+  const [tagsInput, setTagsInput] = useState("");
+  const [remoteSuggestedTags, setRemoteSuggestedTags] = useState<string[]>([]);
 
   useEffect(() => {
     const mode = initialMode ?? (initialUseAI ? "ai_import" : "quick");
     setPostMode(mode === "ai_import" ? "recipe" : mode);
     setActiveTab(mode === "ai_import" ? "ai_import" : "standard");
-    setTagsInput(mode === "quick" ? "" : DEFAULT_RECIPE_TAGS);
+    setTagsInput("");
+    setRemoteSuggestedTags([]);
   }, [initialMode, initialUseAI, isOpen]);
+
+  const tagQuery = tagsInput.split(/[\s,]+/).pop()?.replace(/^#+/, "").toLowerCase() ?? "";
+  useEffect(() => {
+    if (!isOpen || tagQuery.length < 2) {
+      setRemoteSuggestedTags([]);
+      return;
+    }
+
+    let isCurrent = true;
+    const timer = window.setTimeout(() => {
+      communityApi.listSuggestedTags(tagQuery)
+        .then((tags) => {
+          if (isCurrent) setRemoteSuggestedTags(tags);
+        })
+        .catch(() => {
+          if (isCurrent) setRemoteSuggestedTags([]);
+        });
+    }, 250);
+
+    return () => {
+      isCurrent = false;
+      window.clearTimeout(timer);
+    };
+  }, [isOpen, tagQuery]);
+
+  const availableSuggestedTags = Array.from(new Set([...remoteSuggestedTags, ...suggestedTags]));
+  const matchingTags = tagQuery.length > 0
+    ? availableSuggestedTags
+        .filter((tag) => tag.toLowerCase().includes(tagQuery))
+        .slice(0, 6)
+    : [];
+
+  const applySuggestedTag = (tag: string) => {
+    const nextValue = tagsInput.replace(/[^\s,]*$/, tag);
+    setTagsInput(`${nextValue.trimEnd()} `);
+  };
 
   // Nutrition
   const [calories, setCalories] = useState(420);
@@ -219,8 +258,6 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
       hasMadeIt: true,
       tags: parsedTags,
       createdAt: "Just now",
-      isChallengeEntry,
-      challengeName: isChallengeEntry ? "Summer Harvest Salad Challenge" : undefined,
     };
 
     setIsPublishing(true);
@@ -234,6 +271,39 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs overflow-y-auto">
+      <style>{`
+        .community-modal-scrollbar {
+          scrollbar-width: thin;
+          scrollbar-color: rgba(47, 143, 70, 0.62) transparent;
+        }
+        .community-modal-scrollbar::-webkit-scrollbar {
+          width: 8px;
+        }
+        .community-modal-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .community-modal-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(47, 143, 70, 0.62);
+          border-radius: 999px;
+          border: 2px solid transparent;
+          background-clip: padding-box;
+        }
+        .community-modal-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: rgba(47, 143, 70, 0.82);
+          background-clip: padding-box;
+        }
+        .dark .community-modal-scrollbar {
+          scrollbar-color: rgba(183, 227, 95, 0.48) transparent;
+        }
+        .dark .community-modal-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(183, 227, 95, 0.48);
+          background-clip: padding-box;
+        }
+        .dark .community-modal-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: rgba(183, 227, 95, 0.68);
+          background-clip: padding-box;
+        }
+      `}</style>
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 10 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -274,7 +344,7 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
           </button>
           <button
             type="button"
-            onClick={() => { setPostMode("recipe"); if (!tagsInput.trim()) setTagsInput(DEFAULT_RECIPE_TAGS); }}
+            onClick={() => { setPostMode("recipe"); setActiveTab("standard"); }}
             className={`border-b-2 px-4 py-3 text-xs font-bold transition ${postMode === "recipe" ? "border-[#2F8F46] text-[#2F8F46] dark:border-[#B7E35F] dark:text-[#B7E35F]" : "border-transparent text-neutral-500 hover:text-neutral-900 dark:hover:text-white"}`}
           >
             Recipe Post
@@ -308,7 +378,7 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
         </div>}
 
         {/* Modal Scrollable Body */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        <div className="community-modal-scrollbar flex-1 overflow-y-auto p-6 space-y-6">
           {postMode === "quick" ? (
             <form id="create-post-form" onSubmit={handlePublish} className="space-y-5">
               <div>
@@ -327,13 +397,29 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
               </div>
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-neutral-600 dark:text-neutral-400">Hashtags <span className="font-normal normal-case text-neutral-400">(optional)</span></label>
-                <input
-                  type="text"
-                  value={tagsInput}
-                  onChange={(event) => setTagsInput(event.target.value)}
-                  placeholder="#Dinner, #Baking, #FoodCanvas"
-                  className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-neutral-900 placeholder-neutral-400 focus:border-[#2F8F46] focus:outline-hidden focus:ring-2 focus:ring-[#2F8F46]/15 dark:border-neutral-700 dark:bg-[#18181b] dark:text-white"
-                />
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={tagsInput}
+                    onChange={(event) => setTagsInput(event.target.value)}
+                    placeholder="Add hashtags like #Dinner or #Baking"
+                    className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-neutral-900 placeholder-neutral-400 focus:border-[#2F8F46] focus:outline-hidden focus:ring-2 focus:ring-[#2F8F46]/15 dark:border-neutral-700 dark:bg-[#18181b] dark:text-white"
+                  />
+                  {matchingTags.length > 0 && (
+                    <div className="absolute left-0 right-0 top-full z-20 mt-1 rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl dark:border-neutral-700 dark:bg-[#18181b]">
+                      {matchingTags.map((tag) => (
+                        <button
+                          key={tag}
+                          type="button"
+                          onClick={() => applySuggestedTag(tag)}
+                          className="block w-full rounded-lg px-3 py-2 text-left text-xs font-semibold text-neutral-700 hover:bg-[#EAF7E8] hover:text-[#176B35] dark:text-neutral-200 dark:hover:bg-emerald-950/60 dark:hover:text-[#B7E35F]"
+                        >
+                          {tag}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             </form>
           ) : activeTab === "ai_import" ? (
@@ -654,29 +740,35 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
                 </div>
               </div>
 
-              {/* Nutrition & Challenge Tag */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-100 dark:border-neutral-800">
+              {/* Nutrition & Tags */}
+              <div className="grid grid-cols-1 gap-4 pt-2 border-t border-slate-100 dark:border-neutral-800">
                 <div>
                   <label className="block text-xs font-bold text-neutral-600 dark:text-neutral-400 mb-1">
                     Tags (comma or space-separated)
                   </label>
-                  <input
-                    type="text"
-                    value={tagsInput}
-                    onChange={(e) => setTagsInput(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-neutral-900 dark:border-neutral-700 dark:bg-[#18181b] dark:text-white"
-                  />
-                </div>
-                <div className="flex items-center pt-5">
-                  <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-neutral-700 dark:text-neutral-300">
+                  <div className="relative">
                     <input
-                      type="checkbox"
-                      checked={isChallengeEntry}
-                      onChange={(e) => setIsChallengeEntry(e.target.checked)}
-                      className="rounded text-[#2F8F46] focus:ring-[#2F8F46]"
+                      type="text"
+                      value={tagsInput}
+                      onChange={(e) => setTagsInput(e.target.value)}
+                      placeholder="Add relevant hashtags (optional)"
+                      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-neutral-900 placeholder-neutral-400 dark:border-neutral-700 dark:bg-[#18181b] dark:text-white"
                     />
-                    <span>Submit to #SummerHarvestSalad Weekly Challenge (500 XP)</span>
-                  </label>
+                    {matchingTags.length > 0 && (
+                      <div className="absolute left-0 right-0 top-full z-20 mt-1 rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl dark:border-neutral-700 dark:bg-[#18181b]">
+                        {matchingTags.map((tag) => (
+                          <button
+                            key={tag}
+                            type="button"
+                            onClick={() => applySuggestedTag(tag)}
+                            className="block w-full rounded-lg px-3 py-2 text-left text-xs font-semibold text-neutral-700 hover:bg-[#EAF7E8] hover:text-[#176B35] dark:text-neutral-200 dark:hover:bg-emerald-950/60 dark:hover:text-[#B7E35F]"
+                          >
+                            {tag}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </form>

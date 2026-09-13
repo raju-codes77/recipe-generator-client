@@ -1,9 +1,6 @@
 "use client";
 
-
-
-import { useState, useEffect } from "react";
-
+import { useState, useEffect, type MouseEvent } from "react";
 import Image from "next/image";
 
 import Link from "next/link";
@@ -162,7 +159,27 @@ export default function Navbar() {
 
   };
 
+  const handleNavLinkClick = (
+    event: MouseEvent<HTMLAnchorElement>,
+    href: string,
+  ) => {
+    const isUnmodifiedLeftClick =
+      event.button === 0 &&
+      !event.metaKey &&
+      !event.ctrlKey &&
+      !event.shiftKey &&
+      !event.altKey;
 
+    if (
+      href === "/community" &&
+      pathname === "/community" &&
+      isUnmodifiedLeftClick
+    ) {
+      event.preventDefault();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      window.dispatchEvent(new Event("community:refresh"));
+    }
+  };
 
   const handleLogout = async () => {
 
@@ -259,20 +276,17 @@ export default function Navbar() {
               return (
 
                 <Link
-
-                  key={link.name}
-
-                  href={link.href}
-                  className={`relative px-4 py-2.5 text-[15px] rounded-full transition-all duration-300 ${isActive
-                    ? "text-emerald-700 dark:text-emerald-400 font-bold bg-emerald-50/80 dark:bg-emerald-500/10"
-                    : "text-slate-600 dark:text-slate-300 font-medium hover:text-emerald-600 dark:hover:text-emerald-300 hover:bg-slate-50 dark:hover:bg-slate-800/50"
-                    }`}
-
-                >
-
-                  {link.name}
-                </Link>
-
+  key={link.name}
+  href={link.href}
+  onClick={(event) => handleNavLinkClick(event, link.href)}
+  className={`relative px-4 py-2.5 text-[15px] rounded-full transition-all duration-300 ${
+    isActive
+      ? "text-emerald-700 dark:text-emerald-400 font-bold bg-emerald-50/80 dark:bg-emerald-500/10"
+      : "text-slate-600 dark:text-slate-300 font-medium hover:text-emerald-600 dark:hover:text-emerald-300 hover:bg-slate-50 dark:hover:bg-slate-800/50"
+  }`}
+>
+  {link.name}
+</Link>
               );
 
             })}
@@ -369,7 +383,14 @@ export default function Navbar() {
               </Link>
               <Link
                 href="/registrationProcess/register"
-                className="group relative px-6 py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 text-[15px] font-bold rounded-full transition-all duration-300 shadow-lg hover:shadow-xl flex items-center gap-2"
+                className="group relative px-6 py-2.5 text-white text-[15px] font-bold rounded-full transition-all duration-300 shadow-lg hover:shadow-xl flex items-center gap-2"
+                style={{
+                  background: 'linear-gradient(90deg, #154D31 0%, #24733E 50%, #10B981 100%)',
+                  backgroundSize: '200% 100%',
+                  transition: 'background-position 0.3s ease',
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundPosition = 'right center'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundPosition = 'left center'}
               >
                 <span>Sign Up</span>
                 <ChevronRight size={16} strokeWidth={3} className="opacity-70 group-hover:translate-x-0.5 transition-transform" />
@@ -441,9 +462,10 @@ export default function Navbar() {
                       ? "font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10"
                       : "font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/50"
                       }`}
-
-                    onClick={() => setIsMobileMenuOpen(false)}
-
+                    onClick={(event) => {
+                      setIsMobileMenuOpen(false);
+                      handleNavLinkClick(event, link.href);
+                    }}
                   >
 
                     {link.name}
@@ -497,25 +519,15 @@ export default function Navbar() {
                     </Link>
                     <Link
                       href="/registrationProcess/register"
-                      className="flex items-center justify-center w-full py-3.5 bg-emerald-600 text-white text-[15px] font-bold rounded-2xl transition-colors shadow-lg shadow-emerald-600/20"
+                      className="flex items-center justify-center w-full py-3.5 text-white text-[15px] font-bold rounded-2xl transition-all shadow-lg"
+                      style={{
+                        background: 'linear-gradient(90deg, #154D31 0%, #24733E 50%, #10B981 100%)',
+                        backgroundSize: '200% 100%',
+                        transition: 'background-position 0.3s ease',
+                      }}
                       onClick={() => setIsMobileMenuOpen(false)}
-
-                    >
-
-                      Log in
-
-                    </Link>
-
-
-
-                    <Link
-
-                      href="/registrationProcess/register"
-
-                      className="flex items-center justify-center w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-full transition-colors"
-
-                      onClick={() => setIsMobileMenuOpen(false)}
-
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundPosition = 'right center'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundPosition = 'left center'}
                     >
 
                       Sign Up

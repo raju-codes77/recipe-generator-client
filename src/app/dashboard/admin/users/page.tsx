@@ -1,8 +1,11 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { FiTrash2, FiUserX, FiUserCheck, FiUsers, FiShield, FiChevronLeft, FiChevronRight, FiUserPlus } from "react-icons/fi";
+import { FiTrash2, FiUserX, FiUserCheck, FiUsers, FiShield, FiArrowLeft } from "react-icons/fi";
+import Link from "next/link";
 import toast from "react-hot-toast";
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 interface User {
   id: string;
@@ -19,14 +22,22 @@ export default function AdminUsersPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
 
-  // Users fetched data
+  const [pagination, setPagination] = useState<any>(null);
+  const [page, setPage] = useState(1);
+
   const fetchUsers = async () => {
+    setLoading(true);
     try {
-      const res = await fetch("http://localhost:5000/api/admin/users");
+      const res = await fetch(`${API_BASE_URL}/api/admin/users?page=${page}&limit=20`, {
+        credentials: "include"
+      });
       const data = await res.json();
-      if (data.success) {
-        setUsers(data.users);
-      }
+      setUsers(data.users || []);
+      setPagination({
+        page: data.page,
+        totalPages: data.totalPages,
+        total: data.total
+      });
     } catch (error) {
       console.error("Error fetching users:", error);
       toast.error("Failed to load users");
@@ -37,7 +48,7 @@ export default function AdminUsersPage() {
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [page]);
 
   const totalPages = Math.max(1, Math.ceil(users.length / itemsPerPage));
   const firstUserIndex = (currentPage - 1) * itemsPerPage;
@@ -49,19 +60,19 @@ export default function AdminUsersPage() {
 
   // users status (Suspend / Active) 
   const handleStatusChange = async (id: string, currentStatus: string) => {
-    const newStatus = currentStatus === "ACTIVE" ? "SUSPENDED" : "ACTIVE";
+    const newStatus = currentStatus === "ACTIVE" ? "BLOCKED" : "ACTIVE";
     try {
-      const res = await fetch(`http://localhost:5000/api/admin/users/${id}/status`, {
+      const res = await fetch(`${API_BASE_URL}/api/admin/users/${id}/status`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ status: newStatus }),
       });
-      const data = await res.json();
-      if (data.success) {
+      if (res.ok) {
         toast.success(`User ${newStatus.toLowerCase()} successfully`);
-        fetchUsers(); // refreshing our list
+        setUsers(users.map(u => u.id === id ? { ...u, status: newStatus } : u));
       } else {
-        toast.error(data.message || "Action failed");
+        toast.error("Action failed");
       }
     } catch (error) {
       console.error("Status update error:", error);
@@ -71,18 +82,18 @@ export default function AdminUsersPage() {
 
   //users delete function
   const handleDeleteUser = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this user?")) return;
+    if (!confirm("Are you sure you want to permanently delete this user?")) return;
 
     try {
-      const res = await fetch(`http://localhost:5000/api/admin/users/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/admin/users/${id}`, {
         method: "DELETE",
+        credentials: "include"
       });
-      const data = await res.json();
-      if (data.success) {
+      if (res.ok) {
         toast.success("User deleted successfully");
         setUsers(users.filter((user) => user.id !== id));
       } else {
-        toast.error(data.message || "Delete failed");
+        toast.error("Delete failed");
       }
     } catch (error) {
       console.error("Delete error:", error);
@@ -101,12 +112,14 @@ export default function AdminUsersPage() {
         {/* Header */}
         <div className="mb-8 flex flex-col items-start justify-between gap-5 sm:flex-row sm:items-center">
           <div>
-            <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[#2F8F46] dark:text-[#b7df86]">Admin workspace</p>
-            <h1 className="flex items-center gap-2 text-2xl font-black tracking-tight text-gray-900 dark:text-[#F6F0D7] sm:text-3xl">
-              <FiUsers className="text-[#2F8F46]" /> User management
+            <Link href="/dashboard/admin" className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-[#2F8F46] mb-3 transition-colors">
+              <FiArrowLeft className="mr-2 w-4 h-4" /> Back to Dashboard
+            </Link>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-[#F6F0D7] flex items-center gap-2">
+              <FiUsers className="text-[#2F8F46]" /> User Management
             </h1>
-            <p className="mt-1 text-xs text-gray-500 dark:text-[#F6F0D7]/60 sm:text-sm">
-              Review account access and activity. <span className="font-bold text-[#2F8F46]">{users.length} total users</span>
+            <p className="text-xs sm:text-sm text-gray-500 dark:text-[#F6F0D7]/60 mt-1">
+              Total registered users: <span className="font-bold text-[#2F8F46]">{pagination?.total || users.length}</span>
             </p>
           </div>
           <div className="flex items-center gap-2 rounded-2xl border border-[#dce8d6] bg-white px-4 py-3 text-xs font-semibold text-slate-600 shadow-sm dark:border-white/10 dark:bg-white/5 dark:text-white/65">
@@ -163,14 +176,14 @@ export default function AdminUsersPage() {
                       {/* Suspend / Active Toggle Button */}
                       <button
                         onClick={() => handleStatusChange(user.id, user.status || "ACTIVE")}
-                        title={user.status === "SUSPENDED" ? "Activate User" : "Suspend User"}
+                        title={user.status === "BLOCKED" ? "Activate User" : "Block User"}
                         className={`p-2 rounded-xl transition ${
-                          user.status === "SUSPENDED"
+                          user.status === "BLOCKED"
                             ? "bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-950/50 dark:text-green-300"
                             : "bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-950/50 dark:text-amber-300"
                         }`}
                       >
-                        {user.status === "SUSPENDED" ? <FiUserCheck size={14} /> : <FiUserX size={14} />}
+                        {user.status === "BLOCKED" ? <FiUserCheck size={14} /> : <FiUserX size={14} />}
                       </button>
 
                       {/* Delete Button */}
@@ -194,15 +207,27 @@ export default function AdminUsersPage() {
               </tbody>
             </table>
           </div>
-          {users.length > 0 && (
-            <div className="flex flex-col gap-3 border-t border-[#edf0e9] px-5 py-4 dark:border-white/10 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-              <p className="text-[11px] text-slate-400 dark:text-white/45">Page <span className="font-bold text-slate-700 dark:text-white">{currentPage}</span> of {totalPages}</p>
-              <div className="flex items-center gap-1.5">
-                <button type="button" onClick={() => setCurrentPage((page) => Math.max(1, page - 1))} disabled={currentPage === 1} aria-label="Previous page" className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#dfe7da] text-slate-500 transition hover:border-[#9ec47a] hover:text-[#2F8F46] disabled:cursor-not-allowed disabled:opacity-35 dark:border-white/10"><FiChevronLeft size={16} /></button>
-                {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
-                  <button type="button" key={page} onClick={() => setCurrentPage(page)} aria-label={`Go to page ${page}`} aria-current={currentPage === page ? "page" : undefined} className={`h-9 min-w-9 rounded-xl px-2 text-xs font-bold transition ${currentPage === page ? "bg-[#2F8F46] text-white shadow-md shadow-[#2F8F46]/20" : "border border-transparent text-slate-500 hover:border-[#dfe7da] hover:text-[#2F8F46] dark:text-white/55 dark:hover:border-white/10"}`}>{page}</button>
-                ))}
-                <button type="button" onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))} disabled={currentPage === totalPages} aria-label="Next page" className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#dfe7da] text-slate-500 transition hover:border-[#9ec47a] hover:text-[#2F8F46] disabled:cursor-not-allowed disabled:opacity-35 dark:border-white/10"><FiChevronRight size={16} /></button>
+          {/* Pagination */}
+          {pagination && pagination.totalPages > 1 && (
+            <div className="px-6 py-4 border-t border-gray-200 dark:border-[#89986D]/20 flex items-center justify-between">
+              <span className="text-xs text-gray-500">
+                Showing page {pagination.page} of {pagination.totalPages}
+              </span>
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                  className="px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-200 dark:border-[#89986D]/20 text-gray-700 dark:text-[#F6F0D7] hover:bg-gray-50 dark:hover:bg-[#89986D]/10 disabled:opacity-50 transition-colors"
+                >
+                  Previous
+                </button>
+                <button 
+                  onClick={() => setPage(p => Math.min(pagination.totalPages, p + 1))}
+                  disabled={page === pagination.totalPages}
+                  className="px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-200 dark:border-[#89986D]/20 text-gray-700 dark:text-[#F6F0D7] hover:bg-gray-50 dark:hover:bg-[#89986D]/10 disabled:opacity-50 transition-colors"
+                >
+                  Next
+                </button>
               </div>
             </div>
           )}

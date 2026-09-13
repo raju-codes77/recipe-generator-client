@@ -1,18 +1,21 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { 
   FiUsers, FiBookOpen, FiFolder, FiAward, FiMessageSquare, 
   FiPlus, FiShield, FiSettings, FiFileText, FiTrendingUp, FiActivity, FiServer 
 } from "react-icons/fi";
+import Link from "next/link";
 import { 
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, 
   PieChart, Pie, Cell 
 } from "recharts";
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
 // Mock Data for Analytics Line Chart
-const lineData = [
+const fallbackLineData = [
   { day: "May 12", users: 4200, recipes: 2100, posts: 1100 },
   { day: "May 13", users: 4800, recipes: 2300, posts: 1400 },
   { day: "May 14", users: 5100, recipes: 2600, posts: 1500 },
@@ -23,13 +26,59 @@ const lineData = [
 ];
 
 // Mock Data for Donut Chart (User Growth)
-const pieData = [
+const fallbackPieData = [
   { name: "New Users", value: 6245, color: "#2F8F46" },
   { name: "Active Users", value: 4892, color: "#B7E35F" },
   { name: "Returning Users", value: 1449, color: "#FF9F43" },
 ];
 
 export default function AdminDashboardPage() {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchDashboard() {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/dashboard/admin/overview`, {
+          credentials: "include"
+        });
+        if (res.ok) {
+          const json = await res.json();
+          setData(json);
+        }
+      } catch (err) {
+        console.error("Failed to load admin dashboard data", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchDashboard();
+  }, []);
+
+  const stats = data?.stats || {
+    users: { total: 0, delta: 0 },
+    recipes: { total: 0, delta: 0 },
+    collections: { total: 0, delta: 0 },
+    challenges: { total: 0, delta: 0 },
+    posts: { total: 0, delta: 0 }
+  };
+  
+  const lineData = data?.chartData?.length > 0 ? data.chartData : fallbackLineData;
+  const pieData = data?.userGrowth ? [
+    { name: "New Users", value: data.userGrowth.newUsers, color: "#2F8F46" },
+    { name: "Active Users", value: data.userGrowth.activeUsers, color: "#B7E35F" },
+    { name: "Returning Users", value: data.userGrowth.returningUsers, color: "#FF9F43" },
+  ] : fallbackPieData;
+
+  const topCategories = data?.topCategories?.length > 0 ? data.topCategories : [
+    { name: "Healthy", count: "2,345", pct: 27 },
+    { name: "Dinner", count: "1,987", pct: 22 },
+  ];
+
+  const formatDelta = (delta: number) => {
+    return delta >= 0 ? `↑ ${delta}%` : `↓ ${Math.abs(delta)}%`;
+  };
+
   return (
     <div className="space-y-6">
       {/* 1. Welcome Header Banner */}
@@ -53,55 +102,65 @@ export default function AdminDashboardPage() {
         <div className="p-5 rounded-2xl bg-white dark:bg-black/40 border border-gray-200 dark:border-[#89986D]/20 shadow-sm">
           <div className="flex items-center justify-between mb-2">
             <span className="p-2.5 rounded-xl bg-[#EAF7E8] dark:bg-[#2F8F46]/20 text-[#2F8F46] dark:text-[#B7E35F] text-lg"><FiUsers /></span>
-            <span className="text-[11px] font-semibold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-500/10 px-2 py-0.5 rounded-full">↑ 12.5%</span>
+            <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${stats.users.delta >= 0 ? 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-500/10' : 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/10'}`}>
+              {formatDelta(stats.users.delta)}
+            </span>
           </div>
           <h4 className="text-xs text-gray-500 dark:text-[#F6F0D7]/60 font-medium">Total Users</h4>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-[#F6F0D7] mt-1">12,586</h2>
-          <p className="text-[10px] text-gray-400 dark:text-[#F6F0D7]/40 mt-1">12.5% from last week</p>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-[#F6F0D7] mt-1">{loading ? "..." : stats.users.total.toLocaleString()}</h2>
+          <p className="text-[10px] text-gray-400 dark:text-[#F6F0D7]/40 mt-1">{Math.abs(stats.users.delta)}% from last week</p>
         </div>
 
         {/* Total Recipes */}
         <div className="p-5 rounded-2xl bg-white dark:bg-black/40 border border-gray-200 dark:border-[#89986D]/20 shadow-sm">
           <div className="flex items-center justify-between mb-2">
             <span className="p-2.5 rounded-xl bg-[#FFF0DD] dark:bg-[#FF9F43]/20 text-[#FF9F43] text-lg"><FiBookOpen /></span>
-            <span className="text-[11px] font-semibold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-500/10 px-2 py-0.5 rounded-full">↑ 15.3%</span>
+            <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${stats.recipes.delta >= 0 ? 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-500/10' : 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/10'}`}>
+              {formatDelta(stats.recipes.delta)}
+            </span>
           </div>
           <h4 className="text-xs text-gray-500 dark:text-[#F6F0D7]/60 font-medium">Total Recipes</h4>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-[#F6F0D7] mt-1">8,742</h2>
-          <p className="text-[10px] text-gray-400 dark:text-[#F6F0D7]/40 mt-1">15.3% from last week</p>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-[#F6F0D7] mt-1">{loading ? "..." : stats.recipes.total.toLocaleString()}</h2>
+          <p className="text-[10px] text-gray-400 dark:text-[#F6F0D7]/40 mt-1">{Math.abs(stats.recipes.delta)}% from last week</p>
         </div>
 
         {/* Collections */}
         <div className="p-5 rounded-2xl bg-white dark:bg-black/40 border border-gray-200 dark:border-[#89986D]/20 shadow-sm">
           <div className="flex items-center justify-between mb-2">
             <span className="p-2.5 rounded-xl bg-purple-50 dark:bg-purple-500/20 text-purple-600 dark:text-purple-300 text-lg"><FiFolder /></span>
-            <span className="text-[11px] font-semibold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-500/10 px-2 py-0.5 rounded-full">↑ 8.7%</span>
+            <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${stats.collections.delta >= 0 ? 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-500/10' : 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/10'}`}>
+              {formatDelta(stats.collections.delta)}
+            </span>
           </div>
           <h4 className="text-xs text-gray-500 dark:text-[#F6F0D7]/60 font-medium">Collections</h4>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-[#F6F0D7] mt-1">2,153</h2>
-          <p className="text-[10px] text-gray-400 dark:text-[#F6F0D7]/40 mt-1">8.7% from last week</p>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-[#F6F0D7] mt-1">{loading ? "..." : stats.collections.total.toLocaleString()}</h2>
+          <p className="text-[10px] text-gray-400 dark:text-[#F6F0D7]/40 mt-1">{Math.abs(stats.collections.delta)}% from last week</p>
         </div>
 
         {/* Challenges */}
         <div className="p-5 rounded-2xl bg-white dark:bg-black/40 border border-gray-200 dark:border-[#89986D]/20 shadow-sm">
           <div className="flex items-center justify-between mb-2">
             <span className="p-2.5 rounded-xl bg-yellow-50 dark:bg-yellow-500/20 text-yellow-600 dark:text-yellow-300 text-lg"><FiAward /></span>
-            <span className="text-[11px] font-semibold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-500/10 px-2 py-0.5 rounded-full">↑ 9.1%</span>
+            <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${stats.challenges.delta >= 0 ? 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-500/10' : 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/10'}`}>
+              {formatDelta(stats.challenges.delta)}
+            </span>
           </div>
           <h4 className="text-xs text-gray-500 dark:text-[#F6F0D7]/60 font-medium">Challenges</h4>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-[#F6F0D7] mt-1">46</h2>
-          <p className="text-[10px] text-gray-400 dark:text-[#F6F0D7]/40 mt-1">9.1% from last week</p>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-[#F6F0D7] mt-1">{loading ? "..." : stats.challenges.total.toLocaleString()}</h2>
+          <p className="text-[10px] text-gray-400 dark:text-[#F6F0D7]/40 mt-1">{Math.abs(stats.challenges.delta)}% from last week</p>
         </div>
 
         {/* Community Posts */}
         <div className="p-5 rounded-2xl bg-white dark:bg-black/40 border border-gray-200 dark:border-[#89986D]/20 shadow-sm sm:col-span-2 lg:col-span-1">
           <div className="flex items-center justify-between mb-2">
             <span className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-500/20 text-blue-600 dark:text-blue-300 text-lg"><FiMessageSquare /></span>
-            <span className="text-[11px] font-semibold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-500/10 px-2 py-0.5 rounded-full">↑ 10.2%</span>
+            <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${stats.posts.delta >= 0 ? 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-500/10' : 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/10'}`}>
+              {formatDelta(stats.posts.delta)}
+            </span>
           </div>
           <h4 className="text-xs text-gray-500 dark:text-[#F6F0D7]/60 font-medium">Community Posts</h4>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-[#F6F0D7] mt-1">3,897</h2>
-          <p className="text-[10px] text-gray-400 dark:text-[#F6F0D7]/40 mt-1">10.2% from last week</p>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-[#F6F0D7] mt-1">{loading ? "..." : stats.posts.total.toLocaleString()}</h2>
+          <p className="text-[10px] text-gray-400 dark:text-[#F6F0D7]/40 mt-1">{Math.abs(stats.posts.delta)}% from last week</p>
         </div>
       </div>
 
@@ -151,14 +210,20 @@ export default function AdminDashboardPage() {
               </PieChart>
             </ResponsiveContainer>
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <span className="text-lg font-bold text-gray-900 dark:text-[#F6F0D7]">12,586</span>
+              <span className="text-lg font-bold text-gray-900 dark:text-[#F6F0D7]">{loading ? "..." : stats.users.total.toLocaleString()}</span>
               <span className="text-[10px] text-gray-400 dark:text-[#F6F0D7]/60">Total Users</span>
             </div>
           </div>
           <div className="space-y-1.5 text-xs text-gray-600 dark:text-[#F6F0D7]/80 mt-2">
-            <div className="flex justify-between"><span>🟢 New Users</span><span className="font-semibold">6,245 (49.6%)</span></div>
-            <div className="flex justify-between"><span>🟢 Active Users</span><span className="font-semibold">4,892 (38.8%)</span></div>
-            <div className="flex justify-between"><span>🟠 Returning Users</span><span className="font-semibold">1,449 (11.6%)</span></div>
+            {pieData.map((d, i) => (
+              <div key={i} className="flex justify-between">
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: d.color }}></span> 
+                  {d.name}
+                </span>
+                <span className="font-semibold">{loading ? "..." : `${d.value.toLocaleString()} (${Math.round((d.value / (stats.users.total || 1)) * 100)}%)`}</span>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -167,20 +232,21 @@ export default function AdminDashboardPage() {
           <h3 className="font-bold text-gray-900 dark:text-[#F6F0D7] mb-4">Quick Actions</h3>
           <div className="grid grid-cols-3 gap-3">
             {[
-              { label: "Add Recipe", icon: <FiPlus /> },
-              { label: "Challenge", icon: <FiAward /> },
-              { label: "Announcement", icon: <FiMessageSquare /> },
-              { label: "Manage Users", icon: <FiUsers /> },
-              { label: "Moderate Posts", icon: <FiShield /> },
-              { label: "Generate Report", icon: <FiFileText /> },
+              { label: "Add Recipe", icon: <FiPlus />, href: "/dashboard/admin/recipes" },
+              { label: "Challenge", icon: <FiAward />, href: "/dashboard/admin/challenges" },
+              { label: "Announcements", icon: <FiMessageSquare />, href: "/dashboard/admin/posts" },
+              { label: "Manage Users", icon: <FiUsers />, href: "/dashboard/admin/users" },
+              { label: "Moderate Posts", icon: <FiShield />, href: "/dashboard/admin/posts" },
+              { label: "Reports", icon: <FiFileText />, href: "/dashboard/admin/users" },
             ].map((action, idx) => (
-              <button 
+              <Link 
                 key={idx}
+                href={action.href}
                 className="flex flex-col items-center justify-center p-3 rounded-xl bg-gray-50 dark:bg-[#89986D]/5 border border-gray-100 dark:border-[#89986D]/10 hover:border-[#2F8F46] hover:bg-gray-100 dark:hover:bg-[#89986D]/10 transition text-center group"
               >
                 <span className="text-lg text-[#2F8F46] dark:text-[#B7E35F] mb-1.5 group-hover:scale-110 transition">{action.icon}</span>
                 <span className="text-[11px] font-medium text-gray-700 dark:text-[#F6F0D7]">{action.label}</span>
-              </button>
+              </Link>
             ))}
           </div>
         </div>
@@ -192,23 +258,19 @@ export default function AdminDashboardPage() {
         <div className="p-6 rounded-2xl bg-white dark:bg-black/40 border border-gray-200 dark:border-[#89986D]/20 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-bold text-gray-900 dark:text-[#F6F0D7]">Top Recipe Categories</h3>
-            <span className="text-xs px-2.5 py-1 bg-gray-100 dark:bg-[#89986D]/10 rounded-md text-gray-600 dark:text-[#F6F0D7]">This Week ▾</span>
+            <span className="text-xs px-2.5 py-1 bg-gray-100 dark:bg-[#89986D]/10 rounded-md text-gray-600 dark:text-[#F6F0D7]">All Time ▾</span>
           </div>
           <div className="space-y-4">
-            {[
-              { name: "Healthy", count: "2,345 Recipes", pct: "27%" },
-              { name: "Dinner", count: "1,987 Recipes", pct: "22%" },
-              { name: "Dessert", count: "1,456 Recipes", pct: "17%" },
-              { name: "Breakfast", count: "1,234 Recipes", pct: "14%" },
-              { name: "Vegetarian", count: "1,072 Recipes", pct: "12%" },
-            ].map((cat, i) => (
-              <div key={i} className="space-y-1">
-                <div className="flex justify-between text-xs font-medium text-gray-700 dark:text-[#F6F0D7]">
-                  <span>{cat.name} ({cat.count})</span>
-                  <span className="font-bold">{cat.pct}</span>
+            {loading ? (
+              <p className="text-xs text-gray-500">Loading categories...</p>
+            ) : topCategories.map((c: any, i: number) => (
+              <div key={i}>
+                <div className="flex items-center justify-between text-xs font-bold text-gray-700 dark:text-[#F6F0D7] mb-1.5">
+                  <span>{c.name}</span>
+                  <span className="text-gray-400">{c.count} Recipes ({c.pct}%)</span>
                 </div>
-                <div className="w-full h-2 bg-gray-100 dark:bg-[#89986D]/10 rounded-full overflow-hidden">
-                  <div className="h-full bg-[#2F8F46] rounded-full" style={{ width: cat.pct }}></div>
+                <div className="w-full h-2 bg-gray-100 dark:bg-[#89986D]/20 rounded-full overflow-hidden">
+                  <div className="h-full bg-[#117A38] rounded-full" style={{ width: `${c.pct}%` }}></div>
                 </div>
               </div>
             ))}
@@ -219,23 +281,24 @@ export default function AdminDashboardPage() {
         <div className="p-6 rounded-2xl bg-white dark:bg-black/40 border border-gray-200 dark:border-[#89986D]/20 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-bold text-gray-900 dark:text-[#F6F0D7]">Recent Recipes</h3>
-            <span className="text-xs text-[#2F8F46] dark:text-[#B7E35F] font-semibold cursor-pointer">View All</span>
+            <Link href="/dashboard/admin/recipes" className="text-xs text-[#2F8F46] dark:text-[#B7E35F] font-semibold cursor-pointer">View All</Link>
           </div>
           <div className="space-y-3">
-            {[
-              { title: "High Protein Avocado Toast", author: "Sarah Ahmed", time: "May 18, 2025", cal: "520 kcal" },
-              { title: "Spicy Lentil Soup", author: "Healthy Bites", time: "May 18, 2025", cal: "310 kcal" },
-              { title: "Chocolate Protein Pancakes", author: "Fitness Foodie", time: "May 17, 2025", cal: "450 kcal" },
-              { title: "Grilled Salmon with Herbs", author: "Riya's Kitchen", time: "May 17, 2025", cal: "560 kcal" },
-            ].map((rec, i) => (
-              <div key={i} className="flex items-center justify-between p-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-[#89986D]/5 transition border border-transparent hover:border-gray-200 dark:hover:border-[#89986D]/20">
-                <div>
-                  <h4 className="text-xs font-bold text-gray-900 dark:text-[#F6F0D7]">{rec.title}</h4>
-                  <p className="text-[10px] text-gray-400 dark:text-[#F6F0D7]/60">By {rec.author} • {rec.cal}</p>
+            {loading ? (
+              <p className="text-xs text-gray-500">Loading recipes...</p>
+            ) : (data?.recentRecipes || []).length > 0 ? (
+              data.recentRecipes.map((rec: any, i: number) => (
+                <div key={i} className="flex items-center justify-between p-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-[#89986D]/5 transition border border-transparent hover:border-gray-200 dark:hover:border-[#89986D]/20">
+                  <div>
+                    <h4 className="text-xs font-bold text-gray-900 dark:text-[#F6F0D7]">{rec.title}</h4>
+                    <p className="text-[10px] text-gray-400 dark:text-[#F6F0D7]/60">By {rec.author} • {rec.cal}</p>
+                  </div>
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-400">Published</span>
                 </div>
-                <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-400">Published</span>
-              </div>
-            ))}
+              ))
+            ) : (
+              <p className="text-xs text-gray-500">No recent recipes.</p>
+            )}
           </div>
         </div>
 
@@ -243,20 +306,26 @@ export default function AdminDashboardPage() {
         <div className="p-6 rounded-2xl bg-white dark:bg-black/40 border border-gray-200 dark:border-[#89986D]/20 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-bold text-gray-900 dark:text-[#F6F0D7]">Recent Activity</h3>
-            <span className="text-xs text-[#2F8F46] dark:text-[#B7E35F] font-semibold cursor-pointer">View All</span>
+            <Link href="/dashboard/admin/posts" className="text-xs text-[#2F8F46] dark:text-[#B7E35F] font-semibold cursor-pointer">View All</Link>
           </div>
           <div className="space-y-3 text-xs">
-            {[
-              { text: "Sarah Ahmed joined the platform", time: "2m ago" },
-              { text: "Recipe published: 'High Protein Avocado Toast'", time: "15m ago" },
-              { text: "New challenge created: '7-Day Healthy Eating'", time: "1h ago" },
-              { text: "A post has been reported by a user", time: "2h ago" },
-            ].map((act, i) => (
-              <div key={i} className="flex items-start justify-between border-b border-gray-100 dark:border-[#89986D]/10 pb-2.5">
-                <span className="text-gray-700 dark:text-[#F6F0D7]/80 pr-2">{act.text}</span>
-                <span className="text-[10px] text-gray-400 dark:text-[#F6F0D7]/50 whitespace-nowrap">{act.time}</span>
-              </div>
-            ))}
+            {loading ? (
+              <p className="text-xs text-gray-500">Loading activity...</p>
+            ) : (data?.recentActivity || []).length > 0 ? (
+              data.recentActivity.map((act: any, i: number) => {
+                const timeDiff = Math.round((new Date().getTime() - new Date(act.time).getTime()) / 60000);
+                const timeStr = timeDiff < 60 ? `${timeDiff}m ago` : timeDiff < 1440 ? `${Math.floor(timeDiff/60)}h ago` : `${Math.floor(timeDiff/1440)}d ago`;
+                
+                return (
+                  <div key={i} className="flex items-start justify-between border-b border-gray-100 dark:border-[#89986D]/10 pb-2.5">
+                    <span className="text-gray-700 dark:text-[#F6F0D7]/80 pr-2">{act.text}</span>
+                    <span className="text-[10px] text-gray-400 dark:text-[#F6F0D7]/50 whitespace-nowrap">{timeStr}</span>
+                  </div>
+                );
+              })
+            ) : (
+              <p className="text-xs text-gray-500">No recent activity.</p>
+            )}
           </div>
         </div>
       </div>
@@ -267,7 +336,7 @@ export default function AdminDashboardPage() {
         <div className="lg:col-span-2 p-6 rounded-2xl bg-white dark:bg-black/40 border border-gray-200 dark:border-[#89986D]/20 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-bold text-gray-900 dark:text-[#F6F0D7]">Recent Users</h3>
-            <span className="text-xs text-[#2F8F46] dark:text-[#B7E35F] font-semibold cursor-pointer">View All Users →</span>
+            <Link href="/dashboard/admin/users" className="text-xs text-[#2F8F46] dark:text-[#B7E35F] font-semibold cursor-pointer">View All Users →</Link>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
@@ -281,28 +350,33 @@ export default function AdminDashboardPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-[#89986D]/10">
-                {[
-                  { name: "Sarah Ahmed", email: "sarah@example.com", joined: "May 18, 2025", recipes: "24", status: "Active" },
-                  { name: "Riya's Kitchen", email: "riya@example.com", joined: "May 18, 2025", recipes: "18", status: "Active" },
-                  { name: "Healthy Bites", email: "healthybites@example.com", joined: "May 17, 2025", recipes: "15", status: "Active" },
-                  { name: "Foodie Forever", email: "foodie@example.com", joined: "May 17, 2025", recipes: "10", status: "Inactive" },
-                ].map((u, i) => (
-                  <tr key={i} className="hover:bg-gray-50 dark:hover:bg-[#89986D]/5 transition">
-                    <td className="p-3 font-semibold text-gray-900 dark:text-[#F6F0D7]">{u.name}</td>
-                    <td className="p-3 text-gray-500 dark:text-[#F6F0D7]/60">{u.email}</td>
-                    <td className="p-3 text-gray-500 dark:text-[#F6F0D7]/60">{u.joined}</td>
-                    <td className="p-3 text-gray-700 dark:text-[#F6F0D7] font-semibold">{u.recipes}</td>
-                    <td className="p-3">
-                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold ${
-                        u.status === "Active" 
-                          ? "bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-400" 
-                          : "bg-red-50 dark:bg-red-500/10 text-red-500"
-                      }`}>
-                        {u.status}
-                      </span>
-                    </td>
+                {loading ? (
+                  <tr>
+                    <td colSpan={5} className="p-4 text-center text-xs text-gray-500">Loading users...</td>
                   </tr>
-                ))}
+                ) : (data?.recentUsers || []).length > 0 ? (
+                  data.recentUsers.map((u: any, i: number) => (
+                    <tr key={i} className="hover:bg-gray-50 dark:hover:bg-[#89986D]/5 transition">
+                      <td className="p-3 font-semibold text-gray-900 dark:text-[#F6F0D7]">{u.name}</td>
+                      <td className="p-3 text-gray-500 dark:text-[#F6F0D7]/60">{u.email}</td>
+                      <td className="p-3 text-gray-500 dark:text-[#F6F0D7]/60">{new Date(u.joined).toLocaleDateString()}</td>
+                      <td className="p-3 text-gray-700 dark:text-[#F6F0D7] font-semibold">{u.recipes}</td>
+                      <td className="p-3">
+                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold ${
+                          u.status === "ACTIVE" 
+                            ? "bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-400" 
+                            : "bg-red-50 dark:bg-red-500/10 text-red-500"
+                        }`}>
+                          {u.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={5} className="p-4 text-center text-xs text-gray-500">No recent users.</td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>

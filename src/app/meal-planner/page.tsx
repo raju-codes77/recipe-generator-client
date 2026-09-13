@@ -5,7 +5,7 @@ import Image from "next/image";
 import { 
   User, Check, ChevronRight, Settings, Plus, RefreshCw, 
   MapPin, ShoppingBasket, DollarSign, Leaf, ChefHat, 
-  CalendarDays, Activity, ChevronDown, ChevronUp, Clock, X, Info, AlertCircle, ArrowLeft, Heart, Flame, LayoutDashboard
+  CalendarDays, Activity, ChevronDown, ChevronUp, Clock, X, Info, AlertCircle, ArrowLeft, Heart, Flame, LayoutDashboard, Store
 } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 
@@ -465,6 +465,217 @@ const getMealVisual = (type: string) => {
   return { bg: "from-slate-100 to-gray-50 dark:from-slate-800 dark:to-slate-900", icon: "🍽️" };
 };
 
+// ── Nearby Stores Component (Redesigned) ─────────────────────────────────────
+const NearbyStores = ({ ingredients = [], aiStores = [] }: { ingredients?: string[], aiStores?: any[] }) => {
+  const [status, setStatus] = useState<"initial" | "loading" | "error" | "success" | "provider_missing">("initial");
+  const [city, setCity] = useState("");
+  const [zip, setZip] = useState("");
+  const [locationStr, setLocationStr] = useState<string>("");
+  const [searchMethod, setSearchMethod] = useState<"manual" | "geo" | null>(null);
+
+  const handleManualSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!city.trim() && !zip.trim()) {
+      toast.error("Please enter a city or postal code.");
+      return;
+    }
+    
+    setSearchMethod("manual");
+    setStatus("loading");
+    
+    // Simulate API request to missing provider
+    setTimeout(() => {
+      toast.error("Live store results require a configured Places API provider.");
+      setStatus("provider_missing");
+      setLocationStr(`${city} ${zip}`);
+    }, 800);
+  };
+
+  const handleGeolocation = () => {
+    if (!navigator.geolocation) {
+      toast.error("Location access is not supported by your browser.");
+      return;
+    }
+    
+    setSearchMethod("geo");
+    setStatus("loading");
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setStatus("success");
+        setLocationStr(`${pos.coords.latitude},${pos.coords.longitude}`);
+      },
+      (err) => {
+        setStatus("initial");
+        toast.error("Location access was denied. You can search by city and postal/ZIP code instead.");
+      },
+      { timeout: 10000 }
+    );
+  };
+
+  const renderStoreCards = () => {
+    if (!aiStores || aiStores.length === 0) return null;
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
+        {aiStores.map((store: any, idx: number) => (
+          <div key={idx} className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-4 border border-slate-100 dark:border-slate-800 flex flex-col h-full">
+            <h4 className="font-bold text-slate-800 dark:text-slate-200 mb-1 flex items-center gap-2">
+              <Store size={14} className="text-emerald-600"/> {store.name}
+            </h4>
+            {store.location && <p className="text-xs text-slate-500 mb-1 flex items-center gap-1"><MapPin size={12}/> {store.location}</p>}
+            {store.distance && <p className="text-xs text-slate-400 font-medium mb-3">📏 {store.distance}</p>}
+            
+            <a 
+              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(store.name + " " + (store.location || ""))}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-auto pt-3 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between text-xs font-bold text-emerald-600 hover:text-emerald-700 transition group"
+            >
+              <span>View on Map</span>
+              <ChevronRight size={14} className="transform group-hover:translate-x-1 transition-transform" />
+            </a>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  const getMapSearchUrl = () => {
+    const queryStr = ingredients.length > 0 
+      ? `grocery stores for ${ingredients.slice(0, 3).join(", ")}` 
+      : "grocery stores";
+    
+    if (searchMethod === "manual") {
+      return `https://www.google.com/maps/search/${encodeURIComponent(queryStr + " in " + locationStr)}`;
+    }
+    return `https://www.google.com/maps/search/${encodeURIComponent(queryStr)}/@${locationStr},15z`;
+  };
+
+  return (
+    <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 border border-slate-200 dark:border-slate-800 shadow-sm mt-8">
+      <div className="mb-8">
+        <h3 className="font-black text-xl mb-2 flex items-center gap-2 text-slate-900 dark:text-white"><Store size={22} className="text-emerald-600"/> Where to Buy</h3>
+        <p className="text-sm text-slate-500">Find grocery stores near you where you can buy the ingredients for this meal plan.</p>
+      </div>
+      
+      {/* Search Form */}
+      <div className="mb-10 p-5 bg-slate-50 dark:bg-slate-800/30 rounded-2xl border border-slate-100 dark:border-slate-800">
+        <form onSubmit={handleManualSearch} className="flex flex-col md:flex-row gap-4 mb-6">
+          <div className="flex-1">
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">City</label>
+            <input 
+              type="text" 
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
+              placeholder="Enter city" 
+              className="w-full px-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
+            />
+          </div>
+          <div className="flex-1">
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Postal / ZIP Code</label>
+            <input 
+              type="text" 
+              value={zip}
+              onChange={(e) => setZip(e.target.value)}
+              placeholder="Enter postal or ZIP code" 
+              className="w-full px-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
+            />
+          </div>
+          <div className="md:w-auto flex items-end">
+            <button type="submit" className="w-full md:w-auto px-6 py-3 bg-slate-900 hover:bg-black dark:bg-emerald-600 dark:hover:bg-emerald-700 text-white rounded-xl font-bold text-sm transition shadow-sm whitespace-nowrap">
+              Find Nearby Stores
+            </button>
+          </div>
+        </form>
+
+        <div className="flex items-center gap-4 mb-6">
+          <div className="h-px bg-slate-200 dark:bg-slate-700 flex-1"></div>
+          <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">or</span>
+          <div className="h-px bg-slate-200 dark:bg-slate-700 flex-1"></div>
+        </div>
+
+        <button 
+          type="button"
+          onClick={handleGeolocation} 
+          className="w-full px-4 py-3 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-bold text-sm transition flex justify-center items-center gap-2 shadow-sm"
+        >
+          <MapPin size={16} className="text-emerald-600"/> Use My Location
+        </button>
+      </div>
+
+      {/* Loading State */}
+      {status === "loading" && (
+        <div className="flex flex-col items-center text-center p-8 bg-slate-50 dark:bg-slate-800/50 rounded-2xl mb-8">
+          <RefreshCw className="animate-spin text-emerald-500 mb-3" size={24} />
+          <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Finding nearby grocery stores...</p>
+        </div>
+      )}
+
+      {/* Missing Provider Error State */}
+      {status === "provider_missing" && (
+        <div className="flex flex-col items-center text-center p-8 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-900/30 rounded-2xl mb-8">
+          <div className="w-12 h-12 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center mb-3">
+            <Store size={24} className="text-amber-600" />
+          </div>
+          <h4 className="font-bold text-sm text-slate-900 dark:text-slate-200 mb-2">Nearby store search is currently unavailable.</h4>
+          <p className="text-xs text-slate-500 mb-6 max-w-md">A location provider API (like Google Places) is required to display live store cards here. However, you can still view results directly on the map.</p>
+          
+          <a 
+            href={getMapSearchUrl()}
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="w-full sm:w-auto px-6 py-3 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold text-sm transition flex justify-center items-center gap-2"
+          >
+            <MapPin size={16}/> View on Map Fallback
+          </a>
+        </div>
+      )}
+
+      {/* Geolocation Success Fallback */}
+      {status === "success" && searchMethod === "geo" && (
+        <div className="flex flex-col items-center text-center p-8 bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-200 dark:border-emerald-900/30 rounded-2xl mb-8">
+          <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mb-3">
+            <MapPin size={24} className="text-emerald-600" />
+          </div>
+          <h4 className="font-bold text-sm text-slate-900 dark:text-slate-200 mb-2">Location acquired successfully!</h4>
+          <p className="text-xs text-slate-500 mb-6">Open the map to see stores near you.</p>
+          
+          <a 
+            href={getMapSearchUrl()}
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="w-full sm:w-auto px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-sm transition flex justify-center items-center gap-2"
+          >
+            <MapPin size={16}/> View on Map
+          </a>
+        </div>
+      )}
+
+      {/* AI Store Cards (If available from plan generation) */}
+      {status === "initial" && aiStores && aiStores.length > 0 && (
+        <div className="mb-8">
+          <h4 className="font-bold text-sm uppercase tracking-wider text-slate-400 mb-2">AI Suggested Stores</h4>
+          {renderStoreCards()}
+        </div>
+      )}
+
+      {/* Online Shopping Section */}
+      <div className="mt-8 pt-8 border-t border-slate-200 dark:border-slate-800">
+        <h4 className="font-bold text-lg mb-2 text-slate-900 dark:text-white">Shop Online</h4>
+        <p className="text-sm text-slate-500 mb-4">Prefer online shopping? Find these ingredients from online grocery platforms.</p>
+        
+        <a 
+          href={`https://www.instacart.com/store/s?k=${encodeURIComponent(ingredients.slice(0, 5).join(" "))}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-500 to-orange-500 hover:from-emerald-600 hover:to-orange-600 text-white rounded-xl font-bold text-sm transition-all shadow-sm hover:shadow-md"
+        >
+          <ShoppingBasket size={16}/> Shop Ingredients Online
+        </a>
+      </div>
+    </div>
+  );
+};
+
 // ── Main Page Component ────────────────────────────────────────────────────
 export default function MealPlannerPage() {
   const [tab, setTab] = useState<"standard" | "budget">("standard");
@@ -476,6 +687,7 @@ export default function MealPlannerPage() {
   const [plan, setPlan] = useState<any>(null);
   const [generating, setGenerating] = useState(false);
   const [selectedDays, setSelectedDays] = useState<number>(7);
+  const [peopleCount, setPeopleCount] = useState<number>(2);
   
   // Navigation
   const [activeDayIndex, setActiveDayIndex] = useState<number>(0);
@@ -510,8 +722,8 @@ export default function MealPlannerPage() {
     try {
       const endpoint = tab === "standard" ? "/api/meal-planner/generate" : "/api/meal-planner/generate-budget";
       const payload = tab === "standard" 
-        ? { days: selectedDays }
-        : { country, city, currency, budget, days: selectedDays };
+        ? { days: selectedDays, peopleCount }
+        : { country, city, currency, budget, days: selectedDays, peopleCount };
 
       const res = await fetch(`${apiUrl}${endpoint}`, {
         method: "POST", credentials: "include", headers: {"Content-Type": "application/json"},
@@ -521,7 +733,75 @@ export default function MealPlannerPage() {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.message || "Failed to generate plan");
       }
-      setPlan(await res.json());
+      
+      const data = await res.json();
+      
+      // -- Ensure mathematical accuracy of AI-generated totals --
+      const cleanNum = (val: any) => {
+        if (val === undefined || val === null) return 0;
+        if (typeof val === 'number') return val;
+        const str = String(val).replace(/[^0-9.]/g, '');
+        return Number(str) || 0;
+      };
+
+      let totalCost = 0;
+      let totalCalories = 0;
+      let totalProtein = 0;
+      let validDaysCount = data.days?.length || 0;
+
+      if (data.days && Array.isArray(data.days)) {
+        data.days.forEach((day: any) => {
+          let dayCost = 0, dayCals = 0, dayPro = 0, dayCarbs = 0, dayFat = 0;
+          if (day.meals) {
+            Object.values(day.meals).forEach((meal: any) => {
+              if (!meal) return;
+              const cost = cleanNum(meal.estimatedCost ?? meal.cost ?? meal.price);
+              const cals = cleanNum(meal.calories ?? meal.kcal ?? meal.nutrition?.calories);
+              const pro = cleanNum(meal.protein ?? meal.nutrition?.protein);
+              const carbs = cleanNum(meal.carbs ?? meal.nutrition?.carbs);
+              const fat = cleanNum(meal.fat ?? meal.nutrition?.fat);
+
+              dayCost += cost;
+              dayCals += cals;
+              dayPro += pro;
+              dayCarbs += carbs;
+              dayFat += fat;
+              
+              meal.estimatedCost = cost || undefined;
+              meal.calories = cals || undefined;
+              meal.protein = pro || undefined;
+              meal.carbs = carbs || undefined;
+              meal.fat = fat || undefined;
+            });
+          }
+          
+          if (!day.dailyTotals) day.dailyTotals = {};
+          day.dailyTotals.calories = dayCals;
+          day.dailyTotals.protein = dayPro;
+          day.dailyTotals.carbs = dayCarbs;
+          day.dailyTotals.fat = dayFat;
+          day.dailyTotals.estimatedCost = dayCost;
+          
+          totalCost += dayCost;
+          totalCalories += dayCals;
+          totalProtein += dayPro;
+        });
+      }
+
+      if (tab === "budget") {
+        data.totalEstimatedCost = Number(totalCost.toFixed(2));
+        if (!data.summary) data.summary = {};
+        data.summary.averageDailyCost = validDaysCount ? Number((totalCost / validDaysCount).toFixed(2)) : 0;
+      }
+      
+      if (!data.summary) data.summary = {};
+      data.summary.averageDailyCalories = validDaysCount ? Math.round(totalCalories / validDaysCount) : 0;
+      data.summary.averageProtein = validDaysCount ? Math.round(totalProtein / validDaysCount) : 0;
+      // Attach peopleCount to plan to display it correctly
+      data.peopleCount = peopleCount;
+      // ---------------------------------------------------------
+
+      setPlan(data);
       setActiveDayIndex(0);
       toast.success(`${selectedDays}-Day ${tab === "budget" ? "Budget " : ""}Meal plan generated!`);
     } catch (err: any) {
@@ -650,14 +930,15 @@ export default function MealPlannerPage() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-[-24px] relative z-10">
+      {/* ── Content Container ── */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative">
         
-        {/* ── Tabs ── */}
-        <div className="flex flex-wrap gap-2 mb-8">
-          <button onClick={() => {setTab("standard"); setPlan(null); setApiError(null);}} className={`px-6 py-3 rounded-full text-sm font-bold transition shadow-sm border ${tab === "standard" ? "bg-emerald-600 text-white border-emerald-600" : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300"}`}>
+        {/* ── Tabs (Segmented Control) ── */}
+        <div className="flex w-fit bg-slate-100/80 dark:bg-slate-800/80 p-1.5 rounded-full border border-slate-200 dark:border-slate-700 shadow-sm mb-10">
+          <button onClick={() => {setTab("standard"); setPlan(null); setApiError(null);}} className={`px-6 py-2.5 rounded-full text-sm font-bold transition-all duration-200 ${tab === "standard" ? "bg-emerald-600 text-white shadow-sm" : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"}`}>
             Meal Planner
           </button>
-          <button onClick={() => {setTab("budget"); setPlan(null); setApiError(null);}} className={`px-6 py-3 rounded-full text-sm font-bold transition shadow-sm border ${tab === "budget" ? "bg-emerald-600 text-white border-emerald-600" : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300"}`}>
+          <button onClick={() => {setTab("budget"); setPlan(null); setApiError(null);}} className={`px-6 py-2.5 rounded-full text-sm font-bold transition-all duration-200 ${tab === "budget" ? "bg-emerald-600 text-white shadow-sm" : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"}`}>
             Budget Planner
           </button>
         </div>
@@ -666,14 +947,41 @@ export default function MealPlannerPage() {
         {!plan && !generating && (
           <div className="max-w-3xl">
             <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm mb-6">
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Plan Duration</h2>
-              <div className="grid grid-cols-3 gap-3 mb-6">
-                {[3, 7, 14].map(d => (
-                  <button key={d} onClick={() => setSelectedDays(d)} className={`py-4 rounded-2xl text-center transition border-2 ${selectedDays === d ? "border-emerald-500 bg-emerald-50 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300" : "border-slate-100 bg-white text-slate-600 hover:border-slate-200 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-400"}`}>
-                    <span className="block text-xl font-black">{d}</span>
-                    <span className="text-[10px] uppercase tracking-wider font-bold">Days</span>
-                  </button>
-                ))}
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                  <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Plan Duration</h2>
+                  <div className="grid grid-cols-3 gap-3">
+                    {[3, 7, 14].map(d => (
+                      <button key={d} onClick={() => setSelectedDays(d)} className={`py-4 rounded-2xl text-center transition border-2 ${selectedDays === d ? "border-emerald-500 bg-emerald-50 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300" : "border-slate-100 bg-white text-slate-600 hover:border-slate-200 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-400"}`}>
+                        <span className="block text-xl font-black">{d}</span>
+                        <span className="text-[10px] uppercase tracking-wider font-bold">Days</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Number of People</h2>
+                  <div className="flex items-center justify-between border-2 border-slate-200 dark:border-slate-700 rounded-2xl p-4 bg-slate-50 dark:bg-slate-800 h-[76px]">
+                    <button 
+                      onClick={() => setPeopleCount(Math.max(1, peopleCount - 1))}
+                      className="w-10 h-10 rounded-full bg-white dark:bg-slate-700 shadow-sm border border-slate-200 dark:border-slate-600 flex items-center justify-center text-slate-600 hover:text-emerald-600 hover:border-emerald-200 transition"
+                    >
+                      <span className="text-xl font-black leading-none pb-0.5">-</span>
+                    </button>
+                    <div className="text-center">
+                      <span className="block text-2xl font-black text-slate-900 dark:text-white leading-none mb-1">{peopleCount}</span>
+                      <span className="text-[10px] uppercase tracking-wider font-bold text-slate-500">People</span>
+                    </div>
+                    <button 
+                      onClick={() => setPeopleCount(Math.min(20, peopleCount + 1))}
+                      className="w-10 h-10 rounded-full bg-white dark:bg-slate-700 shadow-sm border border-slate-200 dark:border-slate-600 flex items-center justify-center text-slate-600 hover:text-emerald-600 hover:border-emerald-200 transition"
+                    >
+                      <span className="text-xl font-black leading-none pb-0.5">+</span>
+                    </button>
+                  </div>
+                </div>
               </div>
 
               {tab === "budget" && (
@@ -748,59 +1056,82 @@ export default function MealPlannerPage() {
           <div className="animate-in fade-in duration-700">
             
             {/* Profile Context Indicator */}
-            <div className="mb-6 flex flex-wrap items-center gap-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-4 py-2 rounded-full w-fit shadow-sm">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1"><User size={12}/> Personalized for you</span>
-              <span className="text-slate-300 dark:text-slate-700 hidden sm:inline">|</span>
+            <div className="mb-10 flex flex-wrap items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-4 py-2 rounded-full w-fit shadow-sm">
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5"><User size={12}/> Personalized for you</span>
+              <span className="text-slate-300 dark:text-slate-700 hidden sm:inline mx-1">•</span>
               <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{profile.foodPreference}</span>
-              <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
+              <span className="text-slate-300 dark:text-slate-700">•</span>
               <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{profile.healthGoal}</span>
               {profile.dailyCalorieTarget && (
                 <>
-                  <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
+                  <span className="text-slate-300 dark:text-slate-700">•</span>
                   <span className="text-xs font-bold text-slate-700 dark:text-slate-300">~{profile.dailyCalorieTarget} kcal/day</span>
                 </>
               )}
-              <button onClick={() => setEditProfile(true)} className="ml-2 text-[10px] bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded hover:bg-slate-200 transition font-bold">Edit</button>
+              <button onClick={() => setEditProfile(true)} className="ml-2 text-xs text-emerald-600 hover:text-emerald-700 font-bold transition flex items-center gap-1">Edit</button>
             </div>
 
             {/* Weekly Summary */}
-            <div className="mb-8">
-              <h2 className="text-3xl font-black text-slate-900 dark:text-white mb-4">Your {plan.days.length}-Day Plan</h2>
+            <div className="mb-12">
+              <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
+                <div>
+                  <h2 className="text-3xl font-black text-slate-900 dark:text-white mb-2">
+                    Your {plan.days?.length}-Day Plan
+                  </h2>
+                  <div className="flex items-center gap-2">
+                    <p className="text-slate-500 text-sm">Generated specifically for your profile goals.</p>
+                    <span className="w-1.5 h-1.5 bg-slate-300 rounded-full mx-1"></span>
+                    <span className="inline-flex items-center gap-1.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider">
+                      <User size={12}/> For {plan.peopleCount || 2} People
+                    </span>
+                  </div>
+                </div>
+                <button onClick={() => setPlan(null)} className="px-6 py-2.5 rounded-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition shadow-sm">
+                  Regenerate
+                </button>
+              </div>
               <div className="flex flex-wrap gap-4">
-                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 flex-1 min-w-[140px] shadow-sm">
-                  <p className="text-xl font-black text-slate-900 dark:text-white">{plan.days.length} <span className="text-sm font-medium text-slate-500">Days</span></p>
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 flex-1 min-w-[140px] shadow-sm flex flex-col justify-center">
+                  <p className="text-3xl font-black text-slate-900 dark:text-white mb-1">{plan.days.length}</p>
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Days</p>
                 </div>
-                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 flex-1 min-w-[140px] shadow-sm">
-                  <p className="text-xl font-black text-slate-900 dark:text-white">{totalMealsCount} <span className="text-sm font-medium text-slate-500">Meals</span></p>
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 flex-1 min-w-[140px] shadow-sm flex flex-col justify-center">
+                  <p className="text-3xl font-black text-slate-900 dark:text-white mb-1">{totalMealsCount}</p>
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Meals</p>
                 </div>
-                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 flex-1 min-w-[140px] shadow-sm">
-                  <p className="text-xl font-black text-slate-900 dark:text-white">~{plan.summary?.averageDailyCalories || "--"} <span className="text-sm font-medium text-slate-500">kcal/day</span></p>
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 flex-1 min-w-[140px] shadow-sm flex flex-col justify-center">
+                  <p className="text-3xl font-black text-slate-900 dark:text-white mb-1">~{plan.summary?.averageDailyCalories || "--"}</p>
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">kcal/day</p>
                 </div>
                 {tab === "budget" && plan.totalEstimatedCost !== undefined && (
-                  <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 rounded-2xl p-4 flex-1 min-w-[160px] shadow-sm">
-                    <p className="text-xl font-black text-amber-700 dark:text-amber-400">{plan.budget?.currency}{plan.totalEstimatedCost} <span className="text-sm font-medium text-amber-700/60">Total</span></p>
+                  <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/50 rounded-2xl p-5 flex-1 min-w-[160px] shadow-sm flex flex-col justify-center">
+                    <p className="text-3xl font-black text-emerald-700 dark:text-emerald-400 mb-1">{plan.budget?.currency}{plan.totalEstimatedCost}</p>
+                    <p className="text-xs font-bold text-emerald-700/60 uppercase tracking-wider">Total Est. Cost</p>
                   </div>
                 )}
-                <div className="flex items-center">
-                   <button onClick={() => setPlan(null)} className="h-full px-5 rounded-2xl border border-slate-200 bg-white text-sm font-bold text-slate-700 hover:bg-slate-50 transition shadow-sm dark:bg-slate-900 dark:border-slate-700 dark:text-slate-300">Regenerate</button>
-                </div>
               </div>
             </div>
 
             {/* Horizontal Day Navigation */}
-            <div className="flex gap-3 overflow-x-auto pb-4 mb-8 custom-scrollbar hide-scrollbar-on-mobile snap-x">
+            <div className="flex gap-3 overflow-x-auto pb-6 mb-8 custom-scrollbar hide-scrollbar-on-mobile snap-x">
               {plan.days.map((day: any, index: number) => {
                 const isActive = activeDayIndex === index;
-                // Parse "Day 1" or format actual dates if available
-                const shortDate = day.date?.substring(0, 8) || `Day ${day.day}`; 
+                let formattedDate = day.date || `Day ${day.day}`;
+                try {
+                  if (day.date && day.date.includes('-')) {
+                    const d = new Date(day.date);
+                    formattedDate = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }).toUpperCase();
+                  }
+                } catch(e) {}
+                
                 return (
                   <button 
                     key={index} 
                     onClick={() => setActiveDayIndex(index)}
-                    className={`snap-start shrink-0 px-6 py-4 rounded-2xl border transition-all duration-200 min-w-[110px] text-left flex flex-col gap-1 ${isActive ? "bg-emerald-600 border-emerald-600 text-white shadow-md" : "bg-white border-slate-200 text-slate-600 hover:border-emerald-300 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-400"}`}
+                    className={`snap-start shrink-0 px-6 py-4 rounded-[20px] border transition-all duration-200 min-w-[120px] text-center flex flex-col items-center justify-center gap-1.5 ${isActive ? "bg-emerald-600 border-emerald-600 text-white shadow-md transform scale-[1.02]" : "bg-white border-slate-200 text-slate-600 hover:border-emerald-300 hover:bg-emerald-50 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-400"}`}
                   >
-                    <span className={`text-[10px] font-bold uppercase tracking-wider ${isActive ? "text-emerald-200" : "text-slate-400"}`}>DAY {day.day}</span>
-                    <span className="font-bold text-lg leading-none">{shortDate}</span>
+                    <span className={`text-[10px] font-black uppercase tracking-widest ${isActive ? "text-emerald-200" : "text-slate-400"}`}>DAY {day.day}</span>
+                    <span className="font-extrabold text-lg leading-none">{formattedDate}</span>
                   </button>
                 );
               })}
@@ -811,14 +1142,25 @@ export default function MealPlannerPage() {
                 
                 {/* Main Content: Meals Grid */}
                 <div className="lg:col-span-3">
-                  <div className="mb-6">
-                    <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-wide">Meals for {activeDayData.date || `Day ${activeDayData.day}`}</h3>
+                  <div className="mb-8">
+                    {(() => {
+                      let activeDateDisplay = activeDayData.date || `Day ${activeDayData.day}`;
+                      try {
+                        if (activeDayData.date && activeDayData.date.includes('-')) {
+                          const d = new Date(activeDayData.date);
+                          activeDateDisplay = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+                        }
+                      } catch(e) {}
+                      return <h3 className="text-xl md:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">Meals for {activeDateDisplay}</h3>;
+                    })()}
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12 items-stretch">
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-12 w-full items-stretch">
                     {(() => {
+                      const mealTypes = ["breakfast", "morningSnack", "lunch", "eveningSnack", "dinner"];
                       const allMeals: any[] = [];
-                      ["breakfast", "morningSnack", "lunch", "eveningSnack", "dinner"].forEach(mealType => {
+                      
+                      mealTypes.forEach(mealType => {
                         let rawData = activeDayData.meals?.[mealType];
                         if (!rawData) return;
                         
@@ -827,6 +1169,7 @@ export default function MealPlannerPage() {
                           if (!meal || !meal.name || meal.name === "Untitled Meal") return;
                           meal._uniqueKey = `${mealType}-${index}`;
                           meal._displayOption = isArray ? ` Option ${index + 1}` : "";
+                          meal._typeStr = mealType.replace(/([A-Z])/g, ' $1').trim().toUpperCase();
                           allMeals.push(meal);
                         };
 
@@ -838,11 +1181,12 @@ export default function MealPlannerPage() {
                           processMeal(rawData, 0, false);
                         }
                       });
-                      
+
+                      if (allMeals.length === 0) return <p className="text-slate-500 italic col-span-full">No meals planned for this day.</p>;
+
                       return allMeals.map(meal => {
                         const visual = getMealVisual(meal._type);
                         const isSnack = meal._type.toLowerCase().includes('snack');
-                        const displayName = meal._type.replace(/([A-Z])/g, ' $1').trim();
                         
                         return (
                           <div 
@@ -850,38 +1194,46 @@ export default function MealPlannerPage() {
                             onClick={() => setModalMeal(meal)}
                             role="button"
                             tabIndex={0}
-                            className={`group text-left bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden hover:shadow-lg transition-all duration-300 flex flex-col h-full cursor-pointer ${isSnack ? "border-dashed" : ""}`}
+                            className={`group text-left bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden hover:shadow-xl hover:border-emerald-200 dark:hover:border-emerald-800 transition-all duration-300 flex flex-col h-full cursor-pointer relative ${isSnack ? "border-dashed" : ""}`}
                           >
                             {/* Meal Card Header / Visual */}
                             {meal.image ? (
-                              <div className="relative w-full h-36 bg-slate-100 overflow-hidden shrink-0">
-                                <Image src={meal.image} alt={meal.name} fill className="object-cover group-hover:scale-105 transition duration-500" />
+                              <div className="relative w-full aspect-[4/3] bg-slate-100 overflow-hidden shrink-0">
+                                <Image src={meal.image} alt={meal.name} fill className="object-cover group-hover:scale-105 transition duration-700 ease-out" />
+                                <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-md text-[10px] font-black text-white uppercase tracking-wider z-10">
+                                  {meal._typeStr}
+                                </div>
                               </div>
                             ) : (
-                              <div className={`relative w-full h-36 bg-gradient-to-br ${visual.bg} flex items-center justify-center overflow-hidden shrink-0`}>
-                                <span className="text-5xl opacity-80 group-hover:scale-110 transition duration-300">{visual.icon}</span>
+                              <div className={`relative w-full aspect-[4/3] bg-gradient-to-br ${visual.bg} flex items-center justify-center overflow-hidden shrink-0`}>
+                                <div className="absolute top-4 left-4 bg-white/60 dark:bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-md text-[10px] font-black text-slate-900 dark:text-white uppercase tracking-wider z-10 shadow-sm border border-black/5 dark:border-white/10">
+                                  {meal._typeStr}
+                                </div>
+                                <span className="text-6xl opacity-90 group-hover:scale-110 transition duration-500 ease-out">{visual.icon}</span>
                               </div>
                             )}
                             
-                            {/* Absolute Badges over visual */}
-                            <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider text-slate-900 shadow-sm max-w-[80%] break-words">
-                              {displayName}{meal._displayOption}
-                            </div>
                             {tab === "budget" && meal.estimatedCost !== undefined && meal.estimatedCost !== null && (
-                              <div className="absolute top-3 right-3 bg-amber-500/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-black text-white shadow-sm">
+                              <div className="absolute top-4 right-4 bg-amber-500/95 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-black text-white shadow-md z-10">
                                 {plan.budget?.currency}{meal.estimatedCost}
                               </div>
                             )}
 
                             {/* Card Body */}
-                            <div className="p-5 flex-1 flex flex-col min-h-[140px]">
-                              <h4 className="font-bold text-slate-900 dark:text-white text-lg leading-tight mb-2 break-words">{meal.name}</h4>
-                              {meal.description && <p className="text-xs text-slate-500 line-clamp-3 mb-4 leading-relaxed break-words">{meal.description}</p>}
+                            <div className="p-5 flex-1 flex flex-col relative z-10 bg-white dark:bg-slate-900">
+                              {meal._displayOption && <span className="text-[10px] font-bold text-emerald-600 mb-1.5 block uppercase">{meal._displayOption}</span>}
+                              <h4 className="font-extrabold text-slate-900 dark:text-white text-lg leading-tight mb-2 break-words group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors">{meal.name}</h4>
+                              {meal.description && <p className="text-xs text-slate-500 line-clamp-2 mb-5 leading-relaxed break-words">{meal.description}</p>}
                               
-                              <div className="flex flex-wrap gap-2 mt-auto pt-4 text-[10px] font-bold uppercase tracking-wider">
-                                {meal.calories && <span className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2.5 py-1 rounded-md shrink-0">{meal.calories} kcal</span>}
-                                {meal.protein && <span className="bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 px-2.5 py-1 rounded-md shrink-0">{meal.protein}g P</span>}
-                                {meal.prepTime && <span className="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 px-2.5 py-1 rounded-md flex items-center gap-1 shrink-0"><Clock size={10}/> {meal.prepTime}</span>}
+                              <div className="flex flex-wrap gap-2 mt-auto mb-4 text-[11px] font-bold tracking-wide">
+                                {meal.calories && <span className="bg-slate-50 border border-slate-100 dark:bg-slate-800 dark:border-slate-700 text-slate-600 dark:text-slate-300 px-2 py-1 rounded-lg shrink-0">{meal.calories} kcal</span>}
+                                {meal.protein && <span className="bg-emerald-50/50 border border-emerald-100 dark:bg-emerald-900/20 dark:border-emerald-800/30 text-emerald-700 dark:text-emerald-400 px-2 py-1 rounded-lg shrink-0">{meal.protein}g P</span>}
+                                {meal.prepTime && <span className="bg-blue-50/50 border border-blue-100 dark:bg-blue-900/20 dark:border-blue-800/30 text-blue-700 dark:text-blue-400 px-2 py-1 rounded-lg flex items-center gap-1 shrink-0"><Clock size={12}/> {meal.prepTime}</span>}
+                              </div>
+                              
+                              <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between group-hover:border-emerald-100 dark:group-hover:border-emerald-900/30 transition-colors">
+                                <span className="text-xs font-bold text-emerald-600 dark:text-emerald-500">View Details</span>
+                                <ChevronRight size={16} className="text-emerald-600 dark:text-emerald-500 transform group-hover:translate-x-1 transition-transform" />
                               </div>
                             </div>
                           </div>
@@ -889,6 +1241,13 @@ export default function MealPlannerPage() {
                       });
                     })()}
                   </div>
+                  
+                  {tab === "budget" && plan.budget && (
+                    <NearbyStores 
+                      ingredients={plan.shoppingList?.map((i: any) => i.name) || []} 
+                      aiStores={plan.nearbyStores || []}
+                    />
+                  )}
                 </div>
 
                 {/* Sidebar Context */}
@@ -939,7 +1298,12 @@ export default function MealPlannerPage() {
                           {plan.shoppingList?.slice(0, 6).map((item: any, i: number) => (
                             <div key={i} className="flex justify-between text-sm">
                               <span className="font-medium text-slate-700 dark:text-slate-300">{item.name}</span>
-                              <span className="text-slate-400">{item.quantity}</span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-slate-400">{item.quantity}</span>
+                                {item.estimatedCost && (
+                                  <span className="text-amber-600 font-bold text-xs">{plan.budget?.currency}{item.estimatedCost}</span>
+                                )}
+                              </div>
                             </div>
                           ))}
                           {plan.shoppingList?.length > 6 && (
@@ -954,6 +1318,7 @@ export default function MealPlannerPage() {
                       </div>
                     </div>
                   )}
+
                 </div>
               </div>
             )}

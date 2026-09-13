@@ -59,7 +59,17 @@ export default function RecipeCollectionSection() {
             Trending Recipes
           </span>
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-black tracking-tight mb-4 leading-tight text-stone-900 dark:text-white">
-            Trending in the <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-700 to-emerald-500 dark:from-emerald-400 dark:to-teal-300">Community</span>
+            Trending in the{" "}
+            <span
+              style={{
+                background: 'linear-gradient(90deg, #0F432B 0%, #4AB741 40%, #154D31 80%, #082E1A 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+              }}
+            >
+              Community
+            </span>
           </h2>
           <p className="text-base text-stone-500 dark:text-slate-400 font-medium leading-relaxed">
             Discover what home cooks and AI are creating right now. Handpicked recipes for taste, health, and simplicity.
@@ -91,7 +101,14 @@ export default function RecipeCollectionSection() {
         >
           <Link
             href="/recipes"
-            className="inline-flex items-center gap-2 bg-stone-900 hover:bg-stone-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white font-bold py-3.5 px-7 rounded-full shadow-sm transition-all duration-300 text-[15px] group"
+            className="inline-flex items-center gap-2 text-white font-bold py-3.5 px-7 rounded-full shadow-md hover:shadow-lg transition-shadow duration-300 text-[15px] group"
+            style={{
+              background: 'linear-gradient(90deg, #154D31 0%, #24733E 50%, #10B981 100%)',
+              backgroundSize: '200% 100%',
+              transition: 'background-position 0.3s ease',
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundPosition = 'right center'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundPosition = 'left center'}
           >
             <span>Browse All Recipes</span>
             <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center group-hover:bg-white/30 transition-colors">
