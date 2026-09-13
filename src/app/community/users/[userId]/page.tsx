@@ -232,6 +232,7 @@ export default function CommunityUserProfilePage() {
   }, [profile?.user.id, session?.user?.id, userId]);
 
   const storyGroup = useMemo(() => profile?.stories.slice().reverse() ?? [], [profile]);
+  const recordStoryView = useCallback((storyId: string) => communityApi.recordStoryView(storyId).then(() => undefined), []);
 
   const handleNextStory = useCallback(() => {
     if (!viewingStory) return;
@@ -731,6 +732,9 @@ export default function CommunityUserProfilePage() {
         onPreviousStory={handlePreviousStory}
         storyCount={storyGroup.length || 1}
         storyIndex={storyIndex < 0 ? 0 : storyIndex}
+        onRecordView={recordStoryView}
+        onLoadViewers={communityApi.listStoryViewers}
+        onReactToStory={(storyId) => communityApi.reactToStory(storyId).then(() => undefined)}
         onDeleteStory={async (storyId) => {
           await communityApi.deleteStory(storyId);
           setViewingStory(null);
