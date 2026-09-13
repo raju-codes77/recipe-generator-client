@@ -19,6 +19,8 @@ interface User {
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
 
   const [pagination, setPagination] = useState<any>(null);
   const [page, setPage] = useState(1);
@@ -47,6 +49,14 @@ export default function AdminUsersPage() {
   useEffect(() => {
     fetchUsers();
   }, [page]);
+
+  const totalPages = Math.max(1, Math.ceil(users.length / itemsPerPage));
+  const firstUserIndex = (currentPage - 1) * itemsPerPage;
+  const visibleUsers = users.slice(firstUserIndex, firstUserIndex + itemsPerPage);
+
+  useEffect(() => {
+    setCurrentPage((page) => Math.min(page, totalPages));
+  }, [totalPages]);
 
   // users status (Suspend / Active) 
   const handleStatusChange = async (id: string, currentStatus: string) => {
@@ -96,11 +106,11 @@ export default function AdminUsersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#121212] p-6 sm:p-10 font-sans">
+    <div className="min-h-screen bg-[#f6f8f3] p-4 font-sans text-slate-900 dark:bg-[#101611] dark:text-[#F6F0D7] sm:p-6 lg:p-10">
       <div className="max-w-6xl mx-auto">
         
         {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+        <div className="mb-8 flex flex-col items-start justify-between gap-5 sm:flex-row sm:items-center">
           <div>
             <Link href="/dashboard/admin" className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-[#2F8F46] mb-3 transition-colors">
               <FiArrowLeft className="mr-2 w-4 h-4" /> Back to Dashboard
@@ -112,10 +122,17 @@ export default function AdminUsersPage() {
               Total registered users: <span className="font-bold text-[#2F8F46]">{pagination?.total || users.length}</span>
             </p>
           </div>
+          <div className="flex items-center gap-2 rounded-2xl border border-[#dce8d6] bg-white px-4 py-3 text-xs font-semibold text-slate-600 shadow-sm dark:border-white/10 dark:bg-white/5 dark:text-white/65">
+            <FiUserPlus className="text-[#e6923b]" /> Live directory
+          </div>
         </div>
 
         {/* Users Table */}
-        <div className="bg-white dark:bg-[#181818] border border-gray-200 dark:border-[#89986D]/20 rounded-3xl shadow-xl overflow-hidden">
+        <div className="overflow-hidden rounded-[26px] border border-[#e1e7dc] bg-white shadow-xl shadow-slate-900/5 dark:border-[#89986D]/20 dark:bg-[#181818]">
+          <div className="flex flex-col justify-between gap-2 border-b border-[#edf0e9] px-5 py-4 dark:border-white/10 sm:flex-row sm:items-center sm:px-6">
+            <div><h2 className="text-sm font-bold">Directory</h2><p className="mt-0.5 text-[11px] text-slate-400">{users.length === 0 ? "No accounts" : `Showing ${firstUserIndex + 1}-${Math.min(firstUserIndex + itemsPerPage, users.length)} of ${users.length}`}</p></div>
+            <span className="w-fit rounded-full bg-[#f0f8e9] px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-[#2F8F46] dark:bg-[#2F8F46]/15 dark:text-[#b7df86]">Protected actions</span>
+          </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
@@ -128,7 +145,7 @@ export default function AdminUsersPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-[#89986D]/10 text-xs">
-                {users.map((user) => (
+                {visibleUsers.map((user) => (
                   <tr key={user.id} className="hover:bg-gray-50/50 dark:hover:bg-[#89986D]/5 transition">
                     <td className="py-4 px-6">
                       <div className="font-bold text-gray-900 dark:text-[#F6F0D7]">{user.name}</div>
