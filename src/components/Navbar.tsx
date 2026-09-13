@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, type MouseEvent } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -93,6 +93,28 @@ export default function Navbar() {
     }
   };
 
+  const handleNavLinkClick = (
+    event: MouseEvent<HTMLAnchorElement>,
+    href: string,
+  ) => {
+    const isUnmodifiedLeftClick =
+      event.button === 0 &&
+      !event.metaKey &&
+      !event.ctrlKey &&
+      !event.shiftKey &&
+      !event.altKey;
+
+    if (
+      href === "/community" &&
+      pathname === "/community" &&
+      isUnmodifiedLeftClick
+    ) {
+      event.preventDefault();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      window.dispatchEvent(new Event("community:refresh"));
+    }
+  };
+
   const handleLogout = async () => {
     try {
       await authClient.signOut({
@@ -163,15 +185,17 @@ export default function Navbar() {
 
               return (
                 <Link
-                  key={link.name}
-                  href={link.href}
-                  className={`relative px-4 py-2.5 text-[15px] rounded-full transition-all duration-300 ${isActive
-                    ? "text-emerald-700 dark:text-emerald-400 font-bold bg-emerald-50/80 dark:bg-emerald-500/10"
-                    : "text-slate-600 dark:text-slate-300 font-medium hover:text-emerald-600 dark:hover:text-emerald-300 hover:bg-slate-50 dark:hover:bg-slate-800/50"
-                    }`}
-                >
-                  {link.name}
-                </Link>
+  key={link.name}
+  href={link.href}
+  onClick={(event) => handleNavLinkClick(event, link.href)}
+  className={`relative px-4 py-2.5 text-[15px] rounded-full transition-all duration-300 ${
+    isActive
+      ? "text-emerald-700 dark:text-emerald-400 font-bold bg-emerald-50/80 dark:bg-emerald-500/10"
+      : "text-slate-600 dark:text-slate-300 font-medium hover:text-emerald-600 dark:hover:text-emerald-300 hover:bg-slate-50 dark:hover:bg-slate-800/50"
+  }`}
+>
+  {link.name}
+</Link>
               );
             })}
           </nav>
@@ -286,7 +310,10 @@ export default function Navbar() {
                       ? "font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10"
                       : "font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/50"
                       }`}
-                    onClick={() => setIsMobileMenuOpen(false)}
+                    onClick={(event) => {
+                      setIsMobileMenuOpen(false);
+                      handleNavLinkClick(event, link.href);
+                    }}
                   >
                     {link.name}
                   </Link>

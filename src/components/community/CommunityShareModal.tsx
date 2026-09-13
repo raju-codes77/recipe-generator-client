@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { Check, Link2, MessageCircle, Send, Share2, X, Globe2 } from "lucide-react";
 import { Post } from "./types";
 import { CommunityAvatar } from "./CommunityAvatar";
+import { parseCommunityTags } from "./community-tags";
 
 interface CommunityShareModalProps {
   post: Post | null;
@@ -11,7 +12,7 @@ interface CommunityShareModalProps {
   currentUserAvatar?: string;
   isSubmitting?: boolean;
   onClose: () => void;
-  onShareNow: (caption: string) => Promise<void> | void;
+  onShareNow: (caption: string, tags: string[]) => Promise<void> | void;
 }
 
 export const CommunityShareModal: React.FC<CommunityShareModalProps> = ({
@@ -24,11 +25,13 @@ export const CommunityShareModal: React.FC<CommunityShareModalProps> = ({
   onShareNow,
 }) => {
   const [caption, setCaption] = useState("");
+  const [tagsInput, setTagsInput] = useState("");
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       setCaption("");
+      setTagsInput("");
       setCopied(false);
     }
   }, [isOpen, post?.id]);
@@ -91,6 +94,14 @@ export const CommunityShareModal: React.FC<CommunityShareModalProps> = ({
                 className="w-full resize-none rounded-2xl border border-slate-200 bg-neutral-50 px-4 py-3 text-sm text-neutral-900 outline-none transition focus:border-[#2F8F46] focus:ring-2 focus:ring-[#2F8F46]/15 dark:border-neutral-700 dark:bg-[#181B19] dark:text-white"
               />
 
+              <input
+                type="text"
+                value={tagsInput}
+                onChange={(event) => setTagsInput(event.target.value)}
+                placeholder="Add hashtags for your share (optional)"
+                className="w-full rounded-2xl border border-slate-200 bg-neutral-50 px-4 py-3 text-sm text-neutral-900 outline-none transition placeholder:text-neutral-400 focus:border-[#2F8F46] focus:ring-2 focus:ring-[#2F8F46]/15 dark:border-neutral-700 dark:bg-[#181B19] dark:text-white"
+              />
+
               <div className="rounded-2xl border border-slate-200 bg-neutral-50 p-3 dark:border-neutral-700 dark:bg-[#181B19]">
                 <div className="flex items-center gap-3">
                   {post.imageUrl ? <img src={post.imageUrl} alt="" className="h-16 w-16 rounded-xl object-cover" /> : <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-[#EAF7E8] text-xs font-black text-[#2F8F46] dark:bg-emerald-950/50 dark:text-[#B7E35F]">FC</div>}
@@ -102,7 +113,7 @@ export const CommunityShareModal: React.FC<CommunityShareModalProps> = ({
                 </div>
               </div>
 
-              <button type="button" disabled={isSubmitting} onClick={() => void onShareNow(caption.trim())} className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#2F8F46] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#176B35] disabled:cursor-not-allowed disabled:opacity-60 dark:bg-[#B7E35F] dark:text-[#14230D] dark:hover:bg-[#C7ED7D]">
+              <button type="button" disabled={isSubmitting} onClick={() => void onShareNow(caption.trim(), parseCommunityTags(tagsInput))} className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#2F8F46] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#176B35] disabled:cursor-not-allowed disabled:opacity-60 dark:bg-[#B7E35F] dark:text-[#14230D] dark:hover:bg-[#C7ED7D]">
                 <Send className="h-4 w-4" />
                 {isSubmitting ? "Sharing..." : "Share now"}
               </button>

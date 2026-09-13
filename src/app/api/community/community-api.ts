@@ -75,7 +75,7 @@ export interface CommunityMessagesPageOptions {
 export interface CommunityPostsPageOptions {
   take?: number;
   skip?: number;
-  filter?: "all" | "trending" | "following" | "quick" | "wellness" | "challenge" | "ai_sparks" | "saved" | "liked";
+  filter?: "all" | "trending" | "following" | "quick" | "wellness" | "ai_sparks" | "saved" | "liked";
 }
 
 export interface CommunityPostInteractions {
@@ -106,6 +106,12 @@ export const communityApi = {
     return response.chefs;
   },
 
+  async listSuggestedTags(search: string): Promise<string[]> {
+    const query = new URLSearchParams({ search });
+    const response = await request<{ tags: string[] }>(`/suggested-tags?${query.toString()}`);
+    return response.tags;
+  },
+
   getFeedCounts() {
     return request<{ savedPostsCount: number; likedPostsCount: number }>("/feed-counts");
   },
@@ -119,8 +125,6 @@ export const communityApi = {
         additionalImages: post.additionalImages,
         recipe: post.recipe,
         tags: post.tags,
-        isChallengeEntry: post.isChallengeEntry,
-        challengeName: post.challengeName,
       }),
     });
 
@@ -153,10 +157,10 @@ export const communityApi = {
     return request<{ active: boolean }>(`/users/${userId}/follow`, { method: "POST" });
   },
 
-  async sharePost(postId: string, caption?: string): Promise<Post> {
+  async sharePost(postId: string, caption?: string, tags?: string[]): Promise<Post> {
     const response = await request<{ post: Post }>(`/posts/${postId}/share`, {
       method: "POST",
-      body: JSON.stringify({ caption }),
+      body: JSON.stringify({ caption, tags }),
     });
     return response.post;
   },

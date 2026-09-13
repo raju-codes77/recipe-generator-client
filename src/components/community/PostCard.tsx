@@ -87,6 +87,9 @@ export const PostCard: React.FC<PostCardProps> = ({
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const displayTags = Array.from(new Set((post.tags ?? []).flatMap((tag) => parseCommunityTags(tag))));
+  const sharedOriginalTags = post.sharedOriginal
+    ? Array.from(new Set(parseCommunityTags(post.sharedOriginal.tags.join(" "))))
+    : [];
 
   const menuRef = useRef<HTMLDivElement>(null);
   const shareMenuRef = useRef<HTMLDivElement>(null);
@@ -327,6 +330,9 @@ export const PostCard: React.FC<PostCardProps> = ({
           {post.caption.trim() && <div>
             <p className="whitespace-pre-line text-sm sm:text-base text-neutral-800 dark:text-neutral-200">{post.caption}</p>
           </div>}
+          {displayTags.length > 0 && <div className="flex flex-wrap gap-2">
+            {displayTags.map((tag) => <span key={tag} className="rounded-lg bg-[#EAF7E8] px-2.5 py-1 text-xs font-semibold text-[#176B35] dark:bg-emerald-950/50 dark:text-[#B7E35F]">{tag}</span>)}
+          </div>}
           <div className="rounded-t-2xl border border-b-0 border-slate-200 bg-neutral-50 p-4 pb-3 dark:border-neutral-700 dark:bg-[#181B19]">
             <div className="flex items-center gap-3">
               <CommunityAvatar src={post.sharedOriginal.author.avatar} alt={post.sharedOriginal.author.name} className="h-10 w-10 rounded-full object-cover" />
@@ -336,6 +342,9 @@ export const PostCard: React.FC<PostCardProps> = ({
               </div>
             </div>
             <p className="mt-3 whitespace-pre-line text-sm leading-6 text-neutral-800 dark:text-neutral-200">{post.sharedOriginal.caption}</p>
+            {sharedOriginalTags.length > 0 && <div className="mt-3 flex flex-wrap gap-2">
+              {sharedOriginalTags.map((tag) => <span key={tag} className="rounded-lg bg-[#EAF7E8] px-2.5 py-1 text-xs font-semibold text-[#176B35] dark:bg-emerald-950/50 dark:text-[#B7E35F]">{tag}</span>)}
+            </div>}
           </div>
         </div>
       ) : <div className="px-4 pb-4 sm:px-6">
@@ -345,7 +354,6 @@ export const PostCard: React.FC<PostCardProps> = ({
         </div>
         {displayTags.length > 0 && <div className="mt-3 flex flex-wrap gap-2">
           {displayTags.map((tag) => <span key={tag} className="rounded-lg bg-[#EAF7E8] px-2.5 py-1 text-xs font-semibold text-[#176B35] hover:bg-[#D8F3DC] cursor-pointer transition dark:bg-emerald-950/50 dark:text-[#B7E35F]">{tag}</span>)}
-          {post.isChallengeEntry && <span className="rounded-lg bg-[#FFF0DD] px-2.5 py-1 text-xs font-bold text-[#FF9F43] flex items-center gap-1.5 dark:bg-amber-950/40"><Flame className="h-3.5 w-3.5" /> Challenge: {post.challengeName}</span>}
         </div>}
       </div>}
 

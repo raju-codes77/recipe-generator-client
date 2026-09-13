@@ -37,23 +37,6 @@ export const INITIAL_STORIES: StoryItem[] = [
     timestamp: '20m ago',
   },
   {
-    id: 'story_2',
-    author: {
-      id: 'author_marcus',
-      name: 'Chef Marcus Vance',
-      username: 'marcus_flame',
-      avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&auto=format&fit=crop&q=80',
-      badge: 'Verified Chef',
-      role: 'chef',
-      followersCount: 12400,
-      recipesCount: 84,
-    },
-    imageUrl: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=800&auto=format&fit=crop&q=80',
-    caption: 'Prepping greens for the #SummerHarvestSalad challenge! 🥗💚',
-    tag: '#SummerChallenge',
-    timestamp: '1h ago',
-  },
-  {
     id: 'story_3',
     author: {
       id: 'author_hana',
@@ -323,7 +306,7 @@ export const INITIAL_COMMUNITY_POSTS: Post[] = [
     caption:
       'Rainbow Nourish Bowl with crispy maple tahini chickpeas, massaged kale, roasted sweet potatoes, and avocado rose. Fuel your week right! 🥑🌈',
     imageUrl: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=1000&auto=format&fit=crop&q=80',
-    tags: ['#VeganBowl', '#PlantBased', '#MealPrep', '#SummerChallenge', '#CleanEating'],
+    tags: ['#VeganBowl', '#PlantBased', '#MealPrep', '#CleanEating'],
     createdAt: '6 hours ago',
     likesCount: 620,
     isLiked: false,
@@ -332,8 +315,6 @@ export const INITIAL_COMMUNITY_POSTS: Post[] = [
     commentsCount: 35,
     madeItCount: 104,
     hasMadeIt: false,
-    isChallengeEntry: true,
-    challengeName: 'Summer Harvest Salad Challenge',
     rating: {
       overall: 4.9,
       flavor: 4.9,
@@ -480,14 +461,6 @@ export const INITIAL_NOTIFICATIONS: NotificationItem[] = [
     text: 'gave 5 stars ★ to your Sourdough scoring technique',
     timeAgo: '45m ago',
     read: false,
-  },
-  {
-    id: 'notif_3',
-    type: 'challenge',
-    user: TOP_CHEFS_TO_FOLLOW[2],
-    text: 'submitted a dish in the #SummerHarvestSalad challenge',
-    timeAgo: '2h ago',
-    read: true,
   },
 ];
 
