@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import { ShoppingBasket, Plus, Sparkles } from "lucide-react";
+import Link from "next/link";
 
 interface Props {
   onAddItem: () => void;
@@ -40,12 +41,13 @@ export default function ShoppingListHeader({ onAddItem, onGenerateFromRecipe }: 
           >
             <Plus size={16} /> Add Item
           </button>
-          <button
-            onClick={onGenerateFromRecipe}
-            className="flex items-center justify-center gap-1.5 px-4 py-2.5 bg-[#16A34A] hover:bg-[#0F6B46] text-white text-sm font-bold rounded-xl shadow-sm transition-colors"
-          >
-            <Sparkles size={16} /> Generate from Recipe
-          </button>
+          <Link href={'/ai-tools/ingredient-rescue'}>
+            <button
+              className="flex items-center justify-center gap-1.5 px-4 py-2.5 bg-[#16A34A] hover:bg-[#0F6B46] text-white text-sm font-bold rounded-xl shadow-sm transition-colors"
+            >
+              <Sparkles size={16} /> Generate from Recipe
+            </button>
+          </Link>
         </div>
 
       </div>
