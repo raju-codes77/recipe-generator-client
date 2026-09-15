@@ -186,18 +186,6 @@ export const CommunitySidebarLeft: React.FC<CommunitySidebarLeftProps> = ({
                     <span className="text-left">{cat.label}</span>
                   </div>
 
-                  {cat.badge && (
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-[9px] font-bold ${
-                        isActive
-                          ? "bg-white/20 text-white"
-                          : "bg-[#FF9F43]/15 text-[#FF9F43]"
-                      }`}
-                    >
-                      {cat.badge}
-                    </span>
-                  )}
-
                   {cat.count !== undefined && (
                     <span
                       className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${

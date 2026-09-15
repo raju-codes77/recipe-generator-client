@@ -202,7 +202,7 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[70] flex h-dvh w-screen items-center justify-center overflow-hidden bg-[#F5F7F2] text-neutral-900 shadow-none dark:bg-black dark:text-white">
+    <div className="fixed inset-0 z-70 flex h-dvh w-screen items-center justify-center overflow-hidden bg-[#F5F7F2] text-neutral-900 shadow-none dark:bg-black dark:text-white">
       <style>{`
         .story-notifications-scrollbar {
           scrollbar-width: thin;
