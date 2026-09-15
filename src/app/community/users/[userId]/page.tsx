@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { AnimatePresence, motion } from "motion/react";
 import { ArrowLeft, Award, BookOpen, BookmarkMinus, CalendarDays, Camera, Check, Eye, Heart, LayoutDashboard, MapPin, MessageCircle, Pencil, UserPlus, X } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { communityApi } from "@/app/api/community/community-api";
@@ -22,6 +23,8 @@ import { formatCommunityTags, parseCommunityTags } from "@/components/community/
 import type { Author, Post, PublicCommunityProfile, Review, StoryItem } from "@/components/community/types";
 
 const PROFILE_POSTS_PER_PAGE = 3;
+const PULL_TO_REFRESH_THRESHOLD = 78;
+const MAX_PULL_DISTANCE = 112;
 
 function ProfileSkeleton() {
   return (
@@ -84,6 +87,7 @@ export default function CommunityUserProfilePage() {
   const [hasMorePosts, setHasMorePosts] = useState(false);
   const [isLoadingMorePosts, setIsLoadingMorePosts] = useState(false);
   const [isProfileRefreshing, setIsProfileRefreshing] = useState(false);
+  const [pullDistance, setPullDistance] = useState(0);
   const [savedPosts, setSavedPosts] = useState<Post[]>([]);
   const [isLoadingSavedPosts, setIsLoadingSavedPosts] = useState(false);
   const [savedPostsError, setSavedPostsError] = useState<string | null>(null);
@@ -110,6 +114,8 @@ export default function CommunityUserProfilePage() {
   const profileMenuRef = useRef<HTMLDivElement>(null);
   const postsLoadMoreRef = useRef<HTMLDivElement>(null);
   const hasLoadedProfileRef = useRef(false);
+  const pullStartYRef = useRef<number | null>(null);
+  const isPullTrackingRef = useRef(false);
 
   useEffect(() => {
     if (!profileMenuOpen) return;
@@ -165,6 +171,40 @@ export default function CommunityUserProfilePage() {
     } finally {
       setIsLoadingMorePosts(false);
     }
+  };
+
+  const handlePullStart = (event: React.TouchEvent<HTMLElement>) => {
+    if (isProfileRefreshing || loading || window.scrollY > 0 || event.touches.length !== 1) return;
+    pullStartYRef.current = event.touches[0].clientY;
+    isPullTrackingRef.current = true;
+    setPullDistance(0);
+  };
+
+  const handlePullMove = (event: React.TouchEvent<HTMLElement>) => {
+    if (!isPullTrackingRef.current || pullStartYRef.current === null || isProfileRefreshing || event.touches.length !== 1) return;
+
+    const distance = event.touches[0].clientY - pullStartYRef.current;
+    if (distance <= 0) {
+      setPullDistance(0);
+      return;
+    }
+
+    if (event.cancelable) event.preventDefault();
+    setPullDistance(Math.min(distance, MAX_PULL_DISTANCE));
+  };
+
+  const handlePullEnd = () => {
+    if (!isPullTrackingRef.current) return;
+
+    const shouldRefresh = pullDistance >= PULL_TO_REFRESH_THRESHOLD;
+    pullStartYRef.current = null;
+    isPullTrackingRef.current = false;
+    setPullDistance(0);
+
+    if (!shouldRefresh || isProfileRefreshing) return;
+
+    setIsProfileRefreshing(true);
+    void loadProfile().finally(() => setIsProfileRefreshing(false));
   };
 
   useEffect(() => {
@@ -476,14 +516,32 @@ export default function CommunityUserProfilePage() {
   const visiblePosts = [...postsForTab].sort((firstPost, secondPost) => Number(Boolean(secondPost.isPinned)) - Number(Boolean(firstPost.isPinned)));
 
   return (
-    <main className="min-h-screen bg-[#F1F5F0] px-0 pb-10 text-neutral-900 dark:bg-[#090B0A] dark:text-neutral-100 [&_a]:cursor-pointer [&_button]:cursor-pointer sm:px-6 sm:pt-5">
-      {isProfileRefreshing && <div className="sticky top-0 z-40 mx-auto mb-3 flex max-w-5xl items-center gap-3 border-b border-[#2F8F46]/20 bg-white/95 px-4 py-2.5 text-xs font-semibold text-[#176B35] shadow-sm backdrop-blur dark:border-[#B7E35F]/20 dark:bg-[#121614]/95 dark:text-[#B7E35F]" role="status" aria-live="polite"><span className="h-4 w-4 animate-spin rounded-full border-2 border-[#2F8F46]/25 border-t-[#2F8F46] dark:border-[#B7E35F]/25 dark:border-t-[#B7E35F]" />Updating your profile…</div>}
-      <div className="mx-auto max-w-5xl">
+    <main onTouchStart={handlePullStart} onTouchMove={handlePullMove} onTouchEnd={handlePullEnd} onTouchCancel={handlePullEnd} className="min-h-screen bg-[#F1F5F0] px-0 pb-10 text-neutral-900 dark:bg-[#090B0A] dark:text-neutral-100 [&_a]:cursor-pointer [&_button]:cursor-pointer sm:px-6 sm:pt-5">
+       <div className="mx-auto max-w-5xl">
         <button onClick={() => router.back()} className="mb-4 ml-4 inline-flex items-center gap-2 text-xs font-semibold text-neutral-500 transition hover:text-[#2F8F46] sm:ml-0 sm:text-sm">
           <ArrowLeft className="h-4 w-4" /> Back to Community
         </button>
 
-        <section className="overflow-hidden border-y border-slate-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-[#121614] sm:rounded-3xl sm:border">
+        <section className="relative overflow-hidden border-y border-slate-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-[#121614] sm:rounded-3xl sm:border">
+          <AnimatePresence>
+            {(isProfileRefreshing || pullDistance > 0) && (
+              <motion.div
+                initial={{ opacity: 0, y: -72 }}
+                animate={{
+                  opacity: isProfileRefreshing ? 1 : Math.min(pullDistance / PULL_TO_REFRESH_THRESHOLD, 1),
+                  y: isProfileRefreshing ? 0 : pullDistance - PULL_TO_REFRESH_THRESHOLD,
+                }}
+                exit={{ opacity: 0, y: -72 }}
+                transition={{ duration: isProfileRefreshing ? 0.35 : 0.12, ease: "easeOut" }}
+                className="pointer-events-none absolute inset-x-0 top-4 z-30 flex justify-center"
+                role="status"
+                aria-live="polite"
+                aria-label="Updating profile"
+              >
+                <span className={`h-8 w-8 rounded-full border-[3px] border-white/45 border-t-white bg-black/35 shadow-lg backdrop-blur-sm dark:border-[#B7E35F]/45 dark:border-t-[#B7E35F] ${isProfileRefreshing ? "animate-spin" : ""}`} />
+              </motion.div>
+            )}
+          </AnimatePresence>
           <div onClick={() => coverImage && setSelectedImage({ src: coverImage, alt: `${profile.user.name}'s cover photo` })} className={`relative h-36 overflow-hidden bg-gradient-to-br from-[#183E28] via-[#2F8F46] to-[#B7E35F] sm:h-64 ${coverImage ? "cursor-pointer" : ""}`}>
             {coverImage && <img src={coverImage} alt="Profile cover" className="h-full w-full cursor-pointer object-cover" />}
             {isOwnProfile && <>
@@ -520,7 +578,7 @@ export default function CommunityUserProfilePage() {
                 {profile.user.id === session?.user?.id ? (
                   <button onClick={openEditProfile} className="inline-flex items-center gap-2 rounded-xl bg-[#2F8F46] px-4 py-2.5 text-xs font-bold text-white transition hover:bg-[#176B35]"><Pencil className="h-3.5 w-3.5" /> Edit profile</button>
                 ) : (
-                  <button onClick={() => void updateProfile(() => communityApi.toggleFollow(profile.user.id))} className="inline-flex items-center gap-2 rounded-xl bg-[#2F8F46] px-4 py-2.5 text-xs font-bold text-white transition hover:bg-[#176B35]"><UserPlus className="h-4 w-4" /> {profile.user.isFollowing ? "Following" : "Follow"}</button>
+                   <button type="button" disabled={isProfileRefreshing} aria-busy={isProfileRefreshing} onClick={() => void updateProfile(() => communityApi.toggleFollow(profile.user.id))} className="inline-flex items-center gap-2 rounded-xl bg-[#2F8F46] px-4 py-2.5 text-xs font-bold text-white transition hover:bg-[#176B35] disabled:cursor-wait disabled:opacity-70"><UserPlus className="h-4 w-4" /> {profile.user.isFollowing ? "Following" : "Follow"}</button>
                 )}
                 {isOwnProfile ? (
                   <button onClick={() => router.push("/dashboard/users")} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-bold text-neutral-700 transition hover:border-[#2F8F46] hover:text-[#2F8F46] dark:border-neutral-700 dark:text-neutral-200"><LayoutDashboard className="h-4 w-4" /> Dashboard</button>
