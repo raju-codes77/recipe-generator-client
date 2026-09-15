@@ -1151,6 +1151,7 @@ export default function Banner() {
               </button>
             </div>
           </div>
+          
 
           <div className="grid grid-cols-3 xl:flex xl:flex-row items-start xl:items-center justify-items-center xl:justify-end gap-x-2 sm:gap-x-4 xl:gap-x-8 gap-y-4 xl:gap-y-0 w-full xl:w-auto order-1 xl:order-2 pb-2 xl:pb-0 pointer-events-auto">
             {FEATURES.map((f, i) => (
