@@ -332,6 +332,32 @@ export const CommunityFeed: React.FC = () => {
       .finally(() => setIsLoadingConnections(false));
   };
 
+  const updatePostInFeed = useCallback((postId: string, update: (post: Post) => Post) => {
+    setPosts((currentPosts) => {
+      const updatedPosts = currentPosts.map((post) => (post.id === postId ? update(post) : post));
+      communityCache = communityCache
+        ? { ...communityCache, posts: updatedPosts }
+        : communityCache;
+      return updatedPosts;
+    });
+    setTrendingPosts((currentPosts) => currentPosts.map((post) => (post.id === postId ? update(post) : post)));
+  }, []);
+
+  const updateAuthorInFeed = useCallback((authorId: string, update: (author: Author) => Author) => {
+    const updatePostAuthor = (post: Post): Post =>
+      post.author.id === authorId ? { ...post, author: update(post.author) } : post;
+
+    setPosts((currentPosts) => {
+      const updatedPosts = currentPosts.map(updatePostAuthor);
+      communityCache = communityCache
+        ? { ...communityCache, posts: updatedPosts }
+        : communityCache;
+      return updatedPosts;
+    });
+    setTrendingPosts((currentPosts) => currentPosts.map(updatePostAuthor));
+    setChefs((currentChefs) => currentChefs.map((author) => (author.id === authorId ? update(author) : author)));
+  }, []);
+
   const runMutation = useCallback(
     async (mutation: () => Promise<unknown>, success: string) => {
       try {
@@ -452,9 +478,48 @@ export const CommunityFeed: React.FC = () => {
     [router],
   );
 
-  // Handle Likes
-  const handleToggleLike = (postId: string) =>
-    void runMutation(() => communityApi.toggleLike(postId), "Updated recipe like");
+  // Handle Likes without reloading the entire feed.
+  const handleToggleLike = useCallback(async (postId: string) => {
+    const post = posts.find((item) => item.id === postId);
+    if (!post) return;
+
+    const previousLiked = post.isLiked;
+    const previousLikesCount = post.likesCount;
+    const optimisticLiked = !previousLiked;
+    const optimisticLikesCount = Math.max(0, previousLikesCount + (optimisticLiked ? 1 : -1));
+
+    updatePostInFeed(postId, (currentPost) => ({
+      ...currentPost,
+      isLiked: optimisticLiked,
+      likesCount: optimisticLikesCount,
+    }));
+    setFeedCounts((currentCounts) => ({
+      ...currentCounts,
+      likedPostsCount: Math.max(0, currentCounts.likedPostsCount + (optimisticLiked ? 1 : -1)),
+    }));
+
+    try {
+      const result = await communityApi.toggleLike(postId);
+      const confirmedLikesCount = Math.max(0, previousLikesCount + (result.active ? 1 : -1));
+      updatePostInFeed(postId, (currentPost) => ({
+        ...currentPost,
+        isLiked: result.active,
+        likesCount: confirmedLikesCount,
+      }));
+      showToast("Updated recipe like");
+    } catch (error) {
+      updatePostInFeed(postId, (currentPost) => ({
+        ...currentPost,
+        isLiked: previousLiked,
+        likesCount: previousLikesCount,
+      }));
+      setFeedCounts((currentCounts) => ({
+        ...currentCounts,
+        likedPostsCount: Math.max(0, currentCounts.likedPostsCount + (optimisticLiked ? -1 : 1)),
+      }));
+      showToast(error instanceof Error ? error.message : "Community action failed");
+    }
+  }, [posts, showToast, updatePostInFeed]);
 
   // Handle Save / Bookmark
   const handleToggleSave = (postId: string) => {
@@ -501,9 +566,28 @@ export const CommunityFeed: React.FC = () => {
   const handleCreateCollection = (name: string, description: string) =>
     void runMutation(() => communityApi.createCollection(name, description), `Created collection "${name}"`);
 
-  // Handle Comments
-  const handleAddComment = (postId: string, content: string) =>
-    void runMutation(() => communityApi.addComment(postId, content), "Comment posted!");
+  // Handle Comments without reloading the entire feed.
+  const handleAddComment = useCallback(async (postId: string, content: string) => {
+    const post = posts.find((item) => item.id === postId);
+    if (!post) return;
+
+    try {
+      await communityApi.addComment(postId, content);
+      const interactions = await communityApi.getPostInteractions(postId, {
+        commentsTake: 8,
+        commentsSkip: 0,
+        reviewsTake: 0,
+      });
+      updatePostInFeed(postId, (currentPost) => ({
+        ...currentPost,
+        comments: interactions.comments,
+        commentsCount: currentPost.commentsCount + 1,
+      }));
+      showToast("Comment posted!");
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "Community action failed");
+    }
+  }, [posts, showToast, updatePostInFeed]);
 
   // Handle Reviews & Ratings
   const handleSubmitReview = (postId: string, review: Review) =>
@@ -513,9 +597,41 @@ export const CommunityFeed: React.FC = () => {
   const handleMadeIt = (postId: string) =>
     void runMutation(() => communityApi.toggleMadeIt(postId), "Updated your cooking history");
 
-  // Handle Follow / Unfollow
-  const handleToggleFollow = (authorId: string) =>
-    void runMutation(() => communityApi.toggleFollow(authorId), "Updated chef following status");
+  // Handle Follow / Unfollow without reloading the entire feed.
+  const handleToggleFollow = useCallback(async (authorId: string) => {
+    const author = posts.find((post) => post.author.id === authorId)?.author
+      ?? chefs.find((item) => item.id === authorId);
+    if (!author) return;
+
+    const previousFollowing = Boolean(author.isFollowing);
+    const previousFollowersCount = author.followersCount ?? 0;
+    const optimisticFollowing = !previousFollowing;
+    const optimisticFollowersCount = Math.max(0, previousFollowersCount + (optimisticFollowing ? 1 : -1));
+
+    updateAuthorInFeed(authorId, (currentAuthor) => ({
+      ...currentAuthor,
+      isFollowing: optimisticFollowing,
+      followersCount: optimisticFollowersCount,
+    }));
+
+    try {
+      const result = await communityApi.toggleFollow(authorId);
+      const confirmedFollowersCount = Math.max(0, previousFollowersCount + (result.active ? 1 : -1));
+      updateAuthorInFeed(authorId, (currentAuthor) => ({
+        ...currentAuthor,
+        isFollowing: result.active,
+        followersCount: confirmedFollowersCount,
+      }));
+      showToast("Updated chef following status");
+    } catch (error) {
+      updateAuthorInFeed(authorId, (currentAuthor) => ({
+        ...currentAuthor,
+        isFollowing: previousFollowing,
+        followersCount: previousFollowersCount,
+      }));
+      showToast(error instanceof Error ? error.message : "Community action failed");
+    }
+  }, [chefs, posts, showToast, updateAuthorInFeed]);
 
   // Handle Share (link copy)
   const handleShare = (post: Post) => {
