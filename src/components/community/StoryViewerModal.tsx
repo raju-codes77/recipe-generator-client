@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'motion/react';
-import { Bell, ChevronLeft, ChevronRight, Download, Eye, Flame, Grid3X3, Heart, MessageCircle, MoreHorizontal, Pause, Play, Send, Trash2, X } from 'lucide-react';
+import { Bell, ChevronLeft, ChevronRight, ChevronUp, Download, Flame, Grid3X3, Heart, MessageCircle, MoreHorizontal, Pause, Play, Send, Trash2, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { NotificationItem, StoryItem, StoryViewer } from './types';
 import { CommunityAvatar } from './CommunityAvatar';
@@ -26,6 +26,8 @@ interface StoryViewerModalProps {
   onLoadViewers?: (storyId: string) => Promise<StoryViewer[]>;
   onReactToStory?: (storyId: string) => Promise<void>;
 }
+
+const STORY_DURATION_MS = 15_000;
 
 export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
   story,
@@ -79,6 +81,13 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
     setLiked(Boolean(story.reacted));
     setViewers([]);
     setIsInsightsOpen(false);
+    if (isOwnStory && onLoadViewers) {
+      setIsLoadingViewers(true);
+      void onLoadViewers(story.id)
+        .then(setViewers)
+        .catch((error) => setSendError(error instanceof Error ? error.message : 'Unable to load story viewers.'))
+        .finally(() => setIsLoadingViewers(false));
+    }
     if (!isOwnStory && onRecordView) {
       void onRecordView(story.id).catch((error) => {
         setSendError(error instanceof Error ? error.message : 'Unable to record this story view.');
@@ -103,7 +112,7 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
           clearInterval(interval);
           return 100;
         }
-        return prev + 2;
+        return Math.min(100, prev + (100 * 100) / STORY_DURATION_MS);
       });
     }, 100);
 
@@ -405,12 +414,48 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
           </div>
 
           {!isOwnStory && <div className="absolute bottom-3 left-4 right-4 z-20 flex items-center gap-2 sm:bottom-5 sm:left-6 sm:right-6"><input type="text" placeholder="Reply to kitchen story..." value={replyText} onChange={(e) => setReplyText(e.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') void sendReply(); }} className="min-w-0 flex-1 rounded-full border border-white/20 bg-black/35 px-4 py-3 text-sm text-white placeholder-white/70 outline-none backdrop-blur-sm focus:border-[#2F8F46]" /><button type="button" onClick={() => void sendReply()} disabled={!replyText.trim() || isSending} aria-label="Send story reply" className="rounded-full bg-[#2F8F46] p-3 transition hover:bg-[#176B35] disabled:cursor-not-allowed disabled:opacity-50"><Send className="h-4 w-4" /></button><motion.button type="button" whileTap={{ scale: 0.85 }} onClick={() => void reactToStory()} disabled={liked || isReacting} aria-pressed={liked} aria-label="React to story" className={`rounded-full p-3 transition ${liked ? 'bg-rose-500' : 'bg-black/35 hover:bg-black/55'} disabled:cursor-default`}><Heart className={`h-4 w-4 ${liked ? 'fill-white' : ''}`} /></motion.button></div>}
-          {sendError && <p className="absolute bottom-20 left-1/2 z-20 -translate-x-1/2 rounded-lg bg-black/70 px-3 py-1 text-xs text-rose-300">{sendError}</p>}
-           </motion.div>
+           {sendError && <p className="absolute bottom-20 left-1/2 z-20 -translate-x-1/2 rounded-lg bg-black/70 px-3 py-1 text-xs text-rose-300">{sendError}</p>}
+          {isOwnStory && (
+            <div className="absolute bottom-4 left-0 right-0 z-30 px-5 lg:bottom-7 lg:px-7">
+              <button
+                type="button"
+                onClick={() => setIsInsightsOpen((open) => !open)}
+                aria-label={`${viewers.length} ${viewers.length === 1 ? 'viewer' : 'viewers'}`}
+                aria-expanded={isInsightsOpen}
+                className="flex items-center gap-2 text-xs font-bold text-[#B7E35F] transition hover:text-[#D4F58B]"
+              >
+                <span>{viewers.length} {viewers.length === 1 ? 'viewer' : 'viewers'}</span>
+                <ChevronUp className={`h-3.5 w-3.5 transition-transform ${isInsightsOpen ? 'rotate-180' : ''}`} />
+              </button>
+              {isInsightsOpen && (
+                <div className="absolute bottom-full left-1/2 mb-3 w-[calc(100%-2rem)] max-w-[340px] -translate-x-1/2 rounded-2xl border border-neutral-200 bg-white p-4 text-left text-neutral-900 shadow-2xl dark:border-white/10 dark:bg-[#202522] dark:text-white">
+                  <div className="max-h-64 space-y-2 overflow-y-auto">
+                    {isLoadingViewers ? (
+                      <div className="rounded-xl bg-neutral-100 p-3 text-xs text-neutral-500 dark:bg-white/5">Loading viewers...</div>
+                    ) : viewers.length === 0 ? (
+                      <div className="rounded-xl bg-neutral-100 p-3 text-xs text-neutral-500 dark:bg-white/5">No viewers yet.</div>
+                    ) : (
+                      viewers.map((viewer) => (
+                        <button
+                          key={viewer.id}
+                          type="button"
+                          onClick={() => navigateFromStory(`/community/users/${encodeURIComponent(viewer.id)}`)}
+                          className="flex w-full items-center gap-3 rounded-xl bg-neutral-100 px-3 py-2.5 text-left transition hover:bg-neutral-200 dark:bg-white/5 dark:hover:bg-white/10"
+                        >
+                          <CommunityAvatar src={viewer.avatar} alt={viewer.name} className="h-8 w-8 rounded-full object-cover" />
+                          <span className="min-w-0 flex-1 truncate text-xs font-semibold">{viewer.name}</span>
+                          {viewer.reacted && <Heart className="h-4 w-4 fill-rose-500 text-rose-500" aria-label="Loved this story" />}
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </motion.div>
            {onNextStory && <button type="button" onClick={onNextStory} onPointerEnter={() => setHoveredStorySide('next')} onPointerLeave={() => setHoveredStorySide(null)} aria-label="Next story" className={`absolute left-full ml-10 hidden h-12 w-12 items-center justify-center rounded-full border border-neutral-200 text-neutral-700 shadow-xl backdrop-blur-sm transition duration-200 dark:border-white/10 dark:text-white lg:flex ${hoveredStorySide === 'next' ? 'scale-110 bg-white animate-pulse dark:bg-white/35' : 'scale-100 bg-white/80 dark:bg-white/20'}`}><ChevronRight className="h-7 w-7" /></button>}
         </div>
-
-        {isOwnStory && <div className="absolute bottom-4 left-1/2 z-30 -translate-x-1/2 lg:bottom-7"><button type="button" onClick={() => setIsInsightsOpen((open) => !open)} className="flex items-center gap-2 whitespace-nowrap rounded-2xl border border-neutral-200 bg-white/95 px-4 py-2 text-xs font-bold text-neutral-900 shadow-sm backdrop-blur-sm transition hover:bg-white dark:border-white/10 dark:bg-black/70 dark:text-white dark:hover:bg-black/85"><Eye className="h-4 w-4 text-[#2F8F46] dark:text-[#B7E35F]" /> Story viewers <span className="text-neutral-400">⌃</span></button>{isInsightsOpen && <div className="absolute bottom-full left-1/2 mb-2 w-[min(340px,88vw)] -translate-x-1/2 rounded-2xl border border-neutral-200 bg-white p-4 text-left text-neutral-900 shadow-2xl dark:border-white/10 dark:bg-[#202522] dark:text-white"><p className="text-sm font-black">Story viewers</p><p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">People who viewed this story</p><div className="mt-4 max-h-64 space-y-2 overflow-y-auto">{isLoadingViewers ? <div className="rounded-xl bg-neutral-100 p-3 text-xs text-neutral-500 dark:bg-white/5">Loading viewers...</div> : viewers.length === 0 ? <div className="rounded-xl bg-neutral-100 p-3 text-xs text-neutral-500 dark:bg-white/5">No viewers yet.</div> : viewers.map((viewer) => <div key={viewer.id} className="flex items-center gap-3 rounded-xl bg-neutral-100 px-3 py-2.5 dark:bg-white/5"><CommunityAvatar src={viewer.avatar} alt={viewer.name} className="h-8 w-8 rounded-full object-cover" /><span className="min-w-0 flex-1 truncate text-xs font-semibold">{viewer.name}</span>{viewer.reacted && <Heart className="h-4 w-4 fill-rose-500 text-rose-500" aria-label="Loved this story" />}</div>)}</div></div>}</div>}
 
       </motion.div>
       <CommunityConfirmModal

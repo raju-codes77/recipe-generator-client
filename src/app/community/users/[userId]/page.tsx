@@ -313,6 +313,58 @@ export default function CommunityUserProfilePage() {
     }
   };
 
+  const handleSocialFollowToggle = async (person: Author) => {
+    if (!session?.user?.id) {
+      requireAuthentication();
+      return;
+    }
+
+    const previousFollowing = Boolean(person.isFollowing);
+    const optimisticFollowing = !previousFollowing;
+    const previousFollowingCount = profile?.followingCount ?? 0;
+    const optimisticFollowingCount = Math.max(
+      0,
+      previousFollowingCount + (optimisticFollowing ? 1 : -1),
+    );
+    setSocialUsers((currentUsers) => currentUsers.map((user) => (
+      user.id === person.id ? { ...user, isFollowing: optimisticFollowing } : user
+    )));
+    setProfile((currentProfile) => currentProfile ? {
+      ...currentProfile,
+      followingCount: optimisticFollowingCount,
+    } : currentProfile);
+    setIsProfileRefreshing(true);
+
+    try {
+      const result = await communityApi.toggleFollow(person.id, session.user.id);
+      if (socialList === "following" && !result.active) {
+        setSocialUsers((currentUsers) => currentUsers.filter((user) => user.id !== person.id));
+      } else {
+        setSocialUsers((currentUsers) => currentUsers.map((user) => (
+          user.id === person.id ? { ...user, isFollowing: result.active } : user
+        )));
+      }
+      await loadProfile();
+      setProfile((currentProfile) => currentProfile ? {
+        ...currentProfile,
+        followingCount: Math.max(
+          0,
+          previousFollowingCount + (result.active === previousFollowing ? 0 : result.active ? 1 : -1),
+        ),
+      } : currentProfile);
+    } catch {
+      setSocialUsers((currentUsers) => currentUsers.map((user) => (
+        user.id === person.id ? { ...user, isFollowing: previousFollowing } : user
+      )));
+      setProfile((currentProfile) => currentProfile ? {
+        ...currentProfile,
+        followingCount: previousFollowingCount,
+      } : currentProfile);
+    } finally {
+      setIsProfileRefreshing(false);
+    }
+  };
+
   const openReview = async (post: Post) => {
     try {
       const interactions = await communityApi.getPostInteractions(post.id, {
@@ -723,7 +775,7 @@ export default function CommunityUserProfilePage() {
                   <div key={person.id} className="flex items-center gap-3 rounded-2xl p-3 transition hover:bg-white/5">
                     <CommunityAvatar src={person.avatar} alt={person.name} className="h-11 w-11 rounded-full border border-neutral-700 object-cover" />
                     <div className="min-w-0 flex-1"><p className="truncate text-sm font-bold">{person.name}</p><p className="text-xs text-neutral-500">@{person.username}</p></div>
-                    {person.id !== session?.user?.id && <button type="button" onClick={() => void updateProfile(() => communityApi.toggleFollow(person.id, session?.user?.id!))} className="rounded-lg border border-[#2F8F46] px-3 py-1.5 text-xs font-bold text-[#B7E35F]">{person.isFollowing ? "Following" : "Follow"}</button>}
+                    {person.id !== session?.user?.id && <button type="button" disabled={isProfileRefreshing} onClick={() => void handleSocialFollowToggle(person)} className="rounded-lg border border-[#2F8F46] px-3 py-1.5 text-xs font-bold text-[#B7E35F] disabled:cursor-wait disabled:opacity-60">{person.isFollowing ? "Following" : "Follow"}</button>}
                   </div>
                 ))
               )}

@@ -995,7 +995,7 @@ export const CommunityFeed: React.FC = () => {
                     className="flex items-center gap-2 font-bold text-neutral-600 hover:text-[#FF9F43] transition dark:text-neutral-300"
                   >
                     <Sparkles className="h-4 w-4 text-[#FF9F43]" />
-                    <span>TheMealDB</span>
+                    <span>AI Import</span>
                   </motion.button>
 
                   <motion.button
@@ -1469,6 +1469,12 @@ export const CommunityFeed: React.FC = () => {
         profileHref={session?.user ? `/community/users/${encodeURIComponent(session.user.id)}` : "/registrationProcess/login"}
         profileImage={session?.user?.image}
         notifications={notifications}
+        onSendMessage={async (recipientId, text) => {
+          await communityApi.sendMessage(recipientId, text, undefined, session?.user?.id!);
+        }}
+        onRecordView={(storyId) => communityApi.recordStoryView(storyId).then(() => undefined)}
+        onLoadViewers={communityApi.listStoryViewers}
+        onReactToStory={(storyId) => communityApi.reactToStory(storyId).then(() => undefined)}
         onOpenMessages={() => {
           setDmRecipientId(undefined);
           setDmAttachedPost(null);
