@@ -18,6 +18,13 @@ interface ApiErrorBody {
   message?: string;
 }
 
+class CommunityApiError extends Error {
+  constructor(message: string, readonly status: number) {
+    super(message);
+    this.name = "CommunityApiError";
+  }
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const headers = new Headers(init?.headers);
   const method = (init?.method || "GET").toUpperCase();
@@ -37,7 +44,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
   if (!response.ok) {
     const body = (await response.json().catch(() => ({}))) as ApiErrorBody;
-    throw new Error(body.message || `Community request failed (${response.status})`);
+    throw new CommunityApiError(body.message || `Community request failed (${response.status})`, response.status);
   }
 
   if (response.status === 204) {
@@ -120,20 +127,25 @@ export const communityApi = {
     return request<{ savedPostsCount: number; likedPostsCount: number }>(`/feed-counts${query}`);
   },
 
-  async createPost(post: Post, userId: string): Promise<Post> {
-    const response = await request<{ post: Post }>("/posts", {
-      method: "POST",
-      body: JSON.stringify({
-        caption: post.caption,
-        imageUrl: post.imageUrl,
-        additionalImages: post.additionalImages,
-        recipe: post.recipe,
-        tags: post.tags,
-        userId,
-      }),
-    });
+  async createPost(post: Post, userId: string): Promise<Post | null> {
+    try {
+      const response = await request<{ post: Post }>("/posts", {
+        method: "POST",
+        body: JSON.stringify({
+          caption: post.caption,
+          imageUrl: post.imageUrl,
+          additionalImages: post.additionalImages,
+          recipe: post.recipe,
+          tags: post.tags,
+          userId,
+        }),
+      });
 
-    return response.post;
+      return response.post;
+    } catch (error) {
+      if (error instanceof CommunityApiError && error.status === 422) return null;
+      throw error;
+    }
   },
 
   toggleLike(postId: string, userId: string) {
@@ -246,11 +258,16 @@ export const communityApi = {
     return response.stories;
   },
 
-  createStory(imageUrl: string, caption: string | undefined, userId: string) {
-    return request("/stories", {
-      method: "POST",
-      body: JSON.stringify({ imageUrl, caption, userId }),
-    });
+  async createStory(imageUrl: string, caption: string | undefined, userId: string): Promise<{ story: StoryItem } | null> {
+    try {
+      return await request<{ story: StoryItem }>("/stories", {
+        method: "POST",
+        body: JSON.stringify({ imageUrl, caption, userId }),
+      });
+    } catch (error) {
+      if (error instanceof CommunityApiError && error.status === 422) return null;
+      throw error;
+    }
   },
 
   deleteStory(storyId: string, userId: string) {
