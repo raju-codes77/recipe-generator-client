@@ -8,7 +8,7 @@ import {
   FiHome, FiUsers, FiBookOpen, FiFolder, FiAward, FiMessageSquare, 
   FiAlertCircle, FiCpu, FiShield, FiSliders, FiSettings, FiLock, 
   FiServer, FiHeadphones, FiMenu, FiX, FiActivity,
-  FiBox, FiCalendar, FiShoppingCart, FiList, FiGrid
+  FiBox, FiCalendar, FiShoppingCart, FiList, FiGrid, FiHeart
 } from "react-icons/fi";
 import { FaDochub } from "react-icons/fa6";
 
@@ -32,7 +32,8 @@ export default function DashboardSidebar() {
   // User Navigation Items (Screenshot onujayi grouped sections)
   const mainNavItems = [
     { name: "Dashboard", icon: <FiHome />, href: "/dashboard/user" },
-    {name: "Nutritionist", icon:<FaDochub/>,  href:"/dashboard/users/example"},
+    {name: "Fitness & Nutrition", icon:<FaDochub/>,  href:"/dashboard/users/example"},
+    { name: "Wellness Hub", icon: <FiHeart />, href: "/dashboard/users/wellness" },
     { name: "My Recipes", icon: <FiBookOpen />, href: "/recipes" },
     { name: "Generate Recipe", icon: <FiCpu />, href: "/dashboard/users/ai-recepi-generator", badge: "AI" },
     { name: "Collections", icon: <FiFolder />, href: "/dashboard/users/static" },
