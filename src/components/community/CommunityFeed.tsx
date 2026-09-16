@@ -412,7 +412,7 @@ export const CommunityFeed: React.FC = () => {
         try {
           [loadedCollections, loadedNotifications, loadedFeedCounts] = await Promise.all([
             communityApi.listCollections(userId),
-            communityApi.listNotifications(userId),
+            communityApi.listNotifications(),
             communityApi.getFeedCounts(userId),
           ]);
         } catch {
