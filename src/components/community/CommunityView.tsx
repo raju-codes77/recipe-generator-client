@@ -447,9 +447,9 @@ export const CommunityView: React.FC = () => {
                     : activeFilter === 'following'
                     ? '👥 Recipes by Chefs You Follow'
                     : activeFilter === 'saved'
-                    ? '🔖 My Saved Recipes'
+                    ? '🔖 My Saved Posts'
                     : activeFilter === 'liked'
-                    ? '❤️ Liked Recipes'
+                    ? '❤️ Liked Posts'
                     : `${activeFilter.toUpperCase()} Recipes`}
                 </h2>
                 <span className="rounded-full bg-[#EAF7E8] px-2.5 py-0.5 text-xs font-bold text-[#176B35] dark:bg-emerald-950/60 dark:text-[#B7E35F]">
