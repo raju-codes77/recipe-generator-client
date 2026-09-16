@@ -3,13 +3,15 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
 import {
   Clock, Flame, Star, ArrowLeft, Heart, Folder, Share2,
-  ChefHat, Users, Award, ThumbsUp, ThumbsDown, X, Plus
+  ChefHat, Users, Award, ThumbsUp, ThumbsDown, X, Plus, Sparkles
 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import DetailsSidebar from "@/components/recipes/details/DetailsSidebar";
 import RecipeDetailsSkeleton from "@/components/recipes/details/RecipeDetailsSkeleton";
+import RecipeAIAssistant from "@/components/recipes/details/RecipeAIAssistant";
 import toast from "react-hot-toast";
 
 interface Ingredient {
@@ -52,6 +54,7 @@ interface RecipeDetail {
   instructions?: string | string[];
   reviews?: Review[];
   user?: {
+    id?: string;
     name: string;
     image?: string;
   };
@@ -85,6 +88,15 @@ export default function RecipeDetailsPage() {
   const [isSubmittingNew, setIsSubmittingNew] = useState(false);
 
   const [activeTab, setActiveTab] = useState("Overview");
+  
+  // AI ASSISTANT STATE
+  const [isAIAssistantOpen, setIsAIAssistantOpen] = useState(false);
+  const [aiInitialPrompt, setAiInitialPrompt] = useState<string>("");
+
+  const openAiAssistant = (prompt?: string) => {
+    setAiInitialPrompt(prompt || "");
+    setIsAIAssistantOpen(true);
+  };
 
   // THUMBNAIL LIST HELPER
   const thumbnailList = recipe?.images && recipe.images.length > 0 
@@ -457,20 +469,41 @@ export default function RecipeDetailsPage() {
 
                   {/* Author Info */}
                   <div className="mb-3 flex items-center gap-2.5">
-                    <div className="relative h-7 w-7 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
-                      {isValidAuthorImage(recipe.user?.image) ? (
-                        <Image
-                          src={recipe.user!.image!}
-                          alt="Author"
-                          fill
-                          sizes="100vw"
-                          className="object-cover"
-                        />
-                      ) : (
-                        <Users className="h-4 w-4 text-gray-500 dark:text-gray-400" />
-                      )}
-                    </div>
-                    <span className="text-xs font-bold text-gray-800 dark:text-gray-200">{recipe.user?.name || "Anonymous Chef"}</span>
+                    {recipe.user?.id ? (
+                      <Link href={`/community/users/${recipe.user.id}`} className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
+                        <div className="relative h-7 w-7 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
+                          {isValidAuthorImage(recipe.user?.image) ? (
+                            <Image
+                              src={recipe.user!.image!}
+                              alt="Author"
+                              fill
+                              sizes="100vw"
+                              className="object-cover"
+                            />
+                          ) : (
+                            <Users className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                          )}
+                        </div>
+                        <span className="text-xs font-bold text-gray-800 hover:text-[#24733E] dark:text-gray-200 dark:hover:text-[#10B981] transition-colors">{recipe.user?.name || "Anonymous Chef"}</span>
+                      </Link>
+                    ) : (
+                      <>
+                        <div className="relative h-7 w-7 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
+                          {isValidAuthorImage(recipe.user?.image) ? (
+                            <Image
+                              src={recipe.user!.image!}
+                              alt="Author"
+                              fill
+                              sizes="100vw"
+                              className="object-cover"
+                            />
+                          ) : (
+                            <Users className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                          )}
+                        </div>
+                        <span className="text-xs font-bold text-gray-800 dark:text-gray-200">{recipe.user?.name || "Anonymous Chef"}</span>
+                      </>
+                    )}
                   </div>
 
                   <p className="mb-4 text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
@@ -528,6 +561,25 @@ export default function RecipeDetailsPage() {
                   </button>
                 </div>
 
+                {/* AI CTA */}
+                <div className="mt-4">
+                  <button
+                    onClick={() => openAiAssistant()}
+                    className="w-full flex items-center justify-between px-4 py-3 bg-gradient-to-r from-orange-50 to-orange-100 dark:from-orange-950/30 dark:to-orange-900/20 border border-orange-200 dark:border-orange-500/30 rounded-xl hover:shadow-md transition-all cursor-pointer group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="bg-orange-500 rounded-full p-2 text-white shadow-sm">
+                        <Sparkles className="w-4 h-4" />
+                      </div>
+                      <div className="text-left">
+                        <p className="text-sm font-bold text-gray-900 dark:text-white">Get AI Help for This Recipe</p>
+                        <p className="text-[10px] text-gray-600 dark:text-gray-400 mt-0.5">Ask about substitutions, nutrition, cooking steps & more.</p>
+                      </div>
+                    </div>
+                    <ArrowLeft className="w-4 h-4 text-orange-500 rotate-180 group-hover:translate-x-1 transition-transform" />
+                  </button>
+                </div>
+
               </div>
             </div>
 
@@ -560,8 +612,16 @@ export default function RecipeDetailsPage() {
             <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
 
               {/* INGREDIENTS */}
-              <div id="ingredients" className="md:col-span-5 bg-white dark:bg-[#131B2E] p-5 rounded-[24px] border border-gray-100 dark:border-white/10 shadow-sm scroll-mt-16">
-                <div className="mb-4 flex items-center justify-between">
+              <div id="ingredients" className="md:col-span-5 bg-white dark:bg-[#131B2E] p-5 rounded-[24px] border border-gray-100 dark:border-white/10 shadow-sm scroll-mt-16 relative group">
+                <button 
+                  onClick={() => openAiAssistant("Can you suggest some ingredient substitutions for this recipe?")}
+                  className="absolute top-4 right-4 flex items-center gap-1.5 px-2.5 py-1.5 bg-orange-50 hover:bg-orange-100 text-orange-600 dark:bg-orange-950/30 dark:text-orange-400 dark:hover:bg-orange-900/40 rounded-lg text-xs font-bold transition-colors opacity-0 group-hover:opacity-100 cursor-pointer"
+                  title="Ask AI about ingredients"
+                >
+                  <Sparkles className="w-3 h-3" />
+                  Ask AI
+                </button>
+                <div className="mb-4 flex items-center justify-between mt-8 md:mt-0">
                   <div className="flex items-center gap-2">
                     <ChefHat className="h-4 w-4 text-[#24733E] dark:text-[#10B981]" />
                     <h2 className="text-sm font-bold text-gray-900 dark:text-white">Ingredients</h2>
@@ -589,8 +649,16 @@ export default function RecipeDetailsPage() {
               </div>
 
               {/* INSTRUCTIONS */}
-              <div id="instructions" className="md:col-span-7 bg-white dark:bg-[#131B2E] p-5 rounded-[24px] border border-gray-100 dark:border-white/10 shadow-sm scroll-mt-16">
-                <div className="mb-4 flex items-center justify-between">
+              <div id="instructions" className="md:col-span-7 bg-white dark:bg-[#131B2E] p-5 rounded-[24px] border border-gray-100 dark:border-white/10 shadow-sm scroll-mt-16 relative group">
+                <button 
+                  onClick={() => openAiAssistant("Explain the cooking steps of this recipe.")}
+                  className="absolute top-4 right-4 flex items-center gap-1.5 px-2.5 py-1.5 bg-orange-50 hover:bg-orange-100 text-orange-600 dark:bg-orange-950/30 dark:text-orange-400 dark:hover:bg-orange-900/40 rounded-lg text-xs font-bold transition-colors opacity-0 group-hover:opacity-100 cursor-pointer"
+                  title="Ask AI about instructions"
+                >
+                  <Sparkles className="w-3 h-3" />
+                  Ask AI
+                </button>
+                <div className="mb-4 flex items-center justify-between mt-8 md:mt-0">
                   <h2 className="text-sm font-bold text-gray-900 dark:text-white">Instructions</h2>
                   <span className="text-[10px] text-gray-400">{formattedInstructions.length} steps</span>
                 </div>
@@ -616,8 +684,16 @@ export default function RecipeDetailsPage() {
             </div>
 
             {/* NUTRITION INFORMATION */}
-            <div id="nutrition" className="bg-white dark:bg-[#131B2E] p-5 rounded-[24px] border border-gray-100 dark:border-white/10 shadow-sm scroll-mt-16">
-              <div className="flex items-center justify-between mb-3">
+            <div id="nutrition" className="bg-white dark:bg-[#131B2E] p-5 rounded-[24px] border border-gray-100 dark:border-white/10 shadow-sm scroll-mt-16 relative group">
+              <button 
+                onClick={() => openAiAssistant("Can you provide more details about the nutrition of this recipe or how to make it healthier?")}
+                className="absolute top-4 right-4 flex items-center gap-1.5 px-2.5 py-1.5 bg-orange-50 hover:bg-orange-100 text-orange-600 dark:bg-orange-950/30 dark:text-orange-400 dark:hover:bg-orange-900/40 rounded-lg text-xs font-bold transition-colors opacity-0 group-hover:opacity-100 cursor-pointer z-10"
+                title="Ask AI about nutrition"
+              >
+                <Sparkles className="w-3 h-3" />
+                Ask AI
+              </button>
+              <div className="flex items-center justify-between mb-3 mt-8 md:mt-0">
                 <h2 className="text-sm font-bold text-gray-900 dark:text-white">Nutrition Information</h2>
                 <span className="text-[10px] text-gray-400">Per serving</span>
               </div>
@@ -853,6 +929,24 @@ export default function RecipeDetailsPage() {
           </div>
         </div>
       )}
+
+      <RecipeAIAssistant 
+        isOpen={isAIAssistantOpen} 
+        onClose={() => {
+          setIsAIAssistantOpen(false);
+          setAiInitialPrompt("");
+        }} 
+        recipe={{ 
+          id: recipe.id, 
+          title: recipe.title,
+          thumbnail: activeImage || recipe.image,
+          category: recipe.category,
+          ingredients: recipe.ingredients,
+          calories: recipe.calories
+        }} 
+        userId={session?.user?.id} 
+        initialPrompt={aiInitialPrompt}
+      />
     </div>
   );
 }
