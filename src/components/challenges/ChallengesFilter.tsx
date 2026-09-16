@@ -17,8 +17,7 @@ export default function ChallengesFilter() {
   ];
 
   return (
-    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-      
+    <div className="flex items-center gap-2 mb-8 overflow-x-auto pb-1">
       {/* Tabs */}
       <div className="flex flex-wrap items-center gap-2">
         {tabs.map((tab) => {
@@ -40,17 +39,6 @@ export default function ChallengesFilter() {
           );
         })}
       </div>
-
-      {/* Sort Dropdown */}
-      <div className="flex items-center gap-2">
-        <label className="text-sm text-slate-500 dark:text-slate-400 font-medium">Sort by:</label>
-        <select className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-green-500/20">
-          <option>Latest</option>
-          <option>Popular</option>
-          <option>Ending Soon</option>
-        </select>
-      </div>
-
     </div>
   );
 }

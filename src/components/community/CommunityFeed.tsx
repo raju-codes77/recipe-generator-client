@@ -453,9 +453,39 @@ export const CommunityFeed: React.FC = () => {
   );
 
   // Handle Likes
-  const handleToggleLike = (postId: string) => {
+  const handleToggleLike = async (postId: string) => {
     if (!session?.user?.id) return requireAuthentication("like a recipe");
-    void runMutation(() => communityApi.toggleLike(postId, session.user.id), "Updated recipe like");
+    
+    // Optimistic UI update
+    setPosts(currentPosts => currentPosts.map(post => {
+      if (post.id === postId) {
+        const isCurrentlyLiked = post.isLiked;
+        return {
+          ...post,
+          isLiked: !isCurrentlyLiked,
+          likesCount: isCurrentlyLiked ? Math.max(0, post.likesCount - 1) : post.likesCount + 1
+        };
+      }
+      return post;
+    }));
+
+    try {
+      await communityApi.toggleLike(postId, session.user.id);
+    } catch (error) {
+      // Revert on error
+      setPosts(currentPosts => currentPosts.map(post => {
+        if (post.id === postId) {
+          const isCurrentlyLiked = post.isLiked;
+          return {
+            ...post,
+            isLiked: !isCurrentlyLiked,
+            likesCount: isCurrentlyLiked ? Math.max(0, post.likesCount - 1) : post.likesCount + 1
+          };
+        }
+        return post;
+      }));
+      showToast("Unable to update like");
+    }
   };
 
   // Handle Save / Bookmark

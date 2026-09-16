@@ -6,7 +6,9 @@ import Image from "next/image";
 import { FiArrowLeft, FiTrash2, FiSearch, FiMessageSquare } from "react-icons/fi";
 import toast from "react-hot-toast";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+import { getApiBaseUrl } from "@/lib/api-url";
+
+const API_BASE_URL = getApiBaseUrl();
 
 export default function AdminPostsPage() {
   const [posts, setPosts] = useState<any[]>([]);

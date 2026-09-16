@@ -103,30 +103,7 @@ export default function LoginPage() {
   };
 
   const handleGoogleLogin = async () => {
-    if (lockoutTime > 0) {
-      toast.error("Your account is temporarily locked. Please wait.");
-      return;
-    }
-
-    setError("");
-    setSuccess("");
-
-    try {
-      setLoading(true);
-      toast.loading("Connecting with Google...", { id: "google-login" });
-
-      await authClient.signIn.social({
-        provider: "google",
-        callbackURL: `${process.env.NEXT_PUBLIC_LOCAL_URL || "http://localhost:3000"}/`,
-      });
-    } catch (err) {
-      console.error("Google login error:", err);
-      toast.dismiss("google-login");
-      const msg = "Google login failed. Please try again.";
-      setError(msg);
-      toast.error(msg);
-      setLoading(false);
-    }
+    toast.error("Social login is currently under maintenance.");
   };
 
   const formatTime = (seconds: number) => {

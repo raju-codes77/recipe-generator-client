@@ -31,7 +31,7 @@ export default function DashboardSidebar() {
 
   // User Navigation Items (Screenshot onujayi grouped sections)
   const mainNavItems = [
-    { name: "Dashboard", icon: <FiHome />, href: "/dashboard/users" },
+    { name: "Dashboard", icon: <FiHome />, href: "/dashboard/user" },
     {name: "Nutritionist", icon:<FaDochub/>,  href:"/dashboard/users/example"},
     { name: "My Recipes", icon: <FiBookOpen />, href: "/recipes" },
     { name: "Generate Recipe", icon: <FiCpu />, href: "/dashboard/users/ai-recepi-generator", badge: "AI" },
@@ -46,7 +46,7 @@ export default function DashboardSidebar() {
     { name: "Nutrition Analyzer", icon: <FiActivity />, href: "/ai-tools/nutrition-analyzer" },
     { name: "Meal Tracker", icon: <FiActivity />, href: "/ai-tools/meal-tracker" },
     { name: "Taste Matcher", icon: <FiActivity />, href: "/ai-tools/taste-matcher" },
-    { name: "Meal Planner", icon: <FiCalendar />, href: "/meal-planner" },
+    { name: "Meal Planner", icon: <FiCalendar />, href: "/ai-tools/meal-planner" },
     { name: "Shopping List", icon: <FiShoppingCart />, href: "/ai-tools/shopping-list" },
   ];
 
@@ -149,7 +149,7 @@ export default function DashboardSidebar() {
                 <p className="px-3 text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">Main</p>
                 <div className="space-y-1">
                   {mainNavItems.map((item, idx) => {
-                    const isActive = pathname === item.href;
+                    const isActive = pathname === item.href || (item.href === "/dashboard/user" && pathname === "/dashboard/users");
                     return (
                       <Link
                         key={idx}

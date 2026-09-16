@@ -32,7 +32,9 @@ interface Recipe {
 }
 
 const RECIPES_PER_PAGE = 4;
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+import { getApiBaseUrl } from "@/lib/api-url";
+
+const API_BASE_URL = getApiBaseUrl();
 
 export default function TasteMatcherDashboard() {
   const { data: session } = authClient.useSession();
@@ -447,7 +449,7 @@ export default function TasteMatcherDashboard() {
                       </div>
 
                       <div className="flex items-center justify-between pt-2 mt-auto">
-                        <Link href={`/dashboard/recipes/${recipe.id}`} className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 flex items-center gap-1 cursor-pointer hover:underline">
+                        <Link href={`/recipes/${recipe.id}`} className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 flex items-center gap-1 cursor-pointer hover:underline">
                           <ChefHat className="w-3.5 h-3.5" /> View Recipe Details
                         </Link>
                         <div className="flex items-center gap-2 text-gray-400">

@@ -594,7 +594,33 @@ export default function CommunityUserProfilePage() {
 
             <div className="rounded-3xl border border-slate-200 bg-white p-5 dark:border-neutral-800 dark:bg-[#121614] sm:p-6">
               <div className="mb-5"><p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#2F8F46]">{activeTab === "My Recipes" ? "Recipe shelf" : "Personal activity"}</p><h2 className="mt-1 text-xl font-black">{activeTab === "My Recipes" ? "My recipes" : "Recent posts"}</h2></div>
-              {visiblePosts.length === 0 ? <div className="rounded-2xl border border-dashed border-slate-300 p-10 text-center text-sm text-neutral-500 dark:border-neutral-700">{activeTab === "My Recipes" ? "No recipes shared yet." : "No public posts yet."}</div> : <><div className="space-y-7">{visiblePosts.map((post) => <div key={post.id} className="profile-post"><PostCard post={post} onLike={(postId) => void updateProfile(() => communityApi.toggleLike(postId, session?.user?.id!))} onSave={handleProfileSave} onShare={(postToShare) => void sharePost(postToShare)} onShareToProfile={(postToShare) => shareToProfile(postToShare)} onRate={(postToRate) => void openReview(postToRate)} onReport={() => undefined} onDelete={(postId) => updateProfile(() => communityApi.deletePost(postId, session?.user?.id!))} onEdit={openPostCaptionEditor} onTogglePin={(postId, isPinned) => void updateProfile(() => communityApi.updatePost(postId, { isPinned }, session?.user?.id!))} onDirectMessage={handleOpenDM} onToggleFollow={() => void updateProfile(() => communityApi.toggleFollow(profile.user.id, session?.user?.id!))} onAddComment={(postId, content) => void updateProfile(() => communityApi.addComment(postId, content, session?.user?.id!))} onLoadInteractions={loadPostInteractions} onMadeIt={(postId) => void updateProfile(() => communityApi.toggleMadeIt(postId, session?.user?.id!))} currentUserId={session?.user?.id} isAuthenticated={Boolean(session?.user)} onRequireAuthentication={requireAuthentication} hasActiveStory={hasStories} onAuthorAvatarClick={hasStories ? () => setViewingStory(storyGroup[0] ?? null) : undefined} onImageClick={(imagePost) => setSelectedImage({ src: imagePost.imageUrl, alt: imagePost.recipe?.title || "FoodCanvas post" })} /></div>)}</div><div ref={postsLoadMoreRef} className="flex min-h-12 items-center justify-center pt-2 text-xs font-semibold text-neutral-500 dark:text-neutral-400">{isLoadingMorePosts ? "Loading more posts..." : hasMorePosts ? "" : "You have reached the end of this profile's posts."}</div></>}
+              {visiblePosts.length === 0 ? <div className="rounded-2xl border border-dashed border-slate-300 p-10 text-center text-sm text-neutral-500 dark:border-neutral-700">{activeTab === "My Recipes" ? "No recipes shared yet." : "No public posts yet."}</div> : <><div className="space-y-7">{visiblePosts.map((post) => <div key={post.id} className="profile-post"><PostCard post={post} onLike={async (postId) => {
+                if (!session?.user?.id) { requireAuthentication(); return; }
+                setProfile(prev => prev ? {
+                  ...prev,
+                  posts: prev.posts.map(p => {
+                    if (p.id === postId) {
+                      const isLiked = p.isLiked;
+                      return { ...p, isLiked: !isLiked, likesCount: isLiked ? Math.max(0, p.likesCount - 1) : p.likesCount + 1 };
+                    }
+                    return p;
+                  })
+                } : null);
+                try {
+                  await communityApi.toggleLike(postId, session.user.id);
+                } catch {
+                  setProfile(prev => prev ? {
+                    ...prev,
+                    posts: prev.posts.map(p => {
+                      if (p.id === postId) {
+                        const isLiked = p.isLiked;
+                        return { ...p, isLiked: !isLiked, likesCount: isLiked ? Math.max(0, p.likesCount - 1) : p.likesCount + 1 };
+                      }
+                      return p;
+                    })
+                  } : null);
+                }
+              }} onSave={handleProfileSave} onShare={(postToShare) => void sharePost(postToShare)} onShareToProfile={(postToShare) => shareToProfile(postToShare)} onRate={(postToRate) => void openReview(postToRate)} onReport={() => undefined} onDelete={(postId) => updateProfile(() => communityApi.deletePost(postId, session?.user?.id!))} onEdit={openPostCaptionEditor} onTogglePin={(postId, isPinned) => void updateProfile(() => communityApi.updatePost(postId, { isPinned }, session?.user?.id!))} onDirectMessage={handleOpenDM} onToggleFollow={() => void updateProfile(() => communityApi.toggleFollow(profile.user.id, session?.user?.id!))} onAddComment={(postId, content) => void updateProfile(() => communityApi.addComment(postId, content, session?.user?.id!))} onLoadInteractions={loadPostInteractions} onMadeIt={(postId) => void updateProfile(() => communityApi.toggleMadeIt(postId, session?.user?.id!))} currentUserId={session?.user?.id} isAuthenticated={Boolean(session?.user)} onRequireAuthentication={requireAuthentication} hasActiveStory={hasStories} onAuthorAvatarClick={hasStories ? () => setViewingStory(storyGroup[0] ?? null) : undefined} onImageClick={(imagePost) => setSelectedImage({ src: imagePost.imageUrl, alt: imagePost.recipe?.title || "FoodCanvas post" })} /></div>)}</div><div ref={postsLoadMoreRef} className="flex min-h-12 items-center justify-center pt-2 text-xs font-semibold text-neutral-500 dark:text-neutral-400">{isLoadingMorePosts ? "Loading more posts..." : hasMorePosts ? "" : "You have reached the end of this profile's posts."}</div></>}
             </div>
           </div>
         </section>)}

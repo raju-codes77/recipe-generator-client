@@ -5,6 +5,9 @@ import { motion } from "framer-motion";
 import { ArrowRight, Sparkles } from "lucide-react";
 import Link from "next/link";
 import RecipeCard from "./recipes/RecipeCard";
+import { getApiBaseUrl } from "@/lib/api-url";
+
+const API_BASE = getApiBaseUrl();
 
 interface Recipe {
   id: string;
@@ -25,7 +28,7 @@ export default function RecipeCollectionSection() {
     const abortController = new AbortController();
     const fetchLatestRecipes = async () => {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/recipes`, { signal: abortController.signal });
+        const response = await fetch(`${API_BASE}/api/recipes`, { signal: abortController.signal });
         const data = await response.json();
 
         // Jodi data array hoy ba object er vetor array thake (e.g. data.recipes)

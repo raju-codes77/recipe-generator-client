@@ -5,6 +5,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { useState, useEffect } from "react";
+import { getApiBaseUrl } from "@/lib/api-url";
 
 const FALLBACK_AVATARS = [
   "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=60",
@@ -22,7 +23,7 @@ export default function CommunitySection() {
   useEffect(() => {
     async function fetchDynamicCommunityData() {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+        const apiUrl = getApiBaseUrl();
         // Fetch recent recipes to get real active user avatars
         const res = await fetch(`${apiUrl}/api/recipes?limit=20`);
         if (res.ok) {

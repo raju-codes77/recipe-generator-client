@@ -11,7 +11,9 @@ import {
 import { ResponsiveContainer, AreaChart, Area, XAxis, Tooltip, CartesianGrid } from "recharts";
 import { authClient } from "@/lib/auth-client";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+import { getApiBaseUrl } from "@/lib/api-url";
+
+const API_BASE_URL = getApiBaseUrl();
 
 // Mock Data for User Calorie/Nutrition Intake Trend fallback
 const fallbackCalorieData = [
@@ -35,12 +37,8 @@ export default function UserDashboardPage() {
     async function fetchDashboard() {
       try {
         const userId = session?.user?.id;
-        const url = new URL(`${API_BASE_URL}/api/dashboard/user/overview`);
-        if (userId) {
-          url.searchParams.append("userId", userId);
-        }
-
-        const res = await fetch(url.toString(), {
+        const queryStr = userId ? `?userId=${encodeURIComponent(userId)}` : "";
+        const res = await fetch(`${API_BASE_URL}/api/dashboard/user/overview${queryStr}`, {
           credentials: "include"
         });
         if (res.ok) {

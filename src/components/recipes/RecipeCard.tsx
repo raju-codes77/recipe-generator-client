@@ -16,6 +16,9 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { authClient } from "@/lib/auth-client";
 import toast from "react-hot-toast";
+import { getApiBaseUrl } from "@/lib/api-url";
+
+const API_BASE = getApiBaseUrl();
 
 interface Recipe {
   id: string;
@@ -64,7 +67,7 @@ export default function RecipeCard({
     const checkFavorite = async () => {
       try {
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/favorites/check?userId=${session.user.id}&recipeId=${recipe.id}`,
+          `${API_BASE}/api/favorites/check?userId=${session.user.id}&recipeId=${recipe.id}`,
           {
             credentials: "include",
           }
@@ -109,7 +112,7 @@ export default function RecipeCard({
     try {
       if (isLiked) {
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/favorites`,
+          `${API_BASE}/api/favorites`,
           {
             method: "DELETE",
             headers: {
@@ -147,7 +150,7 @@ export default function RecipeCard({
         window.dispatchEvent(new Event("recipeUpdated"));
       } else {
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/favorites`,
+          `${API_BASE}/api/favorites`,
           {
             method: "POST",
             headers: {
@@ -192,7 +195,7 @@ export default function RecipeCard({
     if (!session?.user?.id) return;
     setLoadingCollections(true);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/collections?userId=${session.user.id}`, {
+      const res = await fetch(`${API_BASE}/api/collections?userId=${session.user.id}`, {
         credentials: "include",
       });
       const data = await res.json();
@@ -227,7 +230,7 @@ export default function RecipeCard({
   // SAVE TO SPECIFIC COLLECTION WITH TOAST (credentials: "include" যুক্ত করা হয়েছে)
   const handleAddToCollection = async (collectionId: string) => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/collections/add-recipe`, {
+      const res = await fetch(`${API_BASE}/api/collections/add-recipe`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -260,7 +263,7 @@ export default function RecipeCard({
 
     setIsSubmittingNew(true);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/collections`, {
+      const res = await fetch(`${API_BASE}/api/collections`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

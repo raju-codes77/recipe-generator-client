@@ -13,7 +13,9 @@ import {
 } from "recharts";
 import { authClient } from "@/lib/auth-client";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+import { getApiBaseUrl } from "@/lib/api-url";
+
+const API_BASE_URL = getApiBaseUrl();
 
 // Mock Data for Analytics Line Chart
 const fallbackLineData = [
@@ -43,13 +45,7 @@ export default function AdminDashboardPage() {
 
     async function fetchDashboard() {
       try {
-        const userId = session?.user?.id;
-        const url = new URL(`${API_BASE_URL}/api/dashboard/admin/overview`);
-        if (userId) {
-          url.searchParams.append("userId", userId);
-        }
-
-        const res = await fetch(url.toString(), {
+        const res = await fetch(`${API_BASE_URL}/api/dashboard/admin/overview`, {
           credentials: "include"
         });
         if (res.ok) {

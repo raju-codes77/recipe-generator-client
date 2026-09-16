@@ -1,9 +1,8 @@
 import { Challenge, ChallengeDay, ChallengeParticipant, Badge } from "../types/challenge";
 
-let API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
-if (!API_BASE_URL.endsWith("/api")) {
-  API_BASE_URL = API_BASE_URL.replace(/\/+$/, "") + "/api";
-}
+import { getApiBaseUrl } from "./api-url";
+
+const API_BASE_URL = `${getApiBaseUrl()}/api`;
 
 export interface PaginatedChallengeResponse {
   challenges: Challenge[];

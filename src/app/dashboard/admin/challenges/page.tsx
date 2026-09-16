@@ -5,7 +5,9 @@ import Link from "next/link";
 import { FiArrowLeft, FiTrash2, FiSearch, FiAward } from "react-icons/fi";
 import toast from "react-hot-toast";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+import { getApiBaseUrl } from "@/lib/api-url";
+
+const API_BASE_URL = getApiBaseUrl();
 
 export default function AdminChallengesPage() {
   const [challenges, setChallenges] = useState<any[]>([]);

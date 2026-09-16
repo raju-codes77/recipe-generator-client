@@ -5,7 +5,9 @@ import { Replace, Search, Loader2, Info, Link2 } from "lucide-react";
 import toast from "react-hot-toast";
 import Link from "next/link";
 
-const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+import { getApiBaseUrl } from "@/lib/api-url";
+
+const apiUrl = getApiBaseUrl();
 
 export default function IngredientSubstitutionPage() {
   const [recipeContext, setRecipeContext] = useState("");

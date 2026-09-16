@@ -9,7 +9,9 @@ import type {
   StoryItem,
 } from "@/components/community/types";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+import { getApiBaseUrl } from "@/lib/api-url";
+
+const API_BASE_URL = getApiBaseUrl();
 
 interface ApiErrorBody {
   message?: string;
