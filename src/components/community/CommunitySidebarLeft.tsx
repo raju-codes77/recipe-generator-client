@@ -79,13 +79,13 @@ export const CommunitySidebarLeft: React.FC<CommunitySidebarLeftProps> = ({
       ? [
           {
             id: "saved",
-            label: "My Saved Recipes",
+            label: "My Saved Posts",
             icon: Bookmark,
             count: savedPostsCount,
           },
           {
             id: "liked",
-            label: "Recipes I Liked",
+            label: "Posts I Like",
             icon: Heart,
             count: likedPostsCount,
           },

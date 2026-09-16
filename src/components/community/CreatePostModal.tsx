@@ -264,6 +264,11 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
     try {
       await onPublishPost(newPost, imageFile);
       onClose();
+    } catch {
+      // Community parents show the API message in their toast. Consume the
+      // rejected callback here so a failed moderation request never bubbles
+      // into the Next.js development error overlay.
+      onClose();
     } finally {
       setIsPublishing(false);
     }

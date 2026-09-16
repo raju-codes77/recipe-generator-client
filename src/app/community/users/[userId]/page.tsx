@@ -19,12 +19,18 @@ import { ConfirmUnsaveModal } from "@/components/community/ConfirmUnsaveModal";
 import { CommunityTextPromptModal } from "@/components/community/CommunityTextPromptModal";
 import { SendDirectMessageModal } from "@/components/community/SendDirectMessageModal";
 import { CommunityShareModal } from "@/components/community/CommunityShareModal";
+import { CommunityPostDetailsModal } from "@/components/community/CommunityPostDetailsModal";
 import { formatCommunityTags, parseCommunityTags } from "@/components/community/community-tags";
 import type { Author, Post, PublicCommunityProfile, Review, StoryItem } from "@/components/community/types";
 
 const PROFILE_POSTS_PER_PAGE = 3;
 const PULL_TO_REFRESH_THRESHOLD = 78;
 const MAX_PULL_DISTANCE = 112;
+const TEXT_ONLY_POST_IMAGE = "__foodcanvas_text_only__";
+
+function isTextOnlyPost(post: Post): boolean {
+  return !post.imageUrl || post.imageUrl === TEXT_ONLY_POST_IMAGE;
+}
 
 function ProfileSkeleton() {
   return (
@@ -81,6 +87,7 @@ export default function CommunityUserProfilePage() {
   const [socialUsers, setSocialUsers] = useState<Author[]>([]);
   const [isLoadingSocialUsers, setIsLoadingSocialUsers] = useState(false);
   const [selectedImage, setSelectedImage] = useState<{ src: string; alt: string } | null>(null);
+  const [selectedTextPost, setSelectedTextPost] = useState<Post | null>(null);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [storyEditorFile, setStoryEditorFile] = useState<File | null>(null);
   const [isCreateRecipeOpen, setIsCreateRecipeOpen] = useState(false);
@@ -102,6 +109,7 @@ export default function CommunityUserProfilePage() {
   const [isUploadingProfileImage, setIsUploadingProfileImage] = useState(false);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [profileSaveError, setProfileSaveError] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [editPost, setEditPost] = useState<Post | null>(null);
   const [editCaption, setEditCaption] = useState("");
   const [editTags, setEditTags] = useState("");
@@ -116,6 +124,21 @@ export default function CommunityUserProfilePage() {
   const hasLoadedProfileRef = useRef(false);
   const pullStartYRef = useRef<number | null>(null);
   const isPullTrackingRef = useRef(false);
+  const toastTimeoutRef = useRef<number | null>(null);
+
+  const showToast = useCallback((message: string, durationOverride?: number) => {
+    if (toastTimeoutRef.current !== null) window.clearTimeout(toastTimeoutRef.current);
+    setToastMessage(message);
+    const duration = durationOverride ?? (/\b(rejected|not approved)\b/i.test(message) ? 5000 : 3500);
+    toastTimeoutRef.current = duration > 0 ? window.setTimeout(() => {
+      setToastMessage(null);
+      toastTimeoutRef.current = null;
+    }, duration) : null;
+  }, []);
+
+  useEffect(() => () => {
+    if (toastTimeoutRef.current !== null) window.clearTimeout(toastTimeoutRef.current);
+  }, []);
 
   useEffect(() => {
     if (!profileMenuOpen) return;
@@ -308,6 +331,58 @@ export default function CommunityUserProfilePage() {
     try {
       await action();
       await loadProfile();
+    } finally {
+      setIsProfileRefreshing(false);
+    }
+  };
+
+  const handleSocialFollowToggle = async (person: Author) => {
+    if (!session?.user?.id) {
+      requireAuthentication();
+      return;
+    }
+
+    const previousFollowing = Boolean(person.isFollowing);
+    const optimisticFollowing = !previousFollowing;
+    const previousFollowingCount = profile?.followingCount ?? 0;
+    const optimisticFollowingCount = Math.max(
+      0,
+      previousFollowingCount + (optimisticFollowing ? 1 : -1),
+    );
+    setSocialUsers((currentUsers) => currentUsers.map((user) => (
+      user.id === person.id ? { ...user, isFollowing: optimisticFollowing } : user
+    )));
+    setProfile((currentProfile) => currentProfile ? {
+      ...currentProfile,
+      followingCount: optimisticFollowingCount,
+    } : currentProfile);
+    setIsProfileRefreshing(true);
+
+    try {
+      const result = await communityApi.toggleFollow(person.id, session.user.id);
+      if (socialList === "following" && !result.active) {
+        setSocialUsers((currentUsers) => currentUsers.filter((user) => user.id !== person.id));
+      } else {
+        setSocialUsers((currentUsers) => currentUsers.map((user) => (
+          user.id === person.id ? { ...user, isFollowing: result.active } : user
+        )));
+      }
+      await loadProfile();
+      setProfile((currentProfile) => currentProfile ? {
+        ...currentProfile,
+        followingCount: Math.max(
+          0,
+          previousFollowingCount + (result.active === previousFollowing ? 0 : result.active ? 1 : -1),
+        ),
+      } : currentProfile);
+    } catch {
+      setSocialUsers((currentUsers) => currentUsers.map((user) => (
+        user.id === person.id ? { ...user, isFollowing: previousFollowing } : user
+      )));
+      setProfile((currentProfile) => currentProfile ? {
+        ...currentProfile,
+        followingCount: previousFollowingCount,
+      } : currentProfile);
     } finally {
       setIsProfileRefreshing(false);
     }
@@ -617,7 +692,7 @@ export default function CommunityUserProfilePage() {
         {activeTab === "Saved" ? (
           <div className="mt-6 rounded-3xl border border-slate-200 bg-white p-5 dark:border-neutral-800 dark:bg-[#121614] sm:p-6">
             <div className="flex items-center gap-3"><Heart className="h-6 w-6 text-[#FF6B6B]" /><div><h2 className="text-xl font-black">Saved posts & recipes</h2><p className="mt-1 text-sm text-neutral-500">Your saved community content appears here.</p></div></div>
-            {profile.user.id !== session?.user?.id ? <div className="mt-6 rounded-2xl border border-dashed border-slate-300 p-10 text-center text-sm text-neutral-500 dark:border-neutral-700">Saved posts are private.</div> : isLoadingSavedPosts ? <div className="mt-6 grid gap-5 sm:grid-cols-2">{[1, 2, 3, 4].map((item) => <div key={`saved-skeleton-${item}`} className="h-64 animate-pulse rounded-2xl bg-neutral-100 dark:bg-neutral-800" />)}</div> : savedPostsError ? <div className="mt-6 rounded-2xl border border-rose-200 bg-rose-50 p-6 text-center text-sm text-rose-600 dark:border-rose-900 dark:bg-rose-950/20 dark:text-rose-300">{savedPostsError}</div> : savedPosts.length === 0 ? <div className="mt-6 rounded-2xl border border-dashed border-slate-300 p-10 text-center text-sm text-neutral-500 dark:border-neutral-700">No saved posts or recipes yet.</div> : <div className="mt-6 grid gap-5 sm:grid-cols-2">{savedPosts.map((post) => <article key={post.id} className="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-neutral-800 dark:bg-[#171B18]"><button type="button" onClick={() => post.recipe ? setSavedPostDetails(post) : setSelectedImage({ src: post.imageUrl, alt: "Saved FoodCanvas post" })} className="block w-full text-left"><img src={post.imageUrl} alt={post.recipe?.title || "Saved FoodCanvas post"} className="h-48 w-full object-cover transition duration-300 hover:scale-[1.02]" /></button><div className="p-4"><p className="line-clamp-2 text-sm font-bold">{post.recipe?.title || post.caption}</p><p className="mt-2 text-xs text-neutral-500">by {post.author.name}</p><div className="mt-5 flex flex-wrap gap-2.5 border-t border-slate-100 pt-4 dark:border-white/10"><button type="button" onClick={() => post.recipe ? setSavedPostDetails(post) : setSelectedImage({ src: post.imageUrl, alt: "Saved FoodCanvas post" })} className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#2F8F46] px-4 py-2.5 text-xs font-bold text-white shadow-sm transition-colors hover:bg-[#247538] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2F8F46] focus-visible:ring-offset-2 active:bg-[#176B35] dark:bg-[#B7E35F] dark:text-[#14230D] dark:hover:bg-[#C7ED7D] dark:focus-visible:ring-offset-[#171B18]"><BookOpen aria-hidden="true" className="h-4 w-4 shrink-0" />{post.recipe ? "View recipe details" : "View post image"}</button><button type="button" onClick={() => { setSavedPosts((current) => current.filter((savedPost) => savedPost.id !== post.id)); void communityApi.savePost(post.id, undefined, session?.user?.id!); }} className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-semibold text-neutral-600 transition-colors hover:border-rose-300 hover:bg-rose-50 hover:text-rose-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:ring-offset-2 active:bg-rose-100 dark:border-white/15 dark:text-neutral-300 dark:hover:border-rose-400/40 dark:hover:bg-rose-500/10 dark:hover:text-rose-300 dark:focus-visible:ring-offset-[#171B18]"><BookmarkMinus aria-hidden="true" className="h-4 w-4 shrink-0" />Remove from saved</button></div></div></article>)}</div>}
+            {profile.user.id !== session?.user?.id ? <div className="mt-6 rounded-2xl border border-dashed border-slate-300 p-10 text-center text-sm text-neutral-500 dark:border-neutral-700">Saved posts are private.</div> : isLoadingSavedPosts ? <div className="mt-6 grid gap-5 sm:grid-cols-2">{[1, 2, 3, 4].map((item) => <div key={`saved-skeleton-${item}`} className="h-64 animate-pulse rounded-2xl bg-neutral-100 dark:bg-neutral-800" />)}</div> : savedPostsError ? <div className="mt-6 rounded-2xl border border-rose-200 bg-rose-50 p-6 text-center text-sm text-rose-600 dark:border-rose-900 dark:bg-rose-950/20 dark:text-rose-300">{savedPostsError}</div> : savedPosts.length === 0 ? <div className="mt-6 rounded-2xl border border-dashed border-slate-300 p-10 text-center text-sm text-neutral-500 dark:border-neutral-700">No saved posts or recipes yet.</div> : <div className="mt-6 grid gap-5 sm:grid-cols-2">{savedPosts.map((post) => <article key={post.id} className="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-neutral-800 dark:bg-[#171B18]"><button type="button" onClick={() => post.recipe ? setSavedPostDetails(post) : isTextOnlyPost(post) ? setSelectedTextPost(post) : setSelectedImage({ src: post.imageUrl, alt: "Saved FoodCanvas post" })} className="block w-full text-left">{isTextOnlyPost(post) ? <div className="flex h-48 items-center justify-center bg-[#1c241e] px-8 text-center text-base font-semibold leading-7 text-neutral-100">{post.caption}</div> : <img src={post.imageUrl} alt={post.recipe?.title || "Saved FoodCanvas post"} className="h-48 w-full object-cover transition duration-300 hover:scale-[1.02]" />}</button><div className="p-4"><p className="line-clamp-2 text-sm font-bold">{post.recipe?.title || post.caption}</p><p className="mt-2 text-xs text-neutral-500">by {post.author.name}</p><div className="mt-5 flex flex-wrap gap-2.5 border-t border-slate-100 pt-4 dark:border-white/10"><button type="button" onClick={() => post.recipe ? setSavedPostDetails(post) : isTextOnlyPost(post) ? setSelectedTextPost(post) : setSelectedImage({ src: post.imageUrl, alt: "Saved FoodCanvas post" })} className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#2F8F46] px-4 py-2.5 text-xs font-bold text-white shadow-sm transition-colors hover:bg-[#247538] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2F8F46] focus-visible:ring-offset-2 active:bg-[#176B35] dark:bg-[#B7E35F] dark:text-[#14230D] dark:hover:bg-[#C7ED7D] dark:focus-visible:ring-offset-[#171B18]"><BookOpen aria-hidden="true" className="h-4 w-4 shrink-0" />{post.recipe ? "View recipe details" : isTextOnlyPost(post) ? "View post" : "View post image"}</button><button type="button" onClick={() => { setSavedPosts((current) => current.filter((savedPost) => savedPost.id !== post.id)); void communityApi.savePost(post.id, undefined, session?.user?.id!); }} className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-semibold text-neutral-600 transition-colors hover:border-rose-300 hover:bg-rose-50 hover:text-rose-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:ring-offset-2 active:bg-rose-100 dark:border-white/15 dark:text-neutral-300 dark:hover:border-rose-400/40 dark:hover:bg-rose-500/10 dark:hover:text-rose-300 dark:focus-visible:ring-offset-[#171B18]"><BookmarkMinus aria-hidden="true" className="h-4 w-4 shrink-0" />Remove from saved</button></div></div></article>)}</div>}
           </div>
         ) : activeTab === "About" ? (
           <div className="mt-6 grid gap-6 md:grid-cols-2">
@@ -723,7 +798,7 @@ export default function CommunityUserProfilePage() {
                   <div key={person.id} className="flex items-center gap-3 rounded-2xl p-3 transition hover:bg-white/5">
                     <CommunityAvatar src={person.avatar} alt={person.name} className="h-11 w-11 rounded-full border border-neutral-700 object-cover" />
                     <div className="min-w-0 flex-1"><p className="truncate text-sm font-bold">{person.name}</p><p className="text-xs text-neutral-500">@{person.username}</p></div>
-                    {person.id !== session?.user?.id && <button type="button" onClick={() => void updateProfile(() => communityApi.toggleFollow(person.id, session?.user?.id!))} className="rounded-lg border border-[#2F8F46] px-3 py-1.5 text-xs font-bold text-[#B7E35F]">{person.isFollowing ? "Following" : "Follow"}</button>}
+                    {person.id !== session?.user?.id && <button type="button" disabled={isProfileRefreshing} onClick={() => void handleSocialFollowToggle(person)} className="rounded-lg border border-[#2F8F46] px-3 py-1.5 text-xs font-bold text-[#B7E35F] disabled:cursor-wait disabled:opacity-60">{person.isFollowing ? "Following" : "Follow"}</button>}
                   </div>
                 ))
               )}
@@ -737,6 +812,18 @@ export default function CommunityUserProfilePage() {
           <button type="button" onClick={() => setSelectedImage(null)} aria-label="Close full-size image" className="absolute right-5 top-5 rounded-full bg-white/10 p-2 text-white hover:bg-white/20"><X className="h-6 w-6" /></button>
           <img src={selectedImage.src} alt={selectedImage.alt} className="max-h-[90vh] max-w-[92vw] rounded-2xl object-contain shadow-2xl" onClick={(event) => event.stopPropagation()} />
         </div>
+      )}
+
+      {selectedTextPost && (
+        <CommunityPostDetailsModal
+          post={selectedTextPost}
+          isOpen
+          onClose={() => setSelectedTextPost(null)}
+          onLike={() => communityApi.toggleLike(selectedTextPost.id, session?.user?.id!)}
+          onLoadComments={async () => (await communityApi.getPostInteractions(selectedTextPost.id, { commentsTake: 50 })).comments}
+          onAddComment={async (content) => { await communityApi.addComment(selectedTextPost.id, content, session?.user?.id!); }}
+          onShare={() => sharePost(selectedTextPost)}
+        />
       )}
 
       {savedPostDetails?.recipe && <RecipeDetailsModal
@@ -798,13 +885,35 @@ export default function CommunityUserProfilePage() {
       />
 
       <CreatePostModal isOpen={isCreateRecipeOpen} onClose={() => setIsCreateRecipeOpen(false)} onPublishPost={async (newPost, imageFile) => {
-        const imageUrl = imageFile ? await communityApi.uploadImage(imageFile, "posts", session?.user?.id!) : newPost.imageUrl;
-        const createdPost = await communityApi.createPost({ ...newPost, imageUrl }, session?.user?.id!);
-        setProfile((current) => current ? { ...current, posts: [createdPost, ...current.posts] } : current);
-        setIsCreateRecipeOpen(false);
+        try {
+          if (imageFile) showToast("Validating food image...", 0);
+          const imageUrl = imageFile ? await communityApi.uploadImage(imageFile, "posts", session?.user?.id!) : newPost.imageUrl;
+          const createdPost = await communityApi.createPost({ ...newPost, imageUrl }, session?.user?.id!);
+          if (!createdPost) {
+            showToast("Post Rejected: the uploaded image is not food-related.");
+            return;
+          }
+          setProfile((current) => current ? { ...current, posts: [createdPost, ...current.posts] } : current);
+          setIsCreateRecipeOpen(false);
+        } catch (error) {
+          showToast(error instanceof Error ? error.message : "Unable to publish this Community post");
+        }
       }} />
 
-      <StoryEditorModal file={storyEditorFile} isOpen={Boolean(storyEditorFile)} onClose={() => setStoryEditorFile(null)} onShare={async (editedFile, caption) => { const imageUrl = await communityApi.uploadImage(editedFile, "stories", session?.user?.id!); await communityApi.createStory(imageUrl, caption, session?.user?.id!); await loadProfile(); }} />
+      <StoryEditorModal file={storyEditorFile} isOpen={Boolean(storyEditorFile)} onClose={() => setStoryEditorFile(null)} onShare={async (editedFile, caption) => {
+        try {
+          showToast("Validating food image...", 0);
+          const imageUrl = await communityApi.uploadImage(editedFile, "stories", session?.user?.id!);
+          const createdStory = await communityApi.createStory(imageUrl, caption, session?.user?.id!);
+          if (!createdStory) {
+            showToast("Story Rejected: the uploaded image is not food-related.");
+            return;
+          }
+          await loadProfile();
+        } catch (error) {
+          showToast(error instanceof Error ? error.message : "Unable to publish this story");
+        }
+      }} />
 
       <StoryViewerModal
         key={viewingStory?.id ?? "profile-story-viewer"}
@@ -830,6 +939,11 @@ export default function CommunityUserProfilePage() {
           await loadProfile();
         }}
       />
+      {toastMessage && (
+        <div className={`fixed bottom-6 left-1/2 z-[100] -translate-x-1/2 rounded-xl border px-4 py-3 text-center text-sm font-semibold text-white shadow-2xl ${/\b(rejected|not approved)\b/i.test(toastMessage) ? "border-red-500/90 bg-[#2a1515]/90" : "border-[#2F8F46] bg-[#151916]/90"}`}>
+          {toastMessage}
+        </div>
+      )}
     </main>
   );
 }
