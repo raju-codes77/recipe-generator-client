@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import { Bell, ChevronLeft, ChevronRight, Download, Eye, Flame, Grid3X3, Heart, MessageCircle, MoreHorizontal, Pause, Play, Send, Trash2, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { NotificationItem, StoryItem } from './types';
+import { NotificationItem, StoryItem, StoryViewer } from './types';
 import { CommunityAvatar } from './CommunityAvatar';
 import { CommunityConfirmModal } from './CommunityConfirmModal';
 
@@ -22,6 +22,9 @@ interface StoryViewerModalProps {
   profileHref?: string;
   profileImage?: string | null;
   notifications?: NotificationItem[];
+  onRecordView?: (storyId: string) => Promise<void>;
+  onLoadViewers?: (storyId: string) => Promise<StoryViewer[]>;
+  onReactToStory?: (storyId: string) => Promise<void>;
 }
 
 export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
@@ -40,11 +43,17 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
   profileHref = "/community",
   profileImage,
   notifications = [],
+  onRecordView,
+  onLoadViewers,
+  onReactToStory,
 }) => {
   const router = useRouter();
   const [progress, setProgress] = useState(0);
   const [replyText, setReplyText] = useState('');
   const [liked, setLiked] = useState(false);
+  const [isReacting, setIsReacting] = useState(false);
+  const [viewers, setViewers] = useState<StoryViewer[]>([]);
+  const [isLoadingViewers, setIsLoadingViewers] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
   const [isPaused, setIsPaused] = useState(false);
@@ -54,7 +63,9 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [hoveredStorySide, setHoveredStorySide] = useState<'previous' | 'next' | null>(null);
+  const [swipeOffset, setSwipeOffset] = useState(0);
   const notificationsRef = useRef<HTMLDivElement>(null);
+  const swipeStartRef = useRef<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     if (!isOpen || !story) return;
@@ -64,7 +75,25 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
     setIsDeleteConfirmOpen(false);
     setIsNotificationsOpen(false);
     setHoveredStorySide(null);
-  }, [isOpen, story]);
+    setSwipeOffset(0);
+    setLiked(Boolean(story.reacted));
+    setViewers([]);
+    setIsInsightsOpen(false);
+    if (!isOwnStory && onRecordView) {
+      void onRecordView(story.id).catch((error) => {
+        setSendError(error instanceof Error ? error.message : 'Unable to record this story view.');
+      });
+    }
+  }, [isOpen, isOwnStory, onRecordView, story]);
+
+  useEffect(() => {
+    if (!isInsightsOpen || !story || !onLoadViewers) return;
+    setIsLoadingViewers(true);
+    void onLoadViewers(story.id)
+      .then(setViewers)
+      .catch((error) => setSendError(error instanceof Error ? error.message : 'Unable to load story viewers.'))
+      .finally(() => setIsLoadingViewers(false));
+  }, [isInsightsOpen, onLoadViewers, story]);
 
   useEffect(() => {
     if (!isOpen || !story || isPaused) return;
@@ -161,8 +190,49 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
     }
   };
 
+  const reactToStory = async () => {
+    if (liked || !onReactToStory || isReacting) return;
+    setIsReacting(true);
+    setSendError(null);
+    try {
+      await onReactToStory(story.id);
+      setLiked(true);
+    } catch (error) {
+      setSendError(error instanceof Error ? error.message : 'Unable to react to this story.');
+    } finally {
+      setIsReacting(false);
+    }
+  };
+
+  const handleStoryTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
+    if (event.touches.length !== 1) return;
+    swipeStartRef.current = { x: event.touches[0].clientX, y: event.touches[0].clientY };
+  };
+
+  const handleStoryTouchMove = (event: React.TouchEvent<HTMLDivElement>) => {
+    const start = swipeStartRef.current;
+    if (!start || event.touches.length !== 1) return;
+
+    const deltaX = event.touches[0].clientX - start.x;
+    const deltaY = event.touches[0].clientY - start.y;
+    if (deltaY <= 0 || Math.abs(deltaX) > Math.abs(deltaY)) return;
+
+    if (event.cancelable) event.preventDefault();
+    setSwipeOffset(Math.min(deltaY, 180));
+  };
+
+  const handleStoryTouchEnd = () => {
+    const shouldClose = swipeOffset >= 96;
+    swipeStartRef.current = null;
+    if (shouldClose) {
+      onClose();
+      return;
+    }
+    setSwipeOffset(0);
+  };
+
   return (
-    <div className="fixed inset-0 z-[70] flex h-dvh w-screen items-center justify-center overflow-hidden bg-[#F5F7F2] text-neutral-900 shadow-none dark:bg-black dark:text-white">
+    <div className="fixed inset-0 z-70 flex h-dvh w-screen items-center justify-center overflow-hidden bg-[#F5F7F2] text-neutral-900 shadow-none dark:bg-black dark:text-white">
       <style>{`
         .story-notifications-scrollbar {
           scrollbar-width: thin;
@@ -195,15 +265,15 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
         {onNextStory && <button type="button" onClick={onNextStory} aria-label="Next story" className="absolute inset-y-0 right-0 z-0 w-1/2 cursor-pointer" />}
 
         <div className="absolute left-5 top-5 z-40 flex items-center gap-3 sm:left-8 sm:top-7">
-          <button type="button" onClick={onClose} aria-label="Exit story viewer" className="cursor-pointer rounded-full border border-neutral-200 bg-white/90 p-3 text-neutral-800 shadow-sm backdrop-blur-sm transition hover:bg-white dark:border-white/10 dark:bg-white/15 dark:text-white dark:hover:bg-white/25">
+          <button type="button" onClick={onClose} aria-label="Exit story viewer" className="hidden cursor-pointer rounded-full border border-neutral-200 bg-white/90 p-3 text-neutral-800 shadow-sm backdrop-blur-sm transition hover:bg-white dark:border-white/10 dark:bg-white/15 dark:text-white dark:hover:bg-white/25 lg:inline-flex">
             <X className="h-5 w-5" />
           </button>
-          <button type="button" onClick={() => navigateFromStory('/')} aria-label="Go to FoodCanvas home" className="rounded-full transition hover:scale-105">
+          <button type="button" onClick={() => navigateFromStory('/')} aria-label="Go to FoodCanvas home" className="hidden rounded-full transition hover:scale-105 lg:inline-flex">
             <img src="/navbar_logo.png" alt="FoodCanvas" className="h-11 w-11 rounded-full object-contain" />
           </button>
         </div>
 
-        <div className="absolute right-5 top-5 z-40 flex items-center gap-2.5 sm:right-8 sm:top-7 sm:gap-3">
+        <div className="absolute right-5 top-5 z-40 hidden items-center gap-2.5 sm:right-8 sm:top-7 sm:gap-3 lg:flex">
           <button type="button" onClick={() => navigateFromStory(dashboardHref)} aria-label="Open dashboard" className="group relative flex h-10 w-10 items-center justify-center rounded-full border border-neutral-200 bg-white/90 text-neutral-800 shadow-sm backdrop-blur-sm transition hover:bg-white dark:border-white/10 dark:bg-white/15 dark:text-white dark:hover:bg-white/25 sm:h-11 sm:w-11">
             <Grid3X3 className="h-4 w-4 sm:h-5 sm:w-5" />
             <span className="pointer-events-none absolute top-full mt-2 whitespace-nowrap rounded-md bg-black/85 px-2 py-1 text-[10px] font-semibold opacity-0 shadow-lg transition-opacity group-hover:opacity-100">Dashboard</span>
@@ -236,7 +306,14 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
         {/* Story Image */}
         <div className="relative z-10 flex items-center justify-center shadow-none ring-0">
           {onPreviousStory && <button type="button" onClick={onPreviousStory} onPointerEnter={() => setHoveredStorySide('previous')} onPointerLeave={() => setHoveredStorySide(null)} aria-label="Previous story" className={`absolute right-full mr-10 hidden h-12 w-12 items-center justify-center rounded-full border border-neutral-200 text-neutral-700 shadow-xl backdrop-blur-sm transition duration-200 dark:border-white/10 dark:text-white lg:flex ${hoveredStorySide === 'previous' ? 'scale-110 bg-white animate-pulse dark:bg-white/35' : 'scale-100 bg-white/80 dark:bg-white/20'}`}><ChevronLeft className="h-7 w-7" /></button>}
-          <div className="relative flex h-[min(92dvh,680px)] w-[min(88vw,360px)] shrink-0 items-center justify-center overflow-hidden rounded-2xl border-0 bg-white shadow-none ring-0 dark:bg-[#111827] sm:rounded-3xl" style={{ boxShadow: 'none' }}>
+          <motion.div
+            className="relative flex h-dvh w-screen shrink-0 items-center justify-center overflow-hidden rounded-none border-0 bg-white shadow-none ring-0 dark:bg-[#111827] lg:h-[min(92dvh,680px)] lg:w-[min(88vw,360px)] lg:rounded-3xl"
+            style={{ boxShadow: 'none', transform: `translateY(${swipeOffset}px)`, transition: swipeOffset === 0 ? 'transform 180ms ease-out' : 'none' }}
+            onTouchStart={handleStoryTouchStart}
+            onTouchMove={handleStoryTouchMove}
+            onTouchEnd={handleStoryTouchEnd}
+            onTouchCancel={handleStoryTouchEnd}
+          >
           {/* Story progress, brand, and author stay inside the story canvas. */}
           <div className="absolute left-5 right-5 top-5 z-20 flex gap-1 sm:left-7 sm:right-7 sm:top-7">
             {Array.from({ length: storyCount }, (_, index) => (
@@ -256,7 +333,7 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
             <img
               src={story.imageUrl}
               alt={story.caption}
-              className="h-full w-full object-contain"
+              className="h-full w-full object-cover lg:object-contain"
             />
           ) : (
             <div className="flex h-full items-center justify-center text-sm text-white/70">
@@ -327,13 +404,13 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
             </p>
           </div>
 
-          {!isOwnStory && <div className="absolute bottom-3 left-4 right-4 z-20 flex items-center gap-2 sm:bottom-5 sm:left-6 sm:right-6"><input type="text" placeholder="Reply to kitchen story..." value={replyText} onChange={(e) => setReplyText(e.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') void sendReply(); }} className="min-w-0 flex-1 rounded-full border border-white/20 bg-black/35 px-4 py-3 text-sm text-white placeholder-white/70 outline-none backdrop-blur-sm focus:border-[#2F8F46]" /><button type="button" onClick={() => void sendReply()} disabled={!replyText.trim() || isSending} aria-label="Send story reply" className="rounded-full bg-[#2F8F46] p-3 transition hover:bg-[#176B35] disabled:cursor-not-allowed disabled:opacity-50"><Send className="h-4 w-4" /></button><motion.button type="button" whileTap={{ scale: 0.85 }} onClick={() => setLiked(!liked)} aria-label={liked ? 'Remove reaction' : 'React to story'} className={`rounded-full p-3 transition ${liked ? 'bg-rose-500' : 'bg-black/35 hover:bg-black/55'}`}><Heart className={`h-4 w-4 ${liked ? 'fill-white' : ''}`} /></motion.button></div>}
+          {!isOwnStory && <div className="absolute bottom-3 left-4 right-4 z-20 flex items-center gap-2 sm:bottom-5 sm:left-6 sm:right-6"><input type="text" placeholder="Reply to kitchen story..." value={replyText} onChange={(e) => setReplyText(e.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') void sendReply(); }} className="min-w-0 flex-1 rounded-full border border-white/20 bg-black/35 px-4 py-3 text-sm text-white placeholder-white/70 outline-none backdrop-blur-sm focus:border-[#2F8F46]" /><button type="button" onClick={() => void sendReply()} disabled={!replyText.trim() || isSending} aria-label="Send story reply" className="rounded-full bg-[#2F8F46] p-3 transition hover:bg-[#176B35] disabled:cursor-not-allowed disabled:opacity-50"><Send className="h-4 w-4" /></button><motion.button type="button" whileTap={{ scale: 0.85 }} onClick={() => void reactToStory()} disabled={liked || isReacting} aria-pressed={liked} aria-label="React to story" className={`rounded-full p-3 transition ${liked ? 'bg-rose-500' : 'bg-black/35 hover:bg-black/55'} disabled:cursor-default`}><Heart className={`h-4 w-4 ${liked ? 'fill-white' : ''}`} /></motion.button></div>}
           {sendError && <p className="absolute bottom-20 left-1/2 z-20 -translate-x-1/2 rounded-lg bg-black/70 px-3 py-1 text-xs text-rose-300">{sendError}</p>}
-          </div>
-          {onNextStory && <button type="button" onClick={onNextStory} onPointerEnter={() => setHoveredStorySide('next')} onPointerLeave={() => setHoveredStorySide(null)} aria-label="Next story" className={`absolute left-full ml-10 hidden h-12 w-12 items-center justify-center rounded-full border border-neutral-200 text-neutral-700 shadow-xl backdrop-blur-sm transition duration-200 dark:border-white/10 dark:text-white lg:flex ${hoveredStorySide === 'next' ? 'scale-110 bg-white animate-pulse dark:bg-white/35' : 'scale-100 bg-white/80 dark:bg-white/20'}`}><ChevronRight className="h-7 w-7" /></button>}
+           </motion.div>
+           {onNextStory && <button type="button" onClick={onNextStory} onPointerEnter={() => setHoveredStorySide('next')} onPointerLeave={() => setHoveredStorySide(null)} aria-label="Next story" className={`absolute left-full ml-10 hidden h-12 w-12 items-center justify-center rounded-full border border-neutral-200 text-neutral-700 shadow-xl backdrop-blur-sm transition duration-200 dark:border-white/10 dark:text-white lg:flex ${hoveredStorySide === 'next' ? 'scale-110 bg-white animate-pulse dark:bg-white/35' : 'scale-100 bg-white/80 dark:bg-white/20'}`}><ChevronRight className="h-7 w-7" /></button>}
         </div>
 
-        {isOwnStory && <div className="absolute bottom-4 left-1/2 z-30 -translate-x-1/2 sm:bottom-7"><button type="button" onClick={() => setIsInsightsOpen((open) => !open)} className="flex items-center gap-2 whitespace-nowrap rounded-2xl border border-neutral-200 bg-white/95 px-4 py-2 text-xs font-bold text-neutral-900 shadow-sm backdrop-blur-sm transition hover:bg-white dark:border-white/10 dark:bg-black/70 dark:text-white dark:hover:bg-black/85"><Eye className="h-4 w-4 text-[#2F8F46] dark:text-[#B7E35F]" /> Story viewers <span className="text-neutral-400">⌃</span></button>{isInsightsOpen && <div className="absolute bottom-full left-1/2 mb-2 w-[min(340px,88vw)] -translate-x-1/2 rounded-2xl border border-neutral-200 bg-white p-4 text-left text-neutral-900 shadow-2xl dark:border-white/10 dark:bg-[#202522] dark:text-white"><p className="text-sm font-black">Story viewers</p><p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">Viewer and reaction details will appear here after story tracking is connected.</p><div className="mt-4 rounded-xl bg-neutral-100 p-3 text-xs text-neutral-500 dark:bg-white/5">No viewer data available yet.</div></div>}</div>}
+        {isOwnStory && <div className="absolute bottom-4 left-1/2 z-30 -translate-x-1/2 lg:bottom-7"><button type="button" onClick={() => setIsInsightsOpen((open) => !open)} className="flex items-center gap-2 whitespace-nowrap rounded-2xl border border-neutral-200 bg-white/95 px-4 py-2 text-xs font-bold text-neutral-900 shadow-sm backdrop-blur-sm transition hover:bg-white dark:border-white/10 dark:bg-black/70 dark:text-white dark:hover:bg-black/85"><Eye className="h-4 w-4 text-[#2F8F46] dark:text-[#B7E35F]" /> Story viewers <span className="text-neutral-400">⌃</span></button>{isInsightsOpen && <div className="absolute bottom-full left-1/2 mb-2 w-[min(340px,88vw)] -translate-x-1/2 rounded-2xl border border-neutral-200 bg-white p-4 text-left text-neutral-900 shadow-2xl dark:border-white/10 dark:bg-[#202522] dark:text-white"><p className="text-sm font-black">Story viewers</p><p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">People who viewed this story</p><div className="mt-4 max-h-64 space-y-2 overflow-y-auto">{isLoadingViewers ? <div className="rounded-xl bg-neutral-100 p-3 text-xs text-neutral-500 dark:bg-white/5">Loading viewers...</div> : viewers.length === 0 ? <div className="rounded-xl bg-neutral-100 p-3 text-xs text-neutral-500 dark:bg-white/5">No viewers yet.</div> : viewers.map((viewer) => <div key={viewer.id} className="flex items-center gap-3 rounded-xl bg-neutral-100 px-3 py-2.5 dark:bg-white/5"><CommunityAvatar src={viewer.avatar} alt={viewer.name} className="h-8 w-8 rounded-full object-cover" /><span className="min-w-0 flex-1 truncate text-xs font-semibold">{viewer.name}</span>{viewer.reacted && <Heart className="h-4 w-4 fill-rose-500 text-rose-500" aria-label="Loved this story" />}</div>)}</div></div>}</div>}
 
       </motion.div>
       <CommunityConfirmModal

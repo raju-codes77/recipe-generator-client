@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
-import { PlusCircle, RefreshCw, Check, Utensils, Sparkles, Search, X } from "lucide-react";
+import { PlusCircle, RefreshCw, Check, Utensils, Sparkles, Search, X, ChevronDown } from "lucide-react";
 import { Post, Review, StoryItem, RecipeCollection, NotificationItem, Author } from "./types";
 import { fetchRandomMealDbRecipe } from "./mealDbService";
 
@@ -31,7 +31,19 @@ import Link from "next/link";
 const POSTS_PER_PAGE = 4;
 const API_POSTS_PER_PAGE = 6;
 const PUBLIC_PREVIEW_POSTS = 3;
+const COMMUNITY_PULL_THRESHOLD = 78;
+const COMMUNITY_MAX_PULL = 112;
 type CommunityFilter = "all" | "trending" | "following" | "quick" | "wellness" | "ai_sparks" | "saved" | "liked";
+
+const COMMUNITY_FILTER_OPTIONS: Array<{ id: CommunityFilter; label: string }> = [
+  { id: "all", label: "All Community Posts" },
+  { id: "trending", label: "Trending Recipes" },
+  { id: "following", label: "Following Cooks" },
+  { id: "quick", label: "Quick 15-Min Meals" },
+  { id: "wellness", label: "High Protein & Healthy" },
+  { id: "saved", label: "My Saved Recipes" },
+  { id: "liked", label: "Recipes I Liked" },
+];
 
 const FILTER_END_MESSAGES: Record<CommunityFilter, string> = {
   all: "You have reached the latest Community posts.",
@@ -88,6 +100,7 @@ export const CommunityFeed: React.FC = () => {
   const [collections, setCollections] = useState<RecipeCollection[]>([]);
   const [feedCounts, setFeedCounts] = useState({ savedPostsCount: 0, likedPostsCount: 0 });
   const [currentUserRecipeCount, setCurrentUserRecipeCount] = useState<number | null>(null);
+  const [currentUserFollowersCount, setCurrentUserFollowersCount] = useState<number | null>(null);
   const [chefs, setChefs] = useState<Author[]>(() => getCommunityChefs(communityCache?.posts ?? []));
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [connectionsOpen, setConnectionsOpen] = useState(false);
@@ -99,14 +112,33 @@ export const CommunityFeed: React.FC = () => {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [hasMoreServerPosts, setHasMoreServerPosts] = useState(() => communityCache?.hasMorePosts ?? true);
   const [isLoadingMorePosts, setIsLoadingMorePosts] = useState(false);
+  const [pullDistance, setPullDistance] = useState(0);
+  const [isPullRefreshing, setIsPullRefreshing] = useState(false);
 
   // Navigation & Filtering
   const [activeFilter, setActiveFilter] = useState<string>("all");
+  const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isSearchSuggestionSelected, setIsSearchSuggestionSelected] = useState(false);
   const [visiblePostCount, setVisiblePostCount] = useState<number>(POSTS_PER_PAGE);
   const [isLoadingApi, setIsLoadingApi] = useState<boolean>(false);
   const feedEndRef = useRef<HTMLDivElement>(null);
+  const pullStartYRef = useRef<number | null>(null);
+  const isPullTrackingRef = useRef(false);
+
+  useEffect(() => {
+    if (!isMobileFilterOpen) return;
+
+    const closeOnOutsideClick = (event: PointerEvent) => {
+      const target = event.target as Node;
+      if (!(target instanceof Element) || !target.closest("[data-community-filter]")) {
+        setIsMobileFilterOpen(false);
+      }
+    };
+
+    document.addEventListener("pointerdown", closeOnOutsideClick);
+    return () => document.removeEventListener("pointerdown", closeOnOutsideClick);
+  }, [isMobileFilterOpen]);
 
   const suggestedCommunityTags = useMemo(() => {
     const tagCounts = new Map<string, number>();
@@ -131,6 +163,41 @@ export const CommunityFeed: React.FC = () => {
     setActiveFilter(filter);
     window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
   }, [activeFilter]);
+
+  const handlePullStart = (event: React.TouchEvent<HTMLElement>) => {
+    if (isLoadingFilter || isInitialLoading || isPullRefreshing || window.scrollY > 0 || !window.matchMedia("(max-width: 767px)").matches || event.touches.length !== 1) return;
+    pullStartYRef.current = event.touches[0].clientY;
+    isPullTrackingRef.current = true;
+    setPullDistance(0);
+  };
+
+  const handlePullMove = (event: React.TouchEvent<HTMLElement>) => {
+    if (!isPullTrackingRef.current || pullStartYRef.current === null || event.touches.length !== 1) return;
+
+    const distance = event.touches[0].clientY - pullStartYRef.current;
+    if (distance <= 0) {
+      setPullDistance(0);
+      return;
+    }
+
+    if (event.cancelable) event.preventDefault();
+    setPullDistance(Math.min(distance, COMMUNITY_MAX_PULL));
+  };
+
+  const handlePullEnd = () => {
+    if (!isPullTrackingRef.current) return;
+
+    const shouldRefresh = pullDistance >= COMMUNITY_PULL_THRESHOLD;
+    pullStartYRef.current = null;
+    isPullTrackingRef.current = false;
+    setPullDistance(0);
+
+    if (!shouldRefresh) return;
+
+    setIsLoadingFilter(true);
+    setIsPullRefreshing(true);
+    void loadCommunity().finally(() => setIsPullRefreshing(false));
+  };
 
   // Modals state
   const [createPostOpen, setCreatePostOpen] = useState(false);
@@ -224,13 +291,12 @@ export const CommunityFeed: React.FC = () => {
         username: session.user.email.split("@")[0],
         avatar: session.user.image || "",
         role: "user",
-        followersCount: currentUserPost?.author.followersCount || 0,
+         followersCount: currentUserFollowersCount ?? currentUserPost?.author.followersCount ?? 0,
         recipesCount: currentUserRecipeCount ?? posts.filter((post) => post.author.id === session.user.id && post.recipe).length,
       }
     : null;
 
   const loadCommunity = useCallback(async () => {
-    setIsSidebarDataReady(false);
     setIsLoadingFilter(true);
     setLoadError(null);
     try {
@@ -248,20 +314,25 @@ export const CommunityFeed: React.FC = () => {
         communityCache?.stories ?? [],
         null,
       ];
-      setCurrentUserRecipeCount(ownProfile?.user.recipesCount ?? 0);
-      setPosts(loadedPosts);
-      setTrendingPosts(loadedTrendingPosts);
-      setStories(loadedStories);
-      setHasMoreServerPosts(isAuthenticated && loadedPosts.length === API_POSTS_PER_PAGE);
-      setVisiblePostCount(POSTS_PER_PAGE);
-      setChefs(getCommunityChefs(loadedPosts, session?.user.id));
+       if (ownProfile) {
+         setCurrentUserRecipeCount(ownProfile.user.recipesCount);
+         setCurrentUserFollowersCount(ownProfile.user.followersCount);
+       }
+       setPosts(loadedPosts);
+       if (activeFilter === "all") {
+         setTrendingPosts(loadedTrendingPosts);
+         setStories(loadedStories);
+       }
+       setHasMoreServerPosts(isAuthenticated && loadedPosts.length === API_POSTS_PER_PAGE);
+       setVisiblePostCount(POSTS_PER_PAGE);
+       if (activeFilter === "all") setChefs(getCommunityChefs(loadedPosts, session?.user.id));
       communityCache = {
         posts: loadedPosts,
         trendingPosts: loadedTrendingPosts,
         stories: loadedStories,
         hasMorePosts: isAuthenticated && loadedPosts.length === API_POSTS_PER_PAGE,
       };
-      if (isAuthenticated) try {
+       if (isAuthenticated && activeFilter === "all") try {
         const suggestedChefs = await communityApi.listSuggestedChefs();
         setChefs(suggestedChefs);
       } catch {
@@ -286,10 +357,13 @@ export const CommunityFeed: React.FC = () => {
           setNotifications([]);
         }
       } else {
-        setCurrentUserRecipeCount(0);
         setCollections([]);
         setNotifications([]);
-        setFeedCounts({ savedPostsCount: 0, likedPostsCount: 0 });
+        if (!session?.user) {
+          setCurrentUserRecipeCount(0);
+          setCurrentUserFollowersCount(0);
+          setFeedCounts({ savedPostsCount: 0, likedPostsCount: 0 });
+        }
       }
     } catch (error) {
       setLoadError(error instanceof Error ? error.message : "Unable to load the Community feed");
@@ -313,6 +387,7 @@ export const CommunityFeed: React.FC = () => {
       if (activeFilter !== "all") return;
     }
 
+    setIsSidebarDataReady(false);
     setIsLoadingFilter(true);
     void loadCommunity();
   }, [activeFilter, loadCommunity, searchQuery]);
@@ -331,6 +406,32 @@ export const CommunityFeed: React.FC = () => {
       .catch(() => setConnectionUsers([]))
       .finally(() => setIsLoadingConnections(false));
   };
+
+  const updatePostInFeed = useCallback((postId: string, update: (post: Post) => Post) => {
+    setPosts((currentPosts) => {
+      const updatedPosts = currentPosts.map((post) => (post.id === postId ? update(post) : post));
+      communityCache = communityCache
+        ? { ...communityCache, posts: updatedPosts }
+        : communityCache;
+      return updatedPosts;
+    });
+    setTrendingPosts((currentPosts) => currentPosts.map((post) => (post.id === postId ? update(post) : post)));
+  }, []);
+
+  const updateAuthorInFeed = useCallback((authorId: string, update: (author: Author) => Author) => {
+    const updatePostAuthor = (post: Post): Post =>
+      post.author.id === authorId ? { ...post, author: update(post.author) } : post;
+
+    setPosts((currentPosts) => {
+      const updatedPosts = currentPosts.map(updatePostAuthor);
+      communityCache = communityCache
+        ? { ...communityCache, posts: updatedPosts }
+        : communityCache;
+      return updatedPosts;
+    });
+    setTrendingPosts((currentPosts) => currentPosts.map(updatePostAuthor));
+    setChefs((currentChefs) => currentChefs.map((author) => (author.id === authorId ? update(author) : author)));
+  }, []);
 
   const runMutation = useCallback(
     async (mutation: () => Promise<unknown>, success: string) => {
@@ -452,9 +553,48 @@ export const CommunityFeed: React.FC = () => {
     [router],
   );
 
-  // Handle Likes
-  const handleToggleLike = (postId: string) =>
-    void runMutation(() => communityApi.toggleLike(postId), "Updated recipe like");
+  // Handle Likes without reloading the entire feed.
+  const handleToggleLike = useCallback(async (postId: string) => {
+    const post = posts.find((item) => item.id === postId);
+    if (!post) return;
+
+    const previousLiked = post.isLiked;
+    const previousLikesCount = post.likesCount;
+    const optimisticLiked = !previousLiked;
+    const optimisticLikesCount = Math.max(0, previousLikesCount + (optimisticLiked ? 1 : -1));
+
+    updatePostInFeed(postId, (currentPost) => ({
+      ...currentPost,
+      isLiked: optimisticLiked,
+      likesCount: optimisticLikesCount,
+    }));
+    setFeedCounts((currentCounts) => ({
+      ...currentCounts,
+      likedPostsCount: Math.max(0, currentCounts.likedPostsCount + (optimisticLiked ? 1 : -1)),
+    }));
+
+    try {
+      const result = await communityApi.toggleLike(postId);
+      const confirmedLikesCount = Math.max(0, previousLikesCount + (result.active ? 1 : -1));
+      updatePostInFeed(postId, (currentPost) => ({
+        ...currentPost,
+        isLiked: result.active,
+        likesCount: confirmedLikesCount,
+      }));
+      showToast("Updated recipe like");
+    } catch (error) {
+      updatePostInFeed(postId, (currentPost) => ({
+        ...currentPost,
+        isLiked: previousLiked,
+        likesCount: previousLikesCount,
+      }));
+      setFeedCounts((currentCounts) => ({
+        ...currentCounts,
+        likedPostsCount: Math.max(0, currentCounts.likedPostsCount + (optimisticLiked ? -1 : 1)),
+      }));
+      showToast(error instanceof Error ? error.message : "Community action failed");
+    }
+  }, [posts, showToast, updatePostInFeed]);
 
   // Handle Save / Bookmark
   const handleToggleSave = (postId: string) => {
@@ -501,9 +641,28 @@ export const CommunityFeed: React.FC = () => {
   const handleCreateCollection = (name: string, description: string) =>
     void runMutation(() => communityApi.createCollection(name, description), `Created collection "${name}"`);
 
-  // Handle Comments
-  const handleAddComment = (postId: string, content: string) =>
-    void runMutation(() => communityApi.addComment(postId, content), "Comment posted!");
+  // Handle Comments without reloading the entire feed.
+  const handleAddComment = useCallback(async (postId: string, content: string) => {
+    const post = posts.find((item) => item.id === postId);
+    if (!post) return;
+
+    try {
+      await communityApi.addComment(postId, content);
+      const interactions = await communityApi.getPostInteractions(postId, {
+        commentsTake: 8,
+        commentsSkip: 0,
+        reviewsTake: 0,
+      });
+      updatePostInFeed(postId, (currentPost) => ({
+        ...currentPost,
+        comments: interactions.comments,
+        commentsCount: currentPost.commentsCount + 1,
+      }));
+      showToast("Comment posted!");
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "Community action failed");
+    }
+  }, [posts, showToast, updatePostInFeed]);
 
   // Handle Reviews & Ratings
   const handleSubmitReview = (postId: string, review: Review) =>
@@ -513,9 +672,41 @@ export const CommunityFeed: React.FC = () => {
   const handleMadeIt = (postId: string) =>
     void runMutation(() => communityApi.toggleMadeIt(postId), "Updated your cooking history");
 
-  // Handle Follow / Unfollow
-  const handleToggleFollow = (authorId: string) =>
-    void runMutation(() => communityApi.toggleFollow(authorId), "Updated chef following status");
+  // Handle Follow / Unfollow without reloading the entire feed.
+  const handleToggleFollow = useCallback(async (authorId: string) => {
+    const author = posts.find((post) => post.author.id === authorId)?.author
+      ?? chefs.find((item) => item.id === authorId);
+    if (!author) return;
+
+    const previousFollowing = Boolean(author.isFollowing);
+    const previousFollowersCount = author.followersCount ?? 0;
+    const optimisticFollowing = !previousFollowing;
+    const optimisticFollowersCount = Math.max(0, previousFollowersCount + (optimisticFollowing ? 1 : -1));
+
+    updateAuthorInFeed(authorId, (currentAuthor) => ({
+      ...currentAuthor,
+      isFollowing: optimisticFollowing,
+      followersCount: optimisticFollowersCount,
+    }));
+
+    try {
+      const result = await communityApi.toggleFollow(authorId);
+      const confirmedFollowersCount = Math.max(0, previousFollowersCount + (result.active ? 1 : -1));
+      updateAuthorInFeed(authorId, (currentAuthor) => ({
+        ...currentAuthor,
+        isFollowing: result.active,
+        followersCount: confirmedFollowersCount,
+      }));
+      showToast("Updated chef following status");
+    } catch (error) {
+      updateAuthorInFeed(authorId, (currentAuthor) => ({
+        ...currentAuthor,
+        isFollowing: previousFollowing,
+        followersCount: previousFollowersCount,
+      }));
+      showToast(error instanceof Error ? error.message : "Community action failed");
+    }
+  }, [chefs, posts, showToast, updateAuthorInFeed]);
 
   // Handle Share (link copy)
   const handleShare = (post: Post) => {
@@ -671,7 +862,32 @@ export const CommunityFeed: React.FC = () => {
       </AnimatePresence>
 
       {/* Main Container Layout: 3 Columns (Enhanced sizing & comfortable spacing) */}
-      <main className="mx-auto max-w-[1440px] px-4 py-6 sm:px-6 lg:px-8">
+      <main
+        onTouchStart={handlePullStart}
+        onTouchMove={handlePullMove}
+        onTouchEnd={handlePullEnd}
+        onTouchCancel={handlePullEnd}
+        className="relative mx-auto max-w-[1440px] px-4 py-6 sm:px-6 lg:px-8"
+      >
+        <AnimatePresence>
+          {(pullDistance > 0 || isPullRefreshing) && (
+            <motion.div
+              initial={{ opacity: 0, y: -64 }}
+              animate={{
+                opacity: isPullRefreshing ? 1 : Math.min(pullDistance / COMMUNITY_PULL_THRESHOLD, 1),
+                y: isPullRefreshing ? 0 : pullDistance - COMMUNITY_PULL_THRESHOLD,
+              }}
+              exit={{ opacity: 0, y: -64 }}
+              transition={{ duration: isPullRefreshing ? 0.3 : 0.12, ease: "easeOut" }}
+              className="pointer-events-none absolute inset-x-0 top-2 z-40 flex justify-center lg:hidden"
+              role="status"
+              aria-label="Pull to refresh Community"
+            >
+              <span className={`h-8 w-8 rounded-full border-[3px] border-[#2F8F46]/35 border-t-[#2F8F46] bg-white/80 shadow-lg backdrop-blur-sm dark:border-[#B7E35F]/35 dark:border-t-[#B7E35F] dark:bg-[#121212]/80 ${isPullRefreshing ? "animate-spin" : ""}`} />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         <div className="grid grid-cols-1 items-start gap-7 lg:grid-cols-12 xl:grid-cols-[280px_minmax(0,580px)_280px] xl:justify-center">
           {/* Column 1: Left Navigation & Profile */}
           <CommunityScrollColumn className="community-scroll-column--left-sidebar hidden lg:col-span-3 lg:block xl:col-span-1">
@@ -714,11 +930,18 @@ export const CommunityFeed: React.FC = () => {
                 className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-neutral-800 dark:bg-[#121212]"
               >
                 <div className="flex items-center gap-3.5">
-                  <CommunityAvatar
-                    src={currentUser.avatar}
-                    alt={currentUser.name}
-                    className="h-11 w-11 shrink-0 rounded-full object-cover ring-2 ring-[#2F8F46]"
-                  />
+                  <button
+                    type="button"
+                    onClick={() => router.push(`/community/users/${encodeURIComponent(currentUser.id)}`)}
+                    aria-label="Open your Community profile"
+                    className="shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2F8F46] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[#121212]"
+                  >
+                    <CommunityAvatar
+                      src={currentUser.avatar}
+                      alt={currentUser.name}
+                      className="h-11 w-11 rounded-full object-cover ring-2 ring-[#2F8F46]"
+                    />
+                  </button>
                   <button
                     onClick={() => {
                       setCreatePostInitialAI(false);
@@ -758,7 +981,7 @@ export const CommunityFeed: React.FC = () => {
                     className="flex items-center gap-2 font-bold text-neutral-600 hover:text-[#FF9F43] transition dark:text-neutral-300"
                   >
                     <Sparkles className="h-4 w-4 text-[#FF9F43]" />
-                    <span>TheMealDB & AI Import</span>
+                    <span>TheMealDB</span>
                   </motion.button>
 
                   <motion.button
@@ -881,7 +1104,7 @@ export const CommunityFeed: React.FC = () => {
 
             {/* Filter Status & Active Tabs */}
             <div className="flex items-center justify-between px-1">
-              <div className="flex items-center gap-2.5">
+              <div data-community-filter className="relative flex min-w-0 items-center gap-1.5">
                 <h2 className="font-extrabold text-sm uppercase tracking-wider text-neutral-800 dark:text-neutral-200">
                   {activeFilter === "all"
                     ? "Community Cooking Feed"
@@ -893,8 +1116,42 @@ export const CommunityFeed: React.FC = () => {
                             ? "🔖 My Saved Recipes"
                             : activeFilter === "liked"
                               ? "❤️ Liked Recipes"
-                              : `${activeFilter.toUpperCase()} Recipes`}
+                  : `${activeFilter.toUpperCase()} Recipes`}
                 </h2>
+                <div className="shrink-0 lg:hidden">
+                  <button
+                    type="button"
+                    onClick={() => setIsMobileFilterOpen((open) => !open)}
+                    aria-haspopup="menu"
+                    aria-expanded={isMobileFilterOpen}
+                    aria-label="Choose Community feed"
+                    className="inline-flex rounded-md p-1 text-neutral-500 transition hover:text-[#2F8F46] dark:text-neutral-400 dark:hover:text-[#B7E35F]"
+                  >
+                    <ChevronDown className={`h-4 w-4 transition-transform ${isMobileFilterOpen ? "rotate-180" : ""}`} />
+                  </button>
+
+                  {isMobileFilterOpen && (
+                    <div role="menu" className="absolute left-0 top-full z-40 mt-2 w-52 overflow-hidden rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl dark:border-neutral-700 dark:bg-[#18181b]">
+                      {COMMUNITY_FILTER_OPTIONS
+                        .filter((option) => isAuthenticated || !["following", "saved", "liked"].includes(option.id))
+                        .map((option) => (
+                          <button
+                            key={option.id}
+                            type="button"
+                            role="menuitem"
+                            onClick={() => {
+                              setIsMobileFilterOpen(false);
+                              handleFilterChange(option.id);
+                            }}
+                            className={`flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-xs font-semibold transition ${activeFilter === option.id ? "bg-[#EAF7E8] text-[#176B35] dark:bg-emerald-950/50 dark:text-[#B7E35F]" : "text-neutral-700 hover:bg-neutral-50 dark:text-neutral-200 dark:hover:bg-neutral-800"}`}
+                          >
+                            <span>{option.label}</span>
+                            {activeFilter === option.id && <span aria-hidden="true">✓</span>}
+                          </button>
+                        ))}
+                    </div>
+                  )}
+                </div>
               </div>
 
               {activeFilter !== "all" && (
@@ -1069,7 +1326,7 @@ export const CommunityFeed: React.FC = () => {
                 onViewMoreTrending={() => handleFilterChange("trending")}
                 isAuthenticated={isAuthenticated}
                 onRequireAuthentication={requireAuthentication}
-                isLoading={isInitialLoading || isLoadingFilter || !isSidebarDataReady || !isSidebarContentReady}
+                 isLoading={isInitialLoading || !isSidebarDataReady || !isSidebarContentReady}
               />
           </aside>
         </div>

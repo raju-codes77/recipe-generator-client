@@ -24,7 +24,7 @@ export const CommunityConfirmModal: React.FC<CommunityConfirmModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-[90] flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-90 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm"
       role="alertdialog"
       aria-modal="true"
       aria-labelledby="community-confirm-title"

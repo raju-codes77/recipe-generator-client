@@ -12,7 +12,7 @@ export const ConfirmUnsaveModal: React.FC<ConfirmUnsaveModalProps> = ({ post, on
   if (!post) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs" role="dialog" aria-modal="true" aria-label="Confirm unsave" onClick={onClose}>
+    <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs" role="dialog" aria-modal="true" aria-label="Confirm unsave" onClick={onClose}>
       <div className="w-full max-w-sm rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-neutral-800 dark:bg-[#121212]" onClick={(event) => event.stopPropagation()}>
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-3">

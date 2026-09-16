@@ -27,6 +27,38 @@ interface CommunitySidebarLeftProps {
   onOpenSaved?: () => void;
 }
 
+const AnimatedCount: React.FC<{ value: number }> = ({ value }) => {
+  const [displayValue, setDisplayValue] = React.useState(value);
+  const previousValue = React.useRef(value);
+
+  React.useEffect(() => {
+    const startValue = previousValue.current;
+    if (startValue === value) return;
+
+    const duration = 650;
+    let animationFrame = 0;
+    let startedAt: number | null = null;
+
+    const animate = (timestamp: number) => {
+      startedAt ??= timestamp;
+      const progress = Math.min((timestamp - startedAt) / duration, 1);
+      const easedProgress = 1 - Math.pow(1 - progress, 3);
+      setDisplayValue(Math.round(startValue + (value - startValue) * easedProgress));
+
+      if (progress < 1) {
+        animationFrame = requestAnimationFrame(animate);
+      } else {
+        previousValue.current = value;
+      }
+    };
+
+    animationFrame = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(animationFrame);
+  }, [value]);
+
+  return <>{displayValue}</>;
+};
+
 export const CommunitySidebarLeft: React.FC<CommunitySidebarLeftProps> = ({
   activeFilter,
   setActiveFilter,
@@ -95,7 +127,7 @@ export const CommunitySidebarLeft: React.FC<CommunitySidebarLeftProps> = ({
           <div className="mt-4 grid grid-cols-3 gap-2 rounded-xl bg-neutral-50 p-3 text-center dark:bg-neutral-900/60">
             <div>
               <span className="block font-extrabold text-sm text-[#2F8F46] dark:text-[#B7E35F]">
-                {currentUser.recipesCount}
+                <AnimatedCount value={currentUser.recipesCount} />
               </span>
               <span className="text-[10px] font-medium text-neutral-500 dark:text-neutral-400">
                 Recipes
@@ -104,7 +136,7 @@ export const CommunitySidebarLeft: React.FC<CommunitySidebarLeftProps> = ({
 
             <button type="button" onClick={onOpenFollowers} className="cursor-pointer rounded-lg px-1 py-0.5 transition hover:bg-neutral-100 dark:hover:bg-neutral-800">
               <span className="block font-extrabold text-sm text-neutral-800 dark:text-neutral-200">
-                {currentUser.followersCount}
+                <AnimatedCount value={currentUser.followersCount} />
               </span>
               <span className="text-[10px] font-medium text-neutral-500 dark:text-neutral-400">
                 Followers
@@ -113,7 +145,7 @@ export const CommunitySidebarLeft: React.FC<CommunitySidebarLeftProps> = ({
 
             <button type="button" onClick={onOpenSaved} className="cursor-pointer rounded-lg px-1 py-0.5 transition hover:bg-neutral-100 dark:hover:bg-neutral-800">
               <span className="block font-extrabold text-sm text-[#FF9F43]">
-                {savedPostsCount}
+                <AnimatedCount value={savedPostsCount} />
               </span>
               <span className="text-[10px] font-medium text-neutral-500 dark:text-neutral-400">
                 Saved
@@ -186,18 +218,6 @@ export const CommunitySidebarLeft: React.FC<CommunitySidebarLeftProps> = ({
                     <span className="text-left">{cat.label}</span>
                   </div>
 
-                  {cat.badge && (
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-[9px] font-bold ${
-                        isActive
-                          ? "bg-white/20 text-white"
-                          : "bg-[#FF9F43]/15 text-[#FF9F43]"
-                      }`}
-                    >
-                      {cat.badge}
-                    </span>
-                  )}
-
                   {cat.count !== undefined && (
                     <span
                       className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
@@ -206,7 +226,7 @@ export const CommunitySidebarLeft: React.FC<CommunitySidebarLeftProps> = ({
                           : "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400"
                       }`}
                     >
-                      {cat.count}
+                      <AnimatedCount value={cat.count} />
                     </span>
                   )}
                 </motion.button>
