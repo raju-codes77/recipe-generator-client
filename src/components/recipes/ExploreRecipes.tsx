@@ -25,6 +25,9 @@ import { authClient } from "@/lib/auth-client";
 import Sidebar from "./Sidebar";
 import toast from "react-hot-toast";
 import RecipeSkeleton from "./RecipeSkeleton";
+import { getApiBaseUrl } from "@/lib/api-url";
+
+const API_BASE = getApiBaseUrl();
 
 interface Recipe {
   id: string;
@@ -95,7 +98,7 @@ export default function ExploreRecipes() {
       try {
         setIsCollectionsLoading(true);
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/collections?userId=${session.user.id}`,
+          `${API_BASE}/api/collections?userId=${session.user.id}`,
           { credentials: "include" }
         );
         const data = await response.json();
@@ -179,7 +182,7 @@ export default function ExploreRecipes() {
         }
 
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/recipes?${params.toString()}`,
+          `${API_BASE}/api/recipes?${params.toString()}`,
           { credentials: "include" }
         );
 
@@ -265,7 +268,7 @@ export default function ExploreRecipes() {
       if (session?.user?.id) {
         try {
           const response = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/collections?userId=${session.user.id}`,
+            `${API_BASE}/api/collections?userId=${session.user.id}`,
             { credentials: "include" }
           );
           const data = await response.json();
@@ -288,7 +291,7 @@ export default function ExploreRecipes() {
     e.stopPropagation();
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/collections`, {
+      const response = await fetch(`${API_BASE}/api/collections`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

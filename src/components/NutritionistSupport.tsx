@@ -85,7 +85,7 @@ export default function NutritionistSupportSection() {
 
           {/* CTA Button */}
           <div className="pt-6">
-            <Link href="/nutritionist">
+            <Link href="/dashboard/users/example">
               <div 
                 className="inline-flex items-center gap-2 text-white font-bold py-4 px-8 rounded-full shadow-lg hover:shadow-xl transition-shadow duration-300 text-[15px] group cursor-pointer"
                 style={{

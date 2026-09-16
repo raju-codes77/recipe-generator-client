@@ -5,7 +5,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { FiChevronLeft, FiChevronRight, FiArrowLeft, FiClock } from "react-icons/fi";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+import { getApiBaseUrl } from "@/lib/api-url";
+
+const API_BASE_URL = getApiBaseUrl();
 
 export default function PaginatedAiRecipesPage() {
   const [recipes, setRecipes] = useState<any[]>([]);

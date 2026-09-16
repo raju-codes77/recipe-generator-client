@@ -10,7 +10,9 @@ import type {
   StoryViewer,
 } from "@/components/community/types";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+import { getApiBaseUrl } from "@/lib/api-url";
+
+const API_BASE_URL = getApiBaseUrl();
 
 interface ApiErrorBody {
   message?: string;
@@ -113,11 +115,12 @@ export const communityApi = {
     return response.tags;
   },
 
-  getFeedCounts() {
-    return request<{ savedPostsCount: number; likedPostsCount: number }>("/feed-counts");
+  getFeedCounts(userId?: string) {
+    const query = userId ? `?userId=${userId}` : "";
+    return request<{ savedPostsCount: number; likedPostsCount: number }>(`/feed-counts${query}`);
   },
 
-  async createPost(post: Post): Promise<Post> {
+  async createPost(post: Post, userId: string): Promise<Post> {
     const response = await request<{ post: Post }>("/posts", {
       method: "POST",
       body: JSON.stringify({
@@ -126,42 +129,43 @@ export const communityApi = {
         additionalImages: post.additionalImages,
         recipe: post.recipe,
         tags: post.tags,
+        userId,
       }),
     });
 
     return response.post;
   },
 
-  toggleLike(postId: string) {
-    return request<{ active: boolean }>(`/posts/${postId}/like`, { method: "POST" });
+  toggleLike(postId: string, userId: string) {
+    return request<{ active: boolean }>(`/posts/${postId}/like`, { method: "POST", body: JSON.stringify({ userId }) });
   },
 
-  toggleMadeIt(postId: string) {
-    return request<{ active: boolean }>(`/posts/${postId}/made-it`, { method: "POST" });
+  toggleMadeIt(postId: string, userId: string) {
+    return request<{ active: boolean }>(`/posts/${postId}/made-it`, { method: "POST", body: JSON.stringify({ userId }) });
   },
 
-  addComment(postId: string, content: string) {
+  addComment(postId: string, content: string, userId: string) {
     return request(`/posts/${postId}/comments`, {
       method: "POST",
-      body: JSON.stringify({ content }),
+      body: JSON.stringify({ content, userId }),
     });
   },
 
-  saveReview(postId: string, review: Review) {
+  saveReview(postId: string, review: Review, userId: string) {
     return request(`/posts/${postId}/reviews`, {
       method: "POST",
-      body: JSON.stringify(review),
+      body: JSON.stringify({ ...review, userId }),
     });
   },
 
-  toggleFollow(userId: string) {
-    return request<{ active: boolean }>(`/users/${userId}/follow`, { method: "POST" });
+  toggleFollow(userIdToFollow: string, userId: string) {
+    return request<{ active: boolean }>(`/users/${userIdToFollow}/follow`, { method: "POST", body: JSON.stringify({ userId }) });
   },
 
-  async sharePost(postId: string, caption?: string, tags?: string[]): Promise<Post> {
+  async sharePost(postId: string, caption?: string, userId?: string, tags?: string[]): Promise<Post> {
     const response = await request<{ post: Post }>(`/posts/${postId}/share`, {
       method: "POST",
-      body: JSON.stringify({ caption, tags }),
+      body: JSON.stringify({ caption, tags, userId }),
     });
     return response.post;
   },
@@ -194,8 +198,9 @@ export const communityApi = {
     return response.profile;
   },
 
-  async listCollections(): Promise<RecipeCollection[]> {
-    const response = await request<{ collections: RecipeCollection[] }>("/collections");
+  async listCollections(userId?: string): Promise<RecipeCollection[]> {
+    const query = userId ? `?userId=${userId}` : "";
+    const response = await request<{ collections: RecipeCollection[] }>(`/collections${query}`);
     return response.collections;
   },
 
@@ -207,33 +212,33 @@ export const communityApi = {
     return request<{ posts: Post[]; hasMore: boolean }>(`/saved-posts${suffix}`);
   },
 
-  createCollection(name: string, description: string) {
+  createCollection(name: string, description: string, userId: string) {
     return request("/collections", {
       method: "POST",
-      body: JSON.stringify({ name, description }),
+      body: JSON.stringify({ name, description, userId }),
     });
   },
 
-  savePost(postId: string, collectionId?: string) {
+  savePost(postId: string, collectionId: string | undefined, userId: string) {
     return request<{ active: boolean }>(`/posts/${postId}/save`, {
       method: "POST",
-      body: JSON.stringify({ collectionId }),
+      body: JSON.stringify({ collectionId, userId }),
     });
   },
 
-  reportPost(postId: string, reason: string, details: string) {
+  reportPost(postId: string, reason: string, details: string, userId: string) {
     return request(`/posts/${postId}/reports`, {
       method: "POST",
-      body: JSON.stringify({ reason, details }),
+      body: JSON.stringify({ reason, details, userId }),
     });
   },
 
-  deletePost(postId: string) {
-    return request<void>(`/posts/${postId}`, { method: "DELETE" });
+  deletePost(postId: string, userId: string) {
+    return request<void>(`/posts/${postId}`, { method: "DELETE", body: JSON.stringify({ userId }) });
   },
 
-  updatePost(postId: string, data: { caption?: string; tags?: string[]; isPinned?: boolean }) {
-    return request<void>(`/posts/${postId}`, { method: "PATCH", body: JSON.stringify(data) });
+  updatePost(postId: string, data: { caption?: string; tags?: string[]; isPinned?: boolean }, userId: string) {
+    return request<void>(`/posts/${postId}`, { method: "PATCH", body: JSON.stringify({ ...data, userId }) });
   },
 
   async listStories(): Promise<StoryItem[]> {
@@ -241,15 +246,15 @@ export const communityApi = {
     return response.stories;
   },
 
-  createStory(imageUrl: string, caption = "") {
+  createStory(imageUrl: string, caption: string | undefined, userId: string) {
     return request("/stories", {
       method: "POST",
-      body: JSON.stringify({ imageUrl, caption }),
+      body: JSON.stringify({ imageUrl, caption, userId }),
     });
   },
 
-  deleteStory(storyId: string) {
-    return request<void>(`/stories/${storyId}`, { method: "DELETE" });
+  deleteStory(storyId: string, userId: string) {
+    return request<void>(`/stories/${storyId}`, { method: "DELETE", body: JSON.stringify({ userId }) });
   },
 
   recordStoryView(storyId: string) {
@@ -270,11 +275,11 @@ export const communityApi = {
     return response.notifications;
   },
 
-  markNotificationRead(notificationId: string) {
-    return request(`/notifications/${notificationId}/read`, { method: "PATCH" });
+  markNotificationRead(notificationId: string, userId: string) {
+    return request(`/notifications/${notificationId}/read`, { method: "PATCH", body: JSON.stringify({ userId }) });
   },
 
-  async uploadImage(file: File, folder: "posts" | "stories" | "profiles"): Promise<string> {
+  async uploadImage(file: File, folder: "posts" | "stories" | "profiles", userId: string): Promise<string> {
     const maxImageBytes = 6 * 1024 * 1024;
     if (file.size > maxImageBytes) {
       throw new Error("Image must be 6 MB or smaller");
@@ -283,16 +288,16 @@ export const communityApi = {
     const dataUrl = await fileToDataUrl(file);
     const response = await request<{ url: string }>("/uploads", {
       method: "POST",
-      body: JSON.stringify({ dataUrl, folder }),
+      body: JSON.stringify({ dataUrl, folder, userId }),
     });
 
     return response.url;
   },
 
-  updateProfile(data: { name?: string; bio?: string; location?: string; interests?: string[]; image?: string; coverImage?: string }) {
+  updateProfile(data: { name?: string; bio?: string; location?: string; interests?: string[]; image?: string; coverImage?: string }, userId: string) {
     return request<{ profile: { id: string; name: string; image: string | null; bio: string | null; location: string | null; interests: string[]; coverImage: string | null } }>("/users/me/profile", {
       method: "PATCH",
-      body: JSON.stringify(data),
+      body: JSON.stringify({ ...data, userId }),
     });
   },
 
@@ -310,10 +315,10 @@ export const communityApi = {
     return request<CommunityMessagesPage>(`/messages/${userId}${query}`);
   },
 
-  sendMessage(userId: string, text: string, attachedPostId?: string) {
-    return request(`/messages/${userId}`, {
+  sendMessage(recipientId: string, text: string, attachedPostId: string | undefined, userId: string) {
+    return request(`/messages/${recipientId}`, {
       method: "POST",
-      body: JSON.stringify({ text, attachedPostId }),
+      body: JSON.stringify({ text, attachedPostId, userId }),
     });
   },
 };

@@ -107,8 +107,7 @@ export default function RegisterPage() {
       setSuccessMessage("Account created successfully! Redirecting...");
 
       setTimeout(() => {
-        router.refresh();
-        router.push("/");
+        window.location.href = "/";
       }, 1000);
     } catch (error) {
       console.error("Unexpected signup error:", error);
@@ -121,25 +120,7 @@ export default function RegisterPage() {
   };
 
   const handleGoogleSignup = async () => {
-    setErrorMessage("");
-    setSuccessMessage("");
-
-    try {
-      setLoading(true);
-      toast.loading("Connecting with Google...", { id: "google-signup" });
-      
-      await authClient.signIn.social({
-        provider: "google",
-        callbackURL: `${process.env.NEXT_PUBLIC_LOCAL_URL || "http://localhost:3000"}/`, // সফল লগইনের পর ফ্রন্টএন্ড হোমপেজে আসবে
-      });
-    } catch (error) {
-      console.error("Google signup error:", error);
-      toast.dismiss("google-signup");
-      const msg = "Google signup failed. Please try again.";
-      setErrorMessage(msg);
-      toast.error(msg);
-      setLoading(false);
-    }
+    toast.error("Social signup is currently under maintenance.");
   };
 
   return (
@@ -319,23 +300,6 @@ export default function RegisterPage() {
                 </div>
               </div>
 
-              {/* Role Selection Dropdown */}
-              <div>
-                <div className="relative">
-                  <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-gray-400">
-                    <FiShield size={15} />
-                  </span>
-                  <select
-                    value={role}
-                    onChange={(e) => setRole(e.target.value)}
-                    disabled={loading}
-                    className="w-full pl-10 pr-4 py-3 rounded-xl bg-gray-50/50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 text-xs text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#3A6B35]/30 focus:border-[#3A6B35] transition-all disabled:opacity-50 appearance-none"
-                  >
-                    <option value="USER" className="bg-white dark:bg-gray-900">User (Standard)</option>
-                    <option value="ADMIN" className="bg-white dark:bg-gray-900">Admin</option>
-                  </select>
-                </div>
-              </div>
 
               {/* Password */}
               <div>

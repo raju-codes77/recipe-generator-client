@@ -2,10 +2,12 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { FiArrowLeft, FiTrash2, FiSearch, FiBookOpen } from "react-icons/fi";
+import { FiArrowLeft, FiSearch, FiBookOpen } from "react-icons/fi";
 import toast from "react-hot-toast";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+import { getApiBaseUrl } from "@/lib/api-url";
+
+const API_BASE_URL = getApiBaseUrl();
 
 export default function AdminRecipesPage() {
   const [recipes, setRecipes] = useState<any[]>([]);
@@ -38,26 +40,6 @@ export default function AdminRecipesPage() {
       toast.error("Failed to fetch recipes");
     } finally {
       setLoading(false);
-    }
-  }
-
-  async function handleDelete(id: string) {
-    if (!confirm("Are you sure you want to permanently delete this recipe?")) return;
-
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/admin/recipes/${id}`, {
-        method: 'DELETE',
-        credentials: "include"
-      });
-      if (res.ok) {
-        toast.success("Recipe deleted successfully");
-        setRecipes(recipes.filter(r => r.id !== id));
-      } else {
-        toast.error("Delete failed");
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error("Something went wrong");
     }
   }
 
@@ -111,17 +93,16 @@ export default function AdminRecipesPage() {
                   <th className="px-6 py-4 font-semibold">Author</th>
                   <th className="px-6 py-4 font-semibold">Category</th>
                   <th className="px-6 py-4 font-semibold">Created Date</th>
-                  <th className="px-6 py-4 font-semibold text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-700/50">
                 {loading ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-12 text-center text-gray-500">Loading recipes...</td>
+                    <td colSpan={4} className="px-6 py-12 text-center text-gray-500">Loading recipes...</td>
                   </tr>
                 ) : filteredRecipes.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-12 text-center text-gray-500">No recipes found.</td>
+                    <td colSpan={4} className="px-6 py-12 text-center text-gray-500">No recipes found.</td>
                   </tr>
                 ) : (
                   filteredRecipes.map((r) => (
@@ -142,15 +123,6 @@ export default function AdminRecipesPage() {
                       </td>
                       <td className="px-6 py-4 text-gray-600 dark:text-gray-300">
                         {new Date(r.createdAt).toLocaleDateString()}
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <button 
-                          onClick={() => handleDelete(r.id)}
-                          className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-500 hover:text-red-500 transition-colors"
-                          title="Delete Recipe"
-                        >
-                          <FiTrash2 />
-                        </button>
                       </td>
                     </tr>
                   ))

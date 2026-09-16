@@ -20,7 +20,9 @@ import PantryCard from "@/components/aitools/shopping-list/PantryCard";
 import ShoppingListNote from "@/components/aitools/shopping-list/ShoppingListNote";
 import Link from "next/link";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+import { getApiBaseUrl } from "@/lib/api-url";
+
+const API_URL = getApiBaseUrl();
 
 function mapBackendItem(item: any): ShoppingItem {
   const qtyStr = typeof item.quantity === "number"

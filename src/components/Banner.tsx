@@ -66,7 +66,7 @@ const SLIDES = [
     headline: ["Plan Smarter.", "Eat Better."],
     headlineHighlight: -1,
     sub: "Build your full weekly meal plan on a budget, then let Smart Meal Matcher serve up personalized recipe recommendations just for you.",
-    ctaPrimary: { label: "Plan My Meals", href: "/ai-tools/budget-meal-planner" },
+    ctaPrimary: { label: "Plan My Meals", href: "/ai-tools/meal-planner" },
     ctaSecondary: { label: "Find My Match", href: "/ai-tools/taste-matcher" },
     accentColor: "teal",
     bgImage: "/hero5.png",
@@ -912,7 +912,7 @@ const VISUALS = [Slide0Visual, Slide1Visual, Slide2Visual, Slide3Visual, Slide4V
 // ─── Feature bar ──────────────────────────────────────────────────────────────
 const FEATURES = [
   { icon: <Refrigerator size={16} />, label: "AI Ingredient Rescue", href: "/ai-tools/ingredient-rescue" },
-  { icon: <Calendar size={16} />, label: "Budget Meal Planner", href: "/ai-tools/budget-meal-planner" },
+  { icon: <Calendar size={16} />, label: "Smart Meal Planner", href: "/ai-tools/meal-planner" },
   { icon: <Activity size={16} />, label: "Nutrition & Meal Tracker", href: "/ai-tools/meal-tracker" },
   { icon: <Smile size={16} />, label: "Taste Matcher", href: "/ai-tools/taste-matcher" },
   { icon: <ShoppingBasket size={16} />, label: "Smart Shopping List", href: "/ai-tools/shopping-list" },

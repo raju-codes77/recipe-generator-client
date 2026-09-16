@@ -70,8 +70,7 @@ export default function Navbar() {
 
 
   const dashboardHref =
-
-    userRole === "admin" ? "/dashboard/admin" : "/dashboard/users";
+    userRole === "admin" ? "/dashboard/admin" : "/dashboard/user";
 
   const navLinks = user
 
@@ -395,21 +394,6 @@ export default function Navbar() {
                 <span>Sign Up</span>
                 <ChevronRight size={16} strokeWidth={3} className="opacity-70 group-hover:translate-x-0.5 transition-transform" />
               </Link>
-
-
-
-              <Link
-
-                href="/registrationProcess/register"
-
-                className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-full transition-colors shadow-sm shadow-emerald-600/20"
-
-              >
-
-                Sign Up
-
-              </Link>
-
             </div>
 
           )}

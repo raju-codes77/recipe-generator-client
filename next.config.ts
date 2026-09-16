@@ -3,12 +3,26 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   /* config options here */
   async rewrites() {
-    return [
-      {
-        source: '/api/auth/:path*',
-        destination: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/auth/:path*`,
-      },
-    ];
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+    return {
+      beforeFiles: [
+        {
+          source: '/dashboard/user',
+          destination: '/dashboard/users',
+        },
+        {
+          source: '/dashboard/user/:path*',
+          destination: '/dashboard/users/:path*',
+        },
+      ],
+      afterFiles: [],
+      fallback: [
+        {
+          source: '/api/:path*',
+          destination: `${backendUrl}/api/:path*`,
+        },
+      ],
+    };
   },
   reactCompiler: true,
   images: {

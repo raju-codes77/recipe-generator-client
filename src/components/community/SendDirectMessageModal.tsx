@@ -85,11 +85,13 @@ export const SendDirectMessageModal: React.FC<SendDirectMessageModalProps> = ({
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!session?.user?.id) return;
     if ((!inputMessage.trim() && !attachedPost) || !activeContact.id) return;
     await communityApi.sendMessage(
       activeContact.id,
       inputMessage.trim() || "Check out this delicious recipe!",
       attachedPost?.id,
+      session.user.id
     );
     const page = await communityApi.listMessages(activeContact.id, { take: MESSAGES_PER_PAGE, skip: 0 });
     setMessages((current) => {

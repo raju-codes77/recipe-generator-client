@@ -59,7 +59,7 @@ const TOOLS = [
     cta: "Find My Match",
   },
   {
-    href: "/meal-planner",
+    href: "/ai-tools/meal-planner",
     icon: <Calendar size={24} />,
     iconBg: "bg-indigo-600",
     iconShadow: "shadow-indigo-600/30",
@@ -67,7 +67,7 @@ const TOOLS = [
     border: "border-indigo-100 dark:border-slate-700",
     linkColor: "text-indigo-700 dark:text-indigo-500",
     badge: { text: "AI Powered", color: "bg-indigo-100 text-indigo-700 border-indigo-200" },
-    title: "Budget AI Meal Planner",
+    title: "Smart Meal Planner",
     description:
       "Generate a multi-day meal plan with estimated costs, then auto-build your complete shopping list — all from one tool.",
     cta: "Plan & Shop",
@@ -85,20 +85,6 @@ const TOOLS = [
     description:
       "Manage your grocery list. Add items manually or import from your meal plan. Check off purchased items and track your spending.",
     cta: "Open List",
-  },
-  {
-    href: "/ai-tools/food-waste-manager",
-    icon: <Refrigerator size={24} />,
-    iconBg: "bg-emerald-600",
-    iconShadow: "shadow-emerald-600/30",
-    cardBg: "bg-emerald-50/50 dark:bg-slate-800/50",
-    border: "border-emerald-100 dark:border-slate-700",
-    linkColor: "text-emerald-700 dark:text-emerald-500",
-    badge: { text: "New", color: "bg-green-100 text-green-700 border-green-200" },
-    title: "Food Waste Manager",
-    description:
-      "Track ingredient freshness, get expiry reminders, and discover AI recipes before your food goes to waste.",
-    cta: "Manage My Food",
   },
 ];
 

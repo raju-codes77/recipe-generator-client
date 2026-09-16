@@ -34,7 +34,13 @@ export default function ChallengeDashboardClient({ challenge }: { challenge: any
       setIsCompleting(true);
       const res = await completeChallengeDay(challenge.id, dayId, session.user.id);
       setParticipant(res.participant);
-      toast.success("Mission completed! +XP earned!");
+      
+      if (res.participant.status === "COMPLETED") {
+        toast.success("🏆 Challenge Completed Successfully! All rewards earned!", { duration: 5000 });
+      } else {
+        toast.success("Mission completed! +XP earned!");
+      }
+      
       router.refresh();
     } catch (error: any) {
       toast.error(error.message || "Failed to complete mission");

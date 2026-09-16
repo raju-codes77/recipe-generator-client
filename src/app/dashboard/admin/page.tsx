@@ -11,8 +11,11 @@ import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, 
   PieChart, Pie, Cell 
 } from "recharts";
+import { authClient } from "@/lib/auth-client";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+import { getApiBaseUrl } from "@/lib/api-url";
+
+const API_BASE_URL = getApiBaseUrl();
 
 // Mock Data for Analytics Line Chart
 const fallbackLineData = [
@@ -35,8 +38,11 @@ const fallbackPieData = [
 export default function AdminDashboardPage() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const { data: session, isPending } = authClient.useSession();
 
   useEffect(() => {
+    if (isPending) return;
+
     async function fetchDashboard() {
       try {
         const res = await fetch(`${API_BASE_URL}/api/dashboard/admin/overview`, {
@@ -53,7 +59,7 @@ export default function AdminDashboardPage() {
       }
     }
     fetchDashboard();
-  }, []);
+  }, [isPending, session]);
 
   const stats = data?.stats || {
     users: { total: 0, delta: 0 },

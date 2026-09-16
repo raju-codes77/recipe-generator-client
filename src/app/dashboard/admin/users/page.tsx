@@ -1,11 +1,13 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { FiTrash2, FiUserX, FiUserCheck, FiUsers, FiShield, FiArrowLeft } from "react-icons/fi";
+import { FiTrash2, FiUserX, FiUserCheck, FiUsers, FiShield, FiArrowLeft, FiUserPlus } from "react-icons/fi";
 import Link from "next/link";
 import toast from "react-hot-toast";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+import { getApiBaseUrl } from "@/lib/api-url";
+
+const API_BASE_URL = getApiBaseUrl();
 
 interface User {
   id: string;

@@ -9,8 +9,11 @@ import {
   FiTrendingUp, FiCheckCircle, FiChevronRight, FiChevronLeft, FiHeart, FiArrowRight, FiCpu
 } from "react-icons/fi";
 import { ResponsiveContainer, AreaChart, Area, XAxis, Tooltip, CartesianGrid } from "recharts";
+import { authClient } from "@/lib/auth-client";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+import { getApiBaseUrl } from "@/lib/api-url";
+
+const API_BASE_URL = getApiBaseUrl();
 
 // Mock Data for User Calorie/Nutrition Intake Trend fallback
 const fallbackCalorieData = [
@@ -26,11 +29,16 @@ const fallbackCalorieData = [
 export default function UserDashboardPage() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const { data: session, isPending } = authClient.useSession();
 
   useEffect(() => {
+    if (isPending) return;
+
     async function fetchDashboard() {
       try {
-        const res = await fetch(`${API_BASE_URL}/api/dashboard/user/overview`, {
+        const userId = session?.user?.id;
+        const queryStr = userId ? `?userId=${encodeURIComponent(userId)}` : "";
+        const res = await fetch(`${API_BASE_URL}/api/dashboard/user/overview${queryStr}`, {
           credentials: "include"
         });
         if (res.ok) {
@@ -44,7 +52,7 @@ export default function UserDashboardPage() {
       }
     }
     fetchDashboard();
-  }, []);
+  }, [isPending, session]);
 
   const stats = data?.stats || { recipes: 0, collections: 0, activeChallenges: 0, badges: 0 };
   const nutrition = data?.nutrition || { avgKcal: 0, maxKcal: 0, minKcal: 0, targetKcal: 2000, chartData: fallbackCalorieData };
