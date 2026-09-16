@@ -261,7 +261,7 @@ function Slide0Visual() { // hero1.png - "Good Food. Better You."
       <Slide0FeatureCard
         icon={<Activity size={16} className="text-white" />}
         iconBg="bg-orange-500"
-        title="Nutrition & Meal Tracker"
+        title="Nutrition Analyzer"
         desc="Track your nutrition, reach your goals."
         delay={0.8} offsetX="right-[48%] 2xl:right-[52%]" offsetY="bottom-[8%]"
         floatDir="up"
@@ -913,10 +913,9 @@ const VISUALS = [Slide0Visual, Slide1Visual, Slide2Visual, Slide3Visual, Slide4V
 const FEATURES = [
   { icon: <Refrigerator size={16} />, label: "AI Ingredient Rescue", href: "/ai-tools/ingredient-rescue" },
   { icon: <Calendar size={16} />, label: "Smart Meal Planner", href: "/ai-tools/meal-planner" },
-  { icon: <Activity size={16} />, label: "Nutrition & Meal Tracker", href: "/ai-tools/meal-tracker" },
+  { icon: <Activity size={16} />, label: "Nutrition Analyzer", href: "/ai-tools/meal-tracker" },
   { icon: <Smile size={16} />, label: "Taste Matcher", href: "/ai-tools/taste-matcher" },
   { icon: <ShoppingBasket size={16} />, label: "Smart Shopping List", href: "/ai-tools/shopping-list" },
-  { icon: <TrendingUp size={16} />, label: "Personalized Dietary Profile", href: "/dashboard/users/dietary-profile" },
 ];
 
 const GRADIENT_MAP: Record<string, string> = {

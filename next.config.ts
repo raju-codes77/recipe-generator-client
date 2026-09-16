@@ -28,6 +28,10 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       {
+        protocol: 'https',
+        hostname: 'www.gulabuz.org.au',
+      },
+      {
         protocol: "https",
         hostname: "**", 
       },
@@ -47,8 +51,8 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'encrypted-tbn0.gstatic.com',
       },
-      { protocol: "https", hostname: "source.unsplash.com" }]
-     
+      { protocol: "https", hostname: "source.unsplash.com" }
+    ]
   },
 };
 

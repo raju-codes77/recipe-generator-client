@@ -120,7 +120,15 @@ export default function RegisterPage() {
   };
 
   const handleGoogleSignup = async () => {
-    toast.error("Social signup is currently under maintenance.");
+    try {
+      await authClient.signIn.social({
+        provider: "google",
+        callbackURL: `${window.location.origin}/dashboard`,
+      });
+    } catch (err: any) {
+      console.error("Google signup error:", err);
+      toast.error("Failed to sign up with Google.");
+    }
   };
 
   return (

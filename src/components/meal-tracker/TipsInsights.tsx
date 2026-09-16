@@ -58,12 +58,11 @@ export default function MonthlyCalendarTracker() {
   const monthEntries = Object.entries(history).filter(([d]) =>
     d.startsWith(`${year}-${String(month + 1).padStart(2, "0")}`)
   );
-  const monthAvgKcal = monthEntries.length
-    ? Math.round(monthEntries.reduce((s, [, e]) => s + e.kcal, 0) / monthEntries.length)
-    : 0;
-  const monthAvgProtein = monthEntries.length
-    ? Math.round(monthEntries.reduce((s, [, e]) => s + e.protein, 0) / monthEntries.length)
-    : 0;
+  
+  const todayEntry = history[todayStr];
+  const todayKcal = todayEntry?.kcal || 0;
+  const todayProtein = todayEntry?.protein || 0;
+
   const daysLogged = monthEntries.length;
   const onTrackDays = monthEntries.filter(([, e]) => {
     const goal = dailyGoalKcal ?? 2000;
@@ -177,15 +176,15 @@ export default function MonthlyCalendarTracker() {
         </div>
         <div className="text-center">
           <p className="text-base font-extrabold text-green-600">
-            {monthAvgKcal > 0 ? `${monthAvgKcal}` : "--"}
+            {todayKcal > 0 ? `${todayKcal}` : "--"}
           </p>
-          <p className="text-[10px] text-gray-400">Avg kcal/day</p>
+          <p className="text-[10px] text-gray-400">Today's kcal</p>
         </div>
         <div className="text-center">
           <p className="text-base font-extrabold text-blue-600">
-            {monthAvgProtein > 0 ? `${monthAvgProtein}g` : "--"}
+            {todayProtein > 0 ? `${todayProtein}g` : "--"}
           </p>
-          <p className="text-[10px] text-gray-400">Avg protein</p>
+          <p className="text-[10px] text-gray-400">Today's protein</p>
         </div>
       </div>
 

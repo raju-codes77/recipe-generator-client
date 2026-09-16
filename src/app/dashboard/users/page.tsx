@@ -122,7 +122,7 @@ export default function UserDashboardPage() {
             </div>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row lg:shrink-0">
-            <Link href="/dashboard/users/example" className="flex items-center justify-center gap-2 rounded-xl bg-[#2F8F46] px-4 py-3 text-xs font-bold text-white shadow-md shadow-[#2F8F46]/15 transition hover:bg-[#235f31]">Find a nutritionist <FiArrowRight size={15} /></Link>
+            <Link href="/dashboard/users/health-consultant" className="flex items-center justify-center gap-2 rounded-xl bg-[#2F8F46] px-4 py-3 text-xs font-bold text-white shadow-md shadow-[#2F8F46]/15 transition hover:bg-[#235f31]">Find an expert <FiArrowRight size={15} /></Link>
             <Link href="/dashboard/users/ai-recepi-generator" className="flex items-center justify-center gap-2 rounded-xl border border-[#cbdcc1] bg-white/75 px-4 py-3 text-xs font-bold text-[#2F8F46] transition hover:bg-white dark:border-white/10 dark:bg-white/5 dark:text-[#b7df86]">Ask free AI <FiCpu size={15} /></Link>
           </div>
         </div>
@@ -224,84 +224,8 @@ export default function UserDashboardPage() {
       </div>
 
       {/* 3. Middle Section: Calorie Trend Chart & Active Challenges */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        {/* Calorie Trend Chart (Spans 2 cols) */}
-        <div className="xl:col-span-2 p-6 rounded-3xl bg-white dark:bg-black/40 border border-gray-100 dark:border-[#89986D]/20 shadow-sm flex flex-col justify-between">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h3 className="text-lg font-bold text-gray-900 dark:text-[#F6F0D7]">Weekly Calorie Intake Trend</h3>
-              <p className="text-xs text-gray-400 dark:text-[#F6F0D7]/60 font-medium mt-0.5">Track your daily calorie intake and consistency</p>
-            </div>
-            <button className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 bg-gray-50 dark:bg-[#89986D]/10 hover:bg-gray-100 rounded-lg text-gray-700 dark:text-[#F6F0D7] border border-gray-200 dark:border-transparent transition-colors">
-              This Week <span className="text-[10px]">▼</span>
-            </button>
-          </div>
-          
-          <div className="h-64 w-full relative">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="colorCalories" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#117A38" stopOpacity={0.2}/>
-                    <stop offset="95%" stopColor="#117A38" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <XAxis dataKey="day" stroke="#A0AEC0" fontSize={11} tickLine={false} axisLine={false} />
-                <Tooltip 
-                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' }}
-                  labelStyle={{ fontWeight: 'bold', color: '#1A202C' }}
-                  itemStyle={{ fontWeight: 'bold' }}
-                />
-                <Area 
-                  type="monotone" 
-                  dataKey="calories" 
-                  stroke="#117A38" 
-                  fillOpacity={1} 
-                  fill="url(#colorCalories)" 
-                  strokeWidth={2.5}
-                  activeDot={{ r: 6, fill: "#117A38", stroke: "#fff", strokeWidth: 2 }}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-            
-            {/* Custom Target Line Label Overlay (Mocked) */}
-            <div className="absolute right-0 top-14 text-[9px] font-bold text-gray-400 flex flex-col items-end">
-              <span>Target: {nutrition.targetKcal.toLocaleString()} kcal</span>
-              <div className="w-16 border-t border-dashed border-gray-300 mt-1"></div>
-            </div>
-          </div>
+      <div className="grid grid-cols-1 gap-6">
 
-          <div className="flex items-center justify-between mt-6 pt-5 border-t border-gray-100 dark:border-gray-800">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center text-gray-500">📊</div>
-              <div>
-                <p className="text-[10px] text-gray-400 font-semibold uppercase">Avg. Intake</p>
-                <p className="text-sm font-bold text-gray-900 dark:text-white">{loading ? "..." : nutrition.avgKcal.toLocaleString()} <span className="text-[10px] text-gray-400">kcal</span></p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center text-orange-500">🔥</div>
-              <div>
-                <p className="text-[10px] text-gray-400 font-semibold uppercase">Highest Day</p>
-                <p className="text-sm font-bold text-gray-900 dark:text-white">{loading ? "..." : nutrition.maxKcal.toLocaleString()} <span className="text-[10px] text-gray-400">kcal</span></p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-500">💧</div>
-              <div>
-                <p className="text-[10px] text-gray-400 font-semibold uppercase">Lowest Day</p>
-                <p className="text-sm font-bold text-gray-900 dark:text-white">{loading ? "..." : nutrition.minKcal.toLocaleString()} <span className="text-[10px] text-gray-400">kcal</span></p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full border-4 border-[#117A38] border-r-gray-100 flex items-center justify-center"></div>
-              <div>
-                <p className="text-[10px] text-gray-400 font-semibold uppercase">Consistency</p>
-                <p className="text-sm font-bold text-gray-900 dark:text-white">{nutrition.avgKcal > 0 ? Math.min(100, Math.round((nutrition.avgKcal / nutrition.targetKcal) * 100)) : 0}%</p>
-              </div>
-            </div>
-          </div>
-        </div>
 
         {/* Current Challenges Progress */}
         <div className="p-6 rounded-3xl bg-white dark:bg-black/40 border border-gray-100 dark:border-[#89986D]/20 shadow-sm flex flex-col justify-between">
