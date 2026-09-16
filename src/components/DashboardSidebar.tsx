@@ -34,11 +34,12 @@ export default function DashboardSidebar() {
     { name: "Dashboard", icon: <FiHome />, href: "/dashboard/user" },
     {name: "Fitness & Nutrition", icon:<FaDochub/>,  href:"/dashboard/users/example"},
     { name: "Wellness Hub", icon: <FiHeart />, href: "/dashboard/users/wellness" },
+    {name: "Consultation", icon:<FaDochub/>,  href:"/dashboard/users/health-consultant"},
     { name: "My Recipes", icon: <FiBookOpen />, href: "/recipes" },
     { name: "Generate Recipe", icon: <FiCpu />, href: "/dashboard/users/ai-recepi-generator", badge: "AI" },
     { name: "Collections", icon: <FiFolder />, href: "/dashboard/users/static" },
     { name: "Challenges", icon: <FiAward />, href: "/challenges" },
-    { name: "Dietary Profile", icon: <FiSliders />, href: "/dashboard/users/dietary-profile" },
+    { name: "Wellness Reminders", icon: <FiAlertCircle />, href: "/dashboard/wellness-reminders" },
     { name: "All AI Tools", icon: <FiCpu />, href: "/ai-tools" },
   ];
 
@@ -95,7 +96,7 @@ export default function DashboardSidebar() {
 
       {/* Sidebar Container */}
       <aside className={`
-        fixed lg:static inset-y-0 left-0 z-50 w-64 flex flex-col justify-between
+        fixed lg:sticky lg:top-[88px] inset-y-0 left-0 z-50 lg:z-40 w-64 lg:h-[calc(100vh-88px)] flex flex-col justify-between
         border-r border-[#dfe8da] bg-[#fbfdf9] p-4 shadow-[8px_0_30px_rgba(40,70,45,0.04)] transition-transform duration-300 ease-in-out dark:border-white/10 dark:bg-[#101611] lg:p-5
         ${mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
       `}>

@@ -17,15 +17,18 @@ export interface PaginatedChallengeResponse {
 }
 
 export async function getPaginatedChallenges(params?: { status?: string; search?: string; sort?: string; mine?: boolean; participantStatus?: string; userId?: string; page?: number; limit?: number }): Promise<PaginatedChallengeResponse> {
-  const url = new URL(`${API_BASE_URL}/challenges`);
-  if (params?.status) url.searchParams.append("status", params.status);
-  if (params?.search) url.searchParams.append("search", params.search);
-  if (params?.sort) url.searchParams.append("sort", params.sort);
-  if (params?.mine) url.searchParams.append("mine", "true");
-  if (params?.participantStatus) url.searchParams.append("participantStatus", params.participantStatus);
-  if (params?.userId) url.searchParams.append("userId", params.userId);
-  if (params?.page) url.searchParams.append("page", params.page.toString());
-  if (params?.limit) url.searchParams.append("limit", params.limit.toString());
+  const query = new URLSearchParams();
+  if (params?.status) query.append("status", params.status);
+  if (params?.search) query.append("search", params.search);
+  if (params?.sort) query.append("sort", params.sort);
+  if (params?.mine) query.append("mine", "true");
+  if (params?.participantStatus) query.append("participantStatus", params.participantStatus);
+  if (params?.userId) query.append("userId", params.userId);
+  if (params?.page) query.append("page", params.page.toString());
+  if (params?.limit) query.append("limit", params.limit.toString());
+  
+  const queryString = query.toString();
+  const url = queryString ? `${API_BASE_URL}/challenges?${queryString}` : `${API_BASE_URL}/challenges`;
 
   const res = await fetch(url.toString(), { cache: "no-store" });
   if (!res.ok) throw new Error("Failed to fetch challenges");

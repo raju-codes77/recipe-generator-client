@@ -25,7 +25,7 @@ const TOOLS = [
     border: "border-blue-100 dark:border-slate-700",
     linkColor: "text-blue-700 dark:text-blue-500",
     badge: null,
-    title: "Nutrition & Meal Tracker",
+    title: "Nutrition Analyzer",
     description:
       "Analyze the nutritional content of any food from a photo. Track daily calories, protein, carbs, and fat against your personal goals.",
     cta: "Analyze & Track",
