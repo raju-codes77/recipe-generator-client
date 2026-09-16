@@ -125,7 +125,16 @@ export interface StoryItem {
   caption: string;
   tag?: string;
   viewed?: boolean;
+  reacted?: boolean;
   timestamp: string;
+}
+
+export interface StoryViewer {
+  id: string;
+  name: string;
+  avatar: string;
+  viewedAt: string;
+  reacted: boolean;
 }
 
 export interface PublicCommunityProfile {

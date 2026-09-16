@@ -33,7 +33,7 @@ export default function Loading() {
         }
       `}</style>
       <div
-        className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-background custom-loader-fade"
+        className="fixed inset-0 z-9999 flex flex-col items-center justify-center bg-background custom-loader-fade"
         role="status"
         aria-label="Loading"
       >

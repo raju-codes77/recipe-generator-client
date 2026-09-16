@@ -1,7 +1,7 @@
 import React from "react";
 import { motion } from "motion/react";
 import Link from "next/link";
-import { UserPlus, UserCheck, TrendingUp, Star, LockKeyhole, ChevronDown } from "lucide-react";
+import { UserPlus, UserCheck, TrendingUp, Star, MessageCircle, LockKeyhole, ChevronDown } from "lucide-react";
 import { Author, Post } from "./types";
 import { CommunityAvatar } from "./CommunityAvatar";
 
@@ -170,7 +170,7 @@ export const CommunitySidebarRight: React.FC<CommunitySidebarRightProps> = ({
         </div>
 
         <div className="space-y-3">
-          {trendingPosts.slice(0, 3).map((post, idx) => (
+          {trendingPosts.slice(0, 2).map((post, idx) => (
             <motion.div
               key={post.id}
               whileHover={{ x: 3 }}
@@ -202,6 +202,11 @@ export const CommunitySidebarRight: React.FC<CommunitySidebarRightProps> = ({
                   </span>
                   <span>•</span>
                   <span>{post.likesCount} loved</span>
+                  <span>•</span>
+                  <span className="flex items-center gap-0.5">
+                    <MessageCircle className="h-3 w-3" />
+                    {post.commentsCount}
+                  </span>
                 </div>
               </div>
             </motion.div>

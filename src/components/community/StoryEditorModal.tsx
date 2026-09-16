@@ -393,7 +393,7 @@ export const StoryEditorModal: React.FC<StoryEditorModalProps> = ({ file, isOpen
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-60 flex items-center justify-center bg-black/75 p-3 backdrop-blur-sm sm:p-6"
+           className="fixed inset-0 z-60 flex items-center justify-center bg-black/75 p-0 backdrop-blur-sm sm:p-6"
           role="dialog"
           aria-modal="true"
           aria-label="Edit your Community story"
@@ -406,7 +406,7 @@ export const StoryEditorModal: React.FC<StoryEditorModalProps> = ({ file, isOpen
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.98 }}
             data-story-editor
-            className="flex max-h-[94vh] w-full max-w-5xl flex-col overflow-hidden rounded-3xl border border-emerald-200 bg-white shadow-2xl dark:border-emerald-900/60 dark:bg-[#121212]"
+             className="flex h-dvh max-h-none w-full max-w-none flex-col overflow-hidden rounded-none border-0 bg-white shadow-2xl dark:bg-[#121212] sm:h-auto sm:max-h-[94vh] sm:max-w-5xl sm:rounded-3xl sm:border sm:border-emerald-200 sm:dark:border-emerald-900/60"
           >
             <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-neutral-800 sm:px-6">
               <div>
@@ -426,7 +426,7 @@ export const StoryEditorModal: React.FC<StoryEditorModalProps> = ({ file, isOpen
             </div>
 
             <div className="grid min-h-0 flex-1 gap-5 overflow-y-auto p-4 sm:p-6 lg:grid-cols-[minmax(0,1fr)_280px]">
-              <div className="flex min-h-[420px] items-center justify-center rounded-2xl bg-neutral-950 p-3 sm:p-5">
+               <div className="flex h-[38vh] min-h-[220px] items-center justify-center rounded-2xl bg-neutral-950 p-3 sm:h-auto sm:min-h-[420px] sm:p-5">
                 <canvas
                   ref={canvasRef}
                   width={PREVIEW_WIDTH}
@@ -436,7 +436,7 @@ export const StoryEditorModal: React.FC<StoryEditorModalProps> = ({ file, isOpen
                   onPointerUp={handlePointerUp}
                   onPointerCancel={handlePointerUp}
                   style={{ cursor: tool === "draw" ? PENCIL_CURSOR : tool === "text" ? "move" : "grab" }}
-                  className="max-h-[62vh] w-auto max-w-full touch-none rounded-xl shadow-2xl"
+                   className="max-h-full w-auto max-w-full touch-none rounded-xl shadow-2xl sm:max-h-[62vh]"
                 />
               </div>
 

@@ -7,6 +7,7 @@ import type {
   RecipeCollection,
   Review,
   StoryItem,
+  StoryViewer,
 } from "@/components/community/types";
 
 import { getApiBaseUrl } from "@/lib/api-url";
@@ -256,9 +257,21 @@ export const communityApi = {
     return request<void>(`/stories/${storyId}`, { method: "DELETE", body: JSON.stringify({ userId }) });
   },
 
-  async listNotifications(userId?: string): Promise<NotificationItem[]> {
-    const query = userId ? `?userId=${userId}` : "";
-    const response = await request<{ notifications: NotificationItem[] }>(`/notifications${query}`);
+  recordStoryView(storyId: string) {
+    return request<{ viewed: { alreadyRecorded: boolean } }>(`/stories/${storyId}/view`, { method: "POST" });
+  },
+
+  async listStoryViewers(storyId: string): Promise<StoryViewer[]> {
+    const response = await request<{ viewers: StoryViewer[] }>(`/stories/${storyId}/viewers`);
+    return response.viewers;
+  },
+
+  reactToStory(storyId: string) {
+    return request<{ active: true }>(`/stories/${storyId}/reaction`, { method: "POST" });
+  },
+
+  async listNotifications(): Promise<NotificationItem[]> {
+    const response = await request<{ notifications: NotificationItem[] }>("/notifications");
     return response.notifications;
   },
 

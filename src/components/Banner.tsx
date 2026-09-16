@@ -1013,7 +1013,7 @@ export default function Banner() {
       {/* ── Left-side gradient scrim — premium seamless blend over food photos ── */}
       {/* Light mode: hero bg colour (#faf9f6) eased out to transparent */}
       <div
-        className="absolute inset-0 z-[1] pointer-events-none dark:hidden"
+        className="absolute inset-0 z-1 pointer-events-none dark:hidden"
         style={{
           background: [
             'linear-gradient(to right,',
@@ -1033,7 +1033,7 @@ export default function Banner() {
       />
       {/* Dark mode: slate-950 (#020617) eased out to transparent — cinematic, no hard edge */}
       <div
-        className="absolute inset-0 z-[1] pointer-events-none hidden dark:block"
+        className="absolute inset-0 z-1 pointer-events-none hidden dark:block"
         style={{
           background: [
             'linear-gradient(to right,',
