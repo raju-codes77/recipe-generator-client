@@ -886,7 +886,7 @@ export default function CommunityUserProfilePage() {
 
       <CreatePostModal isOpen={isCreateRecipeOpen} onClose={() => setIsCreateRecipeOpen(false)} onPublishPost={async (newPost, imageFile) => {
         try {
-          if (imageFile) showToast("Validating food image...", 0);
+          if (imageFile) showToast("Validating food image", 0);
           const imageUrl = imageFile ? await communityApi.uploadImage(imageFile, "posts", session?.user?.id!) : newPost.imageUrl;
           const createdPost = await communityApi.createPost({ ...newPost, imageUrl }, session?.user?.id!);
           if (!createdPost) {
@@ -902,7 +902,7 @@ export default function CommunityUserProfilePage() {
 
       <StoryEditorModal file={storyEditorFile} isOpen={Boolean(storyEditorFile)} onClose={() => setStoryEditorFile(null)} onShare={async (editedFile, caption) => {
         try {
-          showToast("Validating food image...", 0);
+          showToast("Validating food image", 0);
           const imageUrl = await communityApi.uploadImage(editedFile, "stories", session?.user?.id!);
           const createdStory = await communityApi.createStory(imageUrl, caption, session?.user?.id!);
           if (!createdStory) {
@@ -939,9 +939,25 @@ export default function CommunityUserProfilePage() {
           await loadProfile();
         }}
       />
+      <style>{`@keyframes community-validation-dot { 0%, 100% { opacity: 0.2; } 35% { opacity: 1; } }`}</style>
       {toastMessage && (
         <div className={`fixed bottom-6 left-1/2 z-[100] -translate-x-1/2 rounded-xl border px-4 py-3 text-center text-sm font-semibold text-white shadow-2xl ${/\b(rejected|not approved)\b/i.test(toastMessage) ? "border-red-500/90 bg-[#2a1515]/90" : "border-[#2F8F46] bg-[#151916]/90"}`}>
-          {toastMessage}
+          {toastMessage === "Validating food image" ? (
+            <span className="inline-flex items-baseline" aria-label="Validating food image">
+              <span>Validating food image</span>
+              <span className="ml-0.5 inline-flex w-4" aria-hidden="true">
+                {[0, 1, 2].map((dot) => (
+                  <span
+                    key={`profile-validation-dot-${dot}`}
+                    className="opacity-20"
+                    style={{ animation: "community-validation-dot 1.2s infinite", animationDelay: `${dot * 0.2}s` }}
+                  >
+                    .
+                  </span>
+                ))}
+              </span>
+            </span>
+          ) : toastMessage}
         </div>
       )}
     </main>

@@ -919,6 +919,10 @@ export const CommunityFeed: React.FC = () => {
         .community-surface :is(a[href], button:not(:disabled), [role="button"], label[for]) {
           cursor: pointer;
         }
+        @keyframes community-validation-dot {
+          0%, 100% { opacity: 0.2; }
+          35% { opacity: 1; }
+        }
       `}</style>
       {/* Toast Alert Banner */}
       <AnimatePresence>
@@ -930,7 +934,22 @@ export const CommunityFeed: React.FC = () => {
             className={`fixed bottom-6 right-6 z-[100] flex items-center gap-2.5 rounded-2xl border px-5 py-3.5 text-xs font-bold text-white shadow-2xl ${/\b(rejected|not approved)\b/i.test(toastMessage) ? "border-red-500/90 bg-[#2a1515]/90" : "border-transparent bg-[#176B35]"}`}
           >
             <Check className={`h-4 w-4 ${/\b(rejected|not approved)\b/i.test(toastMessage) ? "text-red-300" : "text-[#B7E35F]"}`} />
-            <span>{toastMessage}</span>
+            {toastMessage === "Validating food image" ? (
+              <span className="inline-flex items-baseline" aria-label="Validating food image">
+                <span>Validating food image</span>
+                <span className="ml-0.5 inline-flex w-4" aria-hidden="true">
+                  {[0, 1, 2].map((dot) => (
+                    <span
+                      key={`validation-dot-${dot}`}
+                      className="opacity-20"
+                      style={{ animation: "community-validation-dot 1.2s infinite", animationDelay: `${dot * 0.2}s` }}
+                    >
+                      .
+                    </span>
+                  ))}
+                </span>
+              </span>
+            ) : <span>{toastMessage}</span>}
           </motion.div>
         )}
       </AnimatePresence>
@@ -1453,7 +1472,7 @@ export const CommunityFeed: React.FC = () => {
         suggestedTags={suggestedCommunityTags}
         onPublishPost={async (newPost, imageFile) => {
           try {
-            if (imageFile) showToast("Validating food image...", 0);
+            if (imageFile) showToast("Validating food image", 0);
             const imageUrl = imageFile ? await communityApi.uploadImage(imageFile, "posts", session?.user?.id!) : newPost.imageUrl;
             const createdPost = await communityApi.createPost({ ...newPost, imageUrl }, session?.user?.id!);
             if (!createdPost) {
@@ -1575,7 +1594,7 @@ export const CommunityFeed: React.FC = () => {
         onClose={() => setStoryEditorFile(null)}
         onShare={async (editedFile, caption) => {
           try {
-            showToast("Validating food image...", 0);
+            showToast("Validating food image", 0);
             const imageUrl = await communityApi.uploadImage(editedFile, "stories", session?.user?.id!);
             const createdStory = await communityApi.createStory(imageUrl, caption, session?.user?.id!);
             if (!createdStory) {
