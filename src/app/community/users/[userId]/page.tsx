@@ -583,7 +583,7 @@ export default function CommunityUserProfilePage() {
                 {profile.user.id === session?.user?.id ? (
                   <button onClick={openEditProfile} className="inline-flex items-center gap-2 rounded-xl bg-[#2F8F46] px-4 py-2.5 text-xs font-bold text-white transition hover:bg-[#176B35]"><Pencil className="h-3.5 w-3.5" /> Edit profile</button>
                 ) : (
-                   <button type="button" disabled={isProfileRefreshing} aria-busy={isProfileRefreshing} onClick={() => void updateProfile(() => communityApi.toggleFollow(profile.user.id))} className="inline-flex items-center gap-2 rounded-xl bg-[#2F8F46] px-4 py-2.5 text-xs font-bold text-white transition hover:bg-[#176B35] disabled:cursor-wait disabled:opacity-70"><UserPlus className="h-4 w-4" /> {profile.user.isFollowing ? "Following" : "Follow"}</button>
+                   <button type="button" disabled={isProfileRefreshing} aria-busy={isProfileRefreshing} onClick={() => void updateProfile(() => communityApi.toggleFollow(profile.user.id, session?.user?.id!))} className="inline-flex items-center gap-2 rounded-xl bg-[#2F8F46] px-4 py-2.5 text-xs font-bold text-white transition hover:bg-[#176B35] disabled:cursor-wait disabled:opacity-70"><UserPlus className="h-4 w-4" /> {profile.user.isFollowing ? "Following" : "Follow"}</button>
                 )}
                 {isOwnProfile ? (
                   <button onClick={() => router.push("/dashboard/users")} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-bold text-neutral-700 transition hover:border-[#2F8F46] hover:text-[#2F8F46] dark:border-neutral-700 dark:text-neutral-200"><LayoutDashboard className="h-4 w-4" /> Dashboard</button>

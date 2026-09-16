@@ -343,7 +343,7 @@ export const CommunityFeed: React.FC = () => {
         try {
           const [loadedCollections, loadedNotifications, loadedFeedCounts] = await Promise.all([
             communityApi.listCollections(session.user.id),
-            communityApi.listNotifications(session.user.id),
+            communityApi.listNotifications(),
             communityApi.getFeedCounts(session.user.id),
           ]);
           setCollections(loadedCollections);
@@ -574,7 +574,7 @@ export const CommunityFeed: React.FC = () => {
     }));
 
     try {
-      const result = await communityApi.toggleLike(postId);
+      const result = await communityApi.toggleLike(postId, session?.user?.id!);
       const confirmedLikesCount = Math.max(0, previousLikesCount + (result.active ? 1 : -1));
       updatePostInFeed(postId, (currentPost) => ({
         ...currentPost,
@@ -656,7 +656,7 @@ export const CommunityFeed: React.FC = () => {
     if (!post) return;
 
     try {
-      await communityApi.addComment(postId, content);
+      await communityApi.addComment(postId, content, session?.user?.id!);
       const interactions = await communityApi.getPostInteractions(postId, {
         commentsTake: 8,
         commentsSkip: 0,
@@ -703,7 +703,7 @@ export const CommunityFeed: React.FC = () => {
     }));
 
     try {
-      const result = await communityApi.toggleFollow(authorId);
+      const result = await communityApi.toggleFollow(authorId, session?.user?.id!);
       const confirmedFollowersCount = Math.max(0, previousFollowersCount + (result.active ? 1 : -1));
       updateAuthorInFeed(authorId, (currentAuthor) => ({
         ...currentAuthor,
