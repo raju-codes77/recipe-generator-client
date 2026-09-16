@@ -19,6 +19,9 @@ export default function NutritionAnalyzer() {
     try {
       const formData = new FormData();
       formData.append("image", file);
+      
+      const localDate = new Date().toLocaleDateString("en-CA");
+      formData.append("localDate", localDate);
 
       setStatusMessage("Analyzing nutritional content with AI...");
 
@@ -31,6 +34,10 @@ export default function NutritionAnalyzer() {
 
       if (!res.ok) {
         throw new Error(data.error || data.message || "Failed to analyze image");
+      }
+
+      if (data.isFood === false || data.success === false) {
+        throw new Error(data.message || "Please upload a valid food photo.");
       }
 
       // Ensure imageUrl fallback if server returned relative path or missing
