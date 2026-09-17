@@ -6,6 +6,7 @@ import { FiSend, FiX, FiRefreshCw, FiUser } from "react-icons/fi";
 import { Sparkles } from "lucide-react";
 import FoodCanvasAIIcon from "./FoodCanvasAIIcon";
 import { getApiBaseUrl } from "@/lib/api-url";
+import toast from "react-hot-toast";
 
 interface Message {
   sender: "ai" | "user";
@@ -48,7 +49,6 @@ export default function AIAssistantPopup() {
 
     const userMessage: Message = { sender: "user", text: textToSend.trim() };
     setMessages((prev) => [...prev, userMessage]);
-    if (!queryText) setInputQuery("");
     setLoading(true);
 
     try {
@@ -66,20 +66,15 @@ export default function AIAssistantPopup() {
       if (res.ok && data.success && data.reply) {
         const aiMessage: Message = { sender: "ai", text: data.reply };
         setMessages((prev) => [...prev, aiMessage]);
+        setInputQuery(""); // Clear on success
       } else {
-        const errorMessage: Message = {
-          sender: "ai",
-          text: data.error || data.reply || "I couldn't complete that recipe request right now. Please try again!",
-        };
-        setMessages((prev) => [...prev, errorMessage]);
+        toast.error(data.message || "The AI service is temporarily busy. Please try again in a moment.");
+        if (!queryText) setInputQuery(textToSend.trim()); // Preserve input on failure
       }
     } catch (error) {
       console.error("Failed to connect to FoodCanvas chat API:", error);
-      const errorMessage: Message = {
-        sender: "ai",
-        text: "Unable to reach the culinary assistant. Please check your connection and try again.",
-      };
-      setMessages((prev) => [...prev, errorMessage]);
+      toast.error("Unable to reach the culinary assistant. Please check your connection and try again.");
+      if (!queryText) setInputQuery(textToSend.trim()); // Preserve input on failure
     } finally {
       setLoading(false);
     }

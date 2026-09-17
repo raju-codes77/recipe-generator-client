@@ -28,14 +28,26 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const localDate = formData.get("localDate");
+    
     // Forward the file to the Node.js backend
     const backendFormData = new FormData();
     backendFormData.append("image", file);
+    if (localDate) {
+      backendFormData.append("localDate", localDate);
+    }
+
+    const headers = new Headers();
+    const cookie = req.headers.get("cookie");
+    if (cookie) {
+      headers.set("cookie", cookie);
+    }
 
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || process.env.API_URL || "http://localhost:5000";
     const response = await fetch(`${apiUrl}/api/meals/analyze`, {
       method: "POST",
       body: backendFormData,
+      headers,
     });
 
     if (!response.ok) {

@@ -103,7 +103,15 @@ export default function LoginPage() {
   };
 
   const handleGoogleLogin = async () => {
-    toast.error("Social login is currently under maintenance.");
+    try {
+      await authClient.signIn.social({
+        provider: "google",
+        callbackURL: `${window.location.origin}/dashboard`,
+      });
+    } catch (err: any) {
+      console.error("Google login error:", err);
+      toast.error("Failed to sign in with Google.");
+    }
   };
 
   const formatTime = (seconds: number) => {

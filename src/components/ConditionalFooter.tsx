@@ -6,7 +6,10 @@ import Footer from "./Footer";
 export default function ConditionalFooter() {
   const pathname = usePathname();
 
-  if (pathname === "/community" || pathname.startsWith("/community/")) {
+  if (
+    pathname === "/community" || pathname.startsWith("/community/") ||
+    pathname === "/dashboard" || pathname.startsWith("/dashboard/")
+  ) {
     return null;
   }
 
