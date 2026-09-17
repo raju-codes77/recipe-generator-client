@@ -64,6 +64,7 @@ export default function PantryToPlatePage() {
             onBack={resetRecipe}
             onRefine={handleRefineRecipe}
             refiningOption={refiningOption}
+            userPantryIngredients={ingredients}
           />
         ) : (
           <>

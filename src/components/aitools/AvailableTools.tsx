@@ -13,7 +13,7 @@ const TOOLS = [
     badge: { text: "Popular", color: "bg-green-100 text-green-700 border-green-200" },
     title: "AI Ingredient Rescue",
     description:
-      "Turn your pantry ingredients or leftovers into delicious recipes. Two modes: Pantry AI or Leftover Rescue. Reduce food waste smartly.",
+      "Turn your pantry ingredients into delicious recipes. Reduce food waste smartly.",
     cta: "Start Cooking",
   },
   {

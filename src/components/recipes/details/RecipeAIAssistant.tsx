@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { X, Send, Sparkles, User, Bot, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
+import { getApiBaseUrl } from "@/lib/api-url";
 
 interface Message {
   role: "user" | "assistant";
@@ -90,7 +91,7 @@ export default function RecipeAIAssistant({ isOpen, onClose, recipe, userId, ini
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/recipe-ai/chat`, {
+      const response = await fetch(`${getApiBaseUrl()}/api/recipe-ai/chat`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -101,6 +102,7 @@ export default function RecipeAIAssistant({ isOpen, onClose, recipe, userId, ini
           userId,
           history: messages,
         }),
+        credentials: "include",
       });
 
       const data = await response.json();

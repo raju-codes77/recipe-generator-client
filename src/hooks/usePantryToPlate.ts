@@ -75,9 +75,10 @@ export function usePantryToPlate(leftoverMode: boolean = false, initialIngredien
     const toastId = toast.loading("AI is generating your custom recipe...");
 
     try {
-      const res = await fetch("/api/pantry-to-plate", {
+      const res = await fetch(`/api/pantry-to-plate/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           ingredients,
           cuisine,
@@ -117,9 +118,10 @@ export function usePantryToPlate(leftoverMode: boolean = false, initialIngredien
     const toastId = toast.loading(`Refining: ${refinement}...`);
 
     try {
-      const res = await fetch("/api/pantry-to-plate/refine", {
+      const res = await fetch(`/api/pantry-to-plate/refine`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ id: generatedRecipe.id, refinement }),
       });
 

@@ -1,3 +1,5 @@
+import { getApiBaseUrl } from "@/lib/api-url";
+
 export const analyzeMeal = async (file: File, userId?: string) => {
     const formData = new FormData();
     formData.append("image", file);
@@ -10,7 +12,7 @@ export const analyzeMeal = async (file: File, userId?: string) => {
         formData.append("userId", userId);
     }
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+    const apiUrl = getApiBaseUrl();
     const response = await fetch(`${apiUrl}/api/meals/analyze`, {
         method: "POST",
         body: formData,
@@ -40,7 +42,7 @@ export const analyzeMeal = async (file: File, userId?: string) => {
 
 // Common fetch helper with credentials
 const fetchApi = async (path: string, options: RequestInit = {}) => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+    const apiUrl = getApiBaseUrl();
     const res = await fetch(`${apiUrl}${path}`, {
         ...options,
         headers: {

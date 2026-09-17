@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { authClient } from "@/lib/auth-client";
+import { getApiBaseUrl } from "@/lib/api-url";
 
 export interface NotificationActor {
   id: string;
@@ -45,17 +46,21 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const [page, setPage] = useState(1);
   const [hasNextPage, setHasNextPage] = useState(false);
 
-  const { data: session } = authClient.useSession();
+  const { data: session, isPending } = authClient.useSession();
   const userId = session?.user?.id;
 
   const fetchNotifications = useCallback(async (pageNum: number, merge = false) => {
-    if (!userId) return;
+    if (!userId || isPending) return;
     try {
       setIsLoading(true);
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/notifications?page=${pageNum}&limit=10`, {
+      const res = await fetch(`${getApiBaseUrl()}/api/notifications?page=${pageNum}&limit=10`, {
         credentials: "include",
       });
       
+      if (res.status === 401) {
+        return; // Silently skip if unauthorized
+      }
+
       if (!res.ok) throw new Error("Failed to fetch notifications");
       
       const data = await res.json();
@@ -85,7 +90,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
   // Initial load
   useEffect(() => {
-    if (userId) {
+    if (userId && !isPending) {
       fetchNotifications(1);
       
       // Setup simple polling every 30 seconds for unread badge and new notifications
@@ -95,7 +100,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       
       return () => clearInterval(interval);
     }
-  }, [userId, isOpen, fetchNotifications]);
+  }, [userId, isPending, isOpen, fetchNotifications]);
 
   const togglePanel = () => {
     const newState = !isOpen;
@@ -113,7 +118,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
       setUnreadCount(prev => Math.max(0, prev - 1));
       
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/notifications/${id}/read`, {
+      await fetch(`${getApiBaseUrl()}/api/notifications/${id}/read`, {
         method: "PATCH",
         credentials: "include",
       });
@@ -127,7 +132,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
       setUnreadCount(0);
       
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/notifications/read-all`, {
+      await fetch(`${getApiBaseUrl()}/api/notifications/read-all`, {
         method: "PATCH",
         credentials: "include",
       });
