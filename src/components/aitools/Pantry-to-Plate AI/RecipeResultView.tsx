@@ -8,6 +8,8 @@ import { Recipe } from "./types";
 import RefineChips from "./RefineChips";
 import HealthScoreCard from "./HealthScoreCard";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { getApiBaseUrl } from "@/lib/api-url";
 
 const DEFAULT_FOOD_IMAGE =
   "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=1200&q=80";
@@ -38,7 +40,7 @@ function IngredientSubPanel({ ingredient, recipeTitle }: { ingredient: string; r
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [subs, setSubs] = useState<SubResult[] | null>(null);
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+  const apiUrl = getApiBaseUrl();
 
   const fetchSubs = async () => {
     if (subs) { setOpen((o) => !o); return; }
@@ -104,13 +106,51 @@ function IngredientSubPanel({ ingredient, recipeTitle }: { ingredient: string; r
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function RecipeResultView({ recipe, onBack, onRefine, refiningOption }: RecipeResultViewProps) {
+  const router = useRouter();
   const [imgSrc, setImgSrc] = useState<string>(() => sanitizeImageUrl(recipe?.image));
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isAddingMissing, setIsAddingMissing] = useState<boolean>(false);
 
   useEffect(() => {
     setImgSrc(sanitizeImageUrl(recipe?.image));
     setIsLoading(true);
   }, [recipe?.image]);
+
+  const handleAddMissingIngredients = async () => {
+    if (!recipe?.id) {
+      toast.error("Recipe ID is missing");
+      return;
+    }
+    setIsAddingMissing(true);
+    const toastId = toast.loading("Comparing recipe with your pantry...");
+    try {
+      const apiUrl = getApiBaseUrl();
+      const res = await fetch(`${apiUrl}/api/shopping-list/from-recipe`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ recipeId: recipe.id }),
+        credentials: "include",
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.message || data.error || "Failed to add missing ingredients");
+      }
+
+      toast.success(
+        data.message || "Missing ingredients added to your shopping list!",
+        { id: toastId }
+      );
+
+      setTimeout(() => {
+        router.push("/ai-tools/shopping-list");
+      }, 1000);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to add to shopping list", { id: toastId });
+    } finally {
+      setIsAddingMissing(false);
+    }
+  };
 
   return (
     <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6 animate-in fade-in duration-300">
@@ -217,38 +257,22 @@ export default function RecipeResultView({ recipe, onBack, onRefine, refiningOpt
           <RefineChips onRefine={onRefine} refiningOption={refiningOption} />
 
           <div className="pt-2 space-y-3">
-            <Link href="/ai-tools/shopping-list">
-              <button
-                onClick={async () => {
-                  if (!recipe?.id) {
-                    toast.error("Recipe ID is missing");
-                    return;
-                  }
-                  const toastId = toast.loading("Comparing recipe with your pantry...");
-                  try {
-                    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
-                    const res = await fetch(`${apiUrl}/api/shopping-list/from-recipe`, {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ recipeId: recipe.id }),
-                      credentials: "include",
-                    });
-
-                    if (!res.ok) throw new Error("Failed to add missing ingredients");
-                    const data = await res.json();
-                    toast.success(
-                      data.message || "Missing ingredients added to your shopping list!",
-                      { id: toastId }
-                    );
-                  } catch (err: any) {
-                    toast.error(err.message || "Failed to add to shopping list", { id: toastId });
-                  }
-                }}
-                className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-sm flex items-center justify-center gap-2 transition shadow-sm hover:shadow-md cursor-pointer"
-              >
-                <Sparkles className="w-4 h-4" /> Add Missing Ingredients to Shopping List
-              </button>
-            </Link>
+            <button
+              type="button"
+              disabled={isAddingMissing}
+              onClick={handleAddMissingIngredients}
+              className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-sm flex items-center justify-center gap-2 transition shadow-sm hover:shadow-md cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {isAddingMissing ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" /> Comparing & Adding Ingredients...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4" /> Add Missing Ingredients to Shopping List
+                </>
+              )}
+            </button>
             <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={() => toast.success("Recipe saved!")}

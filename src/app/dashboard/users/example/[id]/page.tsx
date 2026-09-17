@@ -128,9 +128,6 @@ export default function NutritionistDetailPage({ params }: PageProps) {
 
   return (
     <div className="min-h-screen bg-[#f7f8f3] px-4 pb-16 pt-24 text-slate-900 dark:bg-[#101611] dark:text-white sm:px-6 lg:px-8">
-      {/* Toaster Container */}
-      <Toaster position="top-right" reverseOrder={false} />
-
       <div className="mx-auto max-w-5xl">
         <button
           onClick={() => router.back()}

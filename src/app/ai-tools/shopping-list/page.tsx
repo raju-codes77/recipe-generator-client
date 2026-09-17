@@ -22,7 +22,7 @@ import Link from "next/link";
 
 import { getApiBaseUrl } from "@/lib/api-url";
 
-const API_URL = getApiBaseUrl();
+const getApiUrl = () => getApiBaseUrl();
 
 function mapBackendItem(item: any): ShoppingItem {
   const qtyStr = typeof item.quantity === "number"
@@ -54,7 +54,7 @@ export default function ShoppingListPage() {
   const fetchShoppingList = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await fetch(`${API_URL}/api/shopping-list`, {
+      const res = await fetch(`${getApiUrl()}/api/shopping-list`, {
         credentials: "include",
       });
 
@@ -107,7 +107,7 @@ export default function ShoppingListPage() {
     // Optimistic UI update
     setItems((prev) => prev.map((i) => (i.id === id ? { ...i, checked: !i.checked } : i)));
     try {
-      const res = await fetch(`${API_URL}/api/shopping-list/${id}/toggle`, {
+      const res = await fetch(`${getApiUrl()}/api/shopping-list/${id}/toggle`, {
         method: "PATCH",
         credentials: "include",
       });
@@ -123,7 +123,7 @@ export default function ShoppingListPage() {
   const handleDelete = async (id: string) => {
     setItems((prev) => prev.filter((i) => i.id !== id));
     try {
-      const res = await fetch(`${API_URL}/api/shopping-list/${id}`, {
+      const res = await fetch(`${getApiUrl()}/api/shopping-list/${id}`, {
         method: "DELETE",
         credentials: "include",
       });
@@ -144,7 +144,7 @@ export default function ShoppingListPage() {
       const quantity = match ? parseFloat(match[1]) : 1;
       const unit = match ? match[2] : "pcs";
 
-      const res = await fetch(`${API_URL}/api/shopping-list`, {
+      const res = await fetch(`${getApiUrl()}/api/shopping-list`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -178,7 +178,7 @@ export default function ShoppingListPage() {
         }
       }
 
-      const res = await fetch(`${API_URL}/api/shopping-list/${id}`, {
+      const res = await fetch(`${getApiUrl()}/api/shopping-list/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -200,31 +200,47 @@ export default function ShoppingListPage() {
   };
 
   const handleClearCompleted = async () => {
-    const hasCompleted = items.some((i) => i.checked);
-    if (!hasCompleted) {
-      toast("Nothing to clear.");
+    const completedItems = items.filter((i) => i.checked);
+    if (completedItems.length === 0) {
+      toast("No completed items to clear.");
       return;
     }
 
+    const previousItems = [...items];
+    // Optimistic UI update
+    setItems((prev) => prev.filter((i) => !i.checked));
+
     try {
-      const res = await fetch(`${API_URL}/api/shopping-list/completed`, {
+      const res = await fetch(`${getApiUrl()}/api/shopping-list/completed`, {
         method: "DELETE",
         credentials: "include",
       });
 
-      if (!res.ok) throw new Error("Failed to clear completed items");
+      if (res.status === 401) {
+        toast.error("Please sign in to save shopping list changes.");
+        return;
+      }
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.message || "Failed to clear completed items");
+      }
+
       const data = await res.json();
-      setItems((data.items || []).map(mapBackendItem));
-      toast.success("Completed items cleared.");
-    } catch {
-      toast.error("Failed to clear completed items.");
+      if (data.items) {
+        setItems(data.items.map(mapBackendItem));
+      }
+      toast.success(`Cleared ${completedItems.length} completed item${completedItems.length === 1 ? "" : "s"}.`);
+    } catch (err: any) {
+      setItems(previousItems);
+      toast.error(err.message || "Failed to clear completed items.");
     }
   };
 
   const handleOptimize = async () => {
     setOptimizing(true);
     try {
-      const res = await fetch(`${API_URL}/api/shopping-list/optimize`, {
+      const res = await fetch(`${getApiUrl()}/api/shopping-list/optimize`, {
         method: "POST",
         credentials: "include",
       });
@@ -255,7 +271,7 @@ export default function ShoppingListPage() {
       </div>
 
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-20 bg-white dark:bg-[#15211B] rounded-3xl border border-[#E5E7EB] dark:border-white/5 space-y-3">
+        <div className="flex flex-col items-center justify-center py-25 bg-white dark:bg-[#15211B] rounded-3xl border border-[#E5E7EB] dark:border-white/5 space-y-3">
           <Loader2 className="w-8 h-8 text-[#16A34A] animate-spin" />
           <p className="text-sm font-semibold text-[#66736C] dark:text-[#A6B0A9]">Loading your real shopping list...</p>
         </div>
