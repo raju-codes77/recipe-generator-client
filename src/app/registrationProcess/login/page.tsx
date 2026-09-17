@@ -106,7 +106,7 @@ export default function LoginPage() {
     try {
       await authClient.signIn.social({
         provider: "google",
-        callbackURL: `${window.location.origin}/dashboard`,
+        callbackURL: `${window.location.origin}/`,
       });
     } catch (err: any) {
       console.error("Google login error:", err);

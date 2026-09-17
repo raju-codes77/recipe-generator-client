@@ -12,7 +12,6 @@ import { Suspense, useEffect } from "react";
 
 function IngredientRescueContent() {
   const searchParams = useSearchParams();
-  const defaultMode = searchParams.get("mode") === "leftover" ? "leftover" : "pantry";
   const urlIngredients = searchParams.get("ingredients");
   const initialIngredients = urlIngredients ? urlIngredients.split(",").map(i => i.trim()).filter(Boolean) : undefined;
 
@@ -43,9 +42,7 @@ function IngredientRescueContent() {
     resetRecipe,
     handleRefineRecipe,
     refiningOption,
-  } = usePantryToPlate(defaultMode === "leftover", initialIngredients);
-
-  const isLeftover = defaultMode === "leftover";
+  } = usePantryToPlate(false, initialIngredients);
 
   return (
     <div className="min-h-screen bg-emerald-50/20 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 transition-colors duration-200 p-4 sm:p-6 md:p-10">
@@ -67,42 +64,10 @@ function IngredientRescueContent() {
           </div>
         </div>
 
-        {/* Mode toggle tabs */}
-        {!generatedRecipe && (
-          <div className="flex gap-2">
-            <Link
-              href="/ai-tools/ingredient-rescue?mode=pantry"
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition border ${
-                !isLeftover
-                  ? "bg-emerald-600 text-white border-emerald-600 shadow-md shadow-emerald-200 dark:shadow-emerald-900/30"
-                  : "bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:border-emerald-400"
-              }`}
-            >
-              <Refrigerator className="w-4 h-4" /> Pantry Ingredients
-            </Link>
-            <Link
-              href="/ai-tools/ingredient-rescue?mode=leftover"
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition border ${
-                isLeftover
-                  ? "bg-amber-500 text-white border-amber-500 shadow-md shadow-amber-200 dark:shadow-amber-900/30"
-                  : "bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:border-amber-400"
-              }`}
-            >
-              <Recycle className="w-4 h-4" /> Leftover Rescue
-            </Link>
-          </div>
-        )}
-
         {/* Context banner */}
         {!generatedRecipe && (
-          <div className={`rounded-2xl px-5 py-4 border text-sm font-medium ${
-            isLeftover
-              ? "bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800/50 text-amber-800 dark:text-amber-300"
-              : "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/50 text-emerald-800 dark:text-emerald-300"
-          }`}>
-            {isLeftover
-              ? "🔄 Leftover Mode: Add ingredients you have left over. AI will prioritize reducing food waste and generating recipes that use what you already have."
-              : "🥗 Pantry Mode: Add your available pantry ingredients. AI will generate a recipe using mainly what you have."}
+          <div className="rounded-2xl px-5 py-4 border text-sm font-medium bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/50 text-emerald-800 dark:text-emerald-300">
+            🥗 Pantry Mode: Add your available pantry ingredients. AI will generate a recipe using mainly what you have.
           </div>
         )}
 
@@ -112,6 +77,7 @@ function IngredientRescueContent() {
             onBack={resetRecipe}
             onRefine={handleRefineRecipe}
             refiningOption={refiningOption}
+            userPantryIngredients={ingredients}
           />
         ) : (
           <>
@@ -144,7 +110,7 @@ function IngredientRescueContent() {
             <GenerateButton
               isGenerating={isGenerating}
               onClick={handleGenerateRecipe}
-              label={isLeftover ? "Rescue My Leftovers" : "Generate Recipe"}
+              label="Generate Recipe"
             />
           </>
         )}

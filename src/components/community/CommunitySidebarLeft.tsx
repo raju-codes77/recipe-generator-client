@@ -70,7 +70,7 @@ export const CommunitySidebarLeft: React.FC<CommunitySidebarLeftProps> = ({
   onOpenFollowers = () => undefined,
   onOpenSaved = () => undefined,
 }) => {
-  const filterCategories: FilterCategory[] = [
+  const filterCategories = [
     { id: "all", label: "All Community Posts", icon: Compass },
     { id: "following", label: "Following Cooks", icon: Users },
     { id: "quick", label: "Quick 15-Min Meals", icon: Clock },

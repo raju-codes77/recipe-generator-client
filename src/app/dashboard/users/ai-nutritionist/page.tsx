@@ -12,6 +12,8 @@ interface Message {
   text: string;
 }
 
+import { getApiBaseUrl } from '@/lib/api-url';
+
 export default function AiNutritionistChat() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -36,11 +38,12 @@ export default function AiNutritionistChat() {
     setIsLoading(true);
 
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      const API_URL = getApiBaseUrl();
       const response = await fetch(`${API_URL}/api/ai-nutritionist/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userMessage })
+        body: JSON.stringify({ message: userMessage }),
+        credentials: "include",
       });
 
       if (!response.ok) {

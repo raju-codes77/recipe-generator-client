@@ -13,6 +13,8 @@ import { authClient } from "@/lib/auth-client";
 
 import toast from "react-hot-toast";
 import { Fredoka } from "next/font/google";
+import { NotificationProvider, useNotifications } from "./notifications/NotificationContext";
+import NotificationPanel from "./notifications/NotificationPanel";
 
 const fredoka = Fredoka({ 
   subsets: ["latin"], 
@@ -22,7 +24,7 @@ const fredoka = Fredoka({
 
 
 
-export default function Navbar() {
+function NavbarContent() {
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -34,6 +36,8 @@ export default function Navbar() {
   const pathname = usePathname();
 
   const router = useRouter();
+
+  const { togglePanel, unreadCount } = useNotifications();
 
 
 
@@ -322,17 +326,22 @@ export default function Navbar() {
           ) : user ? (
             <>
 
-              {/* Notifications */}
-
-              <button
-                onClick={() => toast("You have no new notifications", { icon: "🔔" })}
-                className="p-2.5 text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all duration-200 relative"
-                aria-label="Notifications"
-
-              >
-                <Bell size={18} strokeWidth={2.5} />
-                <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-slate-900" />
-              </button>
+              <div className="relative flex items-center">
+                <button
+                  id="notification-bell-btn"
+                  onClick={togglePanel}
+                  className="p-2.5 text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all duration-200 relative"
+                  aria-label="Notifications"
+                >
+                  <Bell size={18} strokeWidth={2.5} />
+                  {unreadCount > 0 && (
+                    <span className="absolute top-0 right-0 bg-red-500 text-white text-[9px] font-bold px-1 min-w-[16px] h-[16px] rounded-full flex items-center justify-center border-2 border-white dark:border-slate-900">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
+                </button>
+                <NotificationPanel />
+              </div>
 
 
 
@@ -536,4 +545,12 @@ export default function Navbar() {
 
   );
 
+}
+
+export default function Navbar() {
+  return (
+    <NotificationProvider>
+      <NavbarContent />
+    </NotificationProvider>
+  );
 }

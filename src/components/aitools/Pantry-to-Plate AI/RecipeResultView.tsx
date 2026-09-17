@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import toast from "react-hot-toast";
-import { ArrowLeft, Sparkles, Bookmark, Share2, RotateCcw, Replace, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
+import { ArrowLeft, Sparkles, Bookmark, Share2, RotateCcw, Replace, ChevronDown, ChevronUp, Loader2, CheckCircle2, Circle } from "lucide-react";
 import { Recipe } from "./types";
 import RefineChips from "./RefineChips";
 import HealthScoreCard from "./HealthScoreCard";
@@ -26,6 +26,7 @@ interface RecipeResultViewProps {
   onBack: () => void;
   onRefine: (refinement: string) => void;
   refiningOption: string | null;
+  userPantryIngredients?: string[];
 }
 
 // ─── Inline Ingredient Substitution ──────────────────────────────────────────
@@ -36,7 +37,7 @@ interface SubResult {
   reason: string;
 }
 
-function IngredientSubPanel({ ingredient, recipeTitle }: { ingredient: string; recipeTitle: string }) {
+function IngredientSubPanel({ ingredient, recipeTitle, isAvailable }: { ingredient: string; recipeTitle: string, isAvailable?: boolean }) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [subs, setSubs] = useState<SubResult[] | null>(null);
@@ -67,7 +68,11 @@ function IngredientSubPanel({ ingredient, recipeTitle }: { ingredient: string; r
   return (
     <li className="space-y-1">
       <div className="flex items-center gap-2 group">
-        <span className="w-2 h-2 rounded-full bg-emerald-500 mt-1.5 flex-shrink-0" />
+        {isAvailable ? (
+          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 mt-1.5 flex-shrink-0" />
+        ) : (
+          <Circle className="w-3.5 h-3.5 text-rose-400 mt-1.5 flex-shrink-0" />
+        )}
         <span className="flex-1 text-sm text-zinc-600 dark:text-zinc-300">{ingredient}</span>
         <button
           onClick={fetchSubs}
@@ -105,11 +110,26 @@ function IngredientSubPanel({ ingredient, recipeTitle }: { ingredient: string; r
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export default function RecipeResultView({ recipe, onBack, onRefine, refiningOption }: RecipeResultViewProps) {
+export default function RecipeResultView({ recipe, onBack, onRefine, refiningOption, userPantryIngredients }: RecipeResultViewProps) {
   const router = useRouter();
   const [imgSrc, setImgSrc] = useState<string>(() => sanitizeImageUrl(recipe?.image));
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isAddingMissing, setIsAddingMissing] = useState<boolean>(false);
+
+  const availableIngredients: string[] = [];
+  const missingIngredients: string[] = [];
+
+  if (userPantryIngredients) {
+    recipe.ingredients.forEach((ing) => {
+      const isAvail = userPantryIngredients.some((pantryIng) => {
+        const normIng = ing.toLowerCase();
+        const normPantry = pantryIng.toLowerCase().trim();
+        return normPantry && normIng.includes(normPantry);
+      });
+      if (isAvail) availableIngredients.push(ing);
+      else missingIngredients.push(ing);
+    });
+  }
 
   useEffect(() => {
     setImgSrc(sanitizeImageUrl(recipe?.image));
@@ -128,7 +148,10 @@ export default function RecipeResultView({ recipe, onBack, onRefine, refiningOpt
       const res = await fetch(`${apiUrl}/api/shopping-list/from-recipe`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ recipeId: recipe.id }),
+        body: JSON.stringify({ 
+          recipeId: recipe.id,
+          userPantryIngredients 
+        }),
         credentials: "include",
       });
 
@@ -233,11 +256,42 @@ export default function RecipeResultView({ recipe, onBack, onRefine, refiningOpt
                 <Replace className="w-3 h-3" /> Hover an ingredient to substitute
               </span>
             </div>
-            <ul className="space-y-2">
-              {recipe.ingredients.map((item, idx) => (
-                <IngredientSubPanel key={idx} ingredient={item} recipeTitle={recipe.title} />
-              ))}
-            </ul>
+            {userPantryIngredients ? (
+              <>
+                <div className="mb-4">
+                  <h4 className="text-sm font-semibold text-emerald-600 mb-2 flex items-center gap-1">
+                    <CheckCircle2 className="w-4 h-4" /> Available from Pantry
+                  </h4>
+                  <ul className="space-y-2">
+                    {availableIngredients.map((item, idx) => (
+                      <IngredientSubPanel key={idx} ingredient={item} recipeTitle={recipe.title} isAvailable />
+                    ))}
+                  </ul>
+                  {availableIngredients.length === 0 && (
+                    <p className="text-xs text-zinc-500 italic">None</p>
+                  )}
+                </div>
+                <div>
+                  <h4 className="text-sm font-semibold text-rose-500 mb-2 flex items-center gap-1">
+                    <Circle className="w-4 h-4" /> Missing Ingredients
+                  </h4>
+                  <ul className="space-y-2">
+                    {missingIngredients.map((item, idx) => (
+                      <IngredientSubPanel key={idx} ingredient={item} recipeTitle={recipe.title} />
+                    ))}
+                  </ul>
+                  {missingIngredients.length === 0 && (
+                    <p className="text-xs text-zinc-500 italic">None</p>
+                  )}
+                </div>
+              </>
+            ) : (
+              <ul className="space-y-2">
+                {recipe.ingredients.map((item, idx) => (
+                  <IngredientSubPanel key={idx} ingredient={item} recipeTitle={recipe.title} />
+                ))}
+              </ul>
+            )}
           </div>
 
           <div className="space-y-3">

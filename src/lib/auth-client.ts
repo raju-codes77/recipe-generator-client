@@ -1,17 +1,18 @@
 import { createAuthClient } from "better-auth/react";
-import { getApiBaseUrl } from "./api-url";
 
 export const authClient = createAuthClient({
-    baseURL: getApiBaseUrl(),
-
-    fetchOptions: {
-        credentials: "include",
-    },
+  baseURL:
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.NEXT_PUBLIC_LOCAL_URL ||
+    (typeof window !== "undefined" ? window.location.origin : "http://localhost:3000"),
+  fetchOptions: {
+    credentials: "include",
+  },
 });
 
 export const {
-    signIn,
-    signUp,
-    signOut,
-    useSession,
+  signIn,
+  signUp,
+  signOut,
+  useSession,
 } = authClient;

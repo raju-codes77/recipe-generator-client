@@ -12,6 +12,7 @@ import { authClient } from "@/lib/auth-client";
 import DetailsSidebar from "@/components/recipes/details/DetailsSidebar";
 import RecipeDetailsSkeleton from "@/components/recipes/details/RecipeDetailsSkeleton";
 import RecipeAIAssistant from "@/components/recipes/details/RecipeAIAssistant";
+import { getApiBaseUrl } from "@/lib/api-url";
 import toast from "react-hot-toast";
 
 interface Ingredient {
@@ -110,7 +111,7 @@ export default function RecipeDetailsPage() {
     async function fetchRecipeDetails() {
       try {
         setLoading(true);
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/recipes/${id}`, {
+        const response = await fetch(`${getApiBaseUrl()}/api/recipes/${id}`, {
           credentials: "include",
         });
         const data = await response.json();
@@ -146,7 +147,7 @@ export default function RecipeDetailsPage() {
     const checkStatuses = async () => {
       try {
         const favResponse = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/favorites/check?userId=${session.user.id}&recipeId=${id}`,
+          `${getApiBaseUrl()}/api/favorites/check?userId=${session.user.id}&recipeId=${id}`,
           { credentials: "include" }
         );
         const favContentType = favResponse.headers.get("content-type");
@@ -192,7 +193,7 @@ export default function RecipeDetailsPage() {
 
     try {
       const method = previousState ? "DELETE" : "POST";
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/favorites`, {
+      const response = await fetch(`${getApiBaseUrl()}/api/favorites`, {
         method,
         headers: {
           "Content-Type": "application/json",
@@ -238,7 +239,7 @@ export default function RecipeDetailsPage() {
     if (!session?.user?.id) return;
     setLoadingCollections(true);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/collections?userId=${session.user.id}`, {
+      const res = await fetch(`${getApiBaseUrl()}/api/collections?userId=${session.user.id}`, {
         credentials: "include",
       });
       const data = await res.json();
@@ -273,7 +274,7 @@ export default function RecipeDetailsPage() {
     if (!recipe?.id) return;
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/collections/add-recipe`, {
+      const res = await fetch(`${getApiBaseUrl()}/api/collections/add-recipe`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -306,13 +307,15 @@ export default function RecipeDetailsPage() {
 
     setIsSubmittingNew(true);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/collections`, {
+      const res = await fetch(`${getApiBaseUrl()}/api/collections`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
           userId: session.user.id,
           name: newCollectionName.trim(),
+          description: "",
+          isPublic: false,
         }),
       });
       const data = await res.json();

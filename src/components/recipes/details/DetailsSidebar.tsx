@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Star, Users } from "lucide-react";
+import { getApiBaseUrl } from "@/lib/api-url";
 
 interface RecipeItem {
   id: string;
@@ -132,13 +133,14 @@ const DetailsSidebar = ({ recipeId, recipeCategory, recipeImage, recipeUser }: D
     const fetchAuthorStats = async () => {
       if (!authorId) return;
       try {
-        const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+        const API_URL = getApiBaseUrl();
         
         // Fetch recipes, collections, and favorites concurrently to get accurate dynamic counts
+        const fetchOpts = { credentials: "include" as const };
         const [recipesRes, collectionsRes, favoritesRes] = await Promise.all([
-          fetch(`${API_URL}/api/recipes?tab=my-recipes&userId=${authorId}`).catch(() => null),
-          fetch(`${API_URL}/api/collections?userId=${authorId}`).catch(() => null),
-          fetch(`${API_URL}/api/recipes?tab=favorites&userId=${authorId}`).catch(() => null)
+          fetch(`${API_URL}/api/recipes?tab=my-recipes&userId=${authorId}`, fetchOpts).catch(() => null),
+          fetch(`${API_URL}/api/collections?userId=${authorId}`, fetchOpts).catch(() => null),
+          fetch(`${API_URL}/api/recipes?tab=favorites&userId=${authorId}`, fetchOpts).catch(() => null)
         ]);
 
         let recipesCount = 0;
@@ -184,13 +186,13 @@ const DetailsSidebar = ({ recipeId, recipeCategory, recipeImage, recipeUser }: D
     const fetchRelatedRecipes = async () => {
       try {
         setLoading(true);
-        const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+        const API_URL = getApiBaseUrl();
 
         const categoryQuery = recipeCategory ? `category=${encodeURIComponent(recipeCategory)}` : "";
         const excludeQuery = recipeId ? `excludeId=${recipeId}` : "";
         const queryParams = [categoryQuery, excludeQuery, "limit=4"].filter(Boolean).join("&");
 
-        const res = await fetch(`${API_URL}/api/recipes?${queryParams}`);
+        const res = await fetch(`${API_URL}/api/recipes?${queryParams}`, { credentials: "include" });
         const contentType = res.headers.get("content-type");
         if (!contentType || !contentType.includes("application/json")) {
           throw new Error("API did not return JSON. Check if backend server is running.");
