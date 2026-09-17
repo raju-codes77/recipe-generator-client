@@ -39,7 +39,7 @@ export default function RootLayout({
           <AIAssistantPopup/>
           <main className="flex-1">
             {children}
-            <Toaster position="bottom-right" reverseOrder={false} />
+            <Toaster position="top-right" reverseOrder={false} />
             <WellnessReminderScheduler />
           </main>
           <ConditionalFooter />

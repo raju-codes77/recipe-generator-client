@@ -830,7 +830,6 @@ export default function MealPlannerPage() {
   if (!profile || editProfile) {
     return (
       <div className="bg-slate-50 dark:bg-slate-950 min-h-screen pt-8 px-4 pb-24">
-        <Toaster />
         <MealProfileOnboarding profile={profile} onSave={(p) => { setProfile(p); setEditProfile(false); }} userId={userId} />
       </div>
     );
@@ -853,7 +852,6 @@ export default function MealPlannerPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-24 font-sans text-slate-800 dark:text-slate-200">
-      <Toaster />
 
       {/* ── Modal Overlay for Meal Details ── */}
       {modalMeal && (

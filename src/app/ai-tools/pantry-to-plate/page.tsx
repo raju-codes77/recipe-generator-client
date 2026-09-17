@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { Toaster } from "react-hot-toast";
 import RecipeResultView from "@/components/aitools/Pantry-to-Plate AI/RecipeResultView";
 import Hero from "@/components/aitools/Pantry-to-Plate AI/Hero";
 import PantryPanel from "@/components/aitools/Pantry-to-Plate AI/PantryPanel";
@@ -42,8 +41,6 @@ export default function PantryToPlatePage() {
 
   return (
     <div className="min-h-screen bg-emerald-50/20 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 transition-colors duration-200 p-4 sm:p-6 md:p-10">
-      <Toaster position="top-right" reverseOrder={false} />
-
       <div className="max-w-6xl mx-auto space-y-6">
         <div className="flex items-center gap-3">
           <Link
