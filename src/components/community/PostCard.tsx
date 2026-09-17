@@ -149,7 +149,7 @@ export const PostCard: React.FC<PostCardProps> = ({
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xs transition-shadow duration-300 hover:shadow-lg dark:border-neutral-800 dark:bg-[#121212]"
+      className="relative overflow-visible rounded-3xl border border-slate-200 bg-white shadow-xs transition-shadow duration-300 hover:shadow-lg dark:border-neutral-800 dark:bg-[#121212]"
     >
       {/* 1. Author Header Bar */}
       <div className="flex items-center justify-between gap-2 px-4 sm:px-6 pt-5 pb-3.5">
@@ -246,7 +246,7 @@ export const PostCard: React.FC<PostCardProps> = ({
                   initial={{ opacity: 0, scale: 0.92, y: 5 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.92, y: 5 }}
-                  className="absolute right-0 top-10 z-20 w-52 rounded-2xl border border-slate-200 bg-white py-2 shadow-xl dark:border-neutral-800 dark:bg-[#18181b] text-xs"
+                  className="absolute right-0 top-10 z-40 w-52 rounded-2xl border border-slate-200 bg-white py-2 shadow-xl dark:border-neutral-800 dark:bg-[#18181b] text-xs"
                 >
                   {post.author.id === currentUserId ? (
                     <>
@@ -617,12 +617,15 @@ export const PostCard: React.FC<PostCardProps> = ({
                     </Link>
                     <div className="flex-1 rounded-2xl bg-white p-3.5 shadow-xs border border-slate-200 dark:border-neutral-800 dark:bg-[#18181b]">
                       <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
                         <Link
                           href={`/community/users/${comment.userId}`}
                           className="font-bold text-neutral-900 transition hover:text-[#2F8F46] dark:text-white dark:hover:text-[#B7E35F]"
                         >
                           {comment.userName}
                         </Link>
+                        {comment.userId !== currentUserId && <button type="button" onClick={() => onDirectMessage(comment.userId, post)} aria-label={`Message ${comment.userName}`} className="text-neutral-400 transition hover:text-[#FF9F43]"><Send className="h-3.5 w-3.5" /></button>}
+                        </div>
                         <span className="text-[11px] text-neutral-400">{comment.createdAt}</span>
                       </div>
                       <p className="mt-1 text-neutral-700 dark:text-neutral-300 leading-relaxed">{comment.content}</p>

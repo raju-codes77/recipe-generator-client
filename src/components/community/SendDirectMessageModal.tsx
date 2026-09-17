@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "motion/react";
+import toast from "react-hot-toast";
 import { X, Send, MessageSquare, Search } from "lucide-react";
 import { DirectMessageUser, Post } from "./types";
 import { communityApi, CommunityMessage } from "@/app/api/community/community-api";
@@ -29,33 +30,62 @@ export const SendDirectMessageModal: React.FC<SendDirectMessageModalProps> = ({
   const [messages, setMessages] = useState<CommunityMessage[]>([]);
   const [hasMoreMessages, setHasMoreMessages] = useState(false);
   const [isLoadingOlderMessages, setIsLoadingOlderMessages] = useState(false);
-  const selectedContact = contacts.find((contact) => contact.id === selectedContactId) || contacts[0];
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+  const [pendingAttachedPost, setPendingAttachedPost] = useState<Post | null>(null);
+  const messagesContainerRef = React.useRef<HTMLDivElement>(null);
+  const selectedContact = contacts.find((contact) => contact.id === selectedContactId);
   const activeContact: DirectMessageUser = selectedContact || {
     id: "",
-    name: "No cooks available",
+    name: "Select a cook",
     username: "community",
     avatar: "",
     online: false,
-    lastMessage: "Sign in with another account to start a conversation",
+    lastMessage: "Choose a cook to open a conversation",
     lastMessageTime: "",
   };
 
   useEffect(() => {
     if (!isOpen || !session?.user) return;
+    setSelectedContactId(initialRecipientId || "");
+    setMessages([]);
+    setHasMoreMessages(false);
+    setPendingAttachedPost(attachedPost || null);
     void communityApi
       .listContacts(initialRecipientId)
       .then((items) => {
         setContacts(items);
-        setSelectedContactId((current) => initialRecipientId || current || items[0]?.id || "");
       })
       .catch(() => setContacts([]));
   }, [isOpen, initialRecipientId, session?.user?.id]);
 
   useEffect(() => {
+    if (!isOpen || !attachedPost) {
+      if (!isOpen) setInputMessage("");
+      return;
+    }
+    setPendingAttachedPost(attachedPost);
+    setInputMessage("");
+  }, [isOpen, attachedPost?.id]);
+
+  useEffect(() => {
     if (!isOpen || !selectedContactId) return;
+    requestAnimationFrame(() => {
+      const container = messagesContainerRef.current;
+      if (container) container.scrollTop = container.scrollHeight;
+    });
+  }, [isOpen, selectedContactId, messages.length]);
+
+  useEffect(() => {
+    if (!isOpen || !selectedContactId) {
+      setMessages([]);
+      setHasMoreMessages(false);
+      setIsLoadingMessages(false);
+      return;
+    }
     let cancelled = false;
     setMessages([]);
     setHasMoreMessages(false);
+    setIsLoadingMessages(true);
     const load = () =>
       void communityApi
         .listMessages(selectedContactId, { take: MESSAGES_PER_PAGE, skip: 0 })
@@ -67,9 +97,13 @@ export const SendDirectMessageModal: React.FC<SendDirectMessageModalProps> = ({
             return [...current, ...page.messages.filter((message) => !knownIds.has(message.id))];
           });
           setHasMoreMessages(page.hasMore);
+          void communityApi.markMessagesRead(selectedContactId);
         })
         .catch(() => {
           if (!cancelled) setMessages([]);
+        })
+        .finally(() => {
+          if (!cancelled) setIsLoadingMessages(false);
         });
     load();
     const timer = window.setInterval(load, 8000);
@@ -86,12 +120,13 @@ export const SendDirectMessageModal: React.FC<SendDirectMessageModalProps> = ({
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!session?.user?.id) return;
-    if ((!inputMessage.trim() && !attachedPost) || !activeContact.id) return;
+    if ((!inputMessage.trim() && !pendingAttachedPost) || !activeContact.id) return;
+    const messageText = inputMessage.trim();
     await communityApi.sendMessage(
       activeContact.id,
-      inputMessage.trim() || "Check out this delicious recipe!",
-      attachedPost?.id,
-      session.user.id
+      messageText,
+      pendingAttachedPost?.id,
+      session.user.id,
     );
     const page = await communityApi.listMessages(activeContact.id, { take: MESSAGES_PER_PAGE, skip: 0 });
     setMessages((current) => {
@@ -100,6 +135,8 @@ export const SendDirectMessageModal: React.FC<SendDirectMessageModalProps> = ({
     });
     setHasMoreMessages(page.hasMore);
     setInputMessage("");
+    setPendingAttachedPost(null);
+    toast.success("Message sent");
   };
 
   const loadOlderMessages = async () => {
@@ -215,7 +252,7 @@ export const SendDirectMessageModal: React.FC<SendDirectMessageModalProps> = ({
             </div>
 
             {/* Chat Messages */}
-            <div className="flex-1 overflow-y-auto p-5 space-y-3.5">
+            <div ref={messagesContainerRef} className="min-w-0 flex-1 overflow-x-hidden overflow-y-auto p-5 space-y-3.5">
               {hasMoreMessages && (
                 <button
                   type="button"
@@ -226,33 +263,44 @@ export const SendDirectMessageModal: React.FC<SendDirectMessageModalProps> = ({
                   {isLoadingOlderMessages ? "Loading older messages..." : "Load older messages"}
                 </button>
               )}
-              {currentChatMessages.map((msg) => {
+              {!selectedContactId ? (
+                <p className="pt-12 text-center text-xs text-neutral-400">Select a cook to start messaging.</p>
+              ) : isLoadingMessages ? (
+                <p className="pt-12 text-center text-xs text-neutral-400">Loading conversation...</p>
+              ) : currentChatMessages.map((msg) => {
                 const isMe = msg.senderId === session?.user.id;
                 return (
                   <div key={msg.id} className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}>
                     <div
-                      className={`max-w-xs sm:max-w-md rounded-2xl p-3.5 text-xs sm:text-sm leading-relaxed ${
+                      className={`max-w-[85%] break-words whitespace-pre-wrap rounded-2xl p-3.5 text-xs sm:max-w-md sm:text-sm leading-relaxed ${
                         isMe
                           ? "bg-[#2F8F46] text-white rounded-br-none shadow-xs"
                           : "bg-white text-neutral-800 border border-slate-200 rounded-bl-none shadow-xs dark:bg-[#18181b] dark:text-neutral-100 dark:border-neutral-800"
                       }`}
                     >
-                      {msg.attachedPostId && <p className="mb-2 text-[11px] font-bold">🍳 Shared Community recipe</p>}
-                      <p>{msg.text}</p>
+                      {msg.attachedPost && <a href={`/community/recipe/${encodeURIComponent(msg.attachedPost.id)}`} className="mb-2 block w-full max-w-[260px] overflow-hidden rounded-xl border border-amber-200 bg-amber-50 text-left dark:border-amber-900/50 dark:bg-amber-950/20"><img src={msg.attachedPost.imageUrl} alt={msg.attachedPost.caption || "Shared Community post"} className="h-28 w-full object-cover" /><span className="block px-3 pt-2 text-[11px] font-bold text-amber-800 dark:text-amber-200">🍳 Shared Community post</span>{msg.attachedPost.caption && <span className="block break-words px-3 pb-2 pt-1 text-xs text-amber-900 dark:text-amber-100">{msg.attachedPost.caption}</span>}</a>}
+                      {msg.attachedStory && <a href={`/community/story/${encodeURIComponent(msg.attachedStory.id)}`} className="mb-2 block w-full max-w-[260px] overflow-hidden rounded-xl border border-amber-200 bg-amber-50 text-left dark:border-amber-900/50 dark:bg-amber-950/20"><img src={msg.attachedStory.imageUrl} alt={msg.attachedStory.caption || "Shared story"} className="h-28 w-full object-cover" /><span className="mt-1 block break-words px-3 pb-2 text-[11px] font-bold text-amber-800 dark:text-amber-200">📷 Shared story{msg.attachedStory.caption ? `: ${msg.attachedStory.caption}` : ""}</span></a>}
+                      {(() => {
+                        const visibleText = msg.text
+                          .replace(/https?:\/\/\S+/g, "")
+                          .replace(/^\s*Check out this Community recipe:?\s*/i, "")
+                          .trim();
+                        return visibleText ? <p>{visibleText}</p> : null;
+                      })()}
                     </div>
                     <span className="text-[10px] text-neutral-400 mt-1 px-1">{msg.timestamp}</span>
                   </div>
                 );
               })}
-              {currentChatMessages.length === 0 && (
+              {selectedContactId && !isLoadingMessages && currentChatMessages.length === 0 && (
                 <p className="pt-12 text-center text-xs text-neutral-400">No messages yet. Start the conversation.</p>
               )}
             </div>
 
             {/* Attached Recipe Callout before sending */}
-            {attachedPost?.recipe && (
+            {pendingAttachedPost?.recipe && (
               <div className="flex items-center justify-between bg-[#FFF0DD] px-5 py-2 text-xs text-amber-950 border-t border-amber-200">
-                <span className="truncate font-semibold text-xs">📎 Attached Recipe: {attachedPost.recipe.title}</span>
+                <span className="truncate font-semibold text-xs">📎 Attached Recipe: {pendingAttachedPost.recipe.title}</span>
                 <span className="text-[11px] text-amber-700">Will send with message</span>
               </div>
             )}
@@ -267,13 +315,13 @@ export const SendDirectMessageModal: React.FC<SendDirectMessageModalProps> = ({
                 placeholder={`Message @${activeContact.username}...`}
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
-                className="flex-1 rounded-xl border border-slate-200 bg-neutral-50 px-4 py-2.5 text-xs sm:text-sm text-neutral-900 focus:border-[#2F8F46] dark:border-neutral-700 dark:bg-[#18181b] dark:text-white"
+                className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-neutral-50 px-4 py-2.5 text-xs sm:text-sm text-neutral-900 focus:border-[#2F8F46] dark:border-neutral-700 dark:bg-[#18181b] dark:text-white"
               />
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 type="submit"
-                disabled={!inputMessage.trim() && !attachedPost}
+                disabled={(!inputMessage.trim() && !pendingAttachedPost) || !activeContact.id}
                 className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#2F8F46] text-white shadow-xs transition hover:bg-[#176B35] disabled:opacity-40"
               >
                 <Send className="h-4 w-4" />

@@ -13,6 +13,7 @@ interface CommunityShareModalProps {
   isSubmitting?: boolean;
   onClose: () => void;
   onShareNow: (caption: string, tags: string[]) => Promise<void> | void;
+  onSendDirectMessage?: (post: Post) => void;
 }
 
 export const CommunityShareModal: React.FC<CommunityShareModalProps> = ({
@@ -23,6 +24,7 @@ export const CommunityShareModal: React.FC<CommunityShareModalProps> = ({
   isSubmitting = false,
   onClose,
   onShareNow,
+  onSendDirectMessage,
 }) => {
   const [caption, setCaption] = useState("");
   const [tagsInput, setTagsInput] = useState("");
@@ -124,6 +126,7 @@ export const CommunityShareModal: React.FC<CommunityShareModalProps> = ({
                   <button type="button" onClick={() => openExternalShare(`https://wa.me/?text=${encodeURIComponent(`${shareText} ${shareUrl}`)}`)} className="flex flex-col items-center gap-2 text-xs font-semibold text-neutral-600 transition hover:text-[#25D366] dark:text-neutral-300"><span className="flex h-12 w-12 items-center justify-center rounded-full bg-[#25D366]/15 text-[#25D366]"><MessageCircle className="h-5 w-5" /></span>WhatsApp</button>
                   <button type="button" onClick={() => openExternalShare(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`)} className="flex flex-col items-center gap-2 text-xs font-semibold text-neutral-600 transition hover:text-[#1877F2] dark:text-neutral-300"><span className="flex h-12 w-12 items-center justify-center rounded-full bg-[#1877F2]/15 text-[#1877F2]"><Globe2 className="h-5 w-5" /></span>Facebook</button>
                   <button type="button" onClick={() => void copyLink()} className="flex flex-col items-center gap-2 text-xs font-semibold text-neutral-600 transition hover:text-[#2F8F46] dark:text-neutral-300"><span className="flex h-12 w-12 items-center justify-center rounded-full bg-[#2F8F46]/15 text-[#2F8F46] dark:text-[#B7E35F]">{copied ? <Check className="h-5 w-5" /> : <Link2 className="h-5 w-5" />}</span>{copied ? "Copied" : "Copy link"}</button>
+                  {onSendDirectMessage && <button type="button" onClick={() => onSendDirectMessage(post)} className="flex flex-col items-center gap-2 text-xs font-semibold text-neutral-600 transition hover:text-[#FF9F43] dark:text-neutral-300"><span className="flex h-12 w-12 items-center justify-center rounded-full bg-[#FF9F43]/15 text-[#FF9F43]"><MessageCircle className="h-5 w-5" /></span>Message</button>}
                   <button type="button" onClick={() => void navigator.share?.({ title: post.recipe?.title || "FoodCanvas post", text: shareText, url: shareUrl })} className="flex flex-col items-center gap-2 text-xs font-semibold text-neutral-600 transition hover:text-[#FF9F43] dark:text-neutral-300"><span className="flex h-12 w-12 items-center justify-center rounded-full bg-[#FF9F43]/15 text-[#FF9F43]"><Share2 className="h-5 w-5" /></span>More</button>
                 </div>
               </div>

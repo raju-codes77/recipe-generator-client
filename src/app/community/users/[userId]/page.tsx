@@ -868,6 +868,10 @@ export default function CommunityUserProfilePage() {
         isSubmitting={isSharingPost}
         onClose={() => { if (!isSharingPost) setShareModalPost(null); }}
         onShareNow={confirmShareToProfile}
+        onSendDirectMessage={(post) => {
+          setShareModalPost(null);
+          handleOpenDM(post.author.id, post);
+        }}
       />
 
       <CommunityTextPromptModal
@@ -925,7 +929,7 @@ export default function CommunityUserProfilePage() {
         profileImage={session?.user?.image}
         onOpenMessages={() => router.push("/community")}
         onClose={() => setViewingStory(null)}
-        onSendMessage={async (recipientId, text) => { await communityApi.sendMessage(recipientId, text, undefined, session?.user?.id!); }}
+        onSendMessage={async (recipientId, text, storyId) => { await communityApi.sendMessage(recipientId, text, undefined, session?.user?.id!, storyId); }}
         onNextStory={handleNextStory}
         onPreviousStory={handlePreviousStory}
         storyCount={storyGroup.length || 1}

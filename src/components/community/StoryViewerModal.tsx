@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { NotificationItem, StoryItem, StoryViewer } from './types';
 import { CommunityAvatar } from './CommunityAvatar';
 import { CommunityConfirmModal } from './CommunityConfirmModal';
+import toast from "react-hot-toast";
 
 interface StoryViewerModalProps {
   story: StoryItem | null;
@@ -15,7 +16,7 @@ interface StoryViewerModalProps {
   storyCount?: number;
   storyIndex?: number;
   isOwnStory?: boolean;
-  onSendMessage?: (recipientId: string, text: string) => Promise<void>;
+  onSendMessage?: (recipientId: string, text: string, storyId: string) => Promise<void>;
   onDeleteStory?: (storyId: string) => Promise<void>;
   onOpenMessages?: () => void;
   dashboardHref?: string;
@@ -158,8 +159,9 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
     setIsSending(true);
     setSendError(null);
     try {
-      await onSendMessage(story.author.id, message);
+      await onSendMessage(story.author.id, message, story.id);
       setReplyText('');
+      toast.success("Reply sent");
     } catch (error) {
       setSendError(error instanceof Error ? error.message : 'Unable to send this message.');
     } finally {
