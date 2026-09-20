@@ -28,7 +28,8 @@ function SkeletonCard() {
 
 // ─── Active challenge card ─────────────────────────────────────────────────────
 function ActiveCard({ challenge }: { challenge: Challenge }) {
-  const p = challenge.myParticipant!;
+  const p = challenge.myParticipant;
+  if (!p) return null;
   const joinedAt = new Date(p.joinedAt);
   const deadline = new Date(joinedAt.getTime() + p.totalDays * 86400000);
   const daysRemaining = Math.max(0, Math.ceil((deadline.getTime() - Date.now()) / 86400000));

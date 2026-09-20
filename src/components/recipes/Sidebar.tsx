@@ -175,36 +175,6 @@ export default function Sidebar({ selectedCollectionId, onSelectCollection }: Si
 
       </div>
 
-      {/* RECOMMENDED COLLECTIONS CARD */}
-      <div className="rounded-[28px] border border-[#E2EBE4] bg-white p-6 shadow-sm dark:border-white/10 dark:bg-[#131B2E]">
-        <h3 className="font-bold text-gray-900 dark:text-white mb-4">Recommended Collections</h3>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-gray-100">
-                <Image src="https://images.unsplash.com/photo-1543339308-43e59d6b73a6?w=100&auto=format&fit=crop&q=60" alt="High Protein Meals" fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" className="object-cover" />
-              </div>
-              <div>
-                <h4 className="text-xs font-bold text-gray-900 dark:text-white line-clamp-1">High Protein Meals</h4>
-                <p className="text-[10px] text-gray-500 dark:text-gray-400">24 recipes • 1.2k followers</p>
-              </div>
-            </div>
-            <button className="cursor-pointer px-3 py-1.5 rounded-xl border border-[#E2EBE4] text-xs font-bold text-gray-700 hover:bg-gray-50 dark:border-white/10 dark:text-gray-300 dark:hover:bg-white/5 transition-colors">Follow</button>
-          </div>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-gray-100">
-                <Image src="https://images.unsplash.com/photo-1498837167922-ddd27525d352?w=100&auto=format&fit=crop&q=60" alt="Low Carb Recipes" fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" className="object-cover" />
-              </div>
-              <div>
-                <h4 className="text-xs font-bold text-gray-900 dark:text-white line-clamp-1">Low Carb Recipes</h4>
-                <p className="text-[10px] text-gray-500 dark:text-gray-400">18 recipes • 892 followers</p>
-              </div>
-            </div>
-            <button className="cursor-pointer px-3 py-1.5 rounded-xl border border-[#E2EBE4] text-xs font-bold text-gray-700 hover:bg-gray-50 dark:border-white/10 dark:text-gray-300 dark:hover:bg-white/5 transition-colors">Follow</button>
-          </div>
-        </div>
-      </div>
 
       {/* AI BANNER CARD */}
       <div className="rounded-[28px] bg-[#EAF4EB] dark:bg-[#132A26] p-6 relative overflow-hidden border border-[#D1E7D3] dark:border-white/10">

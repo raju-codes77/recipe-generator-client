@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Star, Users } from "lucide-react";
+import { getApiBaseUrl } from "@/lib/api-url";
 
 interface RecipeItem {
   id: string;
@@ -19,6 +20,7 @@ interface DetailsSidebarProps {
   recipeCategory?: string;
   recipeImage?: string;
   recipeUser?: {
+    id?: string;
     name?: string;
     image?: string;
   };
@@ -107,21 +109,90 @@ const DetailsSidebar = ({ recipeId, recipeCategory, recipeImage, recipeUser }: D
     return true;
   };
 
+  const authorId = recipeUser?.id;
   const authorName = recipeUser?.name || "Anonymous Chef";
   const authorImage = recipeUser?.image;
   const defaultImage = recipeImage || "https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=150&q=80";
+
+  const [authorStats, setAuthorStats] = useState<{
+    recipes: number | null;
+    collections: number | null;
+    favorites: number | null;
+  }>({
+    recipes: null,
+    collections: null,
+    favorites: null,
+  });
+
+  const formatCount = (count: number | null) => {
+    if (count === null) return "0";
+    return count >= 1000 ? (count / 1000).toFixed(1) + "k" : count.toString();
+  };
+
+  useEffect(() => {
+    const fetchAuthorStats = async () => {
+      if (!authorId) return;
+      try {
+        const API_URL = getApiBaseUrl();
+        
+        // Fetch recipes, collections, and favorites concurrently to get accurate dynamic counts
+        const fetchOpts = { credentials: "include" as const };
+        const [recipesRes, collectionsRes, favoritesRes] = await Promise.all([
+          fetch(`${API_URL}/api/recipes?tab=my-recipes&userId=${authorId}`, fetchOpts).catch(() => null),
+          fetch(`${API_URL}/api/collections?userId=${authorId}`, fetchOpts).catch(() => null),
+          fetch(`${API_URL}/api/recipes?tab=favorites&userId=${authorId}`, fetchOpts).catch(() => null)
+        ]);
+
+        let recipesCount = 0;
+        let collectionsCount = 0;
+        let favoritesCount = 0;
+
+        if (recipesRes && recipesRes.ok) {
+          const data = await recipesRes.json();
+          if (data.success) {
+            recipesCount = data.count !== undefined ? data.count : (data.recipes?.length || 0);
+          }
+        }
+
+        if (collectionsRes && collectionsRes.ok) {
+          const data = await collectionsRes.json();
+          if (data.success) {
+            collectionsCount = data.collections?.length || 0;
+          }
+        }
+
+        if (favoritesRes && favoritesRes.ok) {
+          const data = await favoritesRes.json();
+          if (data.success) {
+            favoritesCount = data.count !== undefined ? data.count : (data.recipes?.length || 0);
+          }
+        }
+
+        setAuthorStats({
+          recipes: recipesCount,
+          collections: collectionsCount,
+          favorites: favoritesCount,
+        });
+
+      } catch (error) {
+        console.error("Failed to fetch author stats:", error);
+      }
+    };
+
+    fetchAuthorStats();
+  }, [authorId]);
 
   useEffect(() => {
     const fetchRelatedRecipes = async () => {
       try {
         setLoading(true);
-        const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+        const API_URL = getApiBaseUrl();
 
         const categoryQuery = recipeCategory ? `category=${encodeURIComponent(recipeCategory)}` : "";
         const excludeQuery = recipeId ? `excludeId=${recipeId}` : "";
         const queryParams = [categoryQuery, excludeQuery, "limit=4"].filter(Boolean).join("&");
 
-        const res = await fetch(`${API_URL}/api/recipes?${queryParams}`);
+        const res = await fetch(`${API_URL}/api/recipes?${queryParams}`, { credentials: "include" });
         const contentType = res.headers.get("content-type");
         if (!contentType || !contentType.includes("application/json")) {
           throw new Error("API did not return JSON. Check if backend server is running.");
@@ -149,17 +220,17 @@ const DetailsSidebar = ({ recipeId, recipeCategory, recipeImage, recipeUser }: D
     <div className="lg:col-span-4 flex flex-col gap-6">
 
       {/* ABOUT THE AUTHOR CARD */}
-      <div className="bg-white dark:bg-[#131B2E] p-5 rounded-[24px] border border-gray-100 dark:border-white/10 shadow-sm">
+      <div className="bg-white dark:bg-[#131B2E] p-5 rounded-[24px] border border-gray-100 dark:border-white/10 shadow-sm transition-all hover:shadow-md">
         <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">About the Author</h3>
         <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-3">
-            <div className="relative h-12 w-12 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center shrink-0">
+          <Link href={authorId ? `/community/users/${authorId}` : "#"} className="flex items-center gap-3 group hover:opacity-80 transition-opacity flex-1">
+            <div className="relative h-12 w-12 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-800 flex items-center justify-center shrink-0 border-2 border-transparent group-hover:border-[#24733E] dark:group-hover:border-[#10B981] transition-all">
               {isValidAuthorImage(authorImage) ? (
                 <Image
                   src={authorImage!}
                   alt={authorName}
                   fill
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  sizes="48px"
                   className="object-cover"
                 />
               ) : (
@@ -167,29 +238,32 @@ const DetailsSidebar = ({ recipeId, recipeCategory, recipeImage, recipeUser }: D
               )}
             </div>
             <div>
-              <h4 className="text-sm font-bold text-gray-900 dark:text-white">{authorName}</h4>
-              <p className="text-[11px] text-gray-400">Food Enthusiast</p>
+              <h4 className="text-sm font-bold text-gray-900 dark:text-white group-hover:text-[#24733E] dark:group-hover:text-[#10B981] transition-colors">{authorName}</h4>
+              <p className="text-[11px] text-gray-400 dark:text-gray-500">Community Chef</p>
             </div>
-          </div>
-          <button className="px-3.5 py-1.5 rounded-full border border-[#24733E] text-[#24733E] dark:border-[#10B981] dark:text-[#10B981] text-xs font-bold hover:bg-[#24733E] hover:text-white transition-colors cursor-pointer">
-            Follow
-          </button>
+          </Link>
+
+          <Link href={authorId ? `/community/users/${authorId}` : "#"} className="px-3 py-1.5 rounded-full border border-gray-200 text-gray-600 dark:border-white/10 dark:text-gray-300 text-xs font-bold hover:border-[#24733E] hover:text-[#24733E] dark:hover:border-[#10B981] dark:hover:text-[#10B981] transition-colors cursor-pointer text-center">
+            View Profile
+          </Link>
         </div>
+
         <p className="text-xs text-gray-500 dark:text-gray-400 mb-4 leading-relaxed">
           Love creating healthy and delicious recipes with a touch of creativity.
         </p>
+
         <div className="grid grid-cols-3 gap-2 pt-3 border-t border-gray-100 dark:border-white/10 text-center">
           <div>
-            <span className="text-xs font-bold text-gray-800 dark:text-white block">24</span>
-            <span className="text-[9px] text-gray-400">Recipes</span>
+            <span className="text-xs font-bold text-gray-800 dark:text-white block">{formatCount(authorStats.recipes)}</span>
+            <span className="text-[9px] text-gray-400 uppercase tracking-wider">Recipes</span>
           </div>
           <div className="border-x border-gray-100 dark:border-white/10">
-            <span className="text-xs font-bold text-gray-800 dark:text-white block">1.2k</span>
-            <span className="text-[9px] text-gray-400">Followers</span>
+            <span className="text-xs font-bold text-gray-800 dark:text-white block">{formatCount(authorStats.collections)}</span>
+            <span className="text-[9px] text-gray-400 uppercase tracking-wider">Collections</span>
           </div>
           <div>
-            <span className="text-xs font-bold text-gray-800 dark:text-white block">180</span>
-            <span className="text-[9px] text-gray-400">Following</span>
+            <span className="text-xs font-bold text-gray-800 dark:text-white block">{formatCount(authorStats.favorites)}</span>
+            <span className="text-[9px] text-gray-400 uppercase tracking-wider">Favorites</span>
           </div>
         </div>
       </div>

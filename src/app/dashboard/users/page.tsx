@@ -11,9 +11,7 @@ import {
 import { ResponsiveContainer, AreaChart, Area, XAxis, Tooltip, CartesianGrid } from "recharts";
 import { authClient } from "@/lib/auth-client";
 
-import { getApiBaseUrl } from "@/lib/api-url";
 
-const API_BASE_URL = getApiBaseUrl();
 
 // Mock Data for User Calorie/Nutrition Intake Trend fallback
 const fallbackCalorieData = [
@@ -25,6 +23,7 @@ const fallbackCalorieData = [
   { day: "Sat", calories: 1760 },
   { day: "Sun", calories: 1980 },
 ];
+
 
 export default function UserDashboardPage() {
   const [data, setData] = useState<any>(null);
@@ -38,7 +37,7 @@ export default function UserDashboardPage() {
       try {
         const userId = session?.user?.id;
         const queryStr = userId ? `?userId=${encodeURIComponent(userId)}` : "";
-        const res = await fetch(`${API_BASE_URL}/api/dashboard/user/overview${queryStr}`, {
+        const res = await fetch(`/api/dashboard/user/overview${queryStr}`, {
           credentials: "include"
         });
         if (res.ok) {
@@ -53,6 +52,7 @@ export default function UserDashboardPage() {
     }
     fetchDashboard();
   }, [isPending, session]);
+
 
   const stats = data?.stats || { recipes: 0, collections: 0, activeChallenges: 0, badges: 0 };
   const nutrition = data?.nutrition || { avgKcal: 0, maxKcal: 0, minKcal: 0, targetKcal: 2000, chartData: fallbackCalorieData };

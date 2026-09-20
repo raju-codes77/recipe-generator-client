@@ -371,6 +371,39 @@ export const CommunityFeed: React.FC = () => {
         stories: communityCache?.stories ?? [],
         hasMorePosts,
       };
+       if (isAuthenticated && activeFilter === "all") try {
+        const suggestedChefs = await communityApi.listSuggestedChefs();
+        setChefs(suggestedChefs);
+      } catch {
+        // Keep the feed usable if an older deployment does not have this route yet.
+        setChefs(getCommunityChefs(loadedPosts));
+      }
+      if (session?.user && activeFilter === "all") {
+        try {
+          const [loadedCollections, loadedNotifications, loadedFeedCounts] = await Promise.all([
+            communityApi.listCollections(session.user.id),
+            communityApi.listNotifications(),
+            communityApi.getFeedCounts(session.user.id),
+          ]);
+          setCollections(loadedCollections);
+          setNotifications(loadedNotifications);
+          setFeedCounts(loadedFeedCounts);
+        } catch {
+          // These require a valid authenticated session. If a cross-origin
+          // cookie is unavailable, keep the public feed usable instead of
+          // replacing it with a Community-wide error.
+          setCollections([]);
+          setNotifications([]);
+        }
+      } else {
+        setCollections([]);
+        setNotifications([]);
+        if (!session?.user) {
+          setCurrentUserRecipeCount(0);
+          setCurrentUserFollowersCount(0);
+          setFeedCounts({ savedPostsCount: 0, likedPostsCount: 0 });
+        }
+      }
     } catch (error) {
       setLoadError(error instanceof Error ? error.message : "Unable to load the Community feed");
     } finally {
@@ -412,7 +445,7 @@ export const CommunityFeed: React.FC = () => {
         try {
           [loadedCollections, loadedNotifications, loadedFeedCounts] = await Promise.all([
             communityApi.listCollections(userId),
-            communityApi.listNotifications(userId),
+            communityApi.listNotifications(),
             communityApi.getFeedCounts(userId),
           ]);
         } catch {
@@ -669,7 +702,7 @@ export const CommunityFeed: React.FC = () => {
     }));
 
     try {
-      const result = await communityApi.toggleLike(postId);
+      const result = await communityApi.toggleLike(postId, session?.user?.id!);
       const confirmedLikesCount = Math.max(0, previousLikesCount + (result.active ? 1 : -1));
       updatePostInFeed(postId, (currentPost) => ({
         ...currentPost,
@@ -751,7 +784,7 @@ export const CommunityFeed: React.FC = () => {
     if (!post) return;
 
     try {
-      await communityApi.addComment(postId, content);
+      await communityApi.addComment(postId, content, session?.user?.id!);
       const interactions = await communityApi.getPostInteractions(postId, {
         commentsTake: 8,
         commentsSkip: 0,
@@ -798,7 +831,7 @@ export const CommunityFeed: React.FC = () => {
     }));
 
     try {
-      const result = await communityApi.toggleFollow(authorId);
+      const result = await communityApi.toggleFollow(authorId, session?.user?.id!);
       const confirmedFollowersCount = Math.max(0, previousFollowersCount + (result.active ? 1 : -1));
       updateAuthorInFeed(authorId, (currentAuthor) => ({
         ...currentAuthor,

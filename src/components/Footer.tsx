@@ -7,6 +7,7 @@ import { FiMail, FiSend, FiHeart } from "react-icons/fi";
 import { FaFaceAngry, FaInstagram, FaYoutube } from "react-icons/fa6";
 import { FaTwitterSquare } from "react-icons/fa";
 import { Fredoka } from "next/font/google";
+import toast from "react-hot-toast";
 
 const fredoka = Fredoka({ 
   subsets: ["latin"], 
@@ -156,7 +157,7 @@ export default function Footer() {
                         <p className="text-xs text-gray-500 dark:text-slate-400">
                             Subscribe to get special recipe recommendations and AI cooking tips straight to your inbox.
                         </p>
-                        <form onSubmit={(e) => e.preventDefault()} className="space-y-2">
+                        <form onSubmit={(e) => { e.preventDefault(); toast.success("Successfully subscribed to the newsletter!"); }} className="space-y-2">
                             <div className="relative">
                                 <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
                                     <FiMail size={16} />

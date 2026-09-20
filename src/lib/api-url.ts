@@ -1,18 +1,17 @@
 /**
- * Returns the base URL for API requests.
+ * Returns the API base URL for use in client-side fetch calls.
  *
- * In the browser, returns "" (empty string) so that fetch calls hit the
- * Next.js rewrite proxy at the same origin — this ensures session cookies
- * are always sent (same-site).
+ * Always returns "" so all requests go to the Next.js proxy at /api/...
+ * The global proxy (src/app/api/[...proxy]/route.ts) will forward them
+ * to NEXT_PUBLIC_API_URL (the real Express backend).
  *
- * On the server (SSR / Route Handlers), returns the full backend URL so
- * that server-to-server calls reach the Express backend directly.
+ * Server-side Next.js Route Handlers read process.env.NEXT_PUBLIC_API_URL directly.
  */
 export function getApiBaseUrl(): string {
   if (typeof window !== "undefined") {
-    // Browser: use relative URLs → Next.js rewrites proxy them to the backend
+    // Client-side: use relative path to hit the Next.js proxy
     return "";
   }
-  // Server-side: call the backend directly
+  // Server-side: use absolute path to hit the backend directly (fixes URL parsing TypeError)
   return process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 }

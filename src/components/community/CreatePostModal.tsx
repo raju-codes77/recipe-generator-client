@@ -69,9 +69,17 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
   const [remoteSuggestedTags, setRemoteSuggestedTags] = useState<string[]>([]);
 
   useEffect(() => {
+    if (!isOpen) return;
+    
     const mode = initialMode ?? (initialUseAI ? "ai_import" : "quick");
     setPostMode(mode === "ai_import" ? "recipe" : mode);
     setActiveTab(mode === "ai_import" ? "ai_import" : "standard");
+    
+    setCaption("");
+    setTitle("");
+    setCustomPhotoUrl("");
+    setImageFile(undefined);
+    setSelectedPhoto(PRESET_FOOD_PHOTOS[0]);
     setTagsInput("");
     setRemoteSuggestedTags([]);
   }, [initialMode, initialUseAI, isOpen]);
@@ -599,6 +607,7 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
                       onClick={() => {
                         setSelectedPhoto(photo);
                         setCustomPhotoUrl("");
+                        setImageFile(undefined);
                       }}
                       className={`relative aspect-square rounded-xl overflow-hidden cursor-pointer border-2 transition ${
                         selectedPhoto === photo && !customPhotoUrl
@@ -619,7 +628,10 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
                   type="text"
                   placeholder="Or paste custom image URL..."
                   value={customPhotoUrl}
-                  onChange={(e) => setCustomPhotoUrl(e.target.value)}
+                  onChange={(e) => {
+                    setCustomPhotoUrl(e.target.value);
+                    setImageFile(undefined);
+                  }}
                   className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs text-neutral-900 placeholder-neutral-400 dark:border-neutral-700 dark:bg-[#18181b] dark:text-white"
                 />
                 <label className="mt-3 block rounded-xl border border-dashed border-emerald-300 p-3 text-xs font-semibold text-[#2F8F46] cursor-pointer hover:bg-[#EAF7E8] dark:border-emerald-800 dark:text-[#B7E35F]">

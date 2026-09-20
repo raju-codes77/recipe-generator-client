@@ -4,11 +4,11 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { 
-  FiHome, FiUsers, FiBookOpen, FiFolder, FiAward, FiMessageSquare, 
-  FiAlertCircle, FiCpu, FiShield, FiSliders, FiSettings, FiLock, 
+import {
+  FiHome, FiUsers, FiBookOpen, FiFolder, FiAward, FiMessageSquare,
+  FiAlertCircle, FiCpu, FiShield, FiSliders, FiSettings, FiLock,
   FiServer, FiHeadphones, FiMenu, FiX, FiActivity,
-  FiBox, FiCalendar, FiShoppingCart, FiList, FiGrid
+  FiBox, FiCalendar, FiShoppingCart, FiList, FiGrid, FiHeart
 } from "react-icons/fi";
 import { FaDochub } from "react-icons/fa6";
 
@@ -32,11 +32,12 @@ export default function DashboardSidebar() {
   // User Navigation Items (Screenshot onujayi grouped sections)
   const mainNavItems = [
     { name: "Dashboard", icon: <FiHome />, href: "/dashboard/user" },
-    {name: "Consultation", icon:<FaDochub/>,  href:"/dashboard/users/health-consultant"},
-    { name: "My Recipes", icon: <FiBookOpen />, href: "/recipes" },
+    { name: "Wellness Hub", icon: <FiHeart />, href: "/dashboard/users/wellness" },
+    { name: "Consultation", icon: <FaDochub />, href: "/dashboard/users/health-consultant" },
+    { name: "My Recipes", icon: <FiBookOpen />, href: "/dashboard/users/recipes" },
     { name: "Generate Recipe", icon: <FiCpu />, href: "/dashboard/users/ai-recepi-generator", badge: "AI" },
-    { name: "Collections", icon: <FiFolder />, href: "/dashboard/users/static" },
-    { name: "Challenges", icon: <FiAward />, href: "/challenges" },
+    { name: "Collections", icon: <FiFolder />, href: "/dashboard/users/collections" },
+    { name: "Challenges", icon: <FiAward />, href: "/dashboard/users/challenges" },
     { name: "Wellness Reminders", icon: <FiAlertCircle />, href: "/dashboard/wellness-reminders" },
     { name: "All AI Tools", icon: <FiCpu />, href: "/ai-tools" },
   ];
@@ -58,7 +59,7 @@ export default function DashboardSidebar() {
 
   return (
 
-    
+
     <>
       {/* Mobile Header with Hamburger Button */}
       <div className="fixed left-0 right-0 top-0 z-50 flex items-center justify-between border-b border-[#dfe8da] bg-[#fbfdf9]/95 p-3.5 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-[#101611]/95 lg:hidden">
@@ -69,7 +70,7 @@ export default function DashboardSidebar() {
             {role}
           </span>
         </div>
-        <button 
+        <button
           onClick={() => setMobileOpen((open) => !open)}
           aria-label={mobileOpen ? "Close dashboard menu" : "Open dashboard menu"}
           aria-expanded={mobileOpen}
@@ -82,7 +83,7 @@ export default function DashboardSidebar() {
       {/* Mobile Backdrop */}
       <AnimatePresence>
         {mobileOpen && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -99,10 +100,10 @@ export default function DashboardSidebar() {
         ${mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
       `}>
         <div className="space-y-6 overflow-y-auto pt-14 lg:pt-0">
-          
+
           {/* Logo & Brand */}
           {isAdmin && (
-              <div className="mb-3 flex items-center space-x-3 px-2">
+            <div className="mb-3 flex items-center space-x-3 px-2">
               <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#2F8F46] text-lg font-black text-white shadow-md shadow-[#2F8F46]/30">
                 F
               </div>
@@ -128,11 +129,10 @@ export default function DashboardSidebar() {
                       key={idx}
                       href={item.href}
                       onClick={() => setMobileOpen(false)}
-                      className={`group flex items-center space-x-3 rounded-2xl px-3 py-2.5 text-xs font-medium transition-all ${
-                        isActive 
-                          ? "bg-[#2F8F46] font-semibold text-white shadow-md shadow-[#2F8F46]/20" 
+                      className={`group flex items-center space-x-3 rounded-2xl px-3 py-2.5 text-xs font-medium transition-all ${isActive
+                          ? "bg-[#2F8F46] font-semibold text-white shadow-md shadow-[#2F8F46]/20"
                           : "text-gray-600 hover:bg-[#edf6e9] hover:text-[#2F8F46] dark:text-[#F6F0D7]/70 dark:hover:bg-white/10 dark:hover:text-[#F6F0D7]"
-                      }`}
+                        }`}
                     >
                       <span className="text-base">{item.icon}</span>
                       <span>{item.name}</span>
@@ -143,7 +143,7 @@ export default function DashboardSidebar() {
             </>
           ) : (
             <div className="space-y-6">
-              
+
               {/* MAIN Section */}
               <div>
                 <p className="px-3 text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">Main</p>
@@ -155,14 +155,13 @@ export default function DashboardSidebar() {
                         key={idx}
                         href={item.href}
                         onClick={() => setMobileOpen(false)}
-                        className={`group flex items-center justify-between rounded-2xl px-3 py-2.5 text-xs transition-all ${
-                          isActive 
-                            ? "bg-[#eaf7e8] font-bold text-[#176B35] shadow-sm dark:bg-[#2F8F46]/20 dark:text-[#B7E35F]" 
+                        className={`group flex items-center justify-between rounded-2xl px-3 py-2.5 text-xs transition-all ${isActive
+                            ? "bg-[#eaf7e8] font-bold text-[#176B35] shadow-sm dark:bg-[#2F8F46]/20 dark:text-[#B7E35F]"
                             : "font-medium text-gray-600 hover:bg-[#f0f6ed] dark:text-gray-400 dark:hover:bg-white/10"
-                        }`}
+                          }`}
                       >
                         <div className="flex items-center gap-3">
-                            <span className={`text-base transition-transform group-hover:scale-105 ${isActive ? "text-[#2F8F46] dark:text-[#b7df86]" : ""}`}>{item.icon}</span>
+                          <span className={`text-base transition-transform group-hover:scale-105 ${isActive ? "text-[#2F8F46] dark:text-[#b7df86]" : ""}`}>{item.icon}</span>
                           <span>{item.name}</span>
                         </div>
                         <div className="flex items-center gap-2">
@@ -190,11 +189,10 @@ export default function DashboardSidebar() {
                         key={idx}
                         href={item.href}
                         onClick={() => setMobileOpen(false)}
-                        className={`group flex items-center gap-3 rounded-2xl px-3 py-2.5 text-xs font-medium transition-all ${
-                          isActive 
-                            ? "bg-[#eaf7e8] font-bold text-[#176B35] shadow-sm dark:bg-[#2F8F46]/20 dark:text-[#B7E35F]" 
+                        className={`group flex items-center gap-3 rounded-2xl px-3 py-2.5 text-xs font-medium transition-all ${isActive
+                            ? "bg-[#eaf7e8] font-bold text-[#176B35] shadow-sm dark:bg-[#2F8F46]/20 dark:text-[#B7E35F]"
                             : "text-gray-600 hover:bg-[#f0f6ed] dark:text-gray-400 dark:hover:bg-white/10"
-                        }`}
+                          }`}
                       >
                         <span className={`text-base transition-transform group-hover:scale-105 ${isActive ? "text-[#2F8F46] dark:text-[#b7df86]" : ""}`}>{item.icon}</span>
                         <span>{item.name}</span>
@@ -215,11 +213,10 @@ export default function DashboardSidebar() {
                         key={idx}
                         href={item.href}
                         onClick={() => setMobileOpen(false)}
-                        className={`group flex items-center gap-3 rounded-2xl px-3 py-2.5 text-xs font-medium transition-all ${
-                          isActive 
-                            ? "bg-[#eaf7e8] font-bold text-[#176B35] shadow-sm dark:bg-[#2F8F46]/20 dark:text-[#B7E35F]" 
+                        className={`group flex items-center gap-3 rounded-2xl px-3 py-2.5 text-xs font-medium transition-all ${isActive
+                            ? "bg-[#eaf7e8] font-bold text-[#176B35] shadow-sm dark:bg-[#2F8F46]/20 dark:text-[#B7E35F]"
                             : "text-gray-600 hover:bg-[#f0f6ed] dark:text-gray-400 dark:hover:bg-white/10"
-                        }`}
+                          }`}
                       >
                         <span className={`text-base transition-transform group-hover:scale-105 ${isActive ? "text-[#2F8F46] dark:text-[#b7df86]" : ""}`}>{item.icon}</span>
                         <span>{item.name}</span>
@@ -236,7 +233,7 @@ export default function DashboardSidebar() {
 
 
         {/* Upgrade to Pro & User Profile Preview */}
-        
+
         <div className="mt-auto space-y-4 pt-6">
           {!isAdmin && (
             <div className="rounded-[22px] border border-[#cce2c4] bg-[#edf7e9] p-4 shadow-sm dark:border-[#2F8F46]/20 dark:bg-[#2F8F46]/10">
@@ -247,14 +244,14 @@ export default function DashboardSidebar() {
               <p className="text-[10px] text-gray-600 dark:text-[#F6F0D7]/60 mb-3 leading-relaxed">
                 Unlock advanced AI tools, custom meal plans, and more.
               </p>
-              <button className="w-full py-2 bg-[#2F8F46] hover:bg-[#257338] text-white text-[11px] font-bold rounded-xl shadow-md transition flex items-center justify-center gap-1.5">
+              <Link href="/pro" className="w-full py-2 bg-[#2F8F46] hover:bg-[#257338] text-white text-[11px] font-bold rounded-xl shadow-md transition flex items-center justify-center gap-1.5">
                 <span>Upgrade Now</span>
                 <span>→</span>
-              </button>
+              </Link>
             </div>
           )}
 
-         
+
         </div>
       </aside>
     </>
