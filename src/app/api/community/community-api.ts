@@ -159,11 +159,22 @@ export const communityApi = {
     return request<{ active: boolean }>(`/posts/${postId}/made-it`, { method: "POST", body: JSON.stringify({ userId }) });
   },
 
-  addComment(postId: string, content: string, userId: string) {
+  addComment(postId: string, content: string, userId: string, parentId?: string) {
     return request(`/posts/${postId}/comments`, {
       method: "POST",
-      body: JSON.stringify({ content, userId }),
+      body: JSON.stringify({ content, userId, parentId }),
     });
+  },
+
+  updateComment(commentId: string, content: string) {
+    return request(`/comments/${commentId}`, {
+      method: "PATCH",
+      body: JSON.stringify({ content }),
+    });
+  },
+
+  deleteComment(commentId: string) {
+    return request<{ deletedCount: number }>(`/comments/${commentId}`, { method: "DELETE" });
   },
 
   saveReview(postId: string, review: Review, userId: string) {

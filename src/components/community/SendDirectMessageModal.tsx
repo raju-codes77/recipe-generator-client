@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
 import toast from "react-hot-toast";
 import { X, Send, MessageSquare, Search } from "lucide-react";
@@ -23,6 +24,7 @@ export const SendDirectMessageModal: React.FC<SendDirectMessageModalProps> = ({
   attachedPost,
 }) => {
   const { data: session } = authClient.useSession();
+  const router = useRouter();
   const [contacts, setContacts] = useState<DirectMessageUser[]>([]);
   const [selectedContactId, setSelectedContactId] = useState(initialRecipientId || "");
   const [searchQuery, setSearchQuery] = useState("");
@@ -31,6 +33,8 @@ export const SendDirectMessageModal: React.FC<SendDirectMessageModalProps> = ({
   const [hasMoreMessages, setHasMoreMessages] = useState(false);
   const [isLoadingOlderMessages, setIsLoadingOlderMessages] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+  const [isSendingMessage, setIsSendingMessage] = useState(false);
+  const [sendingMessageId, setSendingMessageId] = useState<string | null>(null);
   const [pendingAttachedPost, setPendingAttachedPost] = useState<Post | null>(null);
   const messagesContainerRef = React.useRef<HTMLDivElement>(null);
   const selectedContact = contacts.find((contact) => contact.id === selectedContactId);
@@ -49,6 +53,8 @@ export const SendDirectMessageModal: React.FC<SendDirectMessageModalProps> = ({
     setSelectedContactId(initialRecipientId || "");
     setMessages([]);
     setHasMoreMessages(false);
+    setIsSendingMessage(false);
+    setSendingMessageId(null);
     setPendingAttachedPost(attachedPost || null);
     void communityApi
       .listContacts(initialRecipientId)
@@ -119,24 +125,55 @@ export const SendDirectMessageModal: React.FC<SendDirectMessageModalProps> = ({
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!session?.user?.id) return;
+    if (!session?.user?.id || isSendingMessage) return;
     if ((!inputMessage.trim() && !pendingAttachedPost) || !activeContact.id) return;
     const messageText = inputMessage.trim();
-    await communityApi.sendMessage(
-      activeContact.id,
-      messageText,
-      pendingAttachedPost?.id,
-      session.user.id,
-    );
-    const page = await communityApi.listMessages(activeContact.id, { take: MESSAGES_PER_PAGE, skip: 0 });
-    setMessages((current) => {
-      const knownIds = new Set(current.map((message) => message.id));
-      return [...current, ...page.messages.filter((message) => !knownIds.has(message.id))];
-    });
-    setHasMoreMessages(page.hasMore);
+    const attachedPostForMessage = pendingAttachedPost;
+    const temporaryMessageId = `pending-${Date.now()}`;
+    const optimisticMessage: CommunityMessage = {
+      id: temporaryMessageId,
+      senderId: session.user.id,
+      recipientId: activeContact.id,
+      text: messageText,
+      attachedPostId: attachedPostForMessage?.id,
+      attachedPost: attachedPostForMessage
+        ? { id: attachedPostForMessage.id, imageUrl: attachedPostForMessage.imageUrl, caption: attachedPostForMessage.caption }
+        : null,
+      timestamp: "Just now",
+    };
+
+    setMessages((current) => [...current, optimisticMessage]);
     setInputMessage("");
     setPendingAttachedPost(null);
-    toast.success("Message sent");
+    setIsSendingMessage(true);
+    setSendingMessageId(temporaryMessageId);
+
+    try {
+      await communityApi.sendMessage(
+        activeContact.id,
+        messageText,
+        attachedPostForMessage?.id,
+        session.user.id,
+      );
+      const page = await communityApi.listMessages(activeContact.id, { take: MESSAGES_PER_PAGE, skip: 0 });
+      setMessages((current) => {
+        const knownIds = new Set(current.filter((message) => message.id !== temporaryMessageId).map((message) => message.id));
+        return [
+          ...current.filter((message) => message.id !== temporaryMessageId),
+          ...page.messages.filter((message) => !knownIds.has(message.id)),
+        ];
+      });
+      setHasMoreMessages(page.hasMore);
+      toast.success("Message sent");
+    } catch (error) {
+      setMessages((current) => current.filter((message) => message.id !== temporaryMessageId));
+      setInputMessage(messageText);
+      setPendingAttachedPost(attachedPostForMessage);
+      toast.error(error instanceof Error ? error.message : "Unable to send message");
+    } finally {
+      setIsSendingMessage(false);
+      setSendingMessageId(null);
+    }
   };
 
   const loadOlderMessages = async () => {
@@ -158,10 +195,62 @@ export const SendDirectMessageModal: React.FC<SendDirectMessageModalProps> = ({
     }
   };
 
+  const handleOpenStory = async (event: React.MouseEvent, storyId: string) => {
+    event.preventDefault();
+    try {
+      await communityApi.getStory(storyId);
+      router.push(`/community/story/${encodeURIComponent(storyId)}`);
+    } catch {
+      toast.error("This story is no longer available.", { position: "bottom-right" });
+    }
+  };
+
   const filteredContacts = contacts.filter((c) => c.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
+      <style>{`
+        .community-dm-scrollbar {
+          scrollbar-color: transparent transparent;
+          scrollbar-width: thin;
+        }
+        .community-dm-scrollbar::-webkit-scrollbar {
+          width: 8px;
+        }
+        .community-dm-scrollbar::-webkit-scrollbar-button {
+          display: none;
+          width: 0;
+          height: 0;
+        }
+        .community-dm-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+          border-radius: 999px;
+        }
+        .community-dm-scrollbar::-webkit-scrollbar-thumb {
+          background: transparent;
+          border: 2px solid transparent;
+          border-radius: 999px;
+          transition: background-color 220ms ease;
+        }
+        .community-dm-scrollbar:hover {
+          scrollbar-color: rgba(47, 143, 70, 0.5) transparent;
+        }
+        .community-dm-scrollbar:hover::-webkit-scrollbar-thumb {
+          background: rgba(47, 143, 70, 0.5);
+        }
+        .community-dm-scrollbar:hover::-webkit-scrollbar-thumb:hover {
+          background: rgba(47, 143, 70, 0.72);
+        }
+        .dark .community-dm-scrollbar:hover {
+          scrollbar-color: rgba(183, 227, 95, 0.38) transparent;
+        }
+        .dark .community-dm-scrollbar:hover::-webkit-scrollbar-thumb {
+          background: rgba(183, 227, 95, 0.38);
+        }
+        .dark .community-dm-scrollbar:hover::-webkit-scrollbar-thumb:hover {
+          background: rgba(199, 237, 125, 0.52);
+        }
+      `}</style>
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 10 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -252,7 +341,7 @@ export const SendDirectMessageModal: React.FC<SendDirectMessageModalProps> = ({
             </div>
 
             {/* Chat Messages */}
-            <div ref={messagesContainerRef} className="min-w-0 flex-1 overflow-x-hidden overflow-y-auto p-5 space-y-3.5">
+            <div ref={messagesContainerRef} className="community-dm-scrollbar min-w-0 flex-1 overflow-x-hidden overflow-y-auto p-5 space-y-3.5">
               {hasMoreMessages && (
                 <button
                   type="button"
@@ -279,7 +368,7 @@ export const SendDirectMessageModal: React.FC<SendDirectMessageModalProps> = ({
                       }`}
                     >
                       {msg.attachedPost && <a href={`/community/recipe/${encodeURIComponent(msg.attachedPost.id)}`} className="mb-2 block w-full max-w-[260px] overflow-hidden rounded-xl border border-amber-200 bg-amber-50 text-left dark:border-amber-900/50 dark:bg-amber-950/20"><img src={msg.attachedPost.imageUrl} alt={msg.attachedPost.caption || "Shared Community post"} className="h-28 w-full object-cover" /><span className="block px-3 pt-2 text-[11px] font-bold text-amber-800 dark:text-amber-200">🍳 Shared Community post</span>{msg.attachedPost.caption && <span className="block break-words px-3 pb-2 pt-1 text-xs text-amber-900 dark:text-amber-100">{msg.attachedPost.caption}</span>}</a>}
-                      {msg.attachedStory && <a href={`/community/story/${encodeURIComponent(msg.attachedStory.id)}`} className="mb-2 block w-full max-w-[260px] overflow-hidden rounded-xl border border-amber-200 bg-amber-50 text-left dark:border-amber-900/50 dark:bg-amber-950/20"><img src={msg.attachedStory.imageUrl} alt={msg.attachedStory.caption || "Shared story"} className="h-28 w-full object-cover" /><span className="mt-1 block break-words px-3 pb-2 text-[11px] font-bold text-amber-800 dark:text-amber-200">📷 Shared story{msg.attachedStory.caption ? `: ${msg.attachedStory.caption}` : ""}</span></a>}
+                      {msg.attachedStory && <a href={`/community/story/${encodeURIComponent(msg.attachedStory.id)}`} onClick={(event) => { if (msg.attachedStory) void handleOpenStory(event, msg.attachedStory.id); }} className="mb-2 block w-full max-w-[260px] overflow-hidden rounded-xl border border-amber-200 bg-amber-50 text-left dark:border-amber-900/50 dark:bg-amber-950/20"><img src={msg.attachedStory.imageUrl} alt={msg.attachedStory.caption || "Shared story"} className="h-28 w-full object-cover" /><span className="mt-1 block break-words px-3 pb-2 text-[11px] font-bold text-amber-800 dark:text-amber-200">📷 Shared story{msg.attachedStory.caption ? `: ${msg.attachedStory.caption}` : ""}</span></a>}
                       {(() => {
                         const visibleText = msg.text
                           .replace(/https?:\/\/\S+/g, "")
@@ -288,7 +377,10 @@ export const SendDirectMessageModal: React.FC<SendDirectMessageModalProps> = ({
                         return visibleText ? <p>{visibleText}</p> : null;
                       })()}
                     </div>
-                    <span className="text-[10px] text-neutral-400 mt-1 px-1">{msg.timestamp}</span>
+                    <span className="mt-1 px-1 text-[10px] text-neutral-400">
+                      {msg.timestamp}
+                      {isMe && <span className="ml-1">· {msg.id === sendingMessageId ? "Sending..." : "Sent"}</span>}
+                    </span>
                   </div>
                 );
               })}
@@ -315,16 +407,17 @@ export const SendDirectMessageModal: React.FC<SendDirectMessageModalProps> = ({
                 placeholder={`Message @${activeContact.username}...`}
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
-                className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-neutral-50 px-4 py-2.5 text-xs sm:text-sm text-neutral-900 focus:border-[#2F8F46] dark:border-neutral-700 dark:bg-[#18181b] dark:text-white"
+                disabled={isSendingMessage}
+                className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-neutral-50 px-4 py-2.5 text-xs text-neutral-900 focus:border-[#2F8F46] disabled:cursor-wait disabled:opacity-60 sm:text-sm dark:border-neutral-700 dark:bg-[#18181b] dark:text-white"
               />
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 type="submit"
-                disabled={(!inputMessage.trim() && !pendingAttachedPost) || !activeContact.id}
-                className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#2F8F46] text-white shadow-xs transition hover:bg-[#176B35] disabled:opacity-40"
+                disabled={isSendingMessage || (!inputMessage.trim() && !pendingAttachedPost) || !activeContact.id}
+                className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#2F8F46] text-white shadow-xs transition hover:bg-[#176B35] disabled:cursor-wait disabled:opacity-40"
               >
-                <Send className="h-4 w-4" />
+                {isSendingMessage ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" /> : <Send className="h-4 w-4" />}
               </motion.button>
             </form>
           </div>

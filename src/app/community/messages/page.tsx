@@ -1,10 +1,18 @@
-"use client";
+import type { Metadata } from "next";
+import { CommunityMessenger } from "@/components/community/CommunityMessenger";
 
-import { useRouter } from "next/navigation";
-import { SendDirectMessageModal } from "@/components/community/SendDirectMessageModal";
+export const metadata: Metadata = {
+  title: "Community Messenger | FoodCanvas",
+  description: "Message and share recipes with FoodCanvas Community members.",
+};
 
-export default function CommunityMessagesPage() {
-  const router = useRouter();
+export default async function CommunityMessagesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ userId?: string | string[] }>;
+}) {
+  const params = await searchParams;
+  const userId = Array.isArray(params.userId) ? params.userId[0] : params.userId;
 
-  return <SendDirectMessageModal isOpen onClose={() => router.back()} />;
+  return <CommunityMessenger initialRecipientId={userId} />;
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNotifications } from "./NotificationContext";
 import { useRouter } from "next/navigation";
@@ -50,6 +50,7 @@ export default function NotificationPanel() {
 
   const panelRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const [failedActorImages, setFailedActorImages] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -74,6 +75,7 @@ export default function NotificationPanel() {
       case "POST_LIKE": return <Heart size={18} className="text-pink-500 fill-pink-500" />;
       case "POST_COMMENT": return <MessageCircle size={18} className="text-blue-500" />;
       case "FOLLOW": return <UserPlus size={18} className="text-emerald-500" />;
+      case "MESSAGE": return <MessageCircle size={18} className="text-emerald-500" />;
       case "MEAL_ANALYSIS_SUCCESS": return <Sparkles size={18} className="text-purple-500" />;
       case "MEAL_PLAN_SUCCESS": return <Utensils size={18} className="text-orange-500" />;
       case "BUDGET_MEAL_PLAN_SUCCESS": return <Wallet size={18} className="text-yellow-500" />;
@@ -95,6 +97,45 @@ export default function NotificationPanel() {
 
   return (
     <AnimatePresence>
+      <style>{`
+        .notification-panel-scrollbar {
+          scrollbar-color: rgba(100, 116, 139, 0.55) transparent;
+          scrollbar-width: thin;
+        }
+        .notification-panel-scrollbar::-webkit-scrollbar {
+          width: 8px;
+        }
+        .notification-panel-scrollbar::-webkit-scrollbar-button {
+          display: none;
+          width: 0;
+          height: 0;
+        }
+        .notification-panel-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .notification-panel-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(100, 116, 139, 0.55);
+          border: 2px solid transparent;
+          background-clip: padding-box;
+          border-radius: 999px;
+          transition: background-color 220ms ease;
+        }
+        .notification-panel-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: rgba(52, 211, 153, 0.72);
+          background-clip: padding-box;
+        }
+        .dark .notification-panel-scrollbar {
+          scrollbar-color: rgba(148, 163, 184, 0.48) transparent;
+        }
+        .dark .notification-panel-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(148, 163, 184, 0.48);
+          background-clip: padding-box;
+        }
+        .dark .notification-panel-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: rgba(52, 211, 153, 0.78);
+          background-clip: padding-box;
+        }
+      `}</style>
       {isOpen && (
         <motion.div
           ref={panelRef}
@@ -126,7 +167,7 @@ export default function NotificationPanel() {
           </div>
 
           {/* Body */}
-          <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
+          <div className="notification-panel-scrollbar max-h-[400px] overflow-y-auto">
             {notifications.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
                 <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4">
@@ -137,7 +178,10 @@ export default function NotificationPanel() {
               </div>
             ) : (
               <div className="flex flex-col">
-                {notifications.map((notification) => {
+                {notifications.map((notification, index) => {
+                  const notificationKey = notification.id?.trim()
+                    ? notification.id
+                    : `notification-${notification.type}-${notification.createdAt || "unknown"}-${index}`;
                   const content = (
                     <div 
                       className={`flex gap-3 px-5 py-4 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50 relative ${
@@ -150,13 +194,14 @@ export default function NotificationPanel() {
                       
                       {/* Avatar / Icon */}
                       <div className="relative shrink-0">
-                        {notification.actor?.image ? (
+                        {notification.actor?.image && !failedActorImages[notification.actor.id] ? (
                           <div className="w-10 h-10 rounded-full overflow-hidden border border-slate-200 dark:border-slate-700">
                             <Image 
                               src={notification.actor.image} 
                               alt={notification.actor.name} 
                               fill 
                               className="object-cover"
+                              onError={() => setFailedActorImages((current) => ({ ...current, [notification.actor?.id ?? notification.id]: true }))}
                             />
                           </div>
                         ) : notification.actor ? (
@@ -200,7 +245,7 @@ export default function NotificationPanel() {
 
                   return notification.actionUrl ? (
                     <Link 
-                      key={notification.id} 
+                      key={notificationKey} 
                       href={notification.actionUrl}
                       onClick={() => handleNotificationClick(notification)}
                       className="group border-b border-slate-100 dark:border-slate-800/60 last:border-0"
@@ -209,7 +254,7 @@ export default function NotificationPanel() {
                     </Link>
                   ) : (
                     <div 
-                      key={notification.id}
+                      key={notificationKey}
                       onClick={() => handleNotificationClick(notification)}
                       className="cursor-pointer border-b border-slate-100 dark:border-slate-800/60 last:border-0"
                     >
