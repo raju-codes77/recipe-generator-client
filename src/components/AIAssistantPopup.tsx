@@ -3,10 +3,12 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiSend, FiX, FiRefreshCw, FiUser } from "react-icons/fi";
-import { Sparkles } from "lucide-react";
+import { MessageCircle, Sparkles } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
 import FoodCanvasAIIcon from "./FoodCanvasAIIcon";
 import toast from "react-hot-toast";
 import { apiClient } from "@/lib/api-client";
+import { authClient } from "@/lib/auth-client";
 
 interface Message {
   sender: "ai" | "user";
@@ -14,7 +16,11 @@ interface Message {
 }
 
 export default function AIAssistantPopup() {
+  const pathname = usePathname();
+  const router = useRouter();
+  const { data: session, isPending: isSessionPending } = authClient.useSession();
   const [isOpen, setIsOpen] = useState(false);
+  const [isMessengerNavigating, setIsMessengerNavigating] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
       sender: "ai",
@@ -24,6 +30,9 @@ export default function AIAssistantPopup() {
   const [inputQuery, setInputQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messengerNavigationTimeoutRef = useRef<number | null>(null);
+
+  const showCommunityMessenger = pathname === "/community" && !isSessionPending && Boolean(session?.user);
 
   const popularPrompts = [
     "Quick 20-min dinner",
@@ -42,6 +51,28 @@ export default function AIAssistantPopup() {
       scrollToBottom();
     }
   }, [messages, loading, isOpen]);
+
+  useEffect(() => () => {
+    if (messengerNavigationTimeoutRef.current !== null) {
+      window.clearTimeout(messengerNavigationTimeoutRef.current);
+    }
+  }, []);
+
+  useEffect(() => {
+    setIsMessengerNavigating(false);
+    if (messengerNavigationTimeoutRef.current !== null) {
+      window.clearTimeout(messengerNavigationTimeoutRef.current);
+      messengerNavigationTimeoutRef.current = null;
+    }
+  }, [pathname]);
+
+  const openCommunityMessenger = () => {
+    if (isMessengerNavigating) return;
+    setIsMessengerNavigating(true);
+    messengerNavigationTimeoutRef.current = window.setTimeout(() => {
+      router.push("/community/messages");
+    }, 140);
+  };
 
   const handleSendMessage = async (queryText?: string) => {
     const textToSend = queryText || inputQuery;
@@ -75,6 +106,31 @@ export default function AIAssistantPopup() {
     <>
       {/* Floating Action Button */}
       <div className="fixed bottom-5 right-5 sm:bottom-6 sm:right-6 z-50">
+        <AnimatePresence>
+          {showCommunityMessenger && (
+            <motion.div
+              initial={{ opacity: 0, y: 14, scale: 0.7 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 14, scale: 0.7 }}
+              transition={{ type: "spring", stiffness: 360, damping: 22 }}
+              className="absolute bottom-[calc(100%+0.75rem)] right-0"
+            >
+              <button
+                type="button"
+                onClick={openCommunityMessenger}
+                aria-label="Open Community Messenger"
+                title="Community Messenger"
+                className={`group relative flex h-13 w-13 items-center justify-center rounded-2xl border-2 border-emerald-500/35 bg-white text-emerald-700 shadow-[0_10px_28px_rgba(15,80,50,0.22)] transition hover:scale-105 hover:border-emerald-600 hover:shadow-[0_14px_34px_rgba(15,80,50,0.32)] dark:bg-slate-850 sm:h-14 sm:w-14 sm:rounded-[22px] ${isMessengerNavigating ? "scale-110" : ""}`}
+              >
+                {isMessengerNavigating && <motion.span initial={{ scale: 1, opacity: 0.45 }} animate={{ scale: 7, opacity: 0 }} transition={{ duration: 0.3 }} className="pointer-events-none absolute inset-0 rounded-full bg-emerald-500" />}
+                <MessageCircle className="h-6 w-6" strokeWidth={2.5} />
+                <span className="pointer-events-none absolute right-full mr-3 whitespace-nowrap rounded-lg bg-slate-900 px-2.5 py-1.5 text-xs font-semibold text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
+                  Community Messenger
+                </span>
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
         <motion.button
           type="button"
           onClick={() => setIsOpen((prev) => !prev)}

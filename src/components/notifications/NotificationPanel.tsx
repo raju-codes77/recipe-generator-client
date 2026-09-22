@@ -96,7 +96,7 @@ export default function NotificationPanel() {
   };
 
   return (
-    <AnimatePresence>
+    <>
       <style>{`
         .notification-panel-scrollbar {
           scrollbar-color: rgba(100, 116, 139, 0.55) transparent;
@@ -136,8 +136,10 @@ export default function NotificationPanel() {
           background-clip: padding-box;
         }
       `}</style>
+      <AnimatePresence>
       {isOpen && (
         <motion.div
+          key="notification-panel"
           ref={panelRef}
           initial={{ opacity: 0, y: -10, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -179,9 +181,8 @@ export default function NotificationPanel() {
             ) : (
               <div className="flex flex-col">
                 {notifications.map((notification, index) => {
-                  const notificationKey = notification.id?.trim()
-                    ? notification.id
-                    : `notification-${notification.type}-${notification.createdAt || "unknown"}-${index}`;
+                  const rawNotificationId = typeof notification.id === "string" ? notification.id.trim() : "";
+                  const notificationKey = `notification-${rawNotificationId || "unknown"}-${index}`;
                   const content = (
                     <div 
                       className={`flex gap-3 px-5 py-4 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50 relative ${
@@ -277,6 +278,7 @@ export default function NotificationPanel() {
           </div>
         </motion.div>
       )}
-    </AnimatePresence>
+      </AnimatePresence>
+    </>
   );
 }

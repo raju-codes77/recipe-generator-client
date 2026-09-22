@@ -254,7 +254,7 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
     const newPost: Post = {
       id: `post_${Date.now()}`,
       author: CURRENT_USER,
-      caption: caption.trim() || (postMode === "quick" ? "Shared a food moment with the Community." : `Cooked this delicious ${title}! Fresh ingredients and incredible flavors. ✨`),
+      caption: caption.trim() || (postMode === "quick" ? "" : `Cooked this delicious ${title}! Fresh ingredients and incredible flavors. ✨`),
       imageUrl: postMode === "quick"
         ? (customPhotoUrl.trim() || (imageFile ? "" : TEXT_ONLY_POST_IMAGE))
         : (customPhotoUrl.trim() || selectedPhoto),

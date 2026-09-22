@@ -2,6 +2,7 @@ import type {
   DirectMessageUser,
   NotificationItem,
   Author,
+  CommunityPostLiker,
   Post,
   PublicCommunityProfile,
   RecipeCollection,
@@ -214,7 +215,12 @@ export const communityApi = {
     return response.interactions;
   },
 
-  async getPublicProfile(userId: string, options: { take?: number; skip?: number } = {}): Promise<PublicCommunityProfile> {
+  async listPostLikers(postId: string): Promise<CommunityPostLiker[]> {
+    const response = await request<{ users: CommunityPostLiker[] }>(`/posts/${postId}/likers`);
+    return response.users;
+  },
+
+  async getPublicProfile(userId: string, options: { take?: number; skip?: number; recipeOnly?: boolean } = {}): Promise<PublicCommunityProfile> {
     const query = new URLSearchParams();
     Object.entries(options).forEach(([key, value]) => {
       if (value !== undefined) query.set(key, String(value));

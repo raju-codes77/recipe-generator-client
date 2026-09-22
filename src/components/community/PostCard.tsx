@@ -58,6 +58,7 @@ interface PostCardProps {
   hasActiveStory?: boolean;
   onAuthorAvatarClick?: () => void;
   onImageClick?: (post: Post) => void;
+  onViewRecipe?: (post: Post) => void;
 }
 
 export const PostCard: React.FC<PostCardProps> = ({
@@ -84,6 +85,7 @@ export const PostCard: React.FC<PostCardProps> = ({
     hasActiveStory = false,
     onAuthorAvatarClick,
     onImageClick,
+    onViewRecipe,
 }) => {
   const [isRecipeModalOpen, setIsRecipeModalOpen] = useState(false);
   const [isCaptionExpanded, setIsCaptionExpanded] = useState(false);
@@ -501,11 +503,11 @@ export const PostCard: React.FC<PostCardProps> = ({
             </div>}
           </div>
         </div>
-      ) : <div className="px-4 pb-4 sm:px-6">
-        <div>
+      ) : <div className={post.caption.trim() ? "px-4 pb-4 sm:px-6" : ""}>
+        {post.caption.trim() && <div>
           <p className={`text-sm sm:text-base text-neutral-800 dark:text-neutral-200 leading-relaxed whitespace-pre-line ${!isCaptionExpanded ? "line-clamp-2" : ""}`}>{post.caption}</p>
           {post.caption.length > 120 && <button onClick={() => setIsCaptionExpanded(!isCaptionExpanded)} className="mt-1 text-xs sm:text-sm font-bold text-[#2F8F46] hover:underline dark:text-[#B7E35F] cursor-pointer">{isCaptionExpanded ? "Show less" : "...more"}</button>}
-        </div>
+        </div>}
         {displayTags.length > 0 && <div className="mt-3 flex flex-wrap gap-2">
           {displayTags.map((tag) => <span key={tag} className="rounded-lg bg-[#EAF7E8] px-2.5 py-1 text-xs font-semibold text-[#176B35] hover:bg-[#D8F3DC] cursor-pointer transition dark:bg-emerald-950/50 dark:text-[#B7E35F]">{tag}</span>)}
         </div>}
@@ -557,7 +559,7 @@ export const PostCard: React.FC<PostCardProps> = ({
       {post.recipe && (
         <div className={`border-t border-slate-100 bg-neutral-50/50 dark:border-neutral-800 dark:bg-neutral-900/30 ${post.sharedOriginal ? "mx-4 mb-3 border-x border-b border-slate-200 rounded-b-2xl sm:mx-6 dark:border-neutral-700" : ""}`}>
           <button
-            onClick={() => setIsRecipeModalOpen(true)}
+            onClick={() => (onViewRecipe ? onViewRecipe(post) : setIsRecipeModalOpen(true))}
             className="flex w-full items-center justify-between gap-3 px-4 sm:px-6 py-4 text-left transition hover:bg-neutral-100/60 dark:hover:bg-neutral-900"
           >
             <div className="flex items-center gap-3 min-w-0 flex-1">

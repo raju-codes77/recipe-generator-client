@@ -104,7 +104,8 @@ export const CommunityFeed: React.FC = () => {
   useEffect(() => {
     setIsHydrated(true);
   }, []);
-  const isAuthenticated = isHydrated && Boolean(session?.user);
+  const isSessionReady = isHydrated && !isSessionPending;
+  const isAuthenticated = isSessionReady && Boolean(session?.user);
   const viewerId = session?.user?.id ?? null;
   const cachedCommunity = communityCache?.userId === viewerId ? communityCache : null;
   const cachedSidebar = communitySidebarCache?.userId === viewerId ? communitySidebarCache : null;
@@ -164,6 +165,7 @@ export const CommunityFeed: React.FC = () => {
   const [isSearchSuggestionSelected, setIsSearchSuggestionSelected] = useState(false);
   const [visiblePostCount, setVisiblePostCount] = useState<number>(POSTS_PER_PAGE);
   const [isLoadingApi, setIsLoadingApi] = useState<boolean>(false);
+  const hasCachedInitialFeed = Boolean(cachedCommunity && activeFilter === "all" && !searchQuery.trim());
   const feedEndRef = useRef<HTMLDivElement>(null);
   const pullStartYRef = useRef<number | null>(null);
   const isPullTrackingRef = useRef(false);
@@ -196,7 +198,7 @@ export const CommunityFeed: React.FC = () => {
       .map(([tag]) => tag);
   }, [posts]);
 
-  const isSidebarContentReady = !isAuthenticated || (chefs.length >= 3 && trendingPosts.length >= 2);
+  const isSidebarContentReady = isSessionReady && (!isAuthenticated || (chefs.length >= 3 && trendingPosts.length >= 2));
 
   const handleFilterChange = useCallback((filter: string) => {
     if (filter === activeFilter) return;
@@ -255,6 +257,7 @@ export const CommunityFeed: React.FC = () => {
   const [dmAttachedPost, setDmAttachedPost] = useState<Post | null>(null);
   const [shareModalPost, setShareModalPost] = useState<Post | null>(null);
   const [isSharingPost, setIsSharingPost] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<{ src: string; alt: string } | null>(null);
   const [viewingStory, setViewingStory] = useState<StoryItem | null>(null);
   const [storyEditorFile, setStoryEditorFile] = useState<File | null>(null);
   const [editPost, setEditPost] = useState<Post | null>(null);
@@ -350,6 +353,7 @@ export const CommunityFeed: React.FC = () => {
     : null;
 
   const loadFeed = useCallback(async () => {
+    if (!isSessionReady) return;
     const requestId = ++feedRequestIdRef.current;
     setIsLoadingFilter(true);
     setLoadError(null);
@@ -409,9 +413,10 @@ export const CommunityFeed: React.FC = () => {
         setIsLoadingFilter(false);
       }
     }
-  }, [activeFilter, isAuthenticated, viewerId]);
+  }, [activeFilter, isAuthenticated, isSessionReady, viewerId]);
 
   const loadSidebarData = useCallback(async () => {
+    if (!isSessionReady) return;
     const userId = viewerId;
     if (communitySidebarCache && communitySidebarCache.userId === userId) {
       setTrendingPosts(communitySidebarCache.trendingPosts);
@@ -471,11 +476,21 @@ export const CommunityFeed: React.FC = () => {
     } finally {
       setIsSidebarDataReady(true);
     }
-  }, [isAuthenticated, viewerId]);
+  }, [isAuthenticated, isSessionReady, viewerId]);
 
   useEffect(() => {
+    if (!isSessionReady) return;
+    if (hasCachedInitialFeed && cachedCommunity) {
+      setPosts(cachedCommunity.posts);
+      setHasMoreServerPosts(cachedCommunity.hasMorePosts);
+      setVisiblePostCount(POSTS_PER_PAGE);
+      setLoadError(null);
+      setIsInitialLoading(false);
+      setIsLoadingFilter(false);
+      return;
+    }
     void loadFeed();
-  }, [loadFeed]);
+  }, [cachedCommunity, hasCachedInitialFeed, isSessionReady, loadFeed]);
 
   useEffect(() => {
     void loadSidebarData();
@@ -964,7 +979,7 @@ export const CommunityFeed: React.FC = () => {
   );
   const hasMoreLoadedPosts = isAuthenticated && visiblePostCount < filteredPosts.length;
   const hasMorePosts = isAuthenticated && (hasMoreLoadedPosts || hasMoreServerPosts);
-  const showGuestFeedGate = !isAuthenticated && visiblePosts.length === PUBLIC_PREVIEW_POSTS;
+  const showGuestFeedGate = isSessionReady && !isAuthenticated && visiblePosts.length === PUBLIC_PREVIEW_POSTS;
 
   const handleLoadMore = useCallback(() => {
     if (hasMoreLoadedPosts) {
@@ -1096,6 +1111,7 @@ export const CommunityFeed: React.FC = () => {
                 setViewingStory(group?.[0] ?? story);
               }}
               onAddStory={(file) => setStoryEditorFile(file)}
+              currentUserId={session?.user?.id}
               isAuthenticated={isAuthenticated}
               onRequireAuthentication={requireAuthentication}
             />
@@ -1285,19 +1301,27 @@ export const CommunityFeed: React.FC = () => {
             {/* Filter Status & Active Tabs */}
             <div className="flex items-center justify-between px-1">
               <div data-community-filter className="relative flex min-w-0 items-center gap-1.5">
-                <h2 className="font-extrabold text-sm uppercase tracking-wider text-neutral-800 dark:text-neutral-200">
-                  {activeFilter === "all"
-                    ? "Community Cooking Feed"
-                    : activeFilter === "trending"
-                      ? "🌟 Trending Recipes"
-                      : activeFilter === "following"
-                        ? "👥 Recipes by Chefs You Follow"
-                        : activeFilter === "saved"
-                            ? "🔖 My Saved Posts"
-                            : activeFilter === "liked"
-                              ? "❤️ Liked Posts"
-                  : `${activeFilter.toUpperCase()} Recipes`}
-                </h2>
+                <button
+                  type="button"
+                  onClick={() => setIsMobileFilterOpen((open) => !open)}
+                  aria-haspopup="menu"
+                  aria-expanded={isMobileFilterOpen}
+                  className="min-w-0 text-left lg:pointer-events-none"
+                >
+                  <h2 className="font-extrabold text-sm uppercase tracking-wider text-neutral-800 dark:text-neutral-200">
+                    {activeFilter === "all"
+                      ? "Community Cooking Feed"
+                      : activeFilter === "trending"
+                        ? "🌟 Trending Recipes"
+                        : activeFilter === "following"
+                          ? "👥 Recipes by Chefs You Follow"
+                          : activeFilter === "saved"
+                              ? "🔖 My Saved Posts"
+                              : activeFilter === "liked"
+                                ? "❤️ Liked Posts"
+                    : `${activeFilter.toUpperCase()} Recipes`}
+                  </h2>
+                </button>
                 <div className="shrink-0 lg:hidden">
                   <button
                     type="button"
@@ -1345,7 +1369,7 @@ export const CommunityFeed: React.FC = () => {
             </div>
 
             {/* Posts Stream */}
-            {isInitialLoading || isLoadingFilter ? (
+            {isSessionPending || isInitialLoading || isLoadingFilter ? (
               <div className="space-y-5" aria-live="polite" aria-label="Loading Community posts">
                 <div className="flex items-center justify-center py-1" role="status" aria-label="Updating the Community feed">
                   <span className="h-5 w-5 animate-spin rounded-full border-2 border-[#2F8F46]/25 border-t-[#2F8F46] dark:border-[#B7E35F]/25 dark:border-t-[#B7E35F]" />
@@ -1444,6 +1468,13 @@ export const CommunityFeed: React.FC = () => {
                     currentUserId={currentUser?.id}
                     isAuthenticated={isAuthenticated}
                     onRequireAuthentication={requireAuthentication}
+                    onViewRecipe={(recipePost) => router.push(`/community/recipe/${encodeURIComponent(recipePost.id)}`)}
+                    onImageClick={(imagePost) =>
+                      setSelectedImage({
+                        src: imagePost.imageUrl,
+                        alt: imagePost.recipe?.title || "Community food post",
+                      })
+                    }
                     hasActiveStory={stories.some((story) => story.author.id === post.author.id)}
                     onAuthorAvatarClick={
                       stories.some((story) => story.author.id === post.author.id)
@@ -1515,6 +1546,30 @@ export const CommunityFeed: React.FC = () => {
       </main>
 
       {/* Modals */}
+      {selectedImage && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Full-size food image"
+          onClick={() => setSelectedImage(null)}
+        >
+          <button
+            type="button"
+            onClick={() => setSelectedImage(null)}
+            aria-label="Close full-size image"
+            className="absolute right-5 top-5 rounded-full bg-white/10 p-2 text-white transition hover:bg-white/20"
+          >
+            <X className="h-6 w-6" />
+          </button>
+          <img
+            src={selectedImage.src}
+            alt={selectedImage.alt}
+            className="max-h-[90vh] max-w-[92vw] rounded-2xl object-contain shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          />
+        </div>
+      )}
       {connectionsOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"

@@ -8,6 +8,7 @@ interface StoriesBarProps {
   stories: StoryItem[];
   onSelectStory: (story: StoryItem) => void;
   onAddStory: (file: File) => void;
+  currentUserId?: string | null;
   isAuthenticated?: boolean;
   onRequireAuthentication?: (action: string) => void;
 }
@@ -16,6 +17,7 @@ export const StoriesBar: React.FC<StoriesBarProps> = ({
   stories,
   onSelectStory,
   onAddStory,
+  currentUserId,
   isAuthenticated = true,
   onRequireAuthentication = () => undefined,
 }) => {
@@ -30,8 +32,20 @@ export const StoriesBar: React.FC<StoriesBarProps> = ({
         groups.set(story.author.id, authorStories);
       });
 
-    return Array.from(groups.values());
-  }, [stories]);
+    const groupedStories = Array.from(groups.values());
+    if (!currentUserId) return groupedStories;
+
+    const ownGroupIndex = groupedStories.findIndex((group) => group[0]?.author.id === currentUserId);
+    if (ownGroupIndex <= 0) return groupedStories;
+
+    const [ownGroup] = groupedStories.splice(ownGroupIndex, 1);
+    return [ownGroup, ...groupedStories];
+  }, [currentUserId, stories]);
+
+  const handleStoriesWheel = (event: React.WheelEvent<HTMLDivElement>) => {
+    if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
+    event.currentTarget.scrollLeft += event.deltaY;
+  };
 
   return (
     <div className="relative mb-8 w-full overflow-hidden rounded-2xl border border-slate-200 bg-white p-4.5 shadow-xs dark:border-neutral-800 dark:bg-[#121212]">
@@ -67,7 +81,10 @@ export const StoriesBar: React.FC<StoriesBarProps> = ({
           </Link>
         </div>
       ) : (
-        <div className="flex items-center gap-4 overflow-x-auto pb-1.5 pt-1 scrollbar-none">
+        <div
+          onWheel={handleStoriesWheel}
+          className="flex touch-pan-x cursor-grab items-center gap-4 overflow-x-auto overscroll-x-contain pb-1.5 pt-1 scrollbar-none active:cursor-grabbing"
+        >
           {/* Add Story Button */}
           <motion.label
             whileTap={{ scale: 0.95 }}
@@ -93,7 +110,7 @@ export const StoriesBar: React.FC<StoriesBarProps> = ({
               </motion.span>
             </div>
             <span className="text-xs font-semibold text-neutral-700 dark:text-neutral-300 max-w-[68px] truncate text-center">
-              Your Dish
+              Create Dish
             </span>
           </motion.label>
 
@@ -116,7 +133,9 @@ export const StoriesBar: React.FC<StoriesBarProps> = ({
                 </div>
               </div>
               <span className="text-xs font-medium text-neutral-700 dark:text-neutral-300 max-w-[70px] truncate text-center">
-                {story.author.name.split(" ")[0]}
+                {currentUserId && story.author.id === currentUserId
+                  ? "Your Dish"
+                  : story.author.name.split(" ")[0]}
               </span>
             </motion.div>
           ))}

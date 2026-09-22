@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { authClient } from "@/lib/auth-client";
-import { apiClient } from "@/lib/api-client";
+import { apiClient, ApiError } from "@/lib/api-client";
 
 interface WellnessPreference {
   enabled: boolean;
@@ -32,6 +32,7 @@ export default function WellnessReminderScheduler() {
         const data = await apiClient.get<WellnessPreference>("/wellness-reminders/preferences");
         setPreference(data);
       } catch (err) {
+        if (err instanceof ApiError && err.status === 0) return;
         console.error("Failed to load wellness preferences", err);
       }
     };
@@ -89,7 +90,7 @@ export default function WellnessReminderScheduler() {
           );
         }
       } catch (error: any) {
-        if (error?.status === 429) return;
+        if (error?.status === 0 || error?.status === 429) return;
         console.error("Wellness generation request failed", error);
       }
     };
