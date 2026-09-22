@@ -293,17 +293,17 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
         <div className="absolute right-5 top-5 z-40 hidden items-center gap-2.5 sm:right-8 sm:top-7 sm:gap-3 lg:flex">
           <button type="button" onClick={() => navigateFromStory(dashboardHref)} aria-label="Open dashboard" className="group relative flex h-10 w-10 items-center justify-center rounded-full border border-neutral-200 bg-white/90 text-neutral-800 shadow-sm backdrop-blur-sm transition hover:bg-white dark:border-white/10 dark:bg-white/15 dark:text-white dark:hover:bg-white/25 sm:h-11 sm:w-11">
             <Grid3X3 className="h-4 w-4 sm:h-5 sm:w-5" />
-            <span className="pointer-events-none absolute top-full mt-2 whitespace-nowrap rounded-md bg-black/85 px-2 py-1 text-[10px] font-semibold opacity-0 shadow-lg transition-opacity group-hover:opacity-100">Dashboard</span>
+            <span className="pointer-events-none absolute top-full z-50 mt-2 whitespace-nowrap rounded-md bg-black/85 px-2 py-1 text-[10px] font-semibold text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100">Dashboard</span>
           </button>
           <button type="button" onClick={onOpenMessages} aria-label="Open messages" className="group relative flex h-10 w-10 items-center justify-center rounded-full border border-neutral-200 bg-white/90 text-neutral-800 shadow-sm backdrop-blur-sm transition hover:bg-white dark:border-white/10 dark:bg-white/15 dark:text-white dark:hover:bg-white/25 sm:h-11 sm:w-11">
             <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5" />
-            <span className="pointer-events-none absolute top-full mt-2 whitespace-nowrap rounded-md bg-black/85 px-2 py-1 text-[10px] font-semibold opacity-0 shadow-lg transition-opacity group-hover:opacity-100">Messages</span>
+            <span className="pointer-events-none absolute top-full z-50 mt-2 whitespace-nowrap rounded-md bg-black/85 px-2 py-1 text-[10px] font-semibold text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100">Messages</span>
           </button>
           <div ref={notificationsRef} className="relative">
             <button type="button" onClick={() => setIsNotificationsOpen((open) => !open)} aria-label="Open notifications" aria-expanded={isNotificationsOpen} className="group relative flex h-10 w-10 items-center justify-center rounded-full border border-neutral-200 bg-white/90 text-neutral-800 shadow-sm backdrop-blur-sm transition hover:bg-white dark:border-white/10 dark:bg-white/15 dark:text-white dark:hover:bg-white/25 sm:h-11 sm:w-11">
               <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
               {unreadNotifications.length > 0 && <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-black text-white">{Math.min(unreadNotifications.length, 99)}</span>}
-              <span className="pointer-events-none absolute top-full mt-2 whitespace-nowrap rounded-md bg-black/85 px-2 py-1 text-[10px] font-semibold opacity-0 shadow-lg transition-opacity group-hover:opacity-100">Notifications</span>
+              <span className="pointer-events-none absolute top-full z-50 mt-2 whitespace-nowrap rounded-md bg-black/85 px-2 py-1 text-[10px] font-semibold text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100">Notifications</span>
             </button>
             {isNotificationsOpen && (
               <div className="absolute right-0 top-[calc(100%+0.75rem)] w-[min(320px,calc(100vw-2.5rem))] overflow-hidden rounded-2xl border border-neutral-200 bg-white text-left shadow-2xl dark:border-white/10 dark:bg-[#171C1A]">
@@ -316,7 +316,7 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
           </div>
           <button type="button" onClick={() => navigateFromStory(profileHref)} aria-label="Open your profile" className="group relative overflow-visible rounded-full ring-2 ring-neutral-300 transition hover:ring-[#2F8F46] dark:ring-white/30 dark:hover:ring-[#B7E35F]">
             <CommunityAvatar src={profileImage} alt="Your profile" className="h-10 w-10 rounded-full object-cover sm:h-11 sm:w-11" />
-            <span className="pointer-events-none absolute right-0 top-full mt-2 whitespace-nowrap rounded-md bg-black/85 px-2 py-1 text-[10px] font-semibold opacity-0 shadow-lg transition-opacity group-hover:opacity-100">Your profile</span>
+            <span className="pointer-events-none absolute right-0 top-full z-50 mt-2 whitespace-nowrap rounded-md bg-black/85 px-2 py-1 text-[10px] font-semibold text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100">Your profile</span>
           </button>
         </div>
 

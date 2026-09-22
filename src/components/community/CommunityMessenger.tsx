@@ -23,7 +23,7 @@ function messageText(text: string) {
     .trim();
 }
 
-export const CommunityMessenger: React.FC<{ initialRecipientId?: string }> = ({ initialRecipientId }) => {
+export const CommunityMessenger: React.FC<{ initialRecipientId?: string; returnTo?: string }> = ({ initialRecipientId, returnTo = "/community" }) => {
   const { data: session } = authClient.useSession();
   const router = useRouter();
   const [contacts, setContacts] = useState<DirectMessageUser[]>([]);
@@ -177,7 +177,7 @@ export const CommunityMessenger: React.FC<{ initialRecipientId?: string }> = ({ 
   }
 
   return (
-    <main className="min-h-screen bg-[#FCFDF9] px-3 py-4 dark:bg-[#0a0a0a] sm:px-6 sm:py-8">
+    <main className="h-[calc(100dvh-5rem)] overflow-hidden bg-[#FCFDF9] px-0 py-0 dark:bg-[#0a0a0a] sm:h-[calc(100dvh-5.5rem)] sm:px-6 sm:py-1 lg:h-[calc(100dvh-6rem)]">
       <style>{`
         .community-dm-scrollbar {
           scrollbar-color: transparent transparent;
@@ -220,9 +220,9 @@ export const CommunityMessenger: React.FC<{ initialRecipientId?: string }> = ({ 
           background: rgba(199, 237, 125, 0.52);
         }
       `}</style>
-      <div className="mx-auto flex h-[calc(100vh-2rem)] max-w-6xl flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl dark:border-neutral-800 dark:bg-[#121212] sm:h-[calc(100vh-4rem)]">
-        <header className="flex items-center gap-3 border-b border-slate-100 px-5 py-4 dark:border-neutral-800 sm:px-7">
-          <Link href="/community" aria-label="Back to Community" className="rounded-xl p-2 text-neutral-500 transition hover:bg-neutral-100 hover:text-[#2F8F46] dark:hover:bg-neutral-800">
+      <div className="sticky top-20 z-30 mx-auto -mt-4 flex h-[calc(100dvh-6rem)] max-w-6xl flex-col overflow-hidden rounded-t-none rounded-b-3xl border border-slate-200 bg-white shadow-xl dark:border-neutral-800 dark:bg-[#121212] sm:mt-0 sm:h-[calc(100dvh-6.5rem)] sm:rounded-3xl md:top-20 lg:h-[calc(100dvh-7rem)] lg:top-[88px]">
+        <header className="relative flex items-center gap-3 border-b border-slate-100 bg-white px-5 py-4 dark:border-neutral-800 dark:bg-[#121212] sm:px-7">
+          <Link href={returnTo} aria-label="Back to previous page" className="rounded-xl p-2 text-neutral-500 transition hover:bg-neutral-100 hover:text-[#2F8F46] dark:hover:bg-neutral-800">
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#2F8F46] text-white">
@@ -235,8 +235,8 @@ export const CommunityMessenger: React.FC<{ initialRecipientId?: string }> = ({ 
         </header>
 
         <div className="flex min-h-0 flex-1">
-          <aside className="flex w-full max-w-xs flex-col border-r border-slate-100 dark:border-neutral-800">
-            <div className="border-b border-slate-100 p-4 dark:border-neutral-800">
+          <aside className={`w-full max-w-none flex-col border-r border-slate-100 dark:border-neutral-800 md:flex md:w-80 md:max-w-xs ${selectedContact ? "hidden" : "flex"}`}>
+            <div className="relative z-20 border-b border-slate-100 bg-white px-4 py-2 dark:border-neutral-800 dark:bg-[#121212]">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
                 <input
@@ -272,10 +272,13 @@ export const CommunityMessenger: React.FC<{ initialRecipientId?: string }> = ({ 
             </div>
           </aside>
 
-          <section className="flex min-w-0 flex-1 flex-col bg-neutral-50/50 dark:bg-neutral-950">
+          <section className={`min-w-0 flex-1 flex-col bg-neutral-50/50 dark:bg-neutral-950 ${selectedContact ? "flex" : "hidden md:flex"}`}>
             {selectedContact ? (
               <>
-                <div className="flex items-center gap-3 border-b border-slate-100 bg-white px-5 py-4 dark:border-neutral-800 dark:bg-[#121212]">
+                <div className="flex items-center gap-3 border-b border-slate-100 bg-white px-5 py-2 dark:border-neutral-800 dark:bg-[#121212]">
+                  <button type="button" onClick={() => setSelectedContactId("")} aria-label="Back to conversations" className="rounded-xl p-2 text-neutral-500 transition hover:bg-neutral-100 hover:text-[#2F8F46] dark:hover:bg-neutral-800 md:hidden">
+                    <ArrowLeft className="h-5 w-5" />
+                  </button>
                   <CommunityAvatar src={selectedContact.avatar} alt={selectedContact.name} className="h-10 w-10 rounded-full object-cover" />
                   <div>
                     <h2 className="text-sm font-bold text-neutral-900 dark:text-white">{selectedContact.name}</h2>

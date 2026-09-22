@@ -123,12 +123,11 @@ export const CommunityPostDetailsModal: React.FC<CommunityPostDetailsModalProps>
           aria-label="Community post details"
         >
           <div className="relative mx-auto flex min-h-full w-full max-w-6xl flex-col px-4 pb-4 pt-2 sm:px-8 sm:pb-8 sm:pt-4">
-            <button type="button" onClick={onClose} className="absolute left-0 top-1 z-10 inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-[#121614]/90 text-neutral-200 shadow-lg backdrop-blur transition hover:bg-white/10 sm:left-4 sm:top-3 lg:-left-12 lg:top-4" aria-label="Go back to saved posts">
-              <ArrowLeft className="h-5 w-5" />
-            </button>
-
             <div className="grid flex-1 gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
-              <section className="flex min-h-[calc(100dvh-8rem)] flex-col justify-center rounded-3xl border border-white/10 bg-[#121614] p-6 shadow-2xl sm:p-10">
+              <section className="relative flex min-h-[calc(100dvh-8rem)] flex-col justify-center rounded-3xl border border-white/10 bg-[#121614] p-6 pt-16 shadow-2xl sm:p-10 sm:pt-20">
+                <button type="button" onClick={onClose} className="absolute left-4 top-4 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-[#121614]/90 text-neutral-200 shadow-lg backdrop-blur transition hover:bg-white/10 sm:left-6 sm:top-6" aria-label="Go back to Community posts">
+                  <ArrowLeft className="h-5 w-5" />
+                </button>
                 <div className="mb-8 flex items-center gap-3">
                   <CommunityAvatar src={post.author.avatar} alt={post.author.name} className="h-12 w-12 rounded-full object-cover ring-2 ring-[#2F8F46]/50" />
                   <div><h1 className="text-lg font-black">{post.author.name}</h1><p className="text-xs text-neutral-400">{post.createdAt}</p></div>

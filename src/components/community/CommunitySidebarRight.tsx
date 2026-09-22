@@ -71,19 +71,6 @@ export const CommunitySidebarRight: React.FC<CommunitySidebarRightProps> = ({
         </>
       ) : isAuthenticated ? (
         <>
-      <Link
-        href="/community/messages"
-        className="group flex items-center gap-3 rounded-2xl border border-[#2F8F46]/25 bg-[#EAF7E8] p-4 transition hover:border-[#2F8F46] hover:bg-[#dff3dc] dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:hover:bg-emerald-950/50"
-      >
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#2F8F46] text-white shadow-xs">
-          <MessageCircle className="h-5 w-5" />
-        </span>
-        <span className="min-w-0">
-          <span className="block text-sm font-extrabold text-[#176B35] dark:text-[#B7E35F]">Community Messenger</span>
-          <span className="mt-0.5 block text-[11px] text-neutral-600 dark:text-neutral-400">Message your fellow cooks</span>
-        </span>
-      </Link>
-
       {/* Top Chefs to Follow */}
       <div className="rounded-2xl border border-slate-200 bg-white p-4.5 shadow-xs dark:border-neutral-800 dark:bg-[#121212]">
         <div className="pb-3">
@@ -239,15 +226,6 @@ export const CommunitySidebarRight: React.FC<CommunitySidebarRightProps> = ({
         </>
       ) : (
         <>
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs dark:border-neutral-800 dark:bg-[#121212]">
-            <div className="flex items-center gap-2.5 text-neutral-700 dark:text-neutral-200">
-              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#EAF7E8] text-[#2F8F46] dark:bg-emerald-950/60 dark:text-[#B7E35F]"><MessageCircle className="h-4 w-4" /></span>
-              <h4 className="text-[11px] font-bold uppercase tracking-wider">Community Messenger</h4>
-            </div>
-            <p className="mt-3 text-xs leading-relaxed text-neutral-500 dark:text-neutral-400">Log in to message other Community members.</p>
-            <Link href="/registrationProcess/login" className="mt-3 inline-flex w-full items-center justify-center rounded-xl bg-[#2F8F46] px-3 py-2 text-xs font-bold text-white transition hover:bg-[#176B35]">Log in to message</Link>
-          </div>
-
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs dark:border-neutral-800 dark:bg-[#121212]">
             <div className="flex items-center gap-2.5 text-neutral-700 dark:text-neutral-200">
               <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#EAF7E8] text-[#2F8F46] dark:bg-emerald-950/60 dark:text-[#B7E35F]"><LockKeyhole className="h-4 w-4" /></span>

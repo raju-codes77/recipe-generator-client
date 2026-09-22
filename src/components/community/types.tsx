@@ -130,6 +130,14 @@ export interface StoryItem {
   timestamp: string;
 }
 
+export interface CommunityPostLiker {
+  id: string;
+  name: string;
+  username: string;
+  avatar: string;
+  reactedAt: string;
+}
+
 export interface StoryViewer {
   id: string;
   name: string;

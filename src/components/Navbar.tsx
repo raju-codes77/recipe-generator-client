@@ -269,7 +269,7 @@ function NavbarContent() {
 
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-1.5 lg:gap-2">
+          <nav className="hidden xl:flex items-center gap-1.5 lg:gap-2">
             {navLinks.map((link) => {
 
               const isActive = pathname === link.href;
@@ -420,7 +420,7 @@ function NavbarContent() {
           {/* Mobile Menu Button */}
 
           <button
-            className="md:hidden p-2.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
+            className="xl:hidden p-2.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
 
             aria-label="Toggle mobile menu"
@@ -446,7 +446,7 @@ function NavbarContent() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.25, ease: "easeOut" }}
-            className="md:hidden absolute top-full left-0 w-full bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl shadow-2xl px-6 pb-6 pt-2 z-50 rounded-b-3xl border-b border-slate-100 dark:border-slate-800"
+            className="xl:hidden absolute top-full left-0 w-full bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl shadow-2xl px-6 pb-6 pt-2 z-50 rounded-b-3xl border-b border-slate-100 dark:border-slate-800"
           >
             <div className="flex flex-col gap-1.5">
               {navLinks.map((link) => {
