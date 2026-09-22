@@ -35,6 +35,9 @@ async function proxyRequest(request: Request, props: { params: Promise<{ proxy: 
       "user-agent",
       "x-timezone",
       "x-client-version",
+      "x-forwarded-host",
+      "x-forwarded-proto",
+      "host"
     ];
 
     request.headers.forEach((value, key) => {
@@ -56,6 +59,12 @@ async function proxyRequest(request: Request, props: { params: Promise<{ proxy: 
       headers.set("origin", "http://localhost:3000");
     }
 
+    // Explicitly set forwarded headers so Better Auth knows the original frontend host
+    const host = request.headers.get("host") || "localhost:3000";
+    headers.set("x-forwarded-host", host);
+    
+    const proto = request.headers.get("x-forwarded-proto") || (request.url.startsWith("https") ? "https" : "http");
+    headers.set("x-forwarded-proto", proto);
 
     const fetchOptions: RequestInit & { duplex?: string } = {
       method: request.method,

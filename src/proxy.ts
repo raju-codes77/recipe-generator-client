@@ -7,31 +7,19 @@ export function proxy(request: NextRequest) {
 
     const sessionCookie = getSessionCookie(request);
 
+    // Auth pages: redirect to dashboard if already logged in
     const isAuthRoute = pathname.startsWith("/registrationProcess");
-
-    // Login / Register pages
     if (isAuthRoute) {
         if (sessionCookie) {
-            return NextResponse.redirect(
-                new URL("/dashboard/user", request.url)
-            );
+            return NextResponse.redirect(new URL("/dashboard/users", request.url));
         }
-
         return NextResponse.next();
     }
 
-    // Protected routes
+    // Protected routes: require login
     if (!sessionCookie) {
-        const loginUrl = new URL(
-            "/registrationProcess/login",
-            request.url
-        );
-
-        loginUrl.searchParams.set(
-            "callbackUrl",
-            pathname
-        );
-
+        const loginUrl = new URL("/registrationProcess/login", request.url);
+        loginUrl.searchParams.set("callbackUrl", pathname);
         return NextResponse.redirect(loginUrl);
     }
 
@@ -41,8 +29,9 @@ export function proxy(request: NextRequest) {
 export const config = {
     matcher: [
         "/dashboard/:path*",
-        "/recipes/:path+",
-        "/ai-tools/:path+",
+        "/meal-planner/:path*",
+        "/pro/:path*",
+        "/ai-tools/:path*",
         "/registrationProcess/:path*",
     ],
 };

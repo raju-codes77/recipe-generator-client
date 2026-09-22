@@ -8,10 +8,6 @@
  * Server-side Next.js Route Handlers read process.env.NEXT_PUBLIC_API_URL directly.
  */
 export function getApiBaseUrl(): string {
-  if (typeof window !== "undefined") {
-    // Client-side: use relative path to hit the Next.js proxy
-    return "";
-  }
-  // Server-side: use absolute path to hit the backend directly (fixes URL parsing TypeError)
-  return process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+  const rawBackendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+  return rawBackendUrl.endsWith("/") ? rawBackendUrl.slice(0, -1) : rawBackendUrl;
 }

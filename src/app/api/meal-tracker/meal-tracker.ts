@@ -1,4 +1,4 @@
-import { getApiBaseUrl } from "@/lib/api-url";
+import { apiClient } from "@/lib/api-client";
 
 export const analyzeMeal = async (file: File, userId?: string) => {
     const formData = new FormData();
@@ -12,51 +12,40 @@ export const analyzeMeal = async (file: File, userId?: string) => {
         formData.append("userId", userId);
     }
 
-    const apiUrl = getApiBaseUrl();
-    const response = await fetch(`${apiUrl}/api/meals/analyze`, {
-        method: "POST",
-        body: formData,
-        credentials: "include", // ← CRITICAL: send session cookie so backend can identify the user
-    });
-
-    const contentType = response.headers.get("content-type");
-    if (!contentType?.includes("application/json")) {
-        const text = await response.text();
-        console.error("Non-JSON response:", text);
-        throw new Error(`Server returned an invalid response: ${text.slice(0, 200)}`);
-    }
-
-    const data = await response.json();
-    if (!response.ok) {
+    try {
+        const data = await apiClient.post<any>("/meals/analyze", formData);
+        return data;
+    } catch (error: any) {
         let errorMessage = "Failed to analyze meal";
-        if (data.error) {
-            errorMessage = typeof data.error === "object" ? data.error.message || JSON.stringify(data.error) : data.error;
-        } else if (data.message) {
-            errorMessage = typeof data.message === "object" ? data.message.message || JSON.stringify(data.message) : data.message;
+        if (error.data) {
+            errorMessage = error.data.error || error.data.message || error.message;
+        } else {
+            errorMessage = error.message;
         }
         throw new Error(errorMessage);
     }
-
-    return data;
 };
 
 // Common fetch helper with credentials
 const fetchApi = async (path: string, options: RequestInit = {}) => {
-    const apiUrl = getApiBaseUrl();
-    const res = await fetch(`${apiUrl}${path}`, {
-        ...options,
-        headers: {
-            "Content-Type": "application/json",
-            ...options.headers,
-        },
-        credentials: "include", // Send session cookies
-    });
-    
-    if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || `API Error: ${res.statusText}`);
+    try {
+        const method = options.method || "GET";
+        const data = options.body ? JSON.parse(options.body as string) : undefined;
+        
+        if (method === "GET") {
+            return await apiClient.get<any>(path, options);
+        } else if (method === "POST") {
+            return await apiClient.post<any>(path, data, options);
+        } else if (method === "PUT") {
+            return await apiClient.put<any>(path, data, options);
+        } else if (method === "PATCH") {
+            return await apiClient.patch<any>(path, data, options);
+        } else if (method === "DELETE") {
+            return await apiClient.delete<any>(path, options);
+        }
+    } catch (err: any) {
+        throw new Error(err.message || `API Error`);
     }
-    return res.json();
 };
 
 export const getUserGoal = async (userId: string) => {

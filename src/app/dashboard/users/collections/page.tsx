@@ -46,7 +46,7 @@ export default function CollectionsDashboardPage() {
     e.stopPropagation();
 
     try {
-      const data = await apiClient.delete<any>(`/collections`, { collectionId, userId: session?.user?.id });
+      const data = await apiClient.delete<any>(`/collections`, { data: { collectionId, userId: session?.user?.id } });
 
       setCollections((prev) => prev.filter((col) => col.id !== collectionId));
       toast.success("Collection deleted successfully!");

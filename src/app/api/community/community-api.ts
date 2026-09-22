@@ -10,9 +10,7 @@ import type {
   StoryViewer,
 } from "@/components/community/types";
 
-import { getApiBaseUrl } from "@/lib/api-url";
-
-const API_BASE_URL = getApiBaseUrl();
+import { apiClient } from "@/lib/api-client";
 
 interface ApiErrorBody {
   message?: string;
@@ -26,32 +24,26 @@ class CommunityApiError extends Error {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const headers = new Headers(init?.headers);
   const method = (init?.method || "GET").toUpperCase();
-
-  // A Content-Type header on an otherwise simple GET forces a CORS preflight.
-  // Community reads do not send a body, so leave the header out for those calls.
-  if (init?.body && !headers.has("Content-Type")) {
-    headers.set("Content-Type", "application/json");
+  const data = init?.body ? JSON.parse(init.body as string) : undefined;
+  
+  try {
+    if (method === "GET") {
+      return await apiClient.get<T>(`/community${path}`, init);
+    } else if (method === "POST") {
+      return await apiClient.post<T>(`/community${path}`, data, init);
+    } else if (method === "PUT") {
+      return await apiClient.put<T>(`/community${path}`, data, init);
+    } else if (method === "PATCH") {
+      return await apiClient.patch<T>(`/community${path}`, data, init);
+    } else if (method === "DELETE") {
+      return await apiClient.delete<T>(`/community${path}`, init);
+    }
+    
+    return await apiClient.get<T>(`/community${path}`, init);
+  } catch (error: any) {
+    throw new CommunityApiError(error.message || `Community request failed`, error.status || 500);
   }
-
-  const response = await fetch(`${API_BASE_URL}/api/community${path}`, {
-    ...init,
-    credentials: "include",
-    ...(method === "GET" ? { cache: "no-store" as const } : {}),
-    headers,
-  });
-
-  if (!response.ok) {
-    const body = (await response.json().catch(() => ({}))) as ApiErrorBody;
-    throw new CommunityApiError(body.message || `Community request failed (${response.status})`, response.status);
-  }
-
-  if (response.status === 204) {
-    return undefined as T;
-  }
-
-  return response.json() as Promise<T>;
 }
 
 function fileToDataUrl(file: File): Promise<string> {

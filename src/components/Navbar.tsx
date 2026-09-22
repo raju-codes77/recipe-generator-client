@@ -350,11 +350,19 @@ function NavbarContent() {
                 <div className="flex items-center gap-3">
                   <div className="h-9 w-9 rounded-full overflow-hidden border-2 border-white dark:border-slate-800 shadow-sm relative bg-gradient-to-br from-emerald-500 to-teal-600 text-white font-bold flex items-center justify-center text-xs">
                     {user.image ? (
-                      <Image src={user.image} alt={user.name || "User profile"} fill sizes="36px" className="object-cover" />
+                      <Image
+                        src={user.image}
+                        alt={user.name || "User profile"}
+                        fill
+                        sizes="36px"
+                        className="object-cover"
+                        onError={(e) => {
+                          // Hide the image element on error; the parent div's gradient initials will show instead
+                          (e.target as HTMLImageElement).style.display = "none";
+                        }}
+                      />
                     ) : (
-
                       <span>{getInitials(user.name)}</span>
-
                     )}
 
                   </div>
@@ -475,7 +483,16 @@ function NavbarContent() {
                     <div className="flex items-center gap-4 px-2">
                       <div className="h-12 w-12 rounded-full overflow-hidden border-2 border-emerald-500/30 flex-shrink-0 relative bg-emerald-600 text-white font-bold flex items-center justify-center text-sm">
                         {user.image ? (
-                          <Image src={user.image} alt={user.name || "User"} fill sizes="48px" className="object-cover" />
+                          <Image
+                            src={user.image}
+                            alt={user.name || "User"}
+                            fill
+                            sizes="48px"
+                            className="object-cover"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display = "none";
+                            }}
+                          />
                         ) : (
 
                           <span>{getInitials(user.name)}</span>

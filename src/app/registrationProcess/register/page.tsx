@@ -121,19 +121,21 @@ export default function RegisterPage() {
 
   const handleGoogleSignup = async () => {
     try {
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_LOCAL_URL || "http://localhost:3000";
       await authClient.signIn.social({
         provider: "google",
-        callbackURL: `${window.location.origin}/`,
+        callbackURL: `${appUrl}/`,
+        errorCallbackURL: `${appUrl}/registrationProcess/login`,
       });
-    } catch (err: any) {
-      console.error("Google signup error:", err);
-      toast.error("Failed to sign up with Google.");
+    } catch (err) {
+      console.error("Google login error:", err);
+      toast.error("Failed to sign in with Google.");
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#F9F6F0] dark:bg-black p-4 sm:p-6 lg:p-8 font-sans transition-colors duration-500">
-      
+
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
@@ -143,7 +145,7 @@ export default function RegisterPage() {
 
         {/* LEFT COLUMN: Image with overlay text and features */}
         <div className="hidden lg:flex lg:w-1/2 p-8 sm:p-12 flex-col justify-between relative overflow-hidden">
-          
+
           {/* Background Image with Dark Overlay */}
           <div className="absolute inset-0 z-0">
             <Image
@@ -233,7 +235,7 @@ export default function RegisterPage() {
 
         {/* RIGHT COLUMN: Register Form Section */}
         <div className="w-full lg:w-1/2 bg-white dark:bg-[#121212] p-8 sm:p-10 flex flex-col justify-between overflow-y-auto max-h-[900px] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-gray-200 dark:[&::-webkit-scrollbar-thumb]:bg-gray-800 [&::-webkit-scrollbar-thumb]:rounded-full">
-          
+
           <div>
             {/* Top Log in link header */}
             <div className="flex justify-end items-center mb-6">
