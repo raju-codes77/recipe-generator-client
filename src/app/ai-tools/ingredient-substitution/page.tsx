@@ -5,9 +5,7 @@ import { Replace, Search, Loader2, Info, Link2 } from "lucide-react";
 import toast from "react-hot-toast";
 import Link from "next/link";
 
-import { getApiBaseUrl } from "@/lib/api-url";
-
-const apiUrl = getApiBaseUrl();
+import { apiClient } from "@/lib/api-client";
 
 export default function IngredientSubstitutionPage() {
   const [recipeContext, setRecipeContext] = useState("");
@@ -26,22 +24,10 @@ export default function IngredientSubstitutionPage() {
     setResults(null);
 
     try {
-      const res = await fetch(`${apiUrl}/api/ingredient-substitution`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ingredient: missingIngredient.trim(),
-          recipeContext: recipeContext.trim(),
-        }),
-        credentials: "include",
+      const data = await apiClient.post<any>(`/ingredient-substitution`, {
+        ingredient: missingIngredient.trim(),
+        recipeContext: recipeContext.trim(),
       });
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || "Failed to find substitutes");
-      }
-
-      const data = await res.json();
       if (!data.substitutes || data.substitutes.length === 0) {
         toast.error("No substitutes found for this ingredient.");
         return;

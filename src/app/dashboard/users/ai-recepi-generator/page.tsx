@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { FiSend, FiCpu, FiUser, FiRefreshCw } from "react-icons/fi";
 import { SparkleIcon } from "lucide-react";
+import { apiClient } from "@/lib/api-client";
 
 interface Message {
   sender: "ai" | "user";
@@ -47,16 +48,7 @@ export default function AIChatbotPage() {
     setLoading(true);
 
     try {
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({ prompt: textToSend }),
-      });
-
-      const data = await res.json();
+      const data = await apiClient.post<any>("/chat", { prompt: textToSend });
 
       if (data.success) {
         const aiMessage: Message = { sender: "ai", text: data.reply };

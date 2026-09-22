@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { authClient } from "@/lib/auth-client";
-import { getApiBaseUrl } from "@/lib/api-url";
+import { apiClient } from "@/lib/api-client";
 
 export interface NotificationActor {
   id: string;
@@ -53,17 +53,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     if (!userId || isPending) return;
     try {
       setIsLoading(true);
-      const res = await fetch(`${getApiBaseUrl()}/api/notifications?page=${pageNum}&limit=10`, {
-        credentials: "include",
-      });
-      
-      if (res.status === 401) {
-        return; // Silently skip if unauthorized
-      }
-
-      if (!res.ok) throw new Error("Failed to fetch notifications");
-      
-      const data = await res.json();
+      const data = await apiClient.get<any>(`/notifications?page=${pageNum}&limit=10`);
       const { notifications: newNotifs, unreadCount: newUnread, pagination } = data;
       
       setNotifications(prev => {
@@ -81,7 +71,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       setUnreadCount(newUnread);
       setHasNextPage(pagination.hasNextPage);
       setPage(pagination.page);
-    } catch (error) {
+    } catch (error: any) {
+      if (error?.status === 401) return; // Silently skip if unauthorized
       console.error("Failed to fetch notifications", error);
     } finally {
       setIsLoading(false);
@@ -118,10 +109,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
       setUnreadCount(prev => Math.max(0, prev - 1));
       
-      await fetch(`${getApiBaseUrl()}/api/notifications/${id}/read`, {
-        method: "PATCH",
-        credentials: "include",
-      });
+      await apiClient.patch<any>(`/notifications/${id}/read`);
     } catch (error) {
       console.error("Failed to mark as read", error);
     }
@@ -132,10 +120,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
       setUnreadCount(0);
       
-      await fetch(`${getApiBaseUrl()}/api/notifications/read-all`, {
-        method: "PATCH",
-        credentials: "include",
-      });
+      await apiClient.patch<any>("/notifications/read-all");
     } catch (error) {
       console.error("Failed to mark all as read", error);
     }

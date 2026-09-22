@@ -5,9 +5,7 @@ import Link from "next/link";
 import { FiArrowLeft, FiTrash2, FiSearch, FiAward } from "react-icons/fi";
 import toast from "react-hot-toast";
 
-import { getApiBaseUrl } from "@/lib/api-url";
-
-const API_BASE_URL = getApiBaseUrl();
+import { apiClient } from "@/lib/api-client";
 
 export default function AdminChallengesPage() {
   const [challenges, setChallenges] = useState<any[]>([]);
@@ -23,18 +21,13 @@ export default function AdminChallengesPage() {
   async function fetchChallenges() {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/admin/challenges?page=${page}&limit=20`, {
-        credentials: "include"
+      const data = await apiClient.get<any>(`/admin/challenges?page=${page}&limit=20`);
+      setChallenges(data.challenges || []);
+      setPagination({
+        page: data.page,
+        totalPages: data.totalPages,
+        total: data.total
       });
-      if (res.ok) {
-        const data = await res.json();
-        setChallenges(data.challenges || []);
-        setPagination({
-          page: data.page,
-          totalPages: data.totalPages,
-          total: data.total
-        });
-      }
     } catch (err) {
       console.error(err);
       toast.error("Failed to fetch challenges");
@@ -47,16 +40,9 @@ export default function AdminChallengesPage() {
     if (!confirm("Are you sure you want to permanently delete this challenge?")) return;
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/admin/challenges/${id}`, {
-        method: 'DELETE',
-        credentials: "include"
-      });
-      if (res.ok) {
-        toast.success("Challenge deleted successfully");
-        setChallenges(challenges.filter(c => c.id !== id));
-      } else {
-        toast.error("Delete failed");
-      }
+      await apiClient.delete<any>(`/admin/challenges/${id}`);
+      toast.success("Challenge deleted successfully");
+      setChallenges(challenges.filter(c => c.id !== id));
     } catch (err) {
       console.error(err);
       toast.error("Something went wrong");

@@ -2,13 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { authClient } from "@/lib/auth-client";
-import { getApiBaseUrl } from "@/lib/api-url";
+import { apiClient } from "@/lib/api-client";
 import RecipeCard from "@/components/recipes/RecipeCard";
 import RecipeSkeleton from "@/components/recipes/RecipeSkeleton";
 import { FiBookOpen } from "react-icons/fi";
 import Link from "next/link";
-
-const API_BASE = getApiBaseUrl();
 
 export default function MyRecipesDashboardPage() {
   const { data: session } = authClient.useSession();
@@ -22,12 +20,8 @@ export default function MyRecipesDashboardPage() {
         return;
       }
       try {
-        const response = await fetch(
-          `${API_BASE}/api/recipes?tab=my-recipes&userId=${session.user.id}`,
-          { credentials: "include" }
-        );
-        const data = await response.json();
-        if (response.ok && data.success && Array.isArray(data.recipes)) {
+        const data = await apiClient.get<any>(`/recipes?tab=my-recipes&userId=${session.user.id}`);
+        if (data.success && Array.isArray(data.recipes)) {
           setRecipes(data.recipes);
         }
       } catch (err) {

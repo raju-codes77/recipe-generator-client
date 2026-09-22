@@ -4,6 +4,7 @@ import { DEFAULT_INGREDIENTS } from "@/components/aitools/Pantry-to-Plate AI/con
 import { Recipe } from "@/components/aitools/Pantry-to-Plate AI/types";
 import { useState } from "react";
 import toast from "react-hot-toast";
+import { apiClient } from "@/lib/api-client";
 
 export function usePantryToPlate(leftoverMode: boolean = false, initialIngredients?: string[]) {
   const [ingredients, setIngredients] = useState<string[]>(initialIngredients && initialIngredients.length > 0 ? initialIngredients : DEFAULT_INGREDIENTS);
@@ -75,27 +76,15 @@ export function usePantryToPlate(leftoverMode: boolean = false, initialIngredien
     const toastId = toast.loading("AI is generating your custom recipe...");
 
     try {
-      const res = await fetch(`/api/pantry-to-plate/generate`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          ingredients,
-          cuisine,
-          mealType,
-          cookingTime,
-          diet,
-          servings,
-          selectedOptions,
-        }),
+      const recipe = await apiClient.post<Recipe>("/pantry-to-plate/generate", {
+        ingredients,
+        cuisine,
+        mealType,
+        cookingTime,
+        diet,
+        servings,
+        selectedOptions,
       });
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || "Failed to generate recipe");
-      }
-
-      const recipe: Recipe = await res.json();
       setGeneratedRecipe(recipe);
       toast.success("Recipe generated successfully!", { id: toastId });
 
@@ -118,19 +107,7 @@ export function usePantryToPlate(leftoverMode: boolean = false, initialIngredien
     const toastId = toast.loading(`Refining: ${refinement}...`);
 
     try {
-      const res = await fetch(`/api/pantry-to-plate/refine`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ id: generatedRecipe.id, refinement }),
-      });
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || "Failed to refine recipe");
-      }
-
-      const updated: Recipe = await res.json();
+      const updated = await apiClient.post<Recipe>("/pantry-to-plate/refine", { id: generatedRecipe.id, refinement });
       setGeneratedRecipe(updated);
       toast.success(`Recipe updated: ${refinement}`, { id: toastId });
     } catch (err: any) {

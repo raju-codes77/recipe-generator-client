@@ -5,9 +5,7 @@ import { FiTrash2, FiUserX, FiUserCheck, FiUsers, FiShield, FiArrowLeft, FiUserP
 import Link from "next/link";
 import toast from "react-hot-toast";
 
-import { getApiBaseUrl } from "@/lib/api-url";
-
-const API_BASE_URL = getApiBaseUrl();
+import { apiClient } from "@/lib/api-client";
 
 interface User {
   id: string;
@@ -30,10 +28,7 @@ export default function AdminUsersPage() {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/admin/users?page=${page}&limit=20`, {
-        credentials: "include"
-      });
-      const data = await res.json();
+      const data = await apiClient.get<any>(`/admin/users?page=${page}&limit=20`);
       setUsers(data.users || []);
       setPagination({
         page: data.page,
@@ -64,18 +59,9 @@ export default function AdminUsersPage() {
   const handleStatusChange = async (id: string, currentStatus: string) => {
     const newStatus = currentStatus === "ACTIVE" ? "BLOCKED" : "ACTIVE";
     try {
-      const res = await fetch(`${API_BASE_URL}/api/admin/users/${id}/status`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ status: newStatus }),
-      });
-      if (res.ok) {
-        toast.success(`User ${newStatus.toLowerCase()} successfully`);
-        setUsers(users.map(u => u.id === id ? { ...u, status: newStatus } : u));
-      } else {
-        toast.error("Action failed");
-      }
+      await apiClient.patch<any>(`/admin/users/${id}/status`, { status: newStatus });
+      toast.success(`User ${newStatus.toLowerCase()} successfully`);
+      setUsers(users.map(u => u.id === id ? { ...u, status: newStatus } : u));
     } catch (error) {
       console.error("Status update error:", error);
       toast.error("Something went wrong");
@@ -87,16 +73,9 @@ export default function AdminUsersPage() {
     if (!confirm("Are you sure you want to permanently delete this user?")) return;
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/admin/users/${id}`, {
-        method: "DELETE",
-        credentials: "include"
-      });
-      if (res.ok) {
-        toast.success("User deleted successfully");
-        setUsers(users.filter((user) => user.id !== id));
-      } else {
-        toast.error("Delete failed");
-      }
+      await apiClient.delete<any>(`/admin/users/${id}`);
+      toast.success("User deleted successfully");
+      setUsers(users.filter((user) => user.id !== id));
     } catch (error) {
       console.error("Delete error:", error);
       toast.error("Something went wrong");

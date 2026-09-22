@@ -150,6 +150,7 @@ export default function RegisterPage() {
               src="/brooke-lark-4J059aGa5s4-unsplash.jpg"
               alt="Food Background"
               fill
+              sizes="(max-width: 1024px) 100vw, 50vw"
               className="object-cover object-center"
               priority
             />
@@ -164,6 +165,7 @@ export default function RegisterPage() {
                   src="/logohere.png"
                   alt="FoodCanvas Logo"
                   fill
+                  sizes="36px"
                   className="object-contain"
                   priority
                 />

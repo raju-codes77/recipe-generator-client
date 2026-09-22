@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { X, Send, Sparkles, User, Bot, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
-import { getApiBaseUrl } from "@/lib/api-url";
+import { apiClient } from "@/lib/api-client";
 
 interface Message {
   role: "user" | "assistant";
@@ -91,22 +91,14 @@ export default function RecipeAIAssistant({ isOpen, onClose, recipe, userId, ini
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${getApiBaseUrl()}/api/recipe-ai/chat`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          recipeId: recipe.id,
-          message: text,
-          userId,
-          history: messages,
-        }),
-        credentials: "include",
+      const data = await apiClient.post<any>("/recipe-ai/chat", {
+        recipeId: recipe.id,
+        message: text,
+        userId,
+        history: messages,
       });
 
-      const data = await response.json();
-      if (response.ok && data.success) {
+      if (data.success) {
         setMessages((prev) => [...prev, { role: "assistant", content: data.message }]);
       } else {
         setMessages((prev) => [
@@ -181,7 +173,7 @@ export default function RecipeAIAssistant({ isOpen, onClose, recipe, userId, ini
               <div className="flex items-center gap-3">
                 {recipe.thumbnail ? (
                   <div className="relative w-10 h-10 rounded-full overflow-hidden shrink-0 border-2 border-orange-100 dark:border-orange-900/50">
-                    <Image src={recipe.thumbnail} alt={recipe.title} fill className="object-cover" />
+                    <Image src={recipe.thumbnail} alt={recipe.title} fill sizes="(max-width: 768px) 100vw, 33vw" className="object-cover" />
                   </div>
                 ) : (
                   <div className="bg-orange-100 dark:bg-orange-900/30 p-2.5 rounded-full shrink-0">

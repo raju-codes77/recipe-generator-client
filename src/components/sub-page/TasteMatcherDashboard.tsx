@@ -32,9 +32,7 @@ interface Recipe {
 }
 
 const RECIPES_PER_PAGE = 4;
-import { getApiBaseUrl } from "@/lib/api-url";
-
-const API_BASE_URL = getApiBaseUrl();
+import { apiClient } from "@/lib/api-client";
 
 export default function TasteMatcherDashboard() {
   const { data: session } = authClient.useSession();
@@ -74,10 +72,7 @@ export default function TasteMatcherDashboard() {
       }
       try {
         const userId = session.user.id;
-        const response = await fetch(`${API_BASE_URL}/api/taste-profile?userId=${userId}`, {
-          credentials: "include",
-        });
-        const data = await response.json();
+        const data = await apiClient.get<any>(`/taste-profile?userId=${userId}`);
         if (data.success && data.profile) {
           const p = data.profile;
           setSweetness(p.sweetness);
@@ -164,27 +159,21 @@ export default function TasteMatcherDashboard() {
       .map(([name]) => name.charAt(0).toUpperCase() + name.slice(1));
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/match-recipes`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ 
+      let data: any = null;
+      try {
+        data = await apiClient.post<any>("/match-recipes", {
           sweetness, sourness, saltiness, umami, spiciness, 
           likedIngredients: likes, 
           dislikedIngredients: dislikes, 
           preferredCuisines,
           userId: session.user.id
-        }),
-        signal: abortControllerRef.current?.signal,
-      });
-
-      let data: any = null;
-      try {
-        data = await response.json();
-      } catch {}
+        }, { signal: abortControllerRef.current?.signal });
+      } catch (e: any) {
+        data = e.data || {};
+      }
 
       if (reqId !== requestRef.current) return;
-      if (response.ok && data?.success && Array.isArray(data?.recipes)) {
+      if (data?.success && Array.isArray(data?.recipes)) {
         setRecipes(data.recipes);
         setCurrentPage(1);
 
@@ -192,7 +181,7 @@ export default function TasteMatcherDashboard() {
           document.getElementById("recipe-grid-top")?.scrollIntoView({ behavior: "smooth", block: "start" });
         }, 100);
       } else {
-        setErrorMsg(data?.error || `Request failed with status ${response.status}`);
+        setErrorMsg(data?.error || "Request failed");
       }
     } catch (error: any) {
       clearTimeout(timeoutId);

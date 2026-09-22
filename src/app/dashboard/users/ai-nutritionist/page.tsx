@@ -12,7 +12,7 @@ interface Message {
   text: string;
 }
 
-import { getApiBaseUrl } from '@/lib/api-url';
+import { apiClient } from "@/lib/api-client";
 
 export default function AiNutritionistChat() {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -38,19 +38,8 @@ export default function AiNutritionistChat() {
     setIsLoading(true);
 
     try {
-      const API_URL = getApiBaseUrl();
-      const response = await fetch(`${API_URL}/api/ai-nutritionist/chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userMessage }),
-        credentials: "include",
-      });
+      const data = await apiClient.post<any>(`/ai-nutritionist/chat`, { message: userMessage });
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch response');
-      }
-
-      const data = await response.json();
       if (data.success) {
         setMessages(prev => [...prev, { role: 'ai', text: data.reply }]);
       } else {

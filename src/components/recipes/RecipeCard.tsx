@@ -16,9 +16,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { authClient } from "@/lib/auth-client";
 import toast from "react-hot-toast";
-import { getApiBaseUrl } from "@/lib/api-url";
-
-const API_BASE = getApiBaseUrl();
+import { apiClient } from "@/lib/api-client";
 
 interface Recipe {
   id: string;
@@ -66,26 +64,7 @@ export default function RecipeCard({
 
     const checkFavorite = async () => {
       try {
-        const response = await fetch(
-          `${API_BASE}/api/favorites/check?userId=${session.user.id}&recipeId=${recipe.id}`,
-          {
-            credentials: "include",
-          }
-        );
-
-        const contentType = response.headers.get("content-type");
-        let data;
-        if (contentType && contentType.includes("application/json")) {
-          data = await response.json();
-        } else {
-          throw new Error("Received non-JSON response from server");
-        }
-
-        if (!response.ok) {
-          throw new Error(
-            data.message || "Failed to check favorite"
-          );
-        }
+        const data = await apiClient.get<any>(`/favorites/check?userId=${session.user.id}&recipeId=${recipe.id}`);
 
         setIsLiked(data.isFavorite);
       } catch (error) {
@@ -111,34 +90,12 @@ export default function RecipeCard({
 
     try {
       if (isLiked) {
-        const response = await fetch(
-          `${API_BASE}/api/favorites`,
-          {
-            method: "DELETE",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            credentials: "include",
-            body: JSON.stringify({
-              userId: session.user.id,
-              recipeId: recipe.id,
-            }),
+        const data = await apiClient.delete<any>("/favorites", {
+          data: {
+            userId: session.user.id,
+            recipeId: recipe.id,
           }
-        );
-
-        const contentType = response.headers.get("content-type");
-        let data;
-        if (contentType && contentType.includes("application/json")) {
-          data = await response.json();
-        } else {
-          throw new Error("Received non-JSON response from server");
-        }
-
-        if (!response.ok) {
-          throw new Error(
-            data.message || "Failed to remove favorite"
-          );
-        }
+        });
 
         setIsLiked(false);
         toast.success("Removed from favorites");
@@ -149,34 +106,10 @@ export default function RecipeCard({
         
         window.dispatchEvent(new Event("recipeUpdated"));
       } else {
-        const response = await fetch(
-          `${API_BASE}/api/favorites`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            credentials: "include",
-            body: JSON.stringify({
-              userId: session.user.id,
-              recipeId: recipe.id,
-            }),
-          }
-        );
-
-        const contentType = response.headers.get("content-type");
-        let data;
-        if (contentType && contentType.includes("application/json")) {
-          data = await response.json();
-        } else {
-          throw new Error("Received non-JSON response from server");
-        }
-
-        if (!response.ok) {
-          throw new Error(
-            data.message || "Failed to add favorite"
-          );
-        }
+        const data = await apiClient.post<any>("/favorites", {
+          userId: session.user.id,
+          recipeId: recipe.id,
+        });
 
         setIsLiked(true);
         toast.success("Added to favorites");
@@ -195,10 +128,7 @@ export default function RecipeCard({
     if (!session?.user?.id) return;
     setLoadingCollections(true);
     try {
-      const res = await fetch(`${API_BASE}/api/collections?userId=${session.user.id}`, {
-        credentials: "include",
-      });
-      const data = await res.json();
+      const data = await apiClient.get<any>(`/collections?userId=${session.user.id}`);
       if (data.success) {
         setCollections(data.collections);
       } else {
@@ -230,13 +160,10 @@ export default function RecipeCard({
   // SAVE TO SPECIFIC COLLECTION WITH TOAST (credentials: "include" যুক্ত করা হয়েছে)
   const handleAddToCollection = async (collectionId: string) => {
     try {
-      const res = await fetch(`${API_BASE}/api/collections/add-recipe`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ collectionId, recipeId: recipe.id }),
+      const data = await apiClient.post<any>("/collections/add-recipe", {
+        collectionId, 
+        recipeId: recipe.id 
       });
-      const data = await res.json();
       
       if (data.success) {
         toast.success("Recipe added to collection successfully!");
@@ -263,18 +190,12 @@ export default function RecipeCard({
 
     setIsSubmittingNew(true);
     try {
-      const res = await fetch(`${API_BASE}/api/collections`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          userId: session.user.id,
-          name: newCollectionName.trim(),
-        }),
+      const data = await apiClient.post<any>("/collections", {
+        userId: session.user.id,
+        name: newCollectionName.trim(),
       });
-      const data = await res.json();
 
-      if (res.ok && data.success) {
+      if (data.success) {
         toast.success("Collection created successfully!");
         setNewCollectionName("");
         setIsCreatingNew(false);

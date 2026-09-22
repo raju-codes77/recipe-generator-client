@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Star, Users } from "lucide-react";
-import { getApiBaseUrl } from "@/lib/api-url";
+import { apiClient } from "@/lib/api-client";
 
 interface RecipeItem {
   id: string;
@@ -133,39 +133,26 @@ const DetailsSidebar = ({ recipeId, recipeCategory, recipeImage, recipeUser }: D
     const fetchAuthorStats = async () => {
       if (!authorId) return;
       try {
-        const API_URL = getApiBaseUrl();
-        
-        // Fetch recipes, collections, and favorites concurrently to get accurate dynamic counts
-        const fetchOpts = { credentials: "include" as const };
         const [recipesRes, collectionsRes, favoritesRes] = await Promise.all([
-          fetch(`${API_URL}/api/recipes?tab=my-recipes&userId=${authorId}`, fetchOpts).catch(() => null),
-          fetch(`${API_URL}/api/collections?userId=${authorId}`, fetchOpts).catch(() => null),
-          fetch(`${API_URL}/api/recipes?tab=favorites&userId=${authorId}`, fetchOpts).catch(() => null)
+          apiClient.get<any>(`/recipes?tab=my-recipes&userId=${authorId}`).catch(() => null),
+          apiClient.get<any>(`/collections?userId=${authorId}`).catch(() => null),
+          apiClient.get<any>(`/recipes?tab=favorites&userId=${authorId}`).catch(() => null)
         ]);
 
         let recipesCount = 0;
         let collectionsCount = 0;
         let favoritesCount = 0;
 
-        if (recipesRes && recipesRes.ok) {
-          const data = await recipesRes.json();
-          if (data.success) {
-            recipesCount = data.count !== undefined ? data.count : (data.recipes?.length || 0);
-          }
+        if (recipesRes && recipesRes.success) {
+          recipesCount = recipesRes.count !== undefined ? recipesRes.count : (recipesRes.recipes?.length || 0);
         }
 
-        if (collectionsRes && collectionsRes.ok) {
-          const data = await collectionsRes.json();
-          if (data.success) {
-            collectionsCount = data.collections?.length || 0;
-          }
+        if (collectionsRes && collectionsRes.success) {
+          collectionsCount = collectionsRes.collections?.length || 0;
         }
 
-        if (favoritesRes && favoritesRes.ok) {
-          const data = await favoritesRes.json();
-          if (data.success) {
-            favoritesCount = data.count !== undefined ? data.count : (data.recipes?.length || 0);
-          }
+        if (favoritesRes && favoritesRes.success) {
+          favoritesCount = favoritesRes.count !== undefined ? favoritesRes.count : (favoritesRes.recipes?.length || 0);
         }
 
         setAuthorStats({
@@ -186,19 +173,10 @@ const DetailsSidebar = ({ recipeId, recipeCategory, recipeImage, recipeUser }: D
     const fetchRelatedRecipes = async () => {
       try {
         setLoading(true);
-        const API_URL = getApiBaseUrl();
-
         const categoryQuery = recipeCategory ? `category=${encodeURIComponent(recipeCategory)}` : "";
         const excludeQuery = recipeId ? `excludeId=${recipeId}` : "";
         const queryParams = [categoryQuery, excludeQuery, "limit=4"].filter(Boolean).join("&");
-
-        const res = await fetch(`${API_URL}/api/recipes?${queryParams}`, { credentials: "include" });
-        const contentType = res.headers.get("content-type");
-        if (!contentType || !contentType.includes("application/json")) {
-          throw new Error("API did not return JSON. Check if backend server is running.");
-        }
-
-        const data = await res.json();
+        const data = await apiClient.get<any>(`/recipes?${queryParams}`);
         if (data.success) {
           setRelatedRecipes(data.recipes);
         }
