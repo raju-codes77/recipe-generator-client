@@ -2,9 +2,11 @@ import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import { Bell, ChevronLeft, ChevronRight, ChevronUp, Download, Flame, Grid3X3, Heart, MessageCircle, MoreHorizontal, Pause, Play, Send, Trash2, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { NotificationItem, StoryItem, StoryViewer } from './types';
+import { StoryItem, StoryViewer } from './types';
 import { CommunityAvatar } from './CommunityAvatar';
 import { CommunityConfirmModal } from './CommunityConfirmModal';
+import toast from "react-hot-toast";
+import { useNotifications, type Notification } from "@/components/notifications/NotificationContext";
 
 interface StoryViewerModalProps {
   story: StoryItem | null;
@@ -15,13 +17,12 @@ interface StoryViewerModalProps {
   storyCount?: number;
   storyIndex?: number;
   isOwnStory?: boolean;
-  onSendMessage?: (recipientId: string, text: string) => Promise<void>;
+  onSendMessage?: (recipientId: string, text: string, storyId: string) => Promise<void>;
   onDeleteStory?: (storyId: string) => Promise<void>;
   onOpenMessages?: () => void;
   dashboardHref?: string;
   profileHref?: string;
   profileImage?: string | null;
-  notifications?: NotificationItem[];
   onRecordView?: (storyId: string) => Promise<void>;
   onLoadViewers?: (storyId: string) => Promise<StoryViewer[]>;
   onReactToStory?: (storyId: string) => Promise<void>;
@@ -44,12 +45,12 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
   dashboardHref = "/dashboard/users",
   profileHref = "/community",
   profileImage,
-  notifications = [],
   onRecordView,
   onLoadViewers,
   onReactToStory,
 }) => {
   const router = useRouter();
+  const { notifications, markAsRead } = useNotifications();
   const [progress, setProgress] = useState(0);
   const [replyText, setReplyText] = useState('');
   const [liked, setLiked] = useState(false);
@@ -145,7 +146,13 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
 
   if (!isOpen || !story) return null;
 
-  const unreadNotifications = notifications.filter((notification) => !notification.read);
+  const unreadNotifications = notifications.filter((notification) => !notification.isRead);
+
+  const handleNotificationClick = (notification: Notification) => {
+    if (!notification.isRead) void markAsRead(notification.id);
+    setIsNotificationsOpen(false);
+    if (notification.actionUrl) router.push(notification.actionUrl);
+  };
 
   const navigateFromStory = (href: string) => {
     setIsNotificationsOpen(false);
@@ -158,8 +165,9 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
     setIsSending(true);
     setSendError(null);
     try {
-      await onSendMessage(story.author.id, message);
+      await onSendMessage(story.author.id, message, story.id);
       setReplyText('');
+      toast.success("Reply sent");
     } catch (error) {
       setSendError(error instanceof Error ? error.message : 'Unable to send this message.');
     } finally {
@@ -301,7 +309,7 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
               <div className="absolute right-0 top-[calc(100%+0.75rem)] w-[min(320px,calc(100vw-2.5rem))] overflow-hidden rounded-2xl border border-neutral-200 bg-white text-left shadow-2xl dark:border-white/10 dark:bg-[#171C1A]">
                 <div className="border-b border-neutral-200 px-4 py-3 dark:border-white/10"><p className="text-sm font-black text-neutral-900 dark:text-white">Notifications</p></div>
                 <div className="story-notifications-scrollbar max-h-80 space-y-3 overflow-y-auto p-3">
-                  {notifications.length === 0 ? <p className="px-3 py-5 text-center text-xs text-neutral-400">No notifications yet.</p> : notifications.slice(0, 8).map((notification) => <div key={notification.id} className={`rounded-xl px-4 py-3 text-xs shadow-sm ${notification.read ? "bg-neutral-50 text-neutral-500 dark:bg-white/[0.03] dark:text-neutral-400" : "bg-[#EEF5EC] text-neutral-900 dark:bg-white/8 dark:text-white"}`}><p className="font-semibold">{notification.user.name}</p><p className="mt-1 leading-5">{notification.text}</p><p className="mt-1.5 text-[10px] text-neutral-500">{notification.timeAgo}</p></div>)}
+                  {notifications.length === 0 ? <p className="px-3 py-5 text-center text-xs text-neutral-400">No notifications yet.</p> : notifications.slice(0, 8).map((notification) => <button type="button" key={notification.id} onClick={() => handleNotificationClick(notification)} className={`block w-full rounded-xl px-4 py-3 text-left text-xs shadow-sm ${notification.isRead ? "bg-neutral-50 text-neutral-500 dark:bg-white/[0.03] dark:text-neutral-400" : "bg-[#EEF5EC] text-neutral-900 dark:bg-white/8 dark:text-white"}`}><p className="font-semibold">{notification.actor?.name || notification.title}</p><p className="mt-1 leading-5">{notification.message}</p><p className="mt-1.5 text-[10px] text-neutral-500">{new Date(notification.createdAt).toLocaleString()}</p></button>)}
                 </div>
               </div>
             )}

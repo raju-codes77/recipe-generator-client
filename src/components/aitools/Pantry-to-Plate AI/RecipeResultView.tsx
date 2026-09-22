@@ -114,6 +114,7 @@ export default function RecipeResultView({ recipe, onBack, onRefine, refiningOpt
   const router = useRouter();
   const [imgSrc, setImgSrc] = useState<string>(() => sanitizeImageUrl(recipe?.image));
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [isAddingMissing, setIsAddingMissing] = useState<boolean>(false);
 
   const availableIngredients: string[] = [];
@@ -329,10 +330,33 @@ export default function RecipeResultView({ recipe, onBack, onRefine, refiningOpt
             </button>
             <div className="grid grid-cols-2 gap-3">
               <button
-                onClick={() => toast.success("Recipe saved!")}
+                disabled={isSaving}
+                onClick={async () => {
+                  if (!recipe?.id) {
+                    toast.error("Recipe ID is missing");
+                    return;
+                  }
+
+                  setIsSaving(true);
+                  try {
+                    const res = await fetch("/api/pantry-to-plate/save", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ id: recipe.id }),
+                      credentials: "include",
+                    });
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.message || "Failed to save recipe");
+                    toast.success(data.message || "Recipe saved to your profile");
+                  } catch (error) {
+                    toast.error(error instanceof Error ? error.message : "Failed to save recipe");
+                  } finally {
+                    setIsSaving(false);
+                  }
+                }}
                 className="w-full py-3 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm flex items-center justify-center gap-2 transition cursor-pointer"
               >
-                <Bookmark className="w-4 h-4" /> Save Recipe
+                <Bookmark className="w-4 h-4" /> {isSaving ? "Saving..." : "Save Recipe"}
               </button>
               <button
                 onClick={() => toast.success("Publish link copied!")}

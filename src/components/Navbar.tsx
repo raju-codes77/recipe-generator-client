@@ -13,7 +13,7 @@ import { authClient } from "@/lib/auth-client";
 
 import toast from "react-hot-toast";
 import { Fredoka } from "next/font/google";
-import { NotificationProvider, useNotifications } from "./notifications/NotificationContext";
+import { useNotifications } from "./notifications/NotificationContext";
 import NotificationPanel from "./notifications/NotificationPanel";
 
 const fredoka = Fredoka({ 
@@ -548,9 +548,5 @@ function NavbarContent() {
 }
 
 export default function Navbar() {
-  return (
-    <NotificationProvider>
-      <NavbarContent />
-    </NotificationProvider>
-  );
+  return <NavbarContent />;
 }

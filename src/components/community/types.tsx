@@ -79,6 +79,7 @@ export interface Review {
 export interface Comment {
   id: string;
   userId: string;
+  parentId?: string | null;
   userName: string;
   userAvatar: string;
   content: string;
@@ -140,6 +141,7 @@ export interface StoryViewer {
 export interface PublicCommunityProfile {
   user: Author;
   posts: Post[];
+  pinnedPost?: Post | null;
   stories: StoryItem[];
   followingCount: number;
   postsTotal?: number;
@@ -180,5 +182,6 @@ export interface DirectMessageUser {
   online: boolean;
   lastMessage: string;
   lastMessageTime: string;
+  lastMessageAt?: string | null;
   unreadCount?: number;
 }

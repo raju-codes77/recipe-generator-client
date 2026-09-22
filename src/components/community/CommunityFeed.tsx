@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 import { PlusCircle, RefreshCw, Check, Utensils, Sparkles, Search, X, ChevronDown } from "lucide-react";
-import { Post, Review, StoryItem, RecipeCollection, NotificationItem, Author } from "./types";
+import { Post, Review, StoryItem, RecipeCollection, Author } from "./types";
 import { fetchRandomMealDbRecipe } from "./mealDbService";
 
 import { StoriesBar } from "./StoriesBar";
@@ -71,6 +71,7 @@ const getFilterMessage = (messages: Record<CommunityFilter, string>, filter: str
   messages[filter as CommunityFilter] ?? messages.all;
 
 interface CommunityCache {
+  userId: string | null;
   posts: Post[];
   trendingPosts: Post[];
   stories: StoryItem[];
@@ -78,12 +79,11 @@ interface CommunityCache {
 }
 
 interface CommunitySidebarCache {
-  userId?: string;
+  userId: string | null;
   trendingPosts: Post[];
   stories: StoryItem[];
   chefs: Author[];
   collections: RecipeCollection[];
-  notifications: NotificationItem[];
   feedCounts: { savedPostsCount: number; likedPostsCount: number };
   currentUserRecipeCount: number | null;
   currentUserFollowersCount: number | null;
@@ -105,28 +105,57 @@ export const CommunityFeed: React.FC = () => {
     setIsHydrated(true);
   }, []);
   const isAuthenticated = isHydrated && Boolean(session?.user);
+  const viewerId = session?.user?.id ?? null;
+  const cachedCommunity = communityCache?.userId === viewerId ? communityCache : null;
+  const cachedSidebar = communitySidebarCache?.userId === viewerId ? communitySidebarCache : null;
 
   // Community data state
-  const [posts, setPosts] = useState<Post[]>(() => communityCache?.posts ?? []);
-  const [trendingPosts, setTrendingPosts] = useState<Post[]>(() => communitySidebarCache?.trendingPosts ?? communityCache?.trendingPosts ?? []);
-  const [stories, setStories] = useState<StoryItem[]>(() => communitySidebarCache?.stories ?? communityCache?.stories ?? []);
-  const [collections, setCollections] = useState<RecipeCollection[]>(() => communitySidebarCache?.collections ?? []);
-  const [feedCounts, setFeedCounts] = useState(() => communitySidebarCache?.feedCounts ?? { savedPostsCount: 0, likedPostsCount: 0 });
-  const [currentUserRecipeCount, setCurrentUserRecipeCount] = useState<number | null>(() => communitySidebarCache?.currentUserRecipeCount ?? null);
-  const [currentUserFollowersCount, setCurrentUserFollowersCount] = useState<number | null>(() => communitySidebarCache?.currentUserFollowersCount ?? null);
-  const [chefs, setChefs] = useState<Author[]>(() => communitySidebarCache?.chefs ?? getCommunityChefs(communityCache?.posts ?? []));
-  const [notifications, setNotifications] = useState<NotificationItem[]>(() => communitySidebarCache?.notifications ?? []);
+  const [posts, setPosts] = useState<Post[]>(() => cachedCommunity?.posts ?? []);
+  const [trendingPosts, setTrendingPosts] = useState<Post[]>(() => cachedSidebar?.trendingPosts ?? cachedCommunity?.trendingPosts ?? []);
+  const [stories, setStories] = useState<StoryItem[]>(() => cachedSidebar?.stories ?? cachedCommunity?.stories ?? []);
+  const [collections, setCollections] = useState<RecipeCollection[]>(() => cachedSidebar?.collections ?? []);
+  const [feedCounts, setFeedCounts] = useState(() => cachedSidebar?.feedCounts ?? { savedPostsCount: 0, likedPostsCount: 0 });
+  const [currentUserRecipeCount, setCurrentUserRecipeCount] = useState<number | null>(() => cachedSidebar?.currentUserRecipeCount ?? null);
+  const [currentUserFollowersCount, setCurrentUserFollowersCount] = useState<number | null>(() => cachedSidebar?.currentUserFollowersCount ?? null);
+  const [chefs, setChefs] = useState<Author[]>(() => cachedSidebar?.chefs ?? getCommunityChefs(cachedCommunity?.posts ?? []));
   const [connectionsOpen, setConnectionsOpen] = useState(false);
   const [connectionUsers, setConnectionUsers] = useState<Author[]>([]);
   const [isLoadingConnections, setIsLoadingConnections] = useState(false);
-  const [isInitialLoading, setIsInitialLoading] = useState(() => !communityCache);
+  const [isInitialLoading, setIsInitialLoading] = useState(() => !cachedCommunity || cachedCommunity.posts.length === 0);
   const [isLoadingFilter, setIsLoadingFilter] = useState(false);
-  const [isSidebarDataReady, setIsSidebarDataReady] = useState(() => Boolean(communitySidebarCache));
+  const [isSidebarDataReady, setIsSidebarDataReady] = useState(() => Boolean(cachedSidebar));
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [hasMoreServerPosts, setHasMoreServerPosts] = useState(() => communityCache?.hasMorePosts ?? true);
+  const [hasMoreServerPosts, setHasMoreServerPosts] = useState(() => cachedCommunity?.hasMorePosts ?? true);
   const [isLoadingMorePosts, setIsLoadingMorePosts] = useState(false);
   const [pullDistance, setPullDistance] = useState(0);
   const [isPullRefreshing, setIsPullRefreshing] = useState(false);
+  const previousViewerIdRef = useRef<string | null>(viewerId);
+  const feedRequestIdRef = useRef(0);
+
+  // Never keep one viewer's feed or sidebar state visible for another viewer.
+  useEffect(() => {
+    if (previousViewerIdRef.current === viewerId) return;
+    previousViewerIdRef.current = viewerId;
+
+    if (communityCache?.userId !== viewerId) {
+      communityCache = null;
+      setPosts([]);
+      setHasMoreServerPosts(true);
+      setIsInitialLoading(true);
+    }
+
+    if (communitySidebarCache?.userId !== viewerId) {
+      communitySidebarCache = null;
+      setTrendingPosts([]);
+      setStories([]);
+      setChefs([]);
+      setCollections([]);
+      setFeedCounts({ savedPostsCount: 0, likedPostsCount: 0 });
+      setCurrentUserRecipeCount(null);
+      setCurrentUserFollowersCount(null);
+      setIsSidebarDataReady(false);
+    }
+  }, [viewerId]);
 
   // Navigation & Filtering
   const [activeFilter, setActiveFilter] = useState<string>("all");
@@ -236,6 +265,7 @@ export const CommunityFeed: React.FC = () => {
     const groups = new Map<string, StoryItem[]>();
 
     stories.forEach((story) => {
+      if (!story?.author?.id) return;
       const authorStories = groups.get(story.author.id) ?? [];
       authorStories.push(story);
       groups.set(story.author.id, authorStories);
@@ -320,6 +350,7 @@ export const CommunityFeed: React.FC = () => {
     : null;
 
   const loadFeed = useCallback(async () => {
+    const requestId = ++feedRequestIdRef.current;
     setIsLoadingFilter(true);
     setLoadError(null);
     try {
@@ -328,11 +359,13 @@ export const CommunityFeed: React.FC = () => {
         skip: 0,
         filter: activeFilter as CommunityFilter,
       });
+      if (requestId !== feedRequestIdRef.current || previousViewerIdRef.current !== viewerId) return;
       setPosts(loadedPosts);
       const hasMorePosts = isAuthenticated && loadedPosts.length === API_POSTS_PER_PAGE;
       setHasMoreServerPosts(hasMorePosts);
       setVisiblePostCount(POSTS_PER_PAGE);
       communityCache = {
+        userId: viewerId,
         posts: loadedPosts,
         trendingPosts: communityCache?.trendingPosts ?? [],
         stories: communityCache?.stories ?? [],
@@ -347,24 +380,20 @@ export const CommunityFeed: React.FC = () => {
       }
       if (session?.user && activeFilter === "all") {
         try {
-          const [loadedCollections, loadedNotifications, loadedFeedCounts] = await Promise.all([
+          const [loadedCollections, loadedFeedCounts] = await Promise.all([
             communityApi.listCollections(session.user.id),
-            communityApi.listNotifications(),
             communityApi.getFeedCounts(session.user.id),
           ]);
           setCollections(loadedCollections);
-          setNotifications(loadedNotifications);
           setFeedCounts(loadedFeedCounts);
         } catch {
           // These require a valid authenticated session. If a cross-origin
           // cookie is unavailable, keep the public feed usable instead of
           // replacing it with a Community-wide error.
           setCollections([]);
-          setNotifications([]);
         }
       } else {
         setCollections([]);
-        setNotifications([]);
         if (!session?.user) {
           setCurrentUserRecipeCount(0);
           setCurrentUserFollowersCount(0);
@@ -372,21 +401,23 @@ export const CommunityFeed: React.FC = () => {
         }
       }
     } catch (error) {
+      if (requestId !== feedRequestIdRef.current) return;
       setLoadError(error instanceof Error ? error.message : "Unable to load the Community feed");
     } finally {
-      setIsInitialLoading(false);
-      setIsLoadingFilter(false);
+      if (requestId === feedRequestIdRef.current) {
+        setIsInitialLoading(false);
+        setIsLoadingFilter(false);
+      }
     }
-  }, [activeFilter, isAuthenticated]);
+  }, [activeFilter, isAuthenticated, viewerId]);
 
   const loadSidebarData = useCallback(async () => {
-    const userId = session?.user?.id;
+    const userId = viewerId;
     if (communitySidebarCache && communitySidebarCache.userId === userId) {
       setTrendingPosts(communitySidebarCache.trendingPosts);
       setStories(communitySidebarCache.stories);
       setChefs(communitySidebarCache.chefs);
       setCollections(communitySidebarCache.collections);
-      setNotifications(communitySidebarCache.notifications);
       setFeedCounts(communitySidebarCache.feedCounts);
       setCurrentUserRecipeCount(communitySidebarCache.currentUserRecipeCount);
       setCurrentUserFollowersCount(communitySidebarCache.currentUserFollowersCount);
@@ -401,18 +432,16 @@ export const CommunityFeed: React.FC = () => {
         isAuthenticated ? communityApi.listStories().catch(() => []) : Promise.resolve([]),
         userId ? communityApi.getPublicProfile(userId, { take: 1 }).catch(() => null) : Promise.resolve(null),
         isAuthenticated
-          ? communityApi.listSuggestedChefs().catch(() => getCommunityChefs(communityCache?.posts ?? [], userId))
-          : Promise.resolve(getCommunityChefs(communityCache?.posts ?? [], userId)),
+          ? communityApi.listSuggestedChefs().catch(() => getCommunityChefs(communityCache?.posts ?? [], userId ?? undefined))
+          : Promise.resolve(getCommunityChefs(communityCache?.posts ?? [], userId ?? undefined)),
       ]);
 
       let loadedCollections: RecipeCollection[] = [];
-      let loadedNotifications: NotificationItem[] = [];
       let loadedFeedCounts = { savedPostsCount: 0, likedPostsCount: 0 };
       if (userId) {
         try {
-          [loadedCollections, loadedNotifications, loadedFeedCounts] = await Promise.all([
+          [loadedCollections, loadedFeedCounts] = await Promise.all([
             communityApi.listCollections(userId),
-            communityApi.listNotifications(),
             communityApi.getFeedCounts(userId),
           ]);
         } catch {
@@ -426,24 +455,23 @@ export const CommunityFeed: React.FC = () => {
         stories: loadedStories,
         chefs: suggestedChefs,
         collections: loadedCollections,
-        notifications: loadedNotifications,
         feedCounts: loadedFeedCounts,
         currentUserRecipeCount: ownProfile?.user.recipesCount ?? (userId ? null : 0),
         currentUserFollowersCount: ownProfile?.user.followersCount ?? (userId ? null : 0),
       };
+      if (previousViewerIdRef.current !== viewerId) return;
       communitySidebarCache = nextSidebarCache;
       setTrendingPosts(nextSidebarCache.trendingPosts);
       setStories(nextSidebarCache.stories);
       setChefs(nextSidebarCache.chefs);
       setCollections(nextSidebarCache.collections);
-      setNotifications(nextSidebarCache.notifications);
       setFeedCounts(nextSidebarCache.feedCounts);
       setCurrentUserRecipeCount(nextSidebarCache.currentUserRecipeCount);
       setCurrentUserFollowersCount(nextSidebarCache.currentUserFollowersCount);
     } finally {
       setIsSidebarDataReady(true);
     }
-  }, [isAuthenticated, session?.user?.id]);
+  }, [isAuthenticated, viewerId]);
 
   useEffect(() => {
     void loadFeed();
@@ -457,7 +485,7 @@ export const CommunityFeed: React.FC = () => {
   // It is intentionally module-scoped: SPA navigation reuses it, while a full
   // browser refresh creates a new module and loads fresh sidebar data.
   useEffect(() => {
-    if (!communitySidebarCache || communitySidebarCache.userId !== session?.user?.id) return;
+    if (!communitySidebarCache || communitySidebarCache.userId !== viewerId) return;
 
     communitySidebarCache = {
       ...communitySidebarCache,
@@ -465,12 +493,11 @@ export const CommunityFeed: React.FC = () => {
       stories,
       chefs,
       collections,
-      notifications,
       feedCounts,
       currentUserRecipeCount,
       currentUserFollowersCount,
     };
-  }, [chefs, collections, currentUserFollowersCount, currentUserRecipeCount, feedCounts, notifications, session?.user?.id, stories, trendingPosts]);
+  }, [chefs, collections, currentUserFollowersCount, currentUserRecipeCount, feedCounts, viewerId, stories, trendingPosts]);
 
   const handleCommunityRefresh = useCallback(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
@@ -554,6 +581,7 @@ export const CommunityFeed: React.FC = () => {
         const existingIds = new Set(currentPosts.map((post) => post.id));
         const mergedPosts = [...currentPosts, ...nextPosts.filter((post) => !existingIds.has(post.id))];
         communityCache = {
+          userId: viewerId,
           posts: mergedPosts,
           trendingPosts: communityCache?.trendingPosts ?? trendingPosts,
           stories: communityCache?.stories ?? stories,
@@ -568,7 +596,7 @@ export const CommunityFeed: React.FC = () => {
     } finally {
       setIsLoadingMorePosts(false);
     }
-  }, [activeFilter, hasMoreServerPosts, isAuthenticated, isLoadingMorePosts, posts.length, showToast, stories, trendingPosts]);
+  }, [activeFilter, hasMoreServerPosts, isAuthenticated, isLoadingMorePosts, posts.length, showToast, stories, trendingPosts, viewerId]);
 
   const loadPostInteractions = useCallback(async (
     postId: string,
@@ -744,14 +772,14 @@ export const CommunityFeed: React.FC = () => {
   };
 
   // Handle Comments without reloading the entire feed.
-  const handleAddComment = useCallback(async (postId: string, content: string) => {
+  const handleAddComment = useCallback(async (postId: string, content: string, parentId?: string) => {
     const post = posts.find((item) => item.id === postId);
     if (!post) return;
 
     try {
-      await communityApi.addComment(postId, content, session?.user?.id!);
+      await communityApi.addComment(postId, content, session?.user?.id!, parentId);
       const interactions = await communityApi.getPostInteractions(postId, {
-        commentsTake: 8,
+        commentsTake: 4,
         commentsSkip: 0,
         reviewsTake: 0,
       });
@@ -760,11 +788,37 @@ export const CommunityFeed: React.FC = () => {
         comments: interactions.comments,
         commentsCount: currentPost.commentsCount + 1,
       }));
-      showToast("Comment posted!");
+      showToast(parentId ? "Reply posted!" : "Comment posted!");
     } catch (error) {
       showToast(error instanceof Error ? error.message : "Community action failed");
     }
-  }, [posts, showToast, updatePostInFeed]);
+  }, [loadPostInteractions, posts, session?.user?.id, showToast, updatePostInFeed]);
+
+  const handleUpdateComment = useCallback(async (postId: string, commentId: string, content: string) => {
+    try {
+      await communityApi.updateComment(commentId, content);
+      await loadPostInteractions(postId, { commentsTake: 4, commentsSkip: 0, reviewsTake: 0 });
+      showToast("Comment updated!");
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "Unable to update comment");
+      throw error;
+    }
+  }, [loadPostInteractions, showToast]);
+
+  const handleDeleteComment = useCallback(async (postId: string, commentId: string) => {
+    try {
+      const result = await communityApi.deleteComment(commentId);
+      await loadPostInteractions(postId, { commentsTake: 4, commentsSkip: 0, reviewsTake: 0 });
+      updatePostInFeed(postId, (currentPost) => ({
+        ...currentPost,
+        commentsCount: Math.max(0, currentPost.commentsCount - result.deletedCount),
+      }));
+      showToast("Comment deleted!");
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "Unable to delete comment");
+      throw error;
+    }
+  }, [loadPostInteractions, showToast, updatePostInFeed]);
 
   // Handle Reviews & Ratings
   const handleSubmitReview = (postId: string, review: Review) => {
@@ -952,6 +1006,10 @@ export const CommunityFeed: React.FC = () => {
         .community-surface :is(a[href], button:not(:disabled), [role="button"], label[for]) {
           cursor: pointer;
         }
+        @keyframes community-validation-dot {
+          0%, 100% { opacity: 0.2; }
+          35% { opacity: 1; }
+        }
       `}</style>
       {/* Toast Alert Banner */}
       <AnimatePresence>
@@ -963,7 +1021,22 @@ export const CommunityFeed: React.FC = () => {
             className={`fixed bottom-6 right-6 z-[100] flex items-center gap-2.5 rounded-2xl border px-5 py-3.5 text-xs font-bold text-white shadow-2xl ${/\b(rejected|not approved)\b/i.test(toastMessage) ? "border-red-500/90 bg-[#2a1515]/90" : "border-transparent bg-[#176B35]"}`}
           >
             <Check className={`h-4 w-4 ${/\b(rejected|not approved)\b/i.test(toastMessage) ? "text-red-300" : "text-[#B7E35F]"}`} />
-            <span>{toastMessage}</span>
+            {toastMessage === "Validating food image" ? (
+              <span className="inline-flex items-baseline" aria-label="Validating food image">
+                <span>Validating food image</span>
+                <span className="ml-0.5 inline-flex w-4" aria-hidden="true">
+                  {[0, 1, 2].map((dot) => (
+                    <span
+                      key={`validation-dot-${dot}`}
+                      className="opacity-20"
+                      style={{ animation: "community-validation-dot 1.2s infinite", animationDelay: `${dot * 0.2}s` }}
+                    >
+                      .
+                    </span>
+                  ))}
+                </span>
+              </span>
+            ) : <span>{toastMessage}</span>}
           </motion.div>
         )}
       </AnimatePresence>
@@ -1364,6 +1437,8 @@ export const CommunityFeed: React.FC = () => {
                     onDirectMessage={(authorId, p) => handleOpenDM(authorId, p)}
                     onToggleFollow={handleToggleFollow}
                     onAddComment={handleAddComment}
+                    onUpdateComment={handleUpdateComment}
+                    onDeleteComment={handleDeleteComment}
                     onLoadInteractions={loadPostInteractions}
                     onMadeIt={handleMadeIt}
                     currentUserId={currentUser?.id}
@@ -1486,7 +1561,7 @@ export const CommunityFeed: React.FC = () => {
         suggestedTags={suggestedCommunityTags}
         onPublishPost={async (newPost, imageFile) => {
           try {
-            if (imageFile) showToast("Validating food image...", 0);
+            if (imageFile) showToast("Validating food image", 0);
             const imageUrl = imageFile ? await communityApi.uploadImage(imageFile, "posts", session?.user?.id!) : newPost.imageUrl;
             const createdPost = await communityApi.createPost({ ...newPost, imageUrl }, session?.user?.id!);
             if (!createdPost) {
@@ -1496,6 +1571,7 @@ export const CommunityFeed: React.FC = () => {
             setPosts((currentPosts) => {
               const updatedPosts = [createdPost, ...currentPosts.filter((post) => post.id !== createdPost.id)];
               communityCache = {
+                userId: viewerId,
                 posts: updatedPosts,
                 trendingPosts: communityCache?.trendingPosts ?? trendingPosts,
                 stories: communityCache?.stories ?? stories,
@@ -1570,21 +1646,29 @@ export const CommunityFeed: React.FC = () => {
         dashboardHref={isAuthenticated ? "/dashboard/users" : "/registrationProcess/login"}
         profileHref={session?.user ? `/community/users/${encodeURIComponent(session.user.id)}` : "/registrationProcess/login"}
         profileImage={session?.user?.image}
-        notifications={notifications}
-        onSendMessage={async (recipientId, text) => {
-          await communityApi.sendMessage(recipientId, text, undefined, session?.user?.id!);
+        onSendMessage={async (recipientId, text, storyId) => {
+          await communityApi.sendMessage(recipientId, text, undefined, session?.user?.id!, storyId);
         }}
         onRecordView={(storyId) => communityApi.recordStoryView(storyId).then(() => undefined)}
         onLoadViewers={communityApi.listStoryViewers}
         onReactToStory={(storyId) => communityApi.reactToStory(storyId).then(() => undefined)}
         onOpenMessages={() => {
-          setDmRecipientId(undefined);
-          setDmAttachedPost(null);
-          setDmModalOpen(true);
+          router.push("/community/messages");
         }}
         onDeleteStory={async (storyId) => {
           await communityApi.deleteStory(storyId, session?.user?.id!);
-          await loadFeed();
+          setStories((currentStories) => {
+            const remainingStories = currentStories.filter((story) => story.id !== storyId);
+
+            if (communityCache) {
+              communityCache = { ...communityCache, stories: remainingStories };
+            }
+            if (communitySidebarCache) {
+              communitySidebarCache = { ...communitySidebarCache, stories: remainingStories };
+            }
+
+            return remainingStories;
+          });
           setViewingStory(null);
           showToast("Story deleted");
         }}
@@ -1598,6 +1682,10 @@ export const CommunityFeed: React.FC = () => {
         isSubmitting={isSharingPost}
         onClose={() => { if (!isSharingPost) setShareModalPost(null); }}
         onShareNow={confirmShareToProfile}
+        onSendDirectMessage={(post) => {
+          setShareModalPost(null);
+          handleOpenDM(post.author.id, post);
+        }}
       />
 
       <ConfirmUnsaveModal post={unsaveModalPost} onClose={() => setUnsaveModalPost(null)} onConfirm={handleConfirmUnsave} />
@@ -1608,14 +1696,43 @@ export const CommunityFeed: React.FC = () => {
         onClose={() => setStoryEditorFile(null)}
         onShare={async (editedFile, caption) => {
           try {
-            showToast("Validating food image...", 0);
+            showToast("Validating food image", 0);
             const imageUrl = await communityApi.uploadImage(editedFile, "stories", session?.user?.id!);
-            const createdStory = await communityApi.createStory(imageUrl, caption, session?.user?.id!);
+            const createdStoryResponse = await communityApi.createStory(imageUrl, caption, session?.user?.id!);
+            const createdStory = createdStoryResponse?.story;
             if (!createdStory) {
               showToast("Story Rejected: the uploaded image is not food-related.");
               return;
             }
-            await loadFeed();
+            const normalizedStory: StoryItem = {
+              ...createdStory,
+              author: createdStory.author ?? {
+                id: session?.user?.id ?? "",
+                name: session?.user?.name ?? "Community Cook",
+                username: session?.user?.email?.split("@")[0] ?? "cook",
+                avatar: session?.user?.image ?? "",
+                role: "user",
+                followersCount: 0,
+                recipesCount: 0,
+              },
+              timestamp: createdStory.timestamp || "Just now",
+            };
+            if (!normalizedStory.author.id) {
+              showToast("Story published, but it could not be displayed yet.");
+              return;
+            }
+            setStories((currentStories) => {
+              const updatedStories = [normalizedStory, ...currentStories.filter((story) => story.id !== normalizedStory.id)];
+
+              if (communityCache) {
+                communityCache = { ...communityCache, stories: updatedStories };
+              }
+              if (communitySidebarCache) {
+                communitySidebarCache = { ...communitySidebarCache, stories: updatedStories };
+              }
+
+              return updatedStories;
+            });
             showToast("Story published for 24 hours");
           } catch (error) {
             showToast(error instanceof Error ? error.message : "Unable to publish this story");

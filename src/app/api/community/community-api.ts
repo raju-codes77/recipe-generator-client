@@ -69,6 +69,9 @@ export interface CommunityMessage {
   recipientId: string;
   text: string;
   attachedPostId?: string | null;
+  attachedStoryId?: string | null;
+  attachedPost?: { id: string; imageUrl: string; caption: string } | null;
+  attachedStory?: { id: string; imageUrl: string; caption: string } | null;
   timestamp: string;
 }
 
@@ -156,11 +159,22 @@ export const communityApi = {
     return request<{ active: boolean }>(`/posts/${postId}/made-it`, { method: "POST", body: JSON.stringify({ userId }) });
   },
 
-  addComment(postId: string, content: string, userId: string) {
+  addComment(postId: string, content: string, userId: string, parentId?: string) {
     return request(`/posts/${postId}/comments`, {
       method: "POST",
-      body: JSON.stringify({ content, userId }),
+      body: JSON.stringify({ content, userId, parentId }),
     });
+  },
+
+  updateComment(commentId: string, content: string) {
+    return request(`/comments/${commentId}`, {
+      method: "PATCH",
+      body: JSON.stringify({ content }),
+    });
+  },
+
+  deleteComment(commentId: string) {
+    return request<{ deletedCount: number }>(`/comments/${commentId}`, { method: "DELETE" });
   },
 
   saveReview(postId: string, review: Review, userId: string) {
@@ -332,10 +346,24 @@ export const communityApi = {
     return request<CommunityMessagesPage>(`/messages/${userId}${query}`);
   },
 
-  sendMessage(recipientId: string, text: string, attachedPostId: string | undefined, userId: string) {
+  async getStory(storyId: string): Promise<StoryItem> {
+    const response = await request<{ story: StoryItem }>(`/stories/${encodeURIComponent(storyId)}`);
+    return response.story;
+  },
+
+  async getPost(postId: string): Promise<Post> {
+    const response = await request<{ post: Post }>(`/posts/${encodeURIComponent(postId)}`);
+    return response.post;
+  },
+
+  markMessagesRead(userId: string) {
+    return request<{ success: boolean }>(`/messages/${userId}/read`, { method: "POST" });
+  },
+
+  sendMessage(recipientId: string, text: string, attachedPostId: string | undefined, userId: string, attachedStoryId?: string) {
     return request(`/messages/${recipientId}`, {
       method: "POST",
-      body: JSON.stringify({ text, attachedPostId, userId }),
+      body: JSON.stringify({ text, attachedPostId, attachedStoryId, userId }),
     });
   },
 };

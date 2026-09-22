@@ -22,6 +22,7 @@ import ConditionalFooter from "@/components/ConditionalFooter";
 import { Toaster } from "react-hot-toast";
 import AIAssistantPopup from "@/components/AIAssistantPopup";
 import WellnessReminderScheduler from "@/components/aitools/WellnessReminderScheduler";
+import { NotificationProvider } from "@/components/notifications/NotificationContext";
 
 export default function RootLayout({
   children,
@@ -35,14 +36,16 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-slate-100 dark:bg-slate-950 transition-colors duration-300">
         <div className="">
-          <Navbar />
-          <AIAssistantPopup/>
-          <main className="flex-1">
-            {children}
-            <Toaster position="top-right" reverseOrder={false} />
-            <WellnessReminderScheduler />
-          </main>
-          <ConditionalFooter />
+          <NotificationProvider>
+            <Navbar />
+            <AIAssistantPopup/>
+            <main className="flex-1">
+              {children}
+              <Toaster position="top-right" reverseOrder={false} />
+              <WellnessReminderScheduler />
+            </main>
+            <ConditionalFooter />
+          </NotificationProvider>
         </div>
       </body>
     </html>

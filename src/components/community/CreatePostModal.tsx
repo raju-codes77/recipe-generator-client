@@ -84,6 +84,17 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
     setRemoteSuggestedTags([]);
   }, [initialMode, initialUseAI, isOpen]);
 
+  // The modal stays mounted while it is closed. Clear submission-specific
+  // state so a rejected image cannot be submitted again with the next post.
+  useEffect(() => {
+    if (isOpen) return;
+
+    setCaption("");
+    setCustomPhotoUrl("");
+    setImageFile(undefined);
+    setSelectedPhoto(PRESET_FOOD_PHOTOS[0]);
+  }, [isOpen]);
+
   const tagQuery = tagsInput.split(/[\s,]+/).pop()?.replace(/^#+/, "").toLowerCase() ?? "";
   useEffect(() => {
     if (!isOpen || tagQuery.length < 2) {

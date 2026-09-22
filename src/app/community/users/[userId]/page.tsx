@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
-import { ArrowLeft, Award, BookOpen, BookmarkMinus, CalendarDays, Camera, Check, Eye, Heart, LayoutDashboard, MapPin, MessageCircle, Pencil, UserPlus, X } from "lucide-react";
+import { ArrowLeft, Award, BookOpen, BookmarkMinus, CalendarDays, Camera, Check, Eye, Heart, LayoutDashboard, MapPin, MessageCircle, Pencil, Pin, UserPlus, X } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { communityApi } from "@/app/api/community/community-api";
 import { CommunityAvatar } from "@/components/community/CommunityAvatar";
@@ -245,10 +245,11 @@ export default function CommunityUserProfilePage() {
   }, [hasMorePosts, isLoadingMorePosts, profile?.posts.length]);
 
   useEffect(() => {
+    if (isSessionPending) return;
     hasLoadedProfileRef.current = false;
     const timer = window.setTimeout(() => void loadProfile(), 0);
     return () => window.clearTimeout(timer);
-  }, [loadProfile]);
+  }, [isSessionPending, loadProfile]);
 
   useEffect(() => {
     if (activeTab !== "Saved" || !profile || profile.user.id !== session?.user?.id) return;
@@ -593,7 +594,7 @@ export default function CommunityUserProfilePage() {
   const coverImage = localCoverImage || profile.user.coverImage;
   const recipePosts = profile.posts.filter((post) => post.recipe && !post.sharedFrom);
   const postsForTab = activeTab === "My Recipes" ? recipePosts : profile.posts;
-  const visiblePosts = [...postsForTab].sort((firstPost, secondPost) => Number(Boolean(secondPost.isPinned)) - Number(Boolean(firstPost.isPinned)));
+  const visiblePosts = postsForTab;
 
   return (
     <main onTouchStart={handlePullStart} onTouchMove={handlePullMove} onTouchEnd={handlePullEnd} onTouchCancel={handlePullEnd} className="min-h-screen bg-[#F1F5F0] px-0 pb-10 text-neutral-900 dark:bg-[#090B0A] dark:text-neutral-100 [&_a]:cursor-pointer [&_button]:cursor-pointer sm:px-6 sm:pt-5">
@@ -658,7 +659,10 @@ export default function CommunityUserProfilePage() {
                 {profile.user.id === session?.user?.id ? (
                   <button onClick={openEditProfile} className="inline-flex items-center gap-2 rounded-xl bg-[#2F8F46] px-4 py-2.5 text-xs font-bold text-white transition hover:bg-[#176B35]"><Pencil className="h-3.5 w-3.5" /> Edit profile</button>
                 ) : (
-                   <button type="button" disabled={isProfileRefreshing} aria-busy={isProfileRefreshing} onClick={() => void updateProfile(() => communityApi.toggleFollow(profile.user.id, session?.user?.id!))} className="inline-flex items-center gap-2 rounded-xl bg-[#2F8F46] px-4 py-2.5 text-xs font-bold text-white transition hover:bg-[#176B35] disabled:cursor-wait disabled:opacity-70"><UserPlus className="h-4 w-4" /> {profile.user.isFollowing ? "Following" : "Follow"}</button>
+                   <>
+                     <button type="button" disabled={isProfileRefreshing} aria-busy={isProfileRefreshing} onClick={() => void updateProfile(() => communityApi.toggleFollow(profile.user.id, session?.user?.id!))} className="inline-flex items-center gap-2 rounded-xl bg-[#2F8F46] px-4 py-2.5 text-xs font-bold text-white transition hover:bg-[#176B35] disabled:cursor-wait disabled:opacity-70"><UserPlus className="h-4 w-4" /> {profile.user.isFollowing ? "Following" : "Follow"}</button>
+                     <button type="button" onClick={() => handleOpenDM(profile.user.id)} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-bold text-neutral-700 transition hover:border-[#2F8F46] hover:text-[#2F8F46] dark:border-neutral-700 dark:text-neutral-200 dark:hover:border-[#B7E35F] dark:hover:text-[#B7E35F]"><MessageCircle className="h-4 w-4" /> Message</button>
+                   </>
                 )}
                 {isOwnProfile && (
                   <button onClick={() => router.push("/dashboard/users")} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-bold text-neutral-700 transition hover:border-[#2F8F46] hover:text-[#2F8F46] dark:border-neutral-700 dark:text-neutral-200"><LayoutDashboard className="h-4 w-4" /> Dashboard</button>
@@ -719,10 +723,12 @@ export default function CommunityUserProfilePage() {
 
           <div className="min-w-0 space-y-6">
             {isOwnProfile && <button type="button" onClick={() => setIsCreateRecipeOpen(true)} className="flex w-full items-center gap-3 rounded-3xl border border-[#2F8F46]/40 bg-[#EFF8E9] p-4 text-left transition hover:border-[#2F8F46] hover:bg-[#E4F5D8] dark:bg-[#13251A] dark:hover:bg-[#17351F]"><span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#2F8F46] text-xl font-bold text-white">+</span><span><strong className="block text-sm font-black text-[#176B35] dark:text-[#B7E35F]">Share a recipe</strong><span className="text-xs text-neutral-500 dark:text-neutral-400">Post a dish, recipe or cooking tip</span></span></button>}
-            {recipePosts[0] && <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white dark:border-neutral-800 dark:bg-[#121614]">
-              <div className="flex items-center justify-between px-5 py-4 sm:px-6"><div><p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#2F8F46]">Featured recipe</p><h2 className="mt-1 text-lg font-black">A recipe worth trying</h2></div><Award className="h-5 w-5 text-[#FF9F43]" /></div>
-              <div className="grid sm:grid-cols-[180px_minmax(0,1fr)]"><img src={recipePosts[0].imageUrl} alt={recipePosts[0].recipe?.title || 'Featured recipe'} className="h-44 w-full object-cover sm:h-full" /><div className="p-5"><h3 className="text-xl font-black">{recipePosts[0].recipe?.title || 'Community recipe'}</h3><p className="mt-2 line-clamp-2 text-sm leading-6 text-neutral-500 dark:text-neutral-400">{recipePosts[0].caption}</p><div className="mt-4 flex flex-wrap gap-2">{Array.from(new Set((recipePosts[0].tags ?? []).flatMap((tag) => parseCommunityTags(tag)))).slice(0, 3).map((tag) => <span key={tag} className="rounded-full bg-[#FFF1D9] px-2.5 py-1 text-[11px] font-bold text-[#B96A00]">{tag}</span>)}</div></div></div>
-            </div>}
+            <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white dark:border-neutral-800 dark:bg-[#121614]">
+              <div className="flex items-center justify-between px-5 py-4 sm:px-6"><div><p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#2F8F46]">Pinned post</p><h2 className="mt-1 text-lg font-black">Pinned by {profile.user.name}</h2></div><Pin className="h-5 w-5 text-[#FF9F43]" /></div>
+              {profile.pinnedPost ? <button type="button" onClick={() => profile.pinnedPost?.recipe ? setSavedPostDetails(profile.pinnedPost) : setSelectedTextPost(profile.pinnedPost!)} className="block w-full text-left transition hover:bg-neutral-50 dark:hover:bg-white/[0.03]">
+                <div className="grid sm:grid-cols-[180px_minmax(0,1fr)]">{profile.pinnedPost.imageUrl ? <img src={profile.pinnedPost.imageUrl} alt={profile.pinnedPost.recipe?.title || "Pinned post"} className="h-44 w-full object-cover sm:h-full" /> : <div className="flex h-44 items-center justify-center bg-[#1c241e] px-6 text-center text-sm font-semibold text-neutral-100 sm:h-full">{profile.pinnedPost.caption}</div>}<div className="p-5"><h3 className="text-xl font-black">{profile.pinnedPost.recipe?.title || "Community post"}</h3><p className="mt-2 line-clamp-2 text-sm leading-6 text-neutral-500 dark:text-neutral-400">{profile.pinnedPost.caption}</p><div className="mt-4 flex flex-wrap gap-2">{Array.from(new Set((profile.pinnedPost.tags ?? []).flatMap((tag) => parseCommunityTags(tag)))).slice(0, 3).map((tag) => <span key={tag} className="rounded-full bg-[#FFF1D9] px-2.5 py-1 text-[11px] font-bold text-[#B96A00]">{tag}</span>)}</div></div></div>
+              </button> : <div className="px-5 pb-6 text-sm text-neutral-500 dark:text-neutral-400 sm:px-6">No pinned post yet.</div>}
+            </div>
 
             <div className="rounded-3xl border border-slate-200 bg-white p-5 dark:border-neutral-800 dark:bg-[#121614] sm:p-6">
               <div className="mb-5"><p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#2F8F46]">{activeTab === "My Recipes" ? "Recipe shelf" : "Personal activity"}</p><h2 className="mt-1 text-xl font-black">{activeTab === "My Recipes" ? "My recipes" : "Recent posts"}</h2></div>
@@ -866,6 +872,10 @@ export default function CommunityUserProfilePage() {
         isSubmitting={isSharingPost}
         onClose={() => { if (!isSharingPost) setShareModalPost(null); }}
         onShareNow={confirmShareToProfile}
+        onSendDirectMessage={(post) => {
+          setShareModalPost(null);
+          handleOpenDM(post.author.id, post);
+        }}
       />
 
       <CommunityTextPromptModal
@@ -884,7 +894,7 @@ export default function CommunityUserProfilePage() {
 
       <CreatePostModal isOpen={isCreateRecipeOpen} onClose={() => setIsCreateRecipeOpen(false)} onPublishPost={async (newPost, imageFile) => {
         try {
-          if (imageFile) showToast("Validating food image...", 0);
+          if (imageFile) showToast("Validating food image", 0);
           const imageUrl = imageFile ? await communityApi.uploadImage(imageFile, "posts", session?.user?.id!) : newPost.imageUrl;
           const createdPost = await communityApi.createPost({ ...newPost, imageUrl }, session?.user?.id!);
           if (!createdPost) {
@@ -900,7 +910,7 @@ export default function CommunityUserProfilePage() {
 
       <StoryEditorModal file={storyEditorFile} isOpen={Boolean(storyEditorFile)} onClose={() => setStoryEditorFile(null)} onShare={async (editedFile, caption) => {
         try {
-          showToast("Validating food image...", 0);
+          showToast("Validating food image", 0);
           const imageUrl = await communityApi.uploadImage(editedFile, "stories", session?.user?.id!);
           const createdStory = await communityApi.createStory(imageUrl, caption, session?.user?.id!);
           if (!createdStory) {
@@ -923,7 +933,7 @@ export default function CommunityUserProfilePage() {
         profileImage={session?.user?.image}
         onOpenMessages={() => router.push("/community")}
         onClose={() => setViewingStory(null)}
-        onSendMessage={async (recipientId, text) => { await communityApi.sendMessage(recipientId, text, undefined, session?.user?.id!); }}
+        onSendMessage={async (recipientId, text, storyId) => { await communityApi.sendMessage(recipientId, text, undefined, session?.user?.id!, storyId); }}
         onNextStory={handleNextStory}
         onPreviousStory={handlePreviousStory}
         storyCount={storyGroup.length || 1}
@@ -937,9 +947,25 @@ export default function CommunityUserProfilePage() {
           await loadProfile();
         }}
       />
+      <style>{`@keyframes community-validation-dot { 0%, 100% { opacity: 0.2; } 35% { opacity: 1; } }`}</style>
       {toastMessage && (
         <div className={`fixed bottom-6 left-1/2 z-[100] -translate-x-1/2 rounded-xl border px-4 py-3 text-center text-sm font-semibold text-white shadow-2xl ${/\b(rejected|not approved)\b/i.test(toastMessage) ? "border-red-500/90 bg-[#2a1515]/90" : "border-[#2F8F46] bg-[#151916]/90"}`}>
-          {toastMessage}
+          {toastMessage === "Validating food image" ? (
+            <span className="inline-flex items-baseline" aria-label="Validating food image">
+              <span>Validating food image</span>
+              <span className="ml-0.5 inline-flex w-4" aria-hidden="true">
+                {[0, 1, 2].map((dot) => (
+                  <span
+                    key={`profile-validation-dot-${dot}`}
+                    className="opacity-20"
+                    style={{ animation: "community-validation-dot 1.2s infinite", animationDelay: `${dot * 0.2}s` }}
+                  >
+                    .
+                  </span>
+                ))}
+              </span>
+            </span>
+          ) : toastMessage}
         </div>
       )}
     </main>

@@ -133,6 +133,7 @@ export const CommunityPostDetailsModal: React.FC<CommunityPostDetailsModalProps>
                   <CommunityAvatar src={post.author.avatar} alt={post.author.name} className="h-12 w-12 rounded-full object-cover ring-2 ring-[#2F8F46]/50" />
                   <div><h1 className="text-lg font-black">{post.author.name}</h1><p className="text-xs text-neutral-400">{post.createdAt}</p></div>
                 </div>
+                {post.imageUrl && <img src={post.imageUrl} alt={post.recipe?.title || "Community post"} className="mb-8 max-h-[52vh] w-full rounded-2xl object-contain" />}
                 <p className="whitespace-pre-wrap text-xl font-semibold leading-9 text-neutral-100 sm:text-3xl sm:leading-[1.35]">{post.caption}</p>
                 {post.tags.length > 0 && <div className="mt-8 flex flex-wrap gap-2">{post.tags.map((tag) => <span key={tag} className="rounded-full bg-[#17351F] px-3 py-1.5 text-xs font-bold text-[#B7E35F]">{tag}</span>)}</div>}
               </section>
