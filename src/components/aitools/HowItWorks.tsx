@@ -32,14 +32,14 @@ export default function HowItWorks() {
     <div className="bg-white dark:bg-slate-800 rounded-3xl p-8 border border-slate-100 dark:border-slate-700 shadow-sm mb-6 h-full flex flex-col justify-center">
       <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-10">How AI Tools Work</h3>
       
-      <div className="relative flex flex-col md:flex-row justify-between w-full max-w-4xl mx-auto">
+      <div className="relative grid grid-cols-2 gap-x-3 gap-y-8 md:flex md:flex-row md:justify-between w-full max-w-4xl mx-auto">
         
         {/* Connecting Line (Desktop) */}
         <div className="absolute top-8 left-[10%] right-[10%] h-0.5 border-t-2 border-dashed border-green-200 dark:border-green-900/50 hidden md:block z-0"></div>
 
         {/* Steps */}
         {steps.map((step) => (
-          <div key={step.id} className="relative z-10 flex flex-col items-center text-center w-full md:w-1/4 mb-8 md:mb-0 px-2 group">
+          <div key={step.id} className="relative z-10 flex flex-col items-center text-center w-full md:w-1/4 px-1 md:px-2 group">
             <div className="w-16 h-16 rounded-full bg-white dark:bg-slate-800 border-2 border-green-100 dark:border-green-900 shadow-md shadow-green-100/50 flex items-center justify-center text-green-600 dark:text-green-500 mb-4 group-hover:scale-110 group-hover:border-green-300 transition-all duration-300">
               <step.icon size={24} />
             </div>
