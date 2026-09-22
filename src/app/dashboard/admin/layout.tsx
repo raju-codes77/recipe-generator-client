@@ -1,19 +1,46 @@
-import { redirect } from "next/navigation";
-import { getServerSession, isUserAdmin } from "@/lib/auth-server";
+"use client";
 
-export default async function AdminDashboardLayout({
+import { useEffect } from "react";
+import { useRouter, usePathname } from "next/navigation";
+import { useSession } from "@/lib/auth-client";
+import { Loader2 } from "lucide-react";
+
+export default function AdminDashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const session = await getServerSession();
+  const router = useRouter();
+  const pathname = usePathname();
+  const { data: session, isPending } = useSession();
 
-  if (!session?.user) {
-    redirect("/registrationProcess/login");
+  useEffect(() => {
+    if (isPending) return;
+
+    if (!session?.user) {
+      const loginUrl = new URL("/registrationProcess/login", window.location.href);
+      loginUrl.searchParams.set("callbackUrl", pathname);
+      router.push(loginUrl.pathname + loginUrl.search);
+      return;
+    }
+
+    const isAdmin = String((session.user as any).role || "").trim().toLowerCase() === "admin";
+    if (!isAdmin) {
+      router.push("/dashboard/users");
+    }
+  }, [session, isPending, router, pathname]);
+
+  if (isPending) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-green-600" />
+      </div>
+    );
   }
 
-  if (!isUserAdmin(session)) {
-    redirect("/dashboard/user");
+  // Prevent flash of content for non-admins before redirect happens
+  if (!session?.user || String((session.user as any).role || "").trim().toLowerCase() !== "admin") {
+    return null;
   }
 
   return <>{children}</>;

@@ -104,11 +104,13 @@ export default function LoginPage() {
 
   const handleGoogleLogin = async () => {
     try {
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_LOCAL_URL || "http://localhost:3000";
       await authClient.signIn.social({
         provider: "google",
-        callbackURL: `${window.location.origin}/`,
+        callbackURL: `${appUrl}/`,
+        errorCallbackURL: `${appUrl}/registrationProcess/login`,
       });
-    } catch (err: any) {
+    } catch (err) {
       console.error("Google login error:", err);
       toast.error("Failed to sign in with Google.");
     }
@@ -254,13 +256,10 @@ export default function LoginPage() {
 
             {/* Password Input with Show/Hide Toggle */}
             <div>
-              <div className="flex items-center justify-between mb-1.5">
+              <div className="mb-1.5">
                 <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 pl-1">
                   Password
                 </label>
-                <Link href="/forgot-password" className="text-xs text-[#2F8F46] dark:text-[#89986D] hover:underline font-medium pr-1">
-                  Forgot Password?
-                </Link>
               </div>
 
               <div className="relative">

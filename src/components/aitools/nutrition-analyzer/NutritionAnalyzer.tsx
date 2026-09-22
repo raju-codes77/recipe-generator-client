@@ -1,4 +1,5 @@
 "use client";
+import { apiClient } from "@/lib/api-client";
 
 import { useState, useRef } from "react";
 import toast from "react-hot-toast";
@@ -25,16 +26,7 @@ export default function NutritionAnalyzer() {
 
       setStatusMessage("Analyzing nutritional content with AI...");
 
-      const res = await fetch("/api/nutrition/analyze", {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || data.message || "Failed to analyze image");
-      }
+      const data = await apiClient.post<any>("/meals/analyze", formData);
 
       if (data.isFood === false || data.success === false) {
         throw new Error(data.message || "Please upload a valid food photo.");

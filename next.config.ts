@@ -25,6 +25,12 @@ const nextConfig: NextConfig = {
     };
   },
   reactCompiler: true,
+  experimental: {
+    // Disable automatic web-vitals attribution which throws a TypeError in
+    // certain browsers: "Cannot read properties of undefined (reading 'startTime')"
+    // This is caused by the PerformanceObserver firing before all entries are ready.
+    webVitalsAttribution: [],
+  },
   images: {
     remotePatterns: [
       {

@@ -9,7 +9,7 @@ import RefineChips from "./RefineChips";
 import HealthScoreCard from "./HealthScoreCard";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { getApiBaseUrl } from "@/lib/api-url";
+import { apiClient } from "@/lib/api-client";
 
 const DEFAULT_FOOD_IMAGE =
   "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=1200&q=80";
@@ -41,21 +41,14 @@ function IngredientSubPanel({ ingredient, recipeTitle, isAvailable }: { ingredie
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [subs, setSubs] = useState<SubResult[] | null>(null);
-  const apiUrl = getApiBaseUrl();
+
 
   const fetchSubs = async () => {
     if (subs) { setOpen((o) => !o); return; }
     setOpen(true);
     setLoading(true);
     try {
-      const res = await fetch(`${apiUrl}/api/ingredient-substitution`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ingredient, recipeContext: recipeTitle }),
-        credentials: "include",
-      });
-      if (!res.ok) throw new Error("Failed");
-      const data = await res.json();
+      const data = await apiClient.post<any>("/ingredient-substitution", { ingredient, recipeContext: recipeTitle });
       setSubs(data.substitutes || []);
     } catch {
       toast.error(`Could not find substitutes for ${ingredient}`);
@@ -145,21 +138,10 @@ export default function RecipeResultView({ recipe, onBack, onRefine, refiningOpt
     setIsAddingMissing(true);
     const toastId = toast.loading("Comparing recipe with your pantry...");
     try {
-      const apiUrl = getApiBaseUrl();
-      const res = await fetch(`${apiUrl}/api/shopping-list/from-recipe`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          recipeId: recipe.id,
-          userPantryIngredients 
-        }),
-        credentials: "include",
+      const data = await apiClient.post<any>("/shopping-list/from-recipe", { 
+        recipeId: recipe.id,
+        userPantryIngredients 
       });
-
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        throw new Error(data.message || data.error || "Failed to add missing ingredients");
-      }
 
       toast.success(
         data.message || "Missing ingredients added to your shopping list!",
@@ -339,14 +321,7 @@ export default function RecipeResultView({ recipe, onBack, onRefine, refiningOpt
 
                   setIsSaving(true);
                   try {
-                    const res = await fetch("/api/pantry-to-plate/save", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ id: recipe.id }),
-                      credentials: "include",
-                    });
-                    const data = await res.json();
-                    if (!res.ok) throw new Error(data.message || "Failed to save recipe");
+                    const data = await apiClient.post<any>("/pantry-to-plate/save", { id: recipe.id });
                     toast.success(data.message || "Recipe saved to your profile");
                   } catch (error) {
                     toast.error(error instanceof Error ? error.message : "Failed to save recipe");

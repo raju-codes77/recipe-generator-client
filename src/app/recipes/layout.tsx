@@ -5,7 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { useSession } from "@/lib/auth-client";
 import { Loader2 } from "lucide-react";
 
-export default function UserDashboardLayout({
+export default function RecipesLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -21,25 +21,19 @@ export default function UserDashboardLayout({
       const loginUrl = new URL("/registrationProcess/login", window.location.href);
       loginUrl.searchParams.set("callbackUrl", pathname);
       router.push(loginUrl.pathname + loginUrl.search);
-      return;
-    }
-
-    const isAdmin = String((session.user as any).role || "").trim().toLowerCase() === "admin";
-    if (isAdmin) {
-      router.push("/dashboard/admin");
     }
   }, [session, isPending, router, pathname]);
 
   if (isPending) {
     return (
-      <div className="flex h-screen w-full items-center justify-center">
+      <div className="flex min-h-[50vh] w-full items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-green-600" />
       </div>
     );
   }
 
-  // Prevent flash of content for admins or logged-out users before redirect happens
-  if (!session?.user || String((session.user as any).role || "").trim().toLowerCase() === "admin") {
+  // Prevent flash of content
+  if (!session?.user) {
     return null;
   }
 

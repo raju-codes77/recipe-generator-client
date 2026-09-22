@@ -6,7 +6,8 @@
  * standardizes credentials (cookies), and normalizes error handling.
  */
 
-export const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const rawBackendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+export const BACKEND_URL = rawBackendUrl.endsWith("/") ? rawBackendUrl.slice(0, -1) : rawBackendUrl;
 
 type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
@@ -27,7 +28,8 @@ export class ApiError extends Error {
 }
 
 /**
- * Normalizes the URL, ensuring it points to the direct backend if an absolute path is not provided.
+ * Normalizes the URL to a relative path to leverage Next.js API rewrites.
+ * This guarantees the browser sends first-party cookies (preventing 3rd-party cookie blocking).
  */
 function resolveUrl(endpoint: string): string {
   if (endpoint.startsWith("http://") || endpoint.startsWith("https://")) {
@@ -37,12 +39,10 @@ function resolveUrl(endpoint: string): string {
   // Clean endpoint
   const cleanEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
   
-  // Enforce /api/ prefix if it's missing (assuming all backend routes use it)
-  // But be flexible in case it already includes it.
   if (cleanEndpoint.startsWith("/api/")) {
-    return `${BACKEND_URL}${cleanEndpoint}`;
+    return cleanEndpoint;
   } else {
-    return `${BACKEND_URL}/api${cleanEndpoint}`;
+    return `/api${cleanEndpoint}`;
   }
 }
 
@@ -107,6 +107,6 @@ export const apiClient = {
   patch: <T>(endpoint: string, data?: any, options?: RequestOptions) => 
     request<T>(endpoint, "PATCH", { ...options, data }),
     
-  delete: <T>(endpoint: string, options?: Omit<RequestOptions, "data">) => 
+  delete: <T>(endpoint: string, options?: RequestOptions) => 
     request<T>(endpoint, "DELETE", options),
 };
