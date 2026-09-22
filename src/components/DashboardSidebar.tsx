@@ -6,8 +6,7 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import {
   FiHome, FiUsers, FiBookOpen, FiFolder, FiAward, FiMessageSquare,
-  FiAlertCircle, FiCpu, FiShield, FiSliders, FiSettings, FiLock,
-  FiServer, FiHeadphones, FiMenu, FiX, FiActivity,
+  FiAlertCircle, FiCpu, FiShield, FiMenu, FiX, FiActivity,
   FiBox, FiCalendar, FiShoppingCart, FiList, FiGrid, FiHeart
 } from "react-icons/fi";
 import { FaDochub } from "react-icons/fa6";
@@ -18,7 +17,7 @@ export default function DashboardSidebar() {
 
 
   const isAdmin = pathname?.includes("/admin");
-  const role = isAdmin ? "admin" : "user";
+  const dashboardIdentity = isAdmin ? "Admin Panel" : "My Dashboard";
 
   // Admin Navigation  Items
   const adminNavItems = [
@@ -61,24 +60,16 @@ export default function DashboardSidebar() {
 
 
     <>
-      {/* Mobile Header with Hamburger Button */}
-      <div className="fixed left-0 right-0 top-0 z-50 flex items-center justify-between border-b border-[#dfe8da] bg-[#fbfdf9]/95 p-3.5 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-[#101611]/95 lg:hidden">
-        <div className="flex items-center space-x-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#2F8F46] text-base font-black text-white shadow-md shadow-[#2F8F46]/20">F</div>
-          <span className="text-base font-black tracking-tight text-gray-900 dark:text-[#F6F0D7]">FoodCanvas</span>
-          <span className="rounded-full bg-[#2F8F46]/10 px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-[#2F8F46] dark:bg-[#B7E35F]/10 dark:text-[#B7E35F]">
-            {role}
-          </span>
-        </div>
-        <button
-          onClick={() => setMobileOpen((open) => !open)}
-          aria-label={mobileOpen ? "Close dashboard menu" : "Open dashboard menu"}
-          aria-expanded={mobileOpen}
-          className="rounded-xl bg-[#edf4e9] p-2.5 text-[#235f31] transition hover:bg-[#dfeeda] focus:outline-none dark:bg-white/10 dark:text-[#b7df86]"
-        >
-          {mobileOpen ? <FiX size={24} /> : <FiMenu size={24} />}
-        </button>
-      </div>
+      {/* Responsive floating dashboard menu control */}
+      <button
+        type="button"
+        onClick={() => setMobileOpen((open) => !open)}
+        aria-label={mobileOpen ? "Close dashboard menu" : "Open dashboard menu"}
+        aria-expanded={mobileOpen}
+        className="fixed bottom-[5.75rem] right-5 z-40 flex h-13 w-13 items-center justify-center rounded-2xl border-2 border-emerald-500/35 bg-white text-emerald-700 shadow-[0_10px_28px_rgba(15,80,50,0.22)] transition hover:scale-105 hover:border-emerald-600 hover:shadow-[0_14px_34px_rgba(15,80,50,0.32)] dark:bg-slate-850 sm:bottom-[6.25rem] sm:right-6 sm:h-14 sm:w-14 sm:rounded-[22px] lg:hidden"
+      >
+        {mobileOpen ? <FiX size={23} /> : <FiMenu size={23} />}
+      </button>
 
       {/* Mobile Backdrop */}
       <AnimatePresence>
@@ -99,22 +90,20 @@ export default function DashboardSidebar() {
         border-r border-[#dfe8da] bg-[#fbfdf9] p-4 shadow-[8px_0_30px_rgba(40,70,45,0.04)] transition-transform duration-300 ease-in-out dark:border-white/10 dark:bg-[#101611] lg:p-5
         ${mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
       `}>
-        <div className="space-y-6 overflow-y-auto pt-14 lg:pt-0">
+        <div className="dashboard-sidebar-scrollbar space-y-6 overflow-y-auto pt-0">
 
-          {/* Logo & Brand */}
-          {isAdmin && (
-            <div className="mb-3 flex items-center space-x-3 px-2">
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#2F8F46] text-lg font-black text-white shadow-md shadow-[#2F8F46]/30">
-                F
-              </div>
-              <div>
-                <h1 className="text-base font-black tracking-tight text-gray-900 dark:text-[#F6F0D7]">FoodCanvas</h1>
-                <span className="rounded-full bg-[#EAF7E8] px-2 py-1 text-[9px] font-bold capitalize tracking-wider text-[#2F8F46] dark:bg-[#EAF7E8]/10 dark:text-[#B7E35F]">
-                  {role} Panel
-                </span>
-              </div>
+          {/* Dashboard identity */}
+          <div className="mb-3 flex items-center space-x-3 px-2">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#2F8F46] text-white shadow-md shadow-[#2F8F46]/30">
+              {isAdmin ? <FiShield size={20} /> : <FiHome size={20} />}
             </div>
-          )}
+            <div>
+              <h1 className="text-base font-black tracking-tight text-gray-900 dark:text-[#F6F0D7]">{dashboardIdentity}</h1>
+              <span className="rounded-full bg-[#EAF7E8] px-2 py-1 text-[9px] font-bold capitalize tracking-wider text-[#2F8F46] dark:bg-[#EAF7E8]/10 dark:text-[#B7E35F]">
+                {isAdmin ? "Admin" : "Personal"}
+              </span>
+            </div>
+          </div>
 
           {/* Navigation Section */}
           {isAdmin ? (

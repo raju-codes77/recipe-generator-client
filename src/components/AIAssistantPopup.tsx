@@ -33,6 +33,7 @@ export default function AIAssistantPopup() {
   const messengerNavigationTimeoutRef = useRef<number | null>(null);
 
   const showCommunityMessenger = pathname === "/community" && !isSessionPending && Boolean(session?.user);
+  const isAuthPage = pathname === "/registrationProcess/login" || pathname === "/registrationProcess/register";
 
   const popularPrompts = [
     "Quick 20-min dinner",
@@ -101,6 +102,8 @@ export default function AIAssistantPopup() {
       setLoading(false);
     }
   };
+
+  if (isAuthPage) return null;
 
   return (
     <>

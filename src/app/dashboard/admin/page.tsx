@@ -90,9 +90,8 @@ export default function AdminDashboardPage() {
             Here's what's happening with FlavorAI today.
           </p>
         </div>
-        <div className="mt-4 md:mt-0 flex items-center gap-2 px-4 py-2 bg-gray-50 dark:bg-[#89986D]/10 rounded-xl border border-gray-200 dark:border-[#89986D]/20 text-xs font-semibold text-gray-700 dark:text-[#F6F0D7]">
-          <span>📅 May 12 - May 18, 2026</span>
-        </div>
+        {/* Reserved for the future date-range analytics filter. */}
+        <div aria-hidden="true" className="mt-4 h-[42px] w-[224px] md:mt-0" />
       </div>
 
       {/* 2. Top 5 Stats Cards Grid */}

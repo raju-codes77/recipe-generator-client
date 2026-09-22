@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { FiTrash2, FiUserX, FiUserCheck, FiUsers, FiShield, FiArrowLeft, FiUserPlus } from "react-icons/fi";
+import { FiTrash2, FiUserX, FiUserCheck, FiUsers, FiShield, FiArrowLeft } from "react-icons/fi";
 import Link from "next/link";
 import toast from "react-hot-toast";
 
@@ -102,9 +102,6 @@ export default function AdminUsersPage() {
             <p className="text-xs sm:text-sm text-gray-500 dark:text-[#F6F0D7]/60 mt-1">
               Total registered users: <span className="font-bold text-[#2F8F46]">{pagination?.total || users.length}</span>
             </p>
-          </div>
-          <div className="flex items-center gap-2 rounded-2xl border border-[#dce8d6] bg-white px-4 py-3 text-xs font-semibold text-slate-600 shadow-sm dark:border-white/10 dark:bg-white/5 dark:text-white/65">
-            <FiUserPlus className="text-[#e6923b]" /> Live directory
           </div>
         </div>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -16,6 +16,7 @@ import {
   FiShield,
   FiEye,
   FiEyeOff,
+  FiUpload,
 } from "react-icons/fi";
 import { FcGoogle } from "react-icons/fc";
 import toast from "react-hot-toast";
@@ -29,7 +30,10 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [photo, setPhoto] = useState("");
+  const [photoDataUrl, setPhotoDataUrl] = useState("");
+  const [selectedPhotoName, setSelectedPhotoName] = useState("");
   const [role, setRole] = useState("USER");
+  const photoInputRef = useRef<HTMLInputElement>(null);
 
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -56,6 +60,33 @@ export default function RegisterPage() {
   ];
 
   const isPasswordValid = passwordSteps.every((step) => step.met);
+
+  const handlePhotoFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setErrorMessage("Please choose an image file.");
+      return;
+    }
+
+    if (file.size > 6 * 1024 * 1024) {
+      setErrorMessage("Profile photo must be 6 MB or smaller.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") {
+        setPhotoDataUrl(reader.result);
+        setPhoto("");
+        setSelectedPhotoName(file.name);
+        setErrorMessage("");
+      }
+    };
+    reader.onerror = () => setErrorMessage("Unable to read this image. Please try another file.");
+    reader.readAsDataURL(file);
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -91,7 +122,7 @@ export default function RegisterPage() {
         name: name.trim(),
         email: email.trim(),
         password,
-        image: photo.trim() || undefined,
+        image: photoDataUrl || photo.trim() || undefined,
         role: role,
       } as any);
 
@@ -134,7 +165,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#F9F6F0] dark:bg-black p-4 sm:p-6 lg:p-8 font-sans transition-colors duration-500">
+    <div className="min-h-[calc(100dvh-80px)] lg:min-h-[calc(100dvh-88px)] flex items-center justify-center bg-[#F9F6F0] dark:bg-black p-3 sm:p-4 lg:p-5 font-sans transition-colors duration-500 overflow-x-hidden">
 
       <motion.div
         initial={{ opacity: 0, y: 30 }}
@@ -234,7 +265,7 @@ export default function RegisterPage() {
         </div>
 
         {/* RIGHT COLUMN: Register Form Section */}
-        <div className="w-full lg:w-1/2 bg-white dark:bg-[#121212] p-8 sm:p-10 flex flex-col justify-between overflow-y-auto max-h-[900px] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-gray-200 dark:[&::-webkit-scrollbar-thumb]:bg-gray-800 [&::-webkit-scrollbar-thumb]:rounded-full">
+        <div className="w-full lg:w-1/2 bg-white dark:bg-[#121212] p-6 sm:p-8 flex flex-col justify-between overflow-visible">
 
           <div>
             {/* Top Log in link header */}
@@ -371,9 +402,31 @@ export default function RegisterPage() {
                     onChange={(e) => setPhoto(e.target.value)}
                     placeholder="Profile Photo URL (Optional)"
                     disabled={loading}
-                    className="w-full pl-10 pr-4 py-3 rounded-xl bg-gray-50/50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 text-xs text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#3A6B35]/30 focus:border-[#3A6B35] transition-all disabled:opacity-50 placeholder:text-gray-400"
+                    className="w-full pl-10 pr-12 py-3 rounded-xl bg-gray-50/50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 text-xs text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#3A6B35]/30 focus:border-[#3A6B35] transition-all disabled:opacity-50 placeholder:text-gray-400"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => photoInputRef.current?.click()}
+                    disabled={loading}
+                    aria-label="Choose profile photo from device"
+                    title="Choose photo from device"
+                    className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-gray-400 transition-colors hover:text-[#3A6B35] disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <FiUpload size={16} />
+                  </button>
+                  <input
+                    ref={photoInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handlePhotoFileChange}
+                    className="hidden"
                   />
                 </div>
+                {selectedPhotoName && (
+                  <p className="mt-1.5 truncate px-1 text-[10px] text-[#3A6B35]" title={selectedPhotoName}>
+                    Selected: {selectedPhotoName}
+                  </p>
+                )}
               </div>
 
               {/* Submit Button */}

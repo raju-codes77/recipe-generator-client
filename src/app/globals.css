@@ -95,3 +95,41 @@ body {
 .community-comments-scroll::-webkit-scrollbar-thumb:hover {
   background: rgba(148, 163, 184, 0.42);
 }
+
+.dashboard-sidebar-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #2f8f46 transparent;
+}
+
+.dashboard-sidebar-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.dashboard-sidebar-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.dashboard-sidebar-scrollbar::-webkit-scrollbar-thumb {
+  background: #2f8f46;
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background-clip: padding-box;
+}
+
+.dashboard-sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #24733e;
+  border-width: 1px;
+}
+
+.dark .dashboard-sidebar-scrollbar {
+  scrollbar-color: #4caf60 transparent;
+}
+
+.dark .dashboard-sidebar-scrollbar::-webkit-scrollbar-thumb {
+  background: #4caf60;
+  background-clip: padding-box;
+}
+
+.dark .dashboard-sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #67c878;
+}

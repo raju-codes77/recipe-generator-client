@@ -123,7 +123,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#89986D]/20 via-white to-white dark:from-black dark:via-gray-950 dark:to-black p-4 transition-colors duration-500 overflow-hidden">
+    <div className="min-h-[calc(100dvh-80px)] lg:min-h-[calc(100dvh-88px)] lg:h-[calc(100dvh-88px)] flex items-center justify-center bg-gradient-to-br from-[#89986D]/20 via-white to-white dark:from-black dark:via-gray-950 dark:to-black p-3 sm:p-4 transition-colors duration-500 overflow-x-hidden lg:overflow-hidden">
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}

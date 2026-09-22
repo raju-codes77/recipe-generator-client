@@ -373,6 +373,7 @@ export default function RecipeDetailsPage() {
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     className="object-cover"
                     priority
+                    unoptimized
                   />
                   {/* FAVORITE BUTTON */}
                   <button
@@ -395,7 +396,7 @@ export default function RecipeDetailsPage() {
                       className={`relative h-14 rounded-xl overflow-hidden border cursor-pointer transition-all ${activeImage === imgUrl ? "border-[#24733E] ring-2 ring-[#24733E]/30" : "border-gray-200 dark:border-white/10 hover:border-[#24733E]"
                         }`}
                     >
-                      <Image src={imgUrl} alt={`thumb-${i}`} fill sizes="100vw" className="object-cover" />
+                      <Image src={imgUrl} alt={`thumb-${i}`} fill sizes="100vw" className="object-cover" unoptimized />
                     </div>
                   ))}
                 </div>
@@ -750,7 +751,7 @@ export default function RecipeDetailsPage() {
               ) : (
                 <div className="pt-4 flex gap-3">
                   <div className="relative h-8 w-8 rounded-full overflow-hidden shrink-0">
-                    <Image src={recipe.image || "/placeholder.png"} alt="Reviewer" fill sizes="100vw" className="object-cover" />
+                    <Image src={recipe.image || "/placeholder.png"} alt="Reviewer" fill sizes="100vw" className="object-cover" unoptimized />
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center justify-between">

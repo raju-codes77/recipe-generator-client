@@ -21,10 +21,10 @@ export default function Footer() {
             <div className="max-w-7xl mx-auto px-6 lg:px-10 py-12 lg:py-16">
 
                 {/* Top Grid Section */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 lg:gap-8 mb-12">
+                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-5 gap-10 lg:gap-8 mb-12">
 
                     {/* Brand & Info (Takes 2 columns on large screens) */}
-                    <div className="lg:col-span-2 space-y-4">
+                    <div className="col-span-2 md:col-span-1 lg:col-span-2 space-y-4">
                         <Link
                             href="/"
                             className="flex items-center gap-2 group w-fit"
@@ -87,7 +87,7 @@ export default function Footer() {
                     </div>
 
                     {/* Quick Links */}
-                    <div className="space-y-4">
+                    <div className="col-span-1 md:col-span-1 space-y-4">
                         <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider">
                             Quick Links
                         </h3>
@@ -150,7 +150,7 @@ export default function Footer() {
                     </div>
 
                     {/* Newsletter Subscription */}
-                    <div className="space-y-4">
+                    <div className="col-span-2 md:col-span-1 space-y-4">
                         <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider">
                             Stay Updated
                         </h3>
