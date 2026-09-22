@@ -90,7 +90,7 @@ export default function DashboardSidebar() {
         border-r border-[#dfe8da] bg-[#fbfdf9] p-4 shadow-[8px_0_30px_rgba(40,70,45,0.04)] transition-transform duration-300 ease-in-out dark:border-white/10 dark:bg-[#101611] lg:p-5
         ${mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
       `}>
-        <div className="space-y-6 overflow-y-auto pt-0">
+        <div className="dashboard-sidebar-scrollbar space-y-6 overflow-y-auto pt-0">
 
           {/* Dashboard identity */}
           <div className="mb-3 flex items-center space-x-3 px-2">
