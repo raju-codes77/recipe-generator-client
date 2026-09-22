@@ -12,7 +12,8 @@ import { authClient } from "@/lib/auth-client";
 import DetailsSidebar from "@/components/recipes/details/DetailsSidebar";
 import RecipeDetailsSkeleton from "@/components/recipes/details/RecipeDetailsSkeleton";
 import RecipeAIAssistant from "@/components/recipes/details/RecipeAIAssistant";
-import { getApiBaseUrl } from "@/lib/api-url";
+import YouMayAlsoLike from "@/components/recommendations/YouMayAlsoLike";
+import { apiClient } from "@/lib/api-client";
 import toast from "react-hot-toast";
 
 interface Ingredient {
@@ -111,14 +112,7 @@ export default function RecipeDetailsPage() {
     async function fetchRecipeDetails() {
       try {
         setLoading(true);
-        const response = await fetch(`${getApiBaseUrl()}/api/recipes/${id}`, {
-          credentials: "include",
-        });
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.message || "Failed to fetch recipe details");
-        }
+        const data = await apiClient.get<any>(`/recipes/${id}`);
 
         if (data.success) {
           setRecipe(data.recipe);
@@ -146,16 +140,9 @@ export default function RecipeDetailsPage() {
 
     const checkStatuses = async () => {
       try {
-        const favResponse = await fetch(
-          `${getApiBaseUrl()}/api/favorites/check?userId=${session.user.id}&recipeId=${id}`,
-          { credentials: "include" }
-        );
-        const favContentType = favResponse.headers.get("content-type");
-        if (favContentType && favContentType.includes("application/json")) {
-          const favData = await favResponse.json();
-          if (favResponse.ok && favData.success) {
-            setIsFavorite(favData.isFavorite);
-          }
+        const favData = await apiClient.get<any>(`/favorites/check?userId=${session.user.id}&recipeId=${id}`);
+        if (favData.success) {
+          setIsFavorite(favData.isFavorite);
         }
       } catch (error) {
         console.error("Status check error:", error);
@@ -192,31 +179,9 @@ export default function RecipeDetailsPage() {
     setIsFavoriteLoading(true);
 
     try {
-      const method = previousState ? "DELETE" : "POST";
-      const response = await fetch(`${getApiBaseUrl()}/api/favorites`, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({
-          userId: session.user.id,
-          recipeId: recipe.id,
-        }),
-      });
-
-      const contentType = response.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-        const textResponse = await response.text();
-        console.error("Non-JSON response:", textResponse);
-        throw new Error("Server returned an invalid response.");
-      }
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to update favorites");
-      }
+      const data = previousState 
+        ? await apiClient.delete<any>("/favorites", { data: { userId: session.user.id, recipeId: recipe.id } })
+        : await apiClient.post<any>("/favorites", { userId: session.user.id, recipeId: recipe.id });
 
       if (nextState) {
         toast.success("Added to favorites!");
@@ -239,10 +204,7 @@ export default function RecipeDetailsPage() {
     if (!session?.user?.id) return;
     setLoadingCollections(true);
     try {
-      const res = await fetch(`${getApiBaseUrl()}/api/collections?userId=${session.user.id}`, {
-        credentials: "include",
-      });
-      const data = await res.json();
+      const data = await apiClient.get<any>(`/collections?userId=${session.user.id}`);
       if (data.success) {
         setCollections(data.collections);
       } else {
@@ -274,13 +236,7 @@ export default function RecipeDetailsPage() {
     if (!recipe?.id) return;
 
     try {
-      const res = await fetch(`${getApiBaseUrl()}/api/collections/add-recipe`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ collectionId, recipeId: recipe.id }),
-      });
-      const data = await res.json();
+      const data = await apiClient.post<any>("/collections/add-recipe", { collectionId, recipeId: recipe.id });
 
       if (data.success) {
         toast.success("Recipe added to collection successfully!");
@@ -307,20 +263,14 @@ export default function RecipeDetailsPage() {
 
     setIsSubmittingNew(true);
     try {
-      const res = await fetch(`${getApiBaseUrl()}/api/collections`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          userId: session.user.id,
-          name: newCollectionName.trim(),
-          description: "",
-          isPublic: false,
-        }),
+      const data = await apiClient.post<any>("/collections", {
+        userId: session.user.id,
+        name: newCollectionName.trim(),
+        description: "",
+        isPublic: false,
       });
-      const data = await res.json();
 
-      if (res.ok && data.success) {
+      if (data.success) {
         toast.success("Collection created successfully!");
         setNewCollectionName("");
         setIsCreatingNew(false);
@@ -822,6 +772,9 @@ export default function RecipeDetailsPage() {
               )}
 
             </div>
+
+            {/* YOU MAY ALSO LIKE */}
+            <YouMayAlsoLike currentRecipeId={recipe.id} />
 
           </div>
 

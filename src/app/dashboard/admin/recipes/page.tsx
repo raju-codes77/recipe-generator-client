@@ -5,9 +5,7 @@ import Link from "next/link";
 import { FiArrowLeft, FiSearch, FiBookOpen } from "react-icons/fi";
 import toast from "react-hot-toast";
 
-import { getApiBaseUrl } from "@/lib/api-url";
-
-const API_BASE_URL = getApiBaseUrl();
+import { apiClient } from "@/lib/api-client";
 
 export default function AdminRecipesPage() {
   const [recipes, setRecipes] = useState<any[]>([]);
@@ -23,18 +21,13 @@ export default function AdminRecipesPage() {
   async function fetchRecipes() {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/admin/recipes?page=${page}&limit=20`, {
-        credentials: "include"
+      const data = await apiClient.get<any>(`/admin/recipes?page=${page}&limit=20`);
+      setRecipes(data.recipes || []);
+      setPagination({
+        page: data.page,
+        totalPages: data.totalPages,
+        total: data.total
       });
-      if (res.ok) {
-        const data = await res.json();
-        setRecipes(data.recipes || []);
-        setPagination({
-          page: data.page,
-          totalPages: data.totalPages,
-          total: data.total
-        });
-      }
     } catch (err) {
       console.error(err);
       toast.error("Failed to fetch recipes");

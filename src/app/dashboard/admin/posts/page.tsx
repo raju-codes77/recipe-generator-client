@@ -6,9 +6,7 @@ import Image from "next/image";
 import { FiArrowLeft, FiTrash2, FiSearch, FiMessageSquare } from "react-icons/fi";
 import toast from "react-hot-toast";
 
-import { getApiBaseUrl } from "@/lib/api-url";
-
-const API_BASE_URL = getApiBaseUrl();
+import { apiClient } from "@/lib/api-client";
 
 export default function AdminPostsPage() {
   const [posts, setPosts] = useState<any[]>([]);
@@ -24,18 +22,13 @@ export default function AdminPostsPage() {
   async function fetchPosts() {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/admin/posts?page=${page}&limit=20`, {
-        credentials: "include"
+      const data = await apiClient.get<any>(`/admin/posts?page=${page}&limit=20`);
+      setPosts(data.posts || []);
+      setPagination({
+        page: data.page,
+        totalPages: data.totalPages,
+        total: data.total
       });
-      if (res.ok) {
-        const data = await res.json();
-        setPosts(data.posts || []);
-        setPagination({
-          page: data.page,
-          totalPages: data.totalPages,
-          total: data.total
-        });
-      }
     } catch (err) {
       console.error(err);
       toast.error("Failed to fetch posts");
@@ -48,16 +41,9 @@ export default function AdminPostsPage() {
     if (!confirm("Are you sure you want to permanently delete this post?")) return;
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/admin/posts/${id}`, {
-        method: 'DELETE',
-        credentials: "include"
-      });
-      if (res.ok) {
-        toast.success("Post deleted successfully");
-        setPosts(posts.filter(p => p.id !== id));
-      } else {
-        toast.error("Delete failed");
-      }
+      await apiClient.delete<any>(`/admin/posts/${id}`);
+      toast.success("Post deleted successfully");
+      setPosts(posts.filter(p => p.id !== id));
     } catch (err) {
       console.error(err);
       toast.error("Something went wrong");

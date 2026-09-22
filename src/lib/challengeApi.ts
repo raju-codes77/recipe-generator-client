@@ -1,8 +1,5 @@
 import { Challenge, ChallengeDay, ChallengeParticipant, Badge } from "../types/challenge";
-
-import { getApiBaseUrl } from "./api-url";
-
-const API_BASE_URL = `${getApiBaseUrl()}/api`;
+import { apiClient } from "./api-client";
 
 export interface PaginatedChallengeResponse {
   challenges: Challenge[];
@@ -28,11 +25,9 @@ export async function getPaginatedChallenges(params?: { status?: string; search?
   if (params?.limit) query.append("limit", params.limit.toString());
   
   const queryString = query.toString();
-  const url = queryString ? `${API_BASE_URL}/challenges?${queryString}` : `${API_BASE_URL}/challenges`;
+  const endpoint = queryString ? `/challenges?${queryString}` : `/challenges`;
 
-  const res = await fetch(url.toString(), { cache: "no-store" });
-  if (!res.ok) throw new Error("Failed to fetch challenges");
-  const data = await res.json();
+  const data = await apiClient.get<any>(endpoint, { cache: "no-store" });
   
   const challenges: Challenge[] = data.challenges || [];
   const mapped = challenges.map((c: any) => ({
@@ -53,77 +48,44 @@ export async function getChallenges(params?: { status?: string; search?: string;
 }
 
 export async function getFeaturedChallenge(): Promise<Challenge | null> {
-  const res = await fetch(`${API_BASE_URL}/challenges/featured`, { cache: "no-store" });
-  if (!res.ok) throw new Error("Failed to fetch featured challenge");
-  const data = await res.json();
+  const data = await apiClient.get<any>("/challenges/featured", { cache: "no-store" });
   return data.challenges && data.challenges.length > 0 ? data.challenges[0] : null;
 }
 
 export async function getChallengeById(id: string): Promise<Challenge> {
-  const res = await fetch(`${API_BASE_URL}/challenges/${id}`, { cache: "no-store" });
-  if (!res.ok) throw new Error("Failed to fetch challenge");
-  const data = await res.json();
+  const data = await apiClient.get<any>(`/challenges/${id}`, { cache: "no-store" });
   return data.challenge;
 }
 
 export async function generateChallenges(forceMore?: boolean): Promise<Challenge[]> {
-  const res = await fetch(`${API_BASE_URL}/challenges/generate`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ forceMore }),
-    cache: "no-store"
-  });
-  if (!res.ok) {
-    const errText = await res.text();
-    console.error("Generate challenges failed. Status:", res.status, "Body:", errText);
-    throw new Error(`Failed to generate challenges: ${res.status} ${errText}`);
-  }
-  const data = await res.json();
+  const data = await apiClient.post<any>("/challenges/generate", { forceMore }, { cache: "no-store" });
   return data.challenges || [];
 }
 
 export async function getChallengeProgress(userId?: string): Promise<{ totalParticipated: number; completedChallenges: number; streak: number; xp: number }> {
-  const url = userId ? `${API_BASE_URL}/challenges/user/progress?userId=${userId}` : `${API_BASE_URL}/challenges/user/progress`;
-  const res = await fetch(url, { cache: "no-store" });
-  if (!res.ok) throw new Error("Failed to fetch progress");
-  const data = await res.json();
+  const endpoint = userId ? `/challenges/user/progress?userId=${userId}` : `/challenges/user/progress`;
+  const data = await apiClient.get<any>(endpoint, { cache: "no-store" });
   return data.progress;
 }
 
 export async function getLeaderboard(): Promise<any[]> {
-  const res = await fetch(`${API_BASE_URL}/challenges/global/leaderboard`, { cache: "no-store" });
-  if (!res.ok) throw new Error("Failed to fetch leaderboard");
-  const data = await res.json();
+  const data = await apiClient.get<any>("/challenges/global/leaderboard", { cache: "no-store" });
   return data.leaderboard;
 }
 
 export async function getBadges(userId?: string): Promise<any[]> {
-  const url = userId ? `${API_BASE_URL}/challenges/user/badges?userId=${userId}` : `${API_BASE_URL}/challenges/user/badges`;
-  const res = await fetch(url, { cache: "no-store" });
-  if (!res.ok) throw new Error("Failed to fetch badges");
-  const data = await res.json();
+  const endpoint = userId ? `/challenges/user/badges?userId=${userId}` : `/challenges/user/badges`;
+  const data = await apiClient.get<any>(endpoint, { cache: "no-store" });
   return data.badges;
 }
 
 export async function joinChallenge(id: string, userId: string): Promise<any> {
-  const res = await fetch(`${API_BASE_URL}/challenges/${id}/join`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ userId }),
-    cache: "no-store"
-  });
-  if (!res.ok) {
-    const errData = await res.json().catch(() => ({}));
-    throw new Error(errData.message || "Failed to join challenge");
-  }
-  return res.json();
+  return await apiClient.post<any>(`/challenges/${id}/join`, { userId }, { cache: "no-store" });
 }
 
 export async function getChallengeParticipant(challengeId: string, userId: string): Promise<any> {
   try {
-    const res = await fetch(`${API_BASE_URL}/challenges/${challengeId}/participant?userId=${userId}`, { cache: "no-store" });
-    if (!res.ok) return null;
-    const data = await res.json();
+    const data = await apiClient.get<any>(`/challenges/${challengeId}/participant?userId=${userId}`, { cache: "no-store" });
     return data.participant ?? null;
   } catch {
     return null;
@@ -131,15 +93,5 @@ export async function getChallengeParticipant(challengeId: string, userId: strin
 }
 
 export async function completeChallengeDay(challengeId: string, dayId: string, userId: string): Promise<any> {
-  const res = await fetch(`${API_BASE_URL}/challenges/${challengeId}/days/${dayId}/complete`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ userId }),
-    cache: "no-store"
-  });
-  if (!res.ok) {
-    const errData = await res.json().catch(() => ({}));
-    throw new Error(errData.message || "Failed to complete challenge day");
-  }
-  return res.json();
+  return await apiClient.post<any>(`/challenges/${challengeId}/days/${dayId}/complete`, { userId }, { cache: "no-store" });
 }

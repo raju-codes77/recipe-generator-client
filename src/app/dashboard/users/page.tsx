@@ -10,6 +10,7 @@ import {
 } from "react-icons/fi";
 import { ResponsiveContainer, AreaChart, Area, XAxis, Tooltip, CartesianGrid } from "recharts";
 import { authClient } from "@/lib/auth-client";
+import { apiClient } from "@/lib/api-client";
 
 
 
@@ -37,13 +38,8 @@ export default function UserDashboardPage() {
       try {
         const userId = session?.user?.id;
         const queryStr = userId ? `?userId=${encodeURIComponent(userId)}` : "";
-        const res = await fetch(`/api/dashboard/user/overview${queryStr}`, {
-          credentials: "include"
-        });
-        if (res.ok) {
-          const json = await res.json();
-          setData(json);
-        }
+        const data = await apiClient.get<any>(`/dashboard/user/overview${queryStr}`);
+        setData(data);
       } catch (err) {
         console.error("Failed to load dashboard data", err);
       } finally {
@@ -440,7 +436,7 @@ export default function UserDashboardPage() {
                   <div key={rec.id || i} className="min-w-[240px] sm:min-w-[280px] bg-white dark:bg-gray-800 rounded-2xl p-3 shadow-sm border border-gray-100 hover:shadow-md transition-shadow snap-start flex items-center gap-4">
                     <div className="relative w-20 h-20 rounded-xl overflow-hidden shrink-0 shadow-inner bg-gray-100 flex items-center justify-center">
                       {rec.image ? (
-                        <Image src={rec.image} alt={rec.title} fill className="object-cover" />
+                        <Image src={rec.image} alt={rec.title} fill sizes="(max-width: 768px) 100vw, 33vw" className="object-cover" />
                       ) : (
                         <span className="text-2xl">🍽️</span>
                       )}
@@ -491,7 +487,7 @@ export default function UserDashboardPage() {
           </div>
 
           <div className="absolute -bottom-8 -right-8 w-48 h-48 opacity-90 mix-blend-multiply dark:mix-blend-normal pointer-events-none">
-            <Image src="/water_glass_1788270793954.jpg" alt="Water Glass" fill className="object-contain" />
+            <Image src="/water_glass_1788270793954.jpg" alt="Water Glass" fill sizes="(max-width: 768px) 100vw, 33vw" className="object-contain" />
           </div>
         </div>
       </div>

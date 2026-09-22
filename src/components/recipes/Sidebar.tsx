@@ -11,9 +11,7 @@ import {
 import { authClient } from "@/lib/auth-client";
 import Link from "next/link";
 import toast from "react-hot-toast";
-import { getApiBaseUrl } from "@/lib/api-url";
-
-const API_BASE = getApiBaseUrl();
+import { apiClient } from "@/lib/api-client";
 
 interface SidebarProps {
   selectedCollectionId?: string | null;
@@ -35,10 +33,7 @@ export default function Sidebar({ selectedCollectionId, onSelectCollection }: Si
   const fetchCollections = async () => {
     if (!userId) return;
     try {
-      const res = await fetch(`${API_BASE}/api/collections?userId=${userId}`, {
-        credentials: "include",
-      });
-      const data = await res.json();
+      const data = await apiClient.get<any>(`/collections?userId=${userId}`);
       if (data.success) {
         setCollections(data.collections || []);
       }
@@ -80,13 +75,7 @@ export default function Sidebar({ selectedCollectionId, onSelectCollection }: Si
 
     try {
       setCreating(true);
-      const res = await fetch(`${API_BASE}/api/collections`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ userId, name: newCollectionName }),
-      });
-      const data = await res.json();
+      const data = await apiClient.post<any>("/collections", { userId, name: newCollectionName });
       if (data.success) {
         setNewCollectionName("");
         setIsModalOpen(false);

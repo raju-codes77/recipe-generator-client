@@ -153,6 +153,7 @@ export default function LoginPage() {
                   src="/logohere.png"
                   alt="FoodCanvas Logo"
                   fill
+                  sizes="36px"
                   className="object-contain"
                   priority
                 />
@@ -194,6 +195,7 @@ export default function LoginPage() {
                   src="/logohere.png"
                   alt="FoodCanvas Logo"
                   fill
+                  sizes="36px"
                   className="object-contain"
                   priority
                 />

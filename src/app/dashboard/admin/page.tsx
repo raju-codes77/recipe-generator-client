@@ -13,9 +13,7 @@ import {
 } from "recharts";
 import { authClient } from "@/lib/auth-client";
 
-import { getApiBaseUrl } from "@/lib/api-url";
-
-const API_BASE_URL = getApiBaseUrl();
+import { apiClient } from "@/lib/api-client";
 
 // Mock Data for Analytics Line Chart
 const fallbackLineData = [
@@ -45,13 +43,8 @@ export default function AdminDashboardPage() {
 
     async function fetchDashboard() {
       try {
-        const res = await fetch(`${API_BASE_URL}/api/dashboard/admin/overview`, {
-          credentials: "include"
-        });
-        if (res.ok) {
-          const json = await res.json();
-          setData(json);
-        }
+        const data = await apiClient.get<any>(`/dashboard/admin/overview`);
+        setData(data);
       } catch (err) {
         console.error("Failed to load admin dashboard data", err);
       } finally {

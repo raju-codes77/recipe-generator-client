@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { ChefHat, Camera, BarChart3, Sparkles, Smile, ArrowUp, ArrowDown, Bell } from "lucide-react";
+import { apiClient } from "@/lib/api-client";
 
 type StatData = {
   count: number;
@@ -16,13 +17,10 @@ export default function UsageOverview() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const res = await fetch(`/api/ai-usage/stats?filter=${encodeURIComponent(filter)}`, {
-          credentials: "omit" // or "include" depending on whether you want global or personal stats
+        const data = await apiClient.get<any>(`/ai-usage/stats?filter=${encodeURIComponent(filter)}`, {
+          credentials: "omit" 
         });
-        if (res.ok) {
-          const json = await res.json();
-          setData(json);
-        }
+        setData(data);
       } catch (err) {
         console.error("Failed to fetch AI usage stats", err);
       }

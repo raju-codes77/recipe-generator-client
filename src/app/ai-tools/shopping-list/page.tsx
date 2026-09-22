@@ -20,9 +20,7 @@ import PantryCard from "@/components/aitools/shopping-list/PantryCard";
 import ShoppingListNote from "@/components/aitools/shopping-list/ShoppingListNote";
 import Link from "next/link";
 
-import { getApiBaseUrl } from "@/lib/api-url";
-
-const getApiUrl = () => getApiBaseUrl();
+import { apiClient } from "@/lib/api-client";
 
 function mapBackendItem(item: any): ShoppingItem {
   const qtyStr = typeof item.quantity === "number"
@@ -54,27 +52,20 @@ export default function ShoppingListPage() {
   const fetchShoppingList = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await fetch(`${getApiUrl()}/api/shopping-list`, {
-        credentials: "include",
-      });
-
-      if (res.status === 401) {
-        toast.error("Please sign in to access your shopping list.");
-        setItems([]);
-        return;
-      }
-
-      if (!res.ok) throw new Error("Failed to load shopping list");
-
-      const data = await res.json();
+      const data = await apiClient.get<any>(`/shopping-list`);
       const mapped = (data.items || []).map(mapBackendItem);
       setItems(mapped);
       if (data.summary?.fromPantry !== undefined) {
         setPantryCount(data.summary.fromPantry);
       }
     } catch (err: any) {
-      console.error("Error loading shopping list:", err);
-      toast.error(err.message || "Failed to load shopping list");
+      if (err?.status === 401) {
+        toast.error("Please sign in to access your shopping list.");
+        setItems([]);
+      } else {
+        console.error("Error loading shopping list:", err);
+        toast.error(err.message || "Failed to load shopping list");
+      }
     } finally {
       setLoading(false);
     }
@@ -107,12 +98,7 @@ export default function ShoppingListPage() {
     // Optimistic UI update
     setItems((prev) => prev.map((i) => (i.id === id ? { ...i, checked: !i.checked } : i)));
     try {
-      const res = await fetch(`${getApiUrl()}/api/shopping-list/${id}/toggle`, {
-        method: "PATCH",
-        credentials: "include",
-      });
-      if (!res.ok) throw new Error("Failed to toggle item");
-      const data = await res.json();
+      const data = await apiClient.patch<any>(`/shopping-list/${id}/toggle`, {});
       setItems((data.items || []).map(mapBackendItem));
     } catch {
       toast.error("Failed to toggle item status.");
@@ -123,12 +109,7 @@ export default function ShoppingListPage() {
   const handleDelete = async (id: string) => {
     setItems((prev) => prev.filter((i) => i.id !== id));
     try {
-      const res = await fetch(`${getApiUrl()}/api/shopping-list/${id}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
-      if (!res.ok) throw new Error("Failed to delete item");
-      const data = await res.json();
+      const data = await apiClient.delete<any>(`/shopping-list/${id}`);
       setItems((data.items || []).map(mapBackendItem));
       toast.success("Item removed from your shopping list.");
     } catch {
@@ -144,20 +125,12 @@ export default function ShoppingListPage() {
       const quantity = match ? parseFloat(match[1]) : 1;
       const unit = match ? match[2] : "pcs";
 
-      const res = await fetch(`${getApiUrl()}/api/shopping-list`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          name: newItem.name,
-          quantity,
-          unit,
-          category: newItem.category,
-        }),
+      const data = await apiClient.post<any>(`/shopping-list`, {
+        name: newItem.name,
+        quantity,
+        unit,
+        category: newItem.category,
       });
-
-      if (!res.ok) throw new Error("Failed to add item");
-      const data = await res.json();
       setItems((data.items || []).map(mapBackendItem));
       toast.success("Item added to your shopping list.");
     } catch (err: any) {
@@ -178,20 +151,12 @@ export default function ShoppingListPage() {
         }
       }
 
-      const res = await fetch(`${getApiUrl()}/api/shopping-list/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          name: updates.name,
-          quantity,
-          unit,
-          category: updates.category,
-        }),
+      const data = await apiClient.patch<any>(`/shopping-list/${id}`, {
+        name: updates.name,
+        quantity,
+        unit,
+        category: updates.category,
       });
-
-      if (!res.ok) throw new Error("Failed to update item");
-      const data = await res.json();
       setItems((data.items || []).map(mapBackendItem));
       toast.success("Shopping item updated.");
     } catch {
@@ -211,42 +176,25 @@ export default function ShoppingListPage() {
     setItems((prev) => prev.filter((i) => !i.checked));
 
     try {
-      const res = await fetch(`${getApiUrl()}/api/shopping-list/completed`, {
-        method: "DELETE",
-        credentials: "include",
-      });
-
-      if (res.status === 401) {
-        toast.error("Please sign in to save shopping list changes.");
-        return;
-      }
-
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.message || "Failed to clear completed items");
-      }
-
-      const data = await res.json();
+      const data = await apiClient.delete<any>(`/shopping-list/completed`);
       if (data.items) {
         setItems(data.items.map(mapBackendItem));
       }
       toast.success(`Cleared ${completedItems.length} completed item${completedItems.length === 1 ? "" : "s"}.`);
     } catch (err: any) {
       setItems(previousItems);
-      toast.error(err.message || "Failed to clear completed items.");
+      if (err?.status === 401) {
+        toast.error("Please sign in to save shopping list changes.");
+      } else {
+        toast.error(err.message || "Failed to clear completed items.");
+      }
     }
   };
 
   const handleOptimize = async () => {
     setOptimizing(true);
     try {
-      const res = await fetch(`${getApiUrl()}/api/shopping-list/optimize`, {
-        method: "POST",
-        credentials: "include",
-      });
-
-      if (!res.ok) throw new Error("Failed to optimize shopping list");
-      const data = await res.json();
+      const data = await apiClient.post<any>(`/shopping-list/optimize`, {});
       setItems((data.items || []).map(mapBackendItem));
       toast.success("Your shopping list has been optimized.");
     } catch {

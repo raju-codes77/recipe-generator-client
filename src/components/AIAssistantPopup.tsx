@@ -5,8 +5,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { FiSend, FiX, FiRefreshCw, FiUser } from "react-icons/fi";
 import { Sparkles } from "lucide-react";
 import FoodCanvasAIIcon from "./FoodCanvasAIIcon";
-import { getApiBaseUrl } from "@/lib/api-url";
 import toast from "react-hot-toast";
+import { apiClient } from "@/lib/api-client";
 
 interface Message {
   sender: "ai" | "user";
@@ -52,18 +52,9 @@ export default function AIAssistantPopup() {
     setLoading(true);
 
     try {
-      const baseUrl = getApiBaseUrl();
-      const res = await fetch(`${baseUrl}/api/chat`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ prompt: textToSend.trim() }),
-      });
+      const data = await apiClient.post<any>("/chat", { prompt: textToSend.trim() });
 
-      const data = await res.json();
-
-      if (res.ok && data.success && data.reply) {
+      if (data.success && data.reply) {
         const aiMessage: Message = { sender: "ai", text: data.reply };
         setMessages((prev) => [...prev, aiMessage]);
         setInputQuery(""); // Clear on success
@@ -71,9 +62,9 @@ export default function AIAssistantPopup() {
         toast.error(data.message || "The AI service is temporarily busy. Please try again in a moment.");
         if (!queryText) setInputQuery(textToSend.trim()); // Preserve input on failure
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to connect to FoodCanvas chat API:", error);
-      toast.error("Unable to reach the culinary assistant. Please check your connection and try again.");
+      toast.error(error.message || "Unable to reach the culinary assistant. Please check your connection and try again.");
       if (!queryText) setInputQuery(textToSend.trim()); // Preserve input on failure
     } finally {
       setLoading(false);

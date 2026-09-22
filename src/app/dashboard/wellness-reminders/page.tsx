@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
+import { apiClient } from "@/lib/api-client";
 
 const CATEGORY_OPTIONS = [
   { id: "hydration", label: "💧 Hydration" },
@@ -23,15 +24,10 @@ export default function WellnessRemindersSettings() {
   useEffect(() => {
     const fetchPreferences = async () => {
       try {
-        const res = await fetch("/api/wellness-reminders/preferences", {
-          credentials: "include"
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setEnabled(data.enabled);
-          setFrequency(data.frequency);
-          setCategories(data.categories);
-        }
+        const data = await apiClient.get<any>("/wellness-reminders/preferences");
+        setEnabled(data.enabled);
+        setFrequency(data.frequency);
+        setCategories(data.categories);
       } catch (err) {
         console.error(err);
       } finally {
@@ -55,16 +51,9 @@ export default function WellnessRemindersSettings() {
 
     setSaving(true);
     try {
-      const res = await fetch("/api/wellness-reminders/preferences", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ enabled, frequency, categories }),
-      });
-      if (res.ok) {
+      const res = await apiClient.put<any>("/wellness-reminders/preferences", { enabled, frequency, categories });
+      if (res) {
         toast.success("Your wellness reminder preferences have been updated. 💚");
-      } else {
-        throw new Error("Failed to save");
       }
     } catch (err) {
       toast.error("We couldn't save your preferences right now. Please try again later.");

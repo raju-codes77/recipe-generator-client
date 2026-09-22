@@ -2,13 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { authClient } from "@/lib/auth-client";
-import { getApiBaseUrl } from "@/lib/api-url";
+import { apiClient } from "@/lib/api-client";
 import { FiFolder } from "react-icons/fi";
 import { ArrowUpRight, Folder, Trash2 } from "lucide-react";
 import Link from "next/link";
 import toast from "react-hot-toast";
-
-const API_BASE = getApiBaseUrl();
 
 interface Collection {
   id: string;
@@ -29,12 +27,8 @@ export default function CollectionsDashboardPage() {
         return;
       }
       try {
-        const response = await fetch(
-          `${API_BASE}/api/collections?userId=${session.user.id}`,
-          { credentials: "include" }
-        );
-        const data = await response.json();
-        if (response.ok && data.success && Array.isArray(data.collections)) {
+        const data = await apiClient.get<any>(`/collections?userId=${session.user.id}`);
+        if (data.success && Array.isArray(data.collections)) {
           setCollections(data.collections);
         }
       } catch (err) {
@@ -52,15 +46,7 @@ export default function CollectionsDashboardPage() {
     e.stopPropagation();
 
     try {
-      const response = await fetch(`${API_BASE}/api/collections`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ collectionId, userId: session?.user?.id }),
-      });
-
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message || "Failed to delete collection");
+      const data = await apiClient.delete<any>(`/collections`, { collectionId, userId: session?.user?.id });
 
       setCollections((prev) => prev.filter((col) => col.id !== collectionId));
       toast.success("Collection deleted successfully!");

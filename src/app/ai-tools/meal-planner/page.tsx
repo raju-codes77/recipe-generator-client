@@ -10,9 +10,7 @@ import {
 import toast, { Toaster } from "react-hot-toast";
 import { authClient } from "@/lib/auth-client";
 
-import { getApiBaseUrl } from "@/lib/api-url";
-
-const apiUrl = getApiBaseUrl();
+import { apiClient } from "@/lib/api-client";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 type MealProfile = {
@@ -131,17 +129,7 @@ function MealProfileOnboarding({ profile, onSave, userId }: { profile: MealProfi
       const payload = { ...formData };
       if (userId) (payload as any).userId = userId;
 
-      const res = await fetch(`${apiUrl}/api/meal-profile`, {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-      if (!res.ok) {
-        const errJson = await res.json().catch(() => ({}));
-        throw new Error(errJson.error || errJson.message || "Failed to save profile");
-      }
-      const saved = await res.json();
+      const saved = await apiClient.post<any>(`/meal-profile`, payload);
       toast.success("Meal Profile Saved!");
       onSave(saved);
     } catch (err: any) {
@@ -154,7 +142,7 @@ function MealProfileOnboarding({ profile, onSave, userId }: { profile: MealProfi
   return (
     <div className="max-w-6xl mx-auto font-sans">
       <div className="relative w-full h-[220px] rounded-3xl overflow-hidden mb-8 shadow-sm">
-        <Image src="/images/meal_profile_hero.jpg" alt="Setup profile" fill className="object-cover" priority />
+        <Image src="/images/meal_profile_hero.jpg" alt="Setup profile" fill sizes="100vw" className="object-cover" priority />
         <div className="absolute inset-0 bg-emerald-900/40 mix-blend-multiply"></div>
         <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent flex flex-col justify-end p-8">
           <div className="inline-block bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest text-emerald-100 mb-3 w-fit border border-white/20 shadow-sm">
@@ -714,9 +702,8 @@ export default function MealPlannerPage() {
   const currency = currencies[country] || "$";
 
   useEffect(() => {
-    const url = userId ? `${apiUrl}/api/meal-profile?userId=${userId}` : `${apiUrl}/api/meal-profile`;
-    fetch(url, { credentials: "include" })
-      .then(res => res.json())
+    const path = userId ? `/meal-profile?userId=${userId}` : `/meal-profile`;
+    apiClient.get<any>(path)
       .then(data => {
         if (data && data.foodPreference) setProfile(data);
         setLoadingProfile(false);
@@ -730,23 +717,14 @@ export default function MealPlannerPage() {
     setPlan(null);
     setApiError(null);
     try {
-      const endpoint = tab === "standard" ? "/api/meal-planner/generate" : "/api/meal-planner/generate-budget";
+      const endpoint = tab === "standard" ? "/meal-planner/generate" : "/meal-planner/generate-budget";
       const payload: any = tab === "standard" 
         ? { days: selectedDays, peopleCount }
         : { country, city, currency, budget, days: selectedDays, peopleCount };
 
       if (userId) payload.userId = userId;
 
-      const res = await fetch(`${apiUrl}${endpoint}`, {
-        method: "POST", credentials: "include", headers: {"Content-Type": "application/json"},
-        body: JSON.stringify(payload)
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || "Failed to generate plan");
-      }
-      
-      const data = await res.json();
+      const data = await apiClient.post<any>(endpoint, payload);
       
       // -- Ensure mathematical accuracy of AI-generated totals --
       const cleanNum = (val: any) => {
@@ -859,7 +837,7 @@ export default function MealPlannerPage() {
           <div className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl" onClick={e => e.stopPropagation()}>
             {modalMeal.image ? (
                <div className="relative h-48 w-full bg-slate-100 dark:bg-slate-800">
-                 <Image src={modalMeal.image} alt={modalMeal.name || "Meal"} fill className="object-cover" />
+                 <Image src={modalMeal.image} alt={modalMeal.name || "Meal"} fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover" />
                  <button onClick={() => setModalMeal(null)} className="absolute top-4 right-4 bg-black/40 text-white p-2 rounded-full hover:bg-black/60 transition backdrop-blur-md"><X size={20} /></button>
                </div>
             ) : (
@@ -925,7 +903,7 @@ export default function MealPlannerPage() {
 
       {/* ── Hero Header ── */}
       <div className="relative w-full h-[300px] bg-slate-900 overflow-hidden">
-        <Image src="/images/meal_planner_hero.jpg" alt="Healthy meal prep" fill className="object-cover opacity-60" priority />
+        <Image src="/images/meal_planner_hero.jpg" alt="Healthy meal prep" fill sizes="100vw" className="object-cover opacity-60" priority />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-900/40 to-transparent"></div>
         <div className="absolute inset-0 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col justify-end pb-12">
           <p className="text-emerald-400 font-bold text-xs tracking-widest uppercase mb-3 flex items-center gap-2">
@@ -1192,7 +1170,7 @@ export default function MealPlannerPage() {
                             {/* Meal Card Header / Visual */}
                             {meal.image ? (
                               <div className="relative w-full aspect-[4/3] bg-slate-100 overflow-hidden shrink-0">
-                                <Image src={meal.image} alt={meal.name} fill className="object-cover group-hover:scale-105 transition duration-700 ease-out" />
+                                <Image src={meal.image} alt={meal.name} fill sizes="(max-width: 768px) 100vw, 33vw" className="object-cover group-hover:scale-105 transition duration-700 ease-out" />
                                 <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-md text-[10px] font-black text-white uppercase tracking-wider z-10">
                                   {meal._typeStr}
                                 </div>

@@ -5,9 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { FiChevronLeft, FiChevronRight, FiArrowLeft, FiClock } from "react-icons/fi";
 
-import { getApiBaseUrl } from "@/lib/api-url";
-
-const API_BASE_URL = getApiBaseUrl();
+import { apiClient } from "@/lib/api-client";
 
 export default function PaginatedAiRecipesPage() {
   const [recipes, setRecipes] = useState<any[]>([]);
@@ -19,14 +17,9 @@ export default function PaginatedAiRecipesPage() {
     async function fetchAiRecipes() {
       setLoading(true);
       try {
-        const res = await fetch(`${API_BASE_URL}/api/dashboard/user/ai-recipes?page=${page}&limit=12`, {
-          credentials: "include"
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setRecipes(data.recipes || []);
-          setPagination(data.pagination);
-        }
+        const data = await apiClient.get<any>(`/dashboard/user/ai-recipes?page=${page}&limit=12`);
+        setRecipes(data.recipes || []);
+        setPagination(data.pagination);
       } catch (err) {
         console.error("Failed to fetch AI recipes", err);
       } finally {
@@ -75,7 +68,7 @@ export default function PaginatedAiRecipesPage() {
                 <div key={rec.id} className="bg-white dark:bg-gray-800 rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100 dark:border-gray-700 group flex flex-col">
                   <div className="relative h-48 w-full bg-gray-100">
                     {rec.image ? (
-                      <Image src={rec.image} alt={rec.title} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
+                      <Image src={rec.image} alt={rec.title} fill sizes="(max-width: 768px) 100vw, 25vw" className="object-cover group-hover:scale-105 transition-transform duration-500" />
                     ) : (
                       <div className="absolute inset-0 flex items-center justify-center text-4xl">🍽️</div>
                     )}

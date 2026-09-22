@@ -25,9 +25,7 @@ import { authClient } from "@/lib/auth-client";
 import Sidebar from "./Sidebar";
 import toast from "react-hot-toast";
 import RecipeSkeleton from "./RecipeSkeleton";
-import { getApiBaseUrl } from "@/lib/api-url";
-
-const API_BASE = getApiBaseUrl();
+import { apiClient } from "@/lib/api-client";
 
 interface Recipe {
   id: string;
@@ -97,12 +95,8 @@ export default function ExploreRecipes() {
       }
       try {
         setIsCollectionsLoading(true);
-        const response = await fetch(
-          `${API_BASE}/api/collections?userId=${session.user.id}`,
-          { credentials: "include" }
-        );
-        const data = await response.json();
-        if (response.ok && data.success && Array.isArray(data.collections)) {
+        const data = await apiClient.get<any>(`/collections?userId=${session.user.id}`);
+        if (data.success && Array.isArray(data.collections)) {
           setCollections(data.collections);
         }
       } catch (err) {
@@ -181,22 +175,7 @@ export default function ExploreRecipes() {
           return;
         }
 
-        const response = await fetch(
-          `${API_BASE}/api/recipes?${params.toString()}`,
-          { credentials: "include" }
-        );
-
-        const contentType = response.headers.get("content-type");
-        let data;
-        if (contentType && contentType.includes("application/json")) {
-          data = await response.json();
-        } else {
-          throw new Error("Received non-JSON response from server");
-        }
-
-        if (!response.ok) {
-          throw new Error(data.message || "Failed to fetch recipes");
-        }
+        const data = await apiClient.get<any>(`/recipes?${params.toString()}`);
 
         if (data.success && Array.isArray(data.recipes)) {
           let fetchedRecipes = data.recipes;
@@ -267,12 +246,8 @@ export default function ExploreRecipes() {
     const handleCollectionUpdate = async () => {
       if (session?.user?.id) {
         try {
-          const response = await fetch(
-            `${API_BASE}/api/collections?userId=${session.user.id}`,
-            { credentials: "include" }
-          );
-          const data = await response.json();
-          if (response.ok && data.success && Array.isArray(data.collections)) {
+          const data = await apiClient.get<any>(`/collections?userId=${session.user.id}`);
+          if (data.success && Array.isArray(data.collections)) {
             setCollections(data.collections);
           }
         } catch (err) {
@@ -291,15 +266,9 @@ export default function ExploreRecipes() {
     e.stopPropagation();
 
     try {
-      const response = await fetch(`${API_BASE}/api/collections`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ collectionId, userId: session?.user?.id }),
+      await apiClient.delete<any>("/collections", {
+        data: { collectionId, userId: session?.user?.id },
       });
-
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message || "Failed to delete collection");
 
       setCollections((prev) => prev.filter((col) => col.id !== collectionId));
       window.dispatchEvent(new Event("collectionUpdated"));

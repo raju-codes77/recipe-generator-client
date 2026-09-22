@@ -5,7 +5,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { useState, useEffect } from "react";
-import { getApiBaseUrl } from "@/lib/api-url";
+import { apiClient } from "@/lib/api-client";
 
 const FALLBACK_AVATARS = [
   "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=60",
@@ -23,12 +23,9 @@ export default function CommunitySection() {
   useEffect(() => {
     async function fetchDynamicCommunityData() {
       try {
-        const apiUrl = getApiBaseUrl();
         // Fetch recent recipes to get real active user avatars
-        const res = await fetch(`${apiUrl}/api/recipes?limit=20`);
-        if (res.ok) {
-          const data = await res.json();
-          if (data.success && data.recipes) {
+        const data = await apiClient.get<any>("/recipes?limit=20");
+        if (data.success && data.recipes) {
             // Extract unique author profile images
             const uniqueAvatars = new Set<string>();
             data.recipes.forEach((recipe: any) => {
@@ -50,7 +47,6 @@ export default function CommunitySection() {
             if (data.total) {
               setTotalUsers(data.total * 12); // Rough multiplier to imply active users based on recipes
             }
-          }
         }
       } catch (error) {
         console.error("Failed to fetch dynamic community data:", error);
