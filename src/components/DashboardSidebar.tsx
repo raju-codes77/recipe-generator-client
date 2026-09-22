@@ -66,7 +66,7 @@ export default function DashboardSidebar() {
         onClick={() => setMobileOpen((open) => !open)}
         aria-label={mobileOpen ? "Close dashboard menu" : "Open dashboard menu"}
         aria-expanded={mobileOpen}
-        className="fixed bottom-[5.75rem] right-5 z-50 flex h-13 w-13 items-center justify-center rounded-2xl border-2 border-emerald-500/35 bg-white text-emerald-700 shadow-[0_10px_28px_rgba(15,80,50,0.22)] transition hover:scale-105 hover:border-emerald-600 hover:shadow-[0_14px_34px_rgba(15,80,50,0.32)] dark:bg-slate-850 sm:bottom-[6.25rem] sm:right-6 sm:h-14 sm:w-14 sm:rounded-[22px] lg:hidden"
+        className="fixed bottom-[5.75rem] right-5 z-40 flex h-13 w-13 items-center justify-center rounded-2xl border-2 border-emerald-500/35 bg-white text-emerald-700 shadow-[0_10px_28px_rgba(15,80,50,0.22)] transition hover:scale-105 hover:border-emerald-600 hover:shadow-[0_14px_34px_rgba(15,80,50,0.32)] dark:bg-slate-850 sm:bottom-[6.25rem] sm:right-6 sm:h-14 sm:w-14 sm:rounded-[22px] lg:hidden"
       >
         {mobileOpen ? <FiX size={23} /> : <FiMenu size={23} />}
       </button>
