@@ -35,11 +35,11 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col overflow-x-hidden bg-slate-100 dark:bg-slate-950 transition-colors duration-300">
-        <div className="">
+        <div className="w-full min-w-0">
           <NotificationProvider>
             <Navbar />
             <AIAssistantPopup/>
-            <main className="flex-1">
+            <main className="w-full min-w-0 flex-1">
               {children}
               <Toaster position="top-right" reverseOrder={false} />
               <WellnessReminderScheduler />
