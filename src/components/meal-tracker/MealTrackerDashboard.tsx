@@ -1,7 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import {
+  ArrowLeft,
   BarChart2,
   Download,
   ChevronLeft,
@@ -45,8 +47,23 @@ function DashboardInner() {
     setCurrentDate((d) => new Date(d.getTime() + 86400000));
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-slate-900 font-sans transition-colors duration-300">
+    <div className="min-h-screen bg-gray-50 dark:bg-black font-sans transition-colors duration-300">
       <div className="max-w-[1400px] mx-auto px-4 py-6 space-y-6">
+        {/* ── Breadcrumb ── */}
+        <div className="flex items-center gap-3">
+          <Link
+            href="/ai-tools"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-[#2c2c32] dark:bg-[#1a1a1f] dark:text-gray-300 dark:hover:bg-[#25252a]"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            Back to AI Tools
+          </Link>
+          <div className="flex items-center gap-1.5 text-xs text-gray-400 sm:text-sm">
+            <span>/</span>
+            <span className="font-semibold text-green-600 dark:text-emerald-400">Meal Tracker</span>
+          </div>
+        </div>
+
         {/* ── Page Header ── */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -70,7 +87,7 @@ function DashboardInner() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1 border border-gray-200 dark:border-slate-700 rounded-xl px-3 py-2 bg-white dark:bg-slate-800 shadow-sm transition-colors">
+            <div className="flex items-center gap-1 border border-gray-200 dark:border-[#2c2c32] rounded-xl px-3 py-2 bg-white dark:bg-[#1a1a1f] shadow-sm transition-colors">
               <Calendar className="w-4 h-4 text-gray-500 dark:text-gray-400 mr-1" />
               <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
                 {formatDate(currentDate)}

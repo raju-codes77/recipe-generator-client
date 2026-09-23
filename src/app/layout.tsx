@@ -15,6 +15,16 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "FoodCanvas",
   description: "Ai Recipe Generator & sharing platform",
+  icons: {
+    icon: [
+      { url: "/favicon.ico", type: "image/x-icon" },
+      { url: "/favicon.png", type: "image/png", sizes: "512x512" },
+    ],
+    shortcut: [{ url: "/favicon.ico", type: "image/x-icon" }],
+    apple: [
+      { url: "/favicon.png", type: "image/png", sizes: "512x512" },
+    ],
+  },
 };
 
 import Navbar from "@/components/Navbar";
@@ -41,7 +51,7 @@ export default function RootLayout({
             <AIAssistantPopup/>
             <main className="w-full min-w-0 flex-1">
               {children}
-              <Toaster position="top-right" reverseOrder={false} />
+              <Toaster position="bottom-right" reverseOrder={false} />
               <WellnessReminderScheduler />
             </main>
             <ConditionalFooter />

@@ -29,7 +29,7 @@ export default function HowItWorks() {
   ];
 
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-3xl p-8 border border-slate-100 dark:border-slate-700 shadow-sm mb-6 h-full flex flex-col justify-center">
+    <div className="bg-white dark:bg-slate-800/50 rounded-3xl p-8 border border-slate-100 dark:border-slate-700 shadow-sm mb-6 h-full flex flex-col justify-center">
       <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-10">How AI Tools Work</h3>
       
       <div className="relative grid grid-cols-2 gap-x-3 gap-y-8 md:flex md:flex-row md:justify-between w-full max-w-4xl mx-auto">

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
 import { ArrowLeft, Award, BookOpen, BookmarkMinus, CalendarDays, Camera, Check, Eye, Heart, LayoutDashboard, MapPin, MessageCircle, Pencil, Pin, UserPlus, X } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
@@ -73,7 +73,11 @@ function ProfileSkeleton() {
 export default function CommunityUserProfilePage() {
   const { userId } = useParams<{ userId: string }>();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { data: session, isPending: isSessionPending } = authClient.useSession();
+  const isDashboardOrigin = searchParams.get("from") === "dashboard";
+  const backHref = isDashboardOrigin ? "/dashboard/users" : "/community";
+  const backLabel = isDashboardOrigin ? "Back to Dashboard" : "Back to Community";
   const [profile, setProfile] = useState<PublicCommunityProfile | null>(null);
   const [viewingStory, setViewingStory] = useState<StoryItem | null>(null);
   const [loading, setLoading] = useState(true);
@@ -109,7 +113,7 @@ export default function CommunityUserProfilePage() {
   const [dmAttachedPost, setDmAttachedPost] = useState<Post | null>(null);
   const [shareModalPost, setShareModalPost] = useState<Post | null>(null);
   const [isSharingPost, setIsSharingPost] = useState(false);
-  const [isUploadingProfileImage, setIsUploadingProfileImage] = useState(false);
+  const [uploadingImageKind, setUploadingImageKind] = useState<"avatar" | "cover" | null>(null);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [profileSaveError, setProfileSaveError] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -596,8 +600,9 @@ export default function CommunityUserProfilePage() {
     event.target.value = "";
 
     if (!isOwnProfile || !session?.user?.id) return;
-    setIsUploadingProfileImage(true);
+    setUploadingImageKind(kind);
     setProfileSaveError(null);
+    if (kind === "avatar") showToast("Uploading profile picture", 0);
     try {
       const imageUrl = await communityApi.uploadImage(file, "profiles", session.user.id);
       const response = await communityApi.updateProfile(kind === "avatar" ? { image: imageUrl } : { coverImage: imageUrl }, session.user.id);
@@ -611,10 +616,13 @@ export default function CommunityUserProfilePage() {
       } : currentProfile);
       if (kind === "avatar") setLocalAvatarImage(imageUrl);
       else setLocalCoverImage(imageUrl);
+      if (kind === "avatar") showToast("Profile picture uploaded");
     } catch (uploadError) {
-      setProfileSaveError(uploadError instanceof Error ? uploadError.message : "Unable to upload the profile image");
+      const message = uploadError instanceof Error ? uploadError.message : `Unable to upload the ${kind === "avatar" ? "profile picture" : "cover image"}`;
+      setProfileSaveError(message);
+      if (kind === "avatar") showToast(message);
     } finally {
-      setIsUploadingProfileImage(false);
+      setUploadingImageKind(null);
     }
   };
 
@@ -644,8 +652,8 @@ export default function CommunityUserProfilePage() {
   return (
     <main onTouchStart={handlePullStart} onTouchMove={handlePullMove} onTouchEnd={handlePullEnd} onTouchCancel={handlePullEnd} className="min-h-screen bg-[#F1F5F0] px-0 pb-10 text-neutral-900 dark:bg-[#090B0A] dark:text-neutral-100 [&_a]:cursor-pointer [&_button]:cursor-pointer sm:px-6 sm:pt-5">
        <div className="mx-auto max-w-5xl">
-        <button onClick={() => router.back()} className="mb-4 ml-4 inline-flex items-center gap-2 text-xs font-semibold text-neutral-500 transition hover:text-[#2F8F46] sm:ml-0 sm:text-sm">
-          <ArrowLeft className="h-4 w-4" /> Back to Community
+        <button onClick={() => router.push(backHref)} className="mb-4 ml-4 inline-flex items-center gap-2 text-xs font-semibold text-neutral-500 transition hover:text-[#2F8F46] sm:ml-0 sm:text-sm">
+          <ArrowLeft className="h-4 w-4" /> {backLabel}
         </button>
 
         <section className="relative overflow-hidden border-y border-slate-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-[#121614] sm:rounded-3xl sm:border">
@@ -672,7 +680,7 @@ export default function CommunityUserProfilePage() {
             {coverImage && <img src={coverImage} alt="Profile cover" className="h-full w-full cursor-pointer object-cover" />}
             {isOwnProfile && <>
               <input ref={coverInputRef} type="file" accept="image/*" className="hidden" onChange={(event) => void handleProfileImage(event, "cover")} />
-              <button type="button" disabled={isUploadingProfileImage} aria-busy={isUploadingProfileImage} onClick={(event) => { event.preventDefault(); event.stopPropagation(); if (!isUploadingProfileImage) coverInputRef.current?.click(); }} className="absolute bottom-3 right-3 z-20 inline-flex cursor-pointer items-center gap-2 rounded-xl bg-black/65 px-3 py-2 text-xs font-bold text-white backdrop-blur transition hover:bg-black/80 disabled:cursor-wait disabled:opacity-60"><Camera className="h-4 w-4" /> {isUploadingProfileImage ? "Uploading..." : "Change cover"}</button>
+              <button type="button" disabled={uploadingImageKind !== null} aria-busy={uploadingImageKind === "cover"} onClick={(event) => { event.preventDefault(); event.stopPropagation(); if (uploadingImageKind === null) coverInputRef.current?.click(); }} className="absolute bottom-3 right-3 z-20 inline-flex cursor-pointer items-center gap-2 rounded-xl bg-black/65 px-3 py-2 text-xs font-bold text-white backdrop-blur transition hover:bg-black/80 disabled:cursor-wait disabled:opacity-60"><Camera className="h-4 w-4" /> {uploadingImageKind === "cover" ? "Uploading..." : "Change cover"}</button>
             </>}
           </div>
 
@@ -686,7 +694,7 @@ export default function CommunityUserProfilePage() {
                 {profileMenuOpen && canOpenProfileMenu && <div className="absolute left-0 top-[calc(100%+0.75rem)] z-50 w-64 rounded-2xl border border-neutral-700 bg-[#242725] p-2 text-left shadow-2xl">
                   {hasProfileImage && <button type="button" onClick={() => { setSelectedImage({ src: localAvatarImage || profile.user.avatar, alt: `${profile.user.name}'s profile picture` }); setProfileMenuOpen(false); }} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-white hover:bg-white/10"><Eye className="h-5 w-5 text-neutral-300" /> View profile picture</button>}
                   {isOwnProfile && <>
-                    <button type="button" disabled={isUploadingProfileImage} onClick={() => { avatarInputRef.current?.click(); setProfileMenuOpen(false); }} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-white hover:bg-white/10 disabled:opacity-60"><Camera className="h-5 w-5 text-neutral-300" /> Choose profile picture</button>
+                    <button type="button" disabled={uploadingImageKind !== null} onClick={() => { avatarInputRef.current?.click(); setProfileMenuOpen(false); }} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-white hover:bg-white/10 disabled:opacity-60"><Camera className="h-5 w-5 text-neutral-300" /> Choose profile picture</button>
                     <button type="button" onClick={() => { storyInputRef.current?.click(); setProfileMenuOpen(false); }} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-white hover:bg-white/10"><span className="text-lg">＋</span> Add to story</button>
                   </>}
                   {hasStories && <button type="button" onClick={() => { setViewingStory(storyGroup[0] ?? null); setProfileMenuOpen(false); }} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-white hover:bg-white/10"><Eye className="h-5 w-5 text-[#B7E35F]" /> View story</button>}
@@ -1010,9 +1018,9 @@ export default function CommunityUserProfilePage() {
       <style>{`@keyframes community-validation-dot { 0%, 100% { opacity: 0.2; } 35% { opacity: 1; } }`}</style>
       {toastMessage && (
         <div className={`fixed bottom-6 left-1/2 z-[100] -translate-x-1/2 rounded-xl border px-4 py-3 text-center text-sm font-semibold text-white shadow-2xl ${/\b(rejected|not approved)\b/i.test(toastMessage) ? "border-red-500/90 bg-[#2a1515]/90" : "border-[#2F8F46] bg-[#151916]/90"}`}>
-          {toastMessage === "Validating food image" ? (
-            <span className="inline-flex items-baseline" aria-label="Validating food image">
-              <span>Validating food image</span>
+          {toastMessage === "Validating food image" || toastMessage === "Uploading profile picture" ? (
+            <span className="inline-flex items-baseline" aria-label={toastMessage}>
+              <span>{toastMessage}</span>
               <span className="ml-0.5 inline-flex w-4" aria-hidden="true">
                 {[0, 1, 2].map((dot) => (
                   <span

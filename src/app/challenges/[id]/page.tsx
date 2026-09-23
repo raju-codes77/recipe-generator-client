@@ -11,7 +11,7 @@ export default async function ChallengeDetailsPage({ params }: { params: Promise
   if (!challenge) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh]">
-        <h2 className="text-2xl font-bold text-green-950 mb-4">Challenge Not Found</h2>
+        <h2 className="text-2xl font-bold text-green-950 dark:text-emerald-300 mb-4">Challenge Not Found</h2>
         <Link href="/challenges" className="text-green-600 hover:underline">Return to Challenges</Link>
       </div>
     );
@@ -23,7 +23,7 @@ export default async function ChallengeDetailsPage({ params }: { params: Promise
         <ArrowLeft size={20} /> Back to Challenges
       </Link>
 
-      <div className="bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100">
+      <div className="bg-white dark:bg-[#1a1a1f] rounded-3xl overflow-hidden shadow-sm border border-gray-100 dark:border-[#3a3a40]">
         <div className="relative h-[300px] md:h-[400px] w-full">
           <Image
             src={challenge.coverImage || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=1200&auto=format&fit=crop&q=80"}

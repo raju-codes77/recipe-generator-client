@@ -7,13 +7,15 @@ import Link from "next/link";
 import {
   FiHome, FiUsers, FiBookOpen, FiFolder, FiAward, FiMessageSquare,
   FiAlertCircle, FiCpu, FiShield, FiMenu, FiX, FiActivity,
-  FiBox, FiCalendar, FiShoppingCart, FiList, FiGrid, FiHeart
+  FiBox, FiCalendar, FiShoppingCart, FiList, FiGrid, FiHeart, FiUser
 } from "react-icons/fi";
 import { FaDochub } from "react-icons/fa6";
+import { authClient } from "@/lib/auth-client";
 
 export default function DashboardSidebar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
+  const { data: session } = authClient.useSession();
 
 
   const isAdmin = pathname?.includes("/admin");
@@ -34,7 +36,7 @@ export default function DashboardSidebar() {
     { name: "Wellness Hub", icon: <FiHeart />, href: "/dashboard/users/wellness" },
     { name: "Consultation", icon: <FaDochub />, href: "/dashboard/users/health-consultant" },
     { name: "My Recipes", icon: <FiBookOpen />, href: "/dashboard/users/recipes" },
-    { name: "Generate Recipe", icon: <FiCpu />, href: "/dashboard/users/ai-recepi-generator", badge: "AI" },
+    { name: "Flavor AI", icon: <FiCpu />, href: "/dashboard/users/ai-recepi-generator", badge: "AI" },
     { name: "Collections", icon: <FiFolder />, href: "/dashboard/users/collections" },
     { name: "Challenges", icon: <FiAward />, href: "/dashboard/users/challenges" },
     { name: "Wellness Reminders", icon: <FiAlertCircle />, href: "/dashboard/wellness-reminders" },
@@ -53,7 +55,7 @@ export default function DashboardSidebar() {
   const communityNavItems = [
     { name: "Feed", icon: <FiList />, href: "/community" },
     { name: "All Recipes", icon: <FiGrid />, href: "/recipes" },
-    { name: "Community", icon: <FiUsers />, href: "/community" },
+    { name: "Community Profile", icon: <FiUser />, href: session?.user?.id ? `/community/users/${encodeURIComponent(session.user.id)}?from=dashboard` : "/community" },
   ];
 
   return (
@@ -66,7 +68,7 @@ export default function DashboardSidebar() {
         onClick={() => setMobileOpen((open) => !open)}
         aria-label={mobileOpen ? "Close dashboard menu" : "Open dashboard menu"}
         aria-expanded={mobileOpen}
-        className="fixed bottom-[5.75rem] right-5 z-40 flex h-13 w-13 items-center justify-center rounded-2xl border-2 border-emerald-500/35 bg-white text-emerald-700 shadow-[0_10px_28px_rgba(15,80,50,0.22)] transition hover:scale-105 hover:border-emerald-600 hover:shadow-[0_14px_34px_rgba(15,80,50,0.32)] dark:bg-slate-850 sm:bottom-[6.25rem] sm:right-6 sm:h-14 sm:w-14 sm:rounded-[22px] lg:hidden"
+        className="fixed bottom-[5.75rem] right-5 z-[60] flex h-13 w-13 items-center justify-center rounded-2xl border-2 border-emerald-500/35 bg-white text-emerald-700 shadow-[0_10px_28px_rgba(15,80,50,0.22)] transition hover:scale-105 hover:border-emerald-600 hover:shadow-[0_14px_34px_rgba(15,80,50,0.32)] dark:bg-slate-850 sm:bottom-[6.25rem] sm:right-6 sm:h-14 sm:w-14 sm:rounded-[22px] lg:hidden"
       >
         {mobileOpen ? <FiX size={23} /> : <FiMenu size={23} />}
       </button>
@@ -90,7 +92,7 @@ export default function DashboardSidebar() {
         border-r border-[#dfe8da] bg-[#fbfdf9] p-4 shadow-[8px_0_30px_rgba(40,70,45,0.04)] transition-transform duration-300 ease-in-out dark:border-white/10 dark:bg-[#101611] lg:p-5
         ${mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
       `}>
-        <div className="dashboard-sidebar-scrollbar space-y-6 overflow-y-auto pt-0">
+        <div className="dashboard-sidebar-scrollbar -mr-2 space-y-6 overflow-y-auto pt-0 pr-2">
 
           {/* Dashboard identity */}
           <div className="mb-3 flex items-center space-x-3 px-2">
@@ -196,7 +198,9 @@ export default function DashboardSidebar() {
                 <p className="px-3 text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">Community</p>
                 <div className="space-y-1">
                   {communityNavItems.map((item, idx) => {
-                    const isActive = pathname === item.href;
+                    const isActive = item.name === "Community Profile"
+                      ? pathname.startsWith("/community/users/")
+                      : pathname === item.href;
                     return (
                       <Link
                         key={idx}

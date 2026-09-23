@@ -16,7 +16,7 @@ export default function AIAnalysisCard() {
   ];
 
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm p-5 flex flex-col gap-4">
+    <div className="bg-white dark:bg-[#1a1a1f] rounded-2xl border border-gray-200 dark:border-[#2c2c32] shadow-sm p-5 flex flex-col gap-4">
       <h3 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
         <span
           className={`inline-block w-2 h-2 rounded-full ${

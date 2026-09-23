@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { 
   User, Check, ChevronRight, Settings, Plus, RefreshCw, 
   MapPin, ShoppingBasket, DollarSign, Leaf, ChefHat, 
@@ -61,7 +62,7 @@ const ChipInput = ({
           These will be treated as strict exclusions when generating meals.
         </p>
       )}
-      <div className={`p-2 rounded-2xl border bg-slate-50 dark:bg-slate-800 transition-colors ${isWarning ? "border-amber-200 focus-within:border-amber-500" : "border-slate-200 focus-within:border-emerald-500"}`}>
+      <div className={`p-2 rounded-2xl border bg-slate-50 dark:bg-[#25252a] transition-colors ${isWarning ? "border-amber-200 focus-within:border-amber-500" : "border-slate-200 dark:border-[#3a3a40] focus-within:border-emerald-500"}`}>
         <div className="flex flex-wrap gap-2 mb-2">
           {values.map(v => (
             <span key={v} className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-sm font-semibold shadow-sm ${isWarning ? "bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300" : "bg-white text-slate-700 dark:bg-slate-700 dark:text-slate-200"}`}>
@@ -141,6 +142,22 @@ function MealProfileOnboarding({ profile, onSave, userId }: { profile: MealProfi
 
   return (
     <div className="max-w-6xl mx-auto font-sans">
+      <div className="flex items-center gap-3 mb-6">
+        <Link
+          href="/ai-tools"
+          className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50 dark:border-[#2c2c32] dark:bg-[#1a1a1f] dark:text-slate-300 dark:hover:bg-[#25252a]"
+        >
+          <ArrowLeft size={16} />
+          Back to AI Tools
+        </Link>
+        <div className="flex items-center gap-1.5 text-sm text-slate-400">
+          <span>/</span>
+          <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+            Create your meal profile
+          </span>
+        </div>
+      </div>
+
       <div className="relative w-full h-[220px] rounded-3xl overflow-hidden mb-8 shadow-sm">
         <Image src="/images/meal_profile_hero.jpg" alt="Setup profile" fill sizes="100vw" className="object-cover" priority />
         <div className="absolute inset-0 bg-emerald-900/40 mix-blend-multiply"></div>
@@ -155,7 +172,7 @@ function MealProfileOnboarding({ profile, onSave, userId }: { profile: MealProfi
 
       <div className="flex flex-col lg:flex-row gap-8">
         <div className="hidden lg:block w-64 shrink-0">
-          <div className="sticky top-8 bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
+          <div className="sticky top-24 bg-white dark:bg-[#1a1a1f] p-6 rounded-3xl border border-slate-200 dark:border-[#2c2c32] shadow-sm">
             <h3 className="font-bold text-slate-900 dark:text-white mb-6 uppercase tracking-wider text-xs text-slate-400">Onboarding Progress</h3>
             <div className="space-y-4">
               {stepsList.map(s => (
@@ -180,7 +197,7 @@ function MealProfileOnboarding({ profile, onSave, userId }: { profile: MealProfi
           </div>
         </div>
 
-        <div className="flex-1 bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-10 border border-slate-200 dark:border-slate-800 shadow-sm mb-24 lg:mb-0">
+        <div className="flex-1 bg-white dark:bg-[#1a1a1f] rounded-3xl p-6 md:p-10 border border-slate-200 dark:border-[#2c2c32] shadow-sm mb-24 lg:mb-0">
           
           {step === 1 && (
             <div className="animate-in fade-in slide-in-from-right-4 duration-300">
@@ -192,7 +209,7 @@ function MealProfileOnboarding({ profile, onSave, userId }: { profile: MealProfi
                   { id: "Non-Vegetarian", icon: "🥩" }, { id: "Vegetarian", icon: "🥗" }, 
                   { id: "Vegan", icon: "🌱" }, { id: "Halal", icon: "🌙" }
                 ].map(p => (
-                  <button key={p.id} onClick={() => setFormData({...formData, foodPreference: p.id})} className={`p-4 rounded-2xl border-2 text-left transition-all ${formData.foodPreference === p.id ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20" : "border-slate-100 bg-white hover:border-slate-200 dark:bg-slate-800 dark:border-slate-700"}`}>
+                  <button key={p.id} onClick={() => setFormData({...formData, foodPreference: p.id})} className={`p-4 rounded-2xl border-2 text-left transition-all ${formData.foodPreference === p.id ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20" : "border-slate-100 bg-white hover:border-slate-200 dark:bg-[#25252a] dark:border-[#3a3a40]"}`}>
                     <div className="flex justify-between items-start mb-2">
                       <span className="text-2xl">{p.icon}</span>
                       {formData.foodPreference === p.id && <div className="w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center"><Check size={12} className="text-white"/></div>}
@@ -221,7 +238,7 @@ function MealProfileOnboarding({ profile, onSave, userId }: { profile: MealProfi
                   { id: "Muscle Building", icon: "💪", desc: "Prioritize protein-rich meals." },
                   { id: "Balanced Diet", icon: "🍎", desc: "Overall health and wellness." }
                 ].map(g => (
-                  <button key={g.id} onClick={() => setFormData({...formData, healthGoal: g.id})} className={`p-4 rounded-2xl border-2 text-left flex gap-4 transition-all ${formData.healthGoal === g.id ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20" : "border-slate-100 bg-white hover:border-slate-200 dark:bg-slate-800 dark:border-slate-700"}`}>
+                  <button key={g.id} onClick={() => setFormData({...formData, healthGoal: g.id})} className={`p-4 rounded-2xl border-2 text-left flex gap-4 transition-all ${formData.healthGoal === g.id ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20" : "border-slate-100 bg-white hover:border-slate-200 dark:bg-[#25252a] dark:border-[#3a3a40]"}`}>
                     <span className="text-2xl">{g.icon}</span>
                     <div>
                       <h4 className={`font-bold text-sm mb-1 ${formData.healthGoal === g.id ? "text-emerald-900 dark:text-emerald-100" : "text-slate-800 dark:text-slate-200"}`}>{g.id}</h4>
@@ -238,7 +255,7 @@ function MealProfileOnboarding({ profile, onSave, userId }: { profile: MealProfi
                   { id: "Moderate (20-40 min)", label: "Moderate", desc: "20-40m" },
                   { id: "Flexible", label: "Flexible", desc: "Any time" }
                 ].map(c => (
-                  <button key={c.id} onClick={() => setFormData({...formData, cookingTime: c.id})} className={`p-3 rounded-2xl border-2 text-center transition-all ${formData.cookingTime === c.id ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20" : "border-slate-100 bg-white hover:border-slate-200 dark:bg-slate-800 dark:border-slate-700"}`}>
+                  <button key={c.id} onClick={() => setFormData({...formData, cookingTime: c.id})} className={`p-3 rounded-2xl border-2 text-center transition-all ${formData.cookingTime === c.id ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20" : "border-slate-100 bg-white hover:border-slate-200 dark:bg-[#25252a] dark:border-[#3a3a40]"}`}>
                     <span className={`block font-bold text-sm ${formData.cookingTime === c.id ? "text-emerald-900 dark:text-emerald-100" : "text-slate-800 dark:text-slate-200"}`}>{c.label}</span>
                     <span className="text-[10px] text-slate-500">{c.desc}</span>
                   </button>
@@ -255,9 +272,9 @@ function MealProfileOnboarding({ profile, onSave, userId }: { profile: MealProfi
               <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-2">Any dietary restrictions?</h2>
               <p className="text-slate-500 mb-8">Select any specific diets you follow. You can choose multiple.</p>
 
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 {["None", "Low Carb", "Low Sodium", "Gluten Free", "High Protein", "Low Fat"].map(r => (
-                  <button key={r} onClick={() => handleArrayToggle("dietaryRestrictions", r, true)} className={`p-4 rounded-2xl border-2 text-center font-bold text-sm transition-all ${formData.dietaryRestrictions.includes(r) ? "border-emerald-500 bg-emerald-50 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-300" : "border-slate-100 bg-white text-slate-600 hover:border-slate-200 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-400"}`}>
+                  <button key={r} onClick={() => handleArrayToggle("dietaryRestrictions", r, true)} className={`p-4 rounded-2xl border-2 text-center font-bold text-sm transition-all ${formData.dietaryRestrictions.includes(r) ? "border-emerald-500 bg-emerald-50 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-300" : "border-slate-100 bg-white text-slate-600 hover:border-slate-200 dark:bg-[#25252a] dark:border-[#3a3a40] dark:text-slate-400"}`}>
                     {r}
                   </button>
                 ))}
@@ -270,7 +287,7 @@ function MealProfileOnboarding({ profile, onSave, userId }: { profile: MealProfi
               <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-2">Tell us about your daily routine</h2>
               <p className="text-slate-500 mb-8">We&apos;ll structure your meal plan to fit your schedule.</p>
 
-              <div className="mb-8 p-6 bg-slate-50 dark:bg-slate-800/50 rounded-3xl border border-slate-100 dark:border-slate-800">
+                <div className="mb-8 p-6 bg-slate-50 dark:bg-[#25252a] rounded-3xl border border-slate-100 dark:border-[#3a3a40]">
                 <label className="block text-sm font-bold text-slate-900 dark:text-white mb-1">Daily Meals</label>
                 <p className="text-xs text-slate-500 mb-4">How many meals do you usually eat each day?</p>
                 <div className="flex items-center gap-6 max-w-[200px]">
@@ -295,7 +312,7 @@ function MealProfileOnboarding({ profile, onSave, userId }: { profile: MealProfi
                   { id: "Breakfast", icon: "🍳" }, { id: "Lunch", icon: "🥗" }, 
                   { id: "Dinner", icon: "🍲" }, { id: "Snacks", icon: "🍎" }
                 ].map(m => (
-                  <button key={m.id} onClick={() => handleArrayToggle("mealPreferences", m.id)} className={`p-4 rounded-2xl border-2 text-left flex items-center gap-3 transition-all ${formData.mealPreferences.includes(m.id) ? "border-emerald-500 bg-emerald-50 text-emerald-900 dark:bg-emerald-900/20 dark:text-emerald-100" : "border-slate-100 bg-white text-slate-600 hover:border-slate-200 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-400"}`}>
+                  <button key={m.id} onClick={() => handleArrayToggle("mealPreferences", m.id)} className={`p-4 rounded-2xl border-2 text-left flex items-center gap-3 transition-all ${formData.mealPreferences.includes(m.id) ? "border-emerald-500 bg-emerald-50 text-emerald-900 dark:bg-emerald-900/20 dark:text-emerald-100" : "border-slate-100 bg-white text-slate-600 hover:border-slate-200 dark:bg-[#25252a] dark:border-[#3a3a40] dark:text-slate-400"}`}>
                     <span className="text-xl">{m.icon}</span>
                     <span className="font-bold text-sm">{m.id}</span>
                   </button>
@@ -375,7 +392,7 @@ function MealProfileOnboarding({ profile, onSave, userId }: { profile: MealProfi
         </div>
       </div>
 
-      <div className="fixed bottom-0 left-0 w-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 p-4 lg:relative lg:bg-transparent lg:border-t-0 lg:p-0 lg:mt-6 z-40">
+      <div className="fixed bottom-0 left-0 w-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 p-4 lg:relative lg:!bg-transparent lg:!border-t-0 lg:p-0 lg:mt-6 z-40">
         <div className="max-w-6xl mx-auto flex justify-between items-center lg:justify-end lg:gap-4">
           {step > 1 && (
             <button onClick={() => setStep(step - 1)} className="px-6 py-3.5 rounded-xl font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 flex items-center gap-2 transition">
@@ -737,7 +754,7 @@ export default function MealPlannerPage() {
       let totalCost = 0;
       let totalCalories = 0;
       let totalProtein = 0;
-      let validDaysCount = data.days?.length || 0;
+      const validDaysCount = data.days?.length || 0;
 
       if (data.days && Array.isArray(data.days)) {
         data.days.forEach((day: any) => {
@@ -807,7 +824,7 @@ export default function MealPlannerPage() {
 
   if (!profile || editProfile) {
     return (
-      <div className="bg-slate-50 dark:bg-slate-950 min-h-screen pt-8 px-4 pb-24">
+      <div className="bg-slate-50 dark:bg-black min-h-screen pt-8 px-4 pb-24">
         <MealProfileOnboarding profile={profile} onSave={(p) => { setProfile(p); setEditProfile(false); }} userId={userId} />
       </div>
     );
@@ -829,7 +846,7 @@ export default function MealPlannerPage() {
   }, 0) || 0;
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-24 font-sans text-slate-800 dark:text-slate-200">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-8 font-sans text-slate-800 dark:text-slate-200">
 
       {/* ── Modal Overlay for Meal Details ── */}
       {modalMeal && (
@@ -901,11 +918,27 @@ export default function MealPlannerPage() {
         </div>
       )}
 
+      <div className="mx-auto max-w-7xl px-4 pt-8 sm:px-6 lg:px-8">
+        <div className="mb-6 flex items-center gap-3">
+          <Link
+            href="/ai-tools"
+            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-emerald-300 hover:text-emerald-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-emerald-500 dark:hover:text-emerald-400"
+          >
+            <ArrowLeft size={16} />
+            Back to AI Tools
+          </Link>
+          <span className="text-slate-400 dark:text-slate-600">/</span>
+          <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
+            {tab === "standard" ? "Smart Meal Planner" : "Budget Meal Planner"}
+          </span>
+        </div>
+      </div>
+
       {/* ── Hero Header ── */}
-      <div className="relative w-full h-[300px] bg-slate-900 overflow-hidden">
+      <div className="relative mx-auto h-[300px] max-w-7xl overflow-hidden rounded-3xl bg-slate-900">
         <Image src="/images/meal_planner_hero.jpg" alt="Healthy meal prep" fill sizes="100vw" className="object-cover opacity-60" priority />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-900/40 to-transparent"></div>
-        <div className="absolute inset-0 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col justify-end pb-12">
+        <div className="absolute inset-0 flex flex-col justify-end px-6 pb-12 sm:px-8 lg:px-12">
           <p className="text-emerald-400 font-bold text-xs tracking-widest uppercase mb-3 flex items-center gap-2">
             <ChefHat size={16} /> AI MEAL PLANNER
           </p>
@@ -933,8 +966,8 @@ export default function MealPlannerPage() {
 
         {/* ── Plan Configuration ── */}
         {!plan && !generating && (
-          <div className="max-w-3xl">
-            <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm mb-6">
+          <div className="w-full">
+            <div className="max-w-3xl bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm mb-6">
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div>
@@ -1002,7 +1035,7 @@ export default function MealPlannerPage() {
             </div>
 
             {apiError && (
-              <div className="bg-red-50 border border-red-200 text-red-800 rounded-2xl p-6 flex flex-col items-start gap-3">
+              <div className="max-w-3xl bg-red-50 border border-red-200 text-red-800 rounded-2xl p-6 flex flex-col items-start gap-3">
                 <div>
                   <h4 className="font-bold text-sm mb-1">We couldn&apos;t create your meal plan right now.</h4>
                   <p className="text-xs opacity-90">Please try again.</p>
@@ -1012,7 +1045,7 @@ export default function MealPlannerPage() {
             )}
 
             {!apiError && (
-              <div className="mt-12 text-center flex flex-col items-center opacity-60">
+              <div className="mx-auto mt-8 flex w-full flex-col items-center justify-center text-center opacity-60">
                 <div className="w-20 h-20 bg-slate-200 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4">
                   <Leaf size={28} className="text-slate-400" />
                 </div>
@@ -1024,7 +1057,7 @@ export default function MealPlannerPage() {
 
         {/* ── Loading State ── */}
         {generating && (
-          <div className="max-w-3xl py-12 flex flex-col items-center text-center animate-in fade-in">
+          <div className="mx-auto flex min-h-[45vh] w-full max-w-3xl flex-col items-center justify-center py-12 text-center animate-in fade-in">
             <div className="relative w-24 h-24 mb-6">
               <div className="absolute inset-0 border-4 border-slate-100 dark:border-slate-800 rounded-full"></div>
               <div className="absolute inset-0 border-4 border-emerald-500 rounded-full border-t-transparent animate-spin"></div>
@@ -1132,7 +1165,7 @@ export default function MealPlannerPage() {
                       const allMeals: any[] = [];
                       
                       mealTypes.forEach(mealType => {
-                        let rawData = activeDayData.meals?.[mealType];
+                        const rawData = activeDayData.meals?.[mealType];
                         if (!rawData) return;
                         
                         const processMeal = (rawMeal: any, index: number, isArray: boolean) => {
