@@ -39,11 +39,16 @@ function resolveUrl(endpoint: string): string {
   // Clean endpoint
   const cleanEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
   
-  if (cleanEndpoint.startsWith("/api/")) {
-    return cleanEndpoint;
-  } else {
-    return `/api${cleanEndpoint}`;
+  const path = cleanEndpoint.startsWith("/api/") ? cleanEndpoint : `/api${cleanEndpoint}`;
+
+  // If running on the server (Next.js SSR/RSC), we MUST provide an absolute URL.
+  // We use BACKEND_URL to bypass the frontend proxy and hit the backend directly.
+  if (typeof window === "undefined") {
+    return `${BACKEND_URL}${path}`;
   }
+
+  // On the client, use relative path to route through the Next.js proxy
+  return path;
 }
 
 async function request<T>(endpoint: string, method: HttpMethod, options: RequestOptions = {}): Promise<T> {

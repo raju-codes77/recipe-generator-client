@@ -70,6 +70,7 @@ async function proxyRequest(request: Request, props: { params: Promise<{ proxy: 
       method: request.method,
       headers,
       cache: "no-store",
+      redirect: "manual", // CRITICAL: Do not follow redirects silently, pass them to the client
     };
 
     if (request.method !== "GET" && request.method !== "HEAD") {
@@ -100,6 +101,18 @@ async function proxyRequest(request: Request, props: { params: Promise<{ proxy: 
       for (let cookie of setCookies) {
         cookie = cookie.replace(/Domain=[^;]+;?\s*/gi, "");
         responseHeaders.append("set-cookie", cookie);
+      }
+    }
+
+    // Rewrite Location header if the backend tries to redirect to itself instead of the frontend
+    if (responseHeaders.has("location")) {
+      const location = responseHeaders.get("location");
+      if (location) {
+        // If the redirect is relative, or points to the backend, make it point to the frontend
+        if (location.startsWith("/") || location.includes("food-canvas-server.vercel.app") || location.includes("localhost:5000")) {
+          const newLocation = new URL(location, "https://food-canvas.vercel.app").toString();
+          responseHeaders.set("location", newLocation);
+        }
       }
     }
 

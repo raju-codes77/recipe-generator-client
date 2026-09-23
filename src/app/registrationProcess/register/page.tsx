@@ -156,7 +156,7 @@ export default function RegisterPage() {
       // local development and production (food-canvas.vercel.app), never hardcoded localhost
       const appUrl = typeof window !== "undefined"
         ? window.location.origin
-        : (process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000");
+        : (process.env.NEXT_PUBLIC_LOCAL_URL || "http://localhost:3000");
       await authClient.signIn.social({
         provider: "google",
         callbackURL: `${appUrl}/`,
