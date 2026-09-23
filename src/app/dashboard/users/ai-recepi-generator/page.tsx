@@ -74,10 +74,10 @@ export default function AIChatbotPage() {
 
   return (
     <div className="min-h-screen bg-[#f4f7f1] px-3 py-4 transition-colors dark:bg-[#0e140f] sm:px-6 sm:py-6 lg:px-8">
-      <div className="mx-auto flex min-h-[calc(100vh-2rem)] w-full max-w-5xl flex-col overflow-hidden rounded-[30px] border border-[#dfe8da] bg-[#fffefa] shadow-[0_24px_80px_rgba(43,77,51,0.12)] dark:border-white/10 dark:bg-[#151b17] sm:min-h-[calc(100vh-3rem)]">
+      <div className="mx-auto flex h-[calc(100vh-8rem)] min-h-[640px] w-full max-w-5xl flex-col overflow-hidden rounded-[30px] border border-[#dfe8da] bg-[#fffefa] shadow-[0_24px_80px_rgba(43,77,51,0.12)] dark:border-white/10 dark:bg-[#151b17]">
         
         {/* Chat Header */}
-        <div className="relative flex items-center justify-between overflow-hidden bg-linear-to-br from-[#1f6a3a] via-[#2F8F46] to-[#174f2b] px-5 py-5 text-white shadow-md sm:px-7">
+        <div className="relative flex shrink-0 items-center justify-between overflow-hidden bg-linear-to-br from-[#1f6a3a] via-[#2F8F46] to-[#174f2b] px-5 py-5 text-white shadow-md sm:px-7">
           <span className="absolute -right-12 -top-20 h-48 w-48 rounded-full border-22 border-[#f8c657]/20" />
           <div className="relative flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/15 text-[#ffe1a6] shadow-inner ring-1 ring-white/20">
@@ -100,7 +100,7 @@ export default function AIChatbotPage() {
         </div>
 
         {/* Chat Messages Body Area */}
-        <div className="flex-1 overflow-y-auto bg-[#f8f8f3] p-4 dark:bg-[#101511] sm:min-h-112.5 sm:p-7">
+        <div className="flavor-ai-chat-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain bg-[#f8f8f3] p-4 dark:bg-[#101511] sm:p-7">
           <div className="mb-6 flex flex-wrap items-center gap-2 border-b border-[#e6ebe1] pb-4 dark:border-white/10">
             <span className="flex items-center gap-1.5 rounded-full bg-[#edf6e8] px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-[#2F8F46] dark:bg-[#2F8F46]/15 dark:text-[#b7df86]"><SparkleIcon size={12} /> Recipe studio</span>
             <span className="text-[11px] text-slate-400 dark:text-white/40">Recipes · meal plans · cooking tips</span>
@@ -156,7 +156,7 @@ export default function AIChatbotPage() {
         </div>
 
         {/* Trending Suggestions Bar */}
-        <div className="border-t border-[#e7ebe2] bg-[#fffefa] px-4 py-4 dark:border-white/10 dark:bg-[#151b17] sm:px-7">
+        <div className="shrink-0 border-t border-[#e7ebe2] bg-[#fffefa] px-4 py-4 dark:border-white/10 dark:bg-[#151b17] sm:px-7">
           <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.16em] text-gray-400 dark:text-[#F6F0D7]/50">
             Start with an idea
           </p>
@@ -175,7 +175,7 @@ export default function AIChatbotPage() {
         </div>
 
         {/* Input Form Footer */}
-        <div className="border-t border-[#e7ebe2] bg-[#fffefa] p-4 dark:border-white/10 dark:bg-[#151b17] sm:p-6">
+        <div className="shrink-0 border-t border-[#e7ebe2] bg-[#fffefa] p-4 dark:border-white/10 dark:bg-[#151b17] sm:p-6">
           <form 
             onSubmit={(e) => {
               e.preventDefault();

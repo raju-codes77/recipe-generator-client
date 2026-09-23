@@ -21,9 +21,10 @@ interface RecipeDetailsModalProps {
   onLoadComments?: () => Promise<Comment[]>;
   onLoadLikers?: () => Promise<CommunityPostLiker[]>;
   onOpenProfile?: (userId: string) => void;
+  initialShowComments?: boolean;
 }
 
-export const RecipeDetailsModal: React.FC<RecipeDetailsModalProps> = ({ post, isOpen, onClose, fullScreen = false, currentUserId, onLike, onSave, onEditPost, onDeletePost, onAddComment, onUpdateComment, onDeleteComment, onLoadComments, onLoadLikers, onOpenProfile }) => {
+export const RecipeDetailsModal: React.FC<RecipeDetailsModalProps> = ({ post, isOpen, onClose, fullScreen = false, currentUserId, onLike, onSave, onEditPost, onDeletePost, onAddComment, onUpdateComment, onDeleteComment, onLoadComments, onLoadLikers, onOpenProfile, initialShowComments = false }) => {
   const [checkedIngredients, setCheckedIngredients] = useState<Record<number, boolean>>({});
   const [isLiked, setIsLiked] = useState(post.isLiked);
   const [likesCount, setLikesCount] = useState(post.likesCount);
@@ -32,7 +33,7 @@ export const RecipeDetailsModal: React.FC<RecipeDetailsModalProps> = ({ post, is
   const [comments, setComments] = useState<Comment[]>(post.comments);
   const [isLoadingComments, setIsLoadingComments] = useState(false);
   const [commentsCount, setCommentsCount] = useState(post.commentsCount);
-  const [showComments, setShowComments] = useState(false);
+  const [showComments, setShowComments] = useState(initialShowComments);
   const [likers, setLikers] = useState<CommunityPostLiker[]>([]);
   const [showLikers, setShowLikers] = useState(false);
   const [isLoadingLikers, setIsLoadingLikers] = useState(false);
@@ -62,8 +63,8 @@ export const RecipeDetailsModal: React.FC<RecipeDetailsModalProps> = ({ post, is
     setCommentText("");
     setComments(post.comments);
     setCommentsCount(post.commentsCount);
-    setShowComments(false);
-  }, [post]);
+    setShowComments(initialShowComments);
+  }, [initialShowComments, post]);
 
   useEffect(() => {
     if (!isOpen || !onLoadComments) return;

@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import Link from "next/link";
+import toast from "react-hot-toast";
 
 interface Recipe {
   id: string;
@@ -176,6 +177,11 @@ export default function TasteMatcherDashboard() {
       if (data?.success && Array.isArray(data?.recipes)) {
         setRecipes(data.recipes);
         setCurrentPage(1);
+        toast.success(
+          data.recipes.length > 0
+            ? `${data.recipes.length} matching recipes found.`
+            : "No matching recipes found. Try adjusting your preferences.",
+        );
 
         setTimeout(() => {
           document.getElementById("recipe-grid-top")?.scrollIntoView({ behavior: "smooth", block: "start" });

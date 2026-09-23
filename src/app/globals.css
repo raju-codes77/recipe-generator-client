@@ -133,3 +133,48 @@ body {
 .dark .dashboard-sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #67c878;
 }
+
+.flavor-ai-chat-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(47, 143, 70, 0.55) transparent;
+  scrollbar-gutter: stable;
+}
+
+.flavor-ai-chat-scrollbar::-webkit-scrollbar {
+  width: 9px;
+}
+
+.flavor-ai-chat-scrollbar::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.flavor-ai-chat-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.flavor-ai-chat-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(47, 143, 70, 0.55);
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background-clip: padding-box;
+}
+
+.flavor-ai-chat-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #2f8f46;
+  border-width: 1px;
+}
+
+.dark .flavor-ai-chat-scrollbar {
+  scrollbar-color: rgba(183, 227, 95, 0.48) transparent;
+}
+
+.dark .flavor-ai-chat-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(183, 227, 95, 0.48);
+  background-clip: padding-box;
+}
+
+.dark .flavor-ai-chat-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #b7e35f;
+}

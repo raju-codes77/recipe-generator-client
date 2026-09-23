@@ -43,7 +43,7 @@ function ActiveChallengeCard({ challenge }: { challenge: Challenge }) {
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col hover:shadow-md transition-shadow duration-300">
+    <div className="bg-white dark:bg-[#25252a] rounded-2xl border border-gray-100 dark:border-[#3a3a40] shadow-sm overflow-hidden flex flex-col hover:shadow-md transition-shadow duration-300">
       {/* Cover Image */}
       <div className="relative h-44 w-full flex-shrink-0">
         <Image
@@ -61,13 +61,13 @@ function ActiveChallengeCard({ challenge }: { challenge: Challenge }) {
       {/* Content */}
       <div className="p-5 flex flex-col flex-1 gap-4">
         <div>
-          <h3 className="text-lg font-bold text-gray-900 leading-snug mb-1">{challenge.title}</h3>
-          <p className="text-sm text-gray-500 line-clamp-2">{challenge.description}</p>
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white leading-snug mb-1">{challenge.title}</h3>
+          <p className="text-sm text-gray-500 dark:text-slate-300 line-clamp-2">{challenge.description}</p>
         </div>
 
         {/* Progress bar */}
         <div>
-          <div className="flex justify-between text-xs font-semibold text-gray-500 mb-1.5">
+          <div className="flex justify-between text-xs font-semibold text-gray-500 dark:text-slate-300 mb-1.5">
             <span>Progress</span>
             <span className="text-green-700 font-bold">{p.completedDays} / {p.totalDays} days</span>
           </div>
@@ -144,7 +144,7 @@ export default function ActiveChallengesClient() {
   if (!isPending && !session?.user) {
     return (
       <div className="mb-12">
-        <h3 className="text-2xl font-bold text-green-950 mb-6">Active Challenges</h3>
+        <h3 className="mb-6 bg-gradient-to-r from-[#0F432B] via-[#4AB741] to-[#154D31] bg-clip-text text-2xl font-bold text-transparent">Active Challenges</h3>
         <div className="flex flex-col items-center justify-center py-16 px-6 bg-gray-50 rounded-2xl border border-dashed border-gray-200 text-center">
           <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center mb-4">
             <LogIn className="text-green-600" size={26} />
@@ -166,7 +166,7 @@ export default function ActiveChallengesClient() {
   if (isLoading) {
     return (
       <div className="mb-12">
-        <h3 className="text-2xl font-bold text-green-950 mb-6">Active Challenges</h3>
+        <h3 className="mb-6 bg-gradient-to-r from-[#0F432B] via-[#4AB741] to-[#154D31] bg-clip-text text-2xl font-bold text-transparent">Active Challenges</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <SkeletonCard />
           <SkeletonCard />
@@ -180,7 +180,7 @@ export default function ActiveChallengesClient() {
   if (error) {
     return (
       <div className="mb-12">
-        <h3 className="text-2xl font-bold text-green-950 mb-6">Active Challenges</h3>
+        <h3 className="mb-6 bg-gradient-to-r from-[#0F432B] via-[#4AB741] to-[#154D31] bg-clip-text text-2xl font-bold text-transparent">Active Challenges</h3>
         <div className="flex flex-col items-center justify-center py-14 px-6 bg-red-50 rounded-2xl border border-red-100 text-center">
           <p className="text-red-600 font-semibold mb-4">{error}</p>
           <button
@@ -198,7 +198,7 @@ export default function ActiveChallengesClient() {
   if (challenges.length === 0) {
     return (
       <div className="mb-12">
-        <h3 className="text-2xl font-bold text-green-950 mb-6">Active Challenges</h3>
+        <h3 className="mb-6 bg-gradient-to-r from-[#0F432B] via-[#4AB741] to-[#154D31] bg-clip-text text-2xl font-bold text-transparent">Active Challenges</h3>
         <div className="flex flex-col items-center justify-center py-16 px-6 bg-gray-50 rounded-2xl border border-dashed border-gray-200 text-center">
           <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center mb-4">
             <Rocket className="text-green-600" size={26} />
@@ -220,7 +220,7 @@ export default function ActiveChallengesClient() {
   return (
     <div className="mb-12">
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-2xl font-bold text-green-950">Active Challenges</h3>
+        <h3 className="bg-gradient-to-r from-[#0F432B] via-[#4AB741] to-[#154D31] bg-clip-text text-2xl font-bold text-transparent">Active Challenges</h3>
         <span className="text-xs font-bold bg-green-100 text-green-700 px-3 py-1 rounded-full">
           {challenges.length} in progress
         </span>

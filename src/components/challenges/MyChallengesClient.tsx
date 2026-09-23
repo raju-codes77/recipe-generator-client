@@ -8,7 +8,7 @@ import { getChallenges } from "@/lib/challengeApi";
 import { Challenge } from "@/types/challenge";
 import {
   ArrowRight, CheckCircle2, Flame, Clock,
-  Loader2, RotateCcw, LogIn, Rocket, Trophy, Gift,
+  RotateCcw, LogIn, Rocket, Trophy, Gift,
 } from "lucide-react";
 
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
@@ -35,7 +35,7 @@ function ActiveCard({ challenge }: { challenge: Challenge }) {
   const daysRemaining = Math.max(0, Math.ceil((deadline.getTime() - Date.now()) / 86400000));
 
   return (
-    <div className="bg-white rounded-2xl border-2 border-green-100 shadow-sm hover:shadow-md transition-shadow flex flex-col sm:flex-row gap-0 overflow-hidden">
+    <div className="bg-white dark:bg-[#25252a] rounded-2xl border-2 border-green-100 dark:border-[#3a3a40] shadow-sm hover:shadow-md transition-shadow flex flex-col sm:flex-row gap-0 overflow-hidden">
       {/* Thumbnail */}
       <div className="relative w-full sm:w-28 h-32 sm:h-auto flex-shrink-0">
         <Image
@@ -49,8 +49,8 @@ function ActiveCard({ challenge }: { challenge: Challenge }) {
       {/* Content */}
       <div className="flex-1 p-5 flex flex-col gap-3">
         <div>
-          <h4 className="text-base font-bold text-gray-900 leading-snug">{challenge.title}</h4>
-          <p className="text-xs text-gray-500 mt-0.5">{challenge.difficulty} · {challenge.durationDays} days</p>
+          <h4 className="text-base font-bold text-gray-900 dark:text-white leading-snug">{challenge.title}</h4>
+          <p className="text-xs text-gray-500 dark:text-slate-300 mt-0.5">{challenge.difficulty} · {challenge.durationDays} days</p>
         </div>
 
         {/* Progress bar */}
@@ -92,7 +92,7 @@ function ActiveCard({ challenge }: { challenge: Challenge }) {
 // ─── Completed challenge card ──────────────────────────────────────────────────
 function CompletedCard({ challenge }: { challenge: Challenge }) {
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 hover:shadow-sm transition-shadow flex flex-col sm:flex-row gap-0 overflow-hidden opacity-80 hover:opacity-100 transition-opacity">
+    <div className="bg-white dark:bg-[#25252a] rounded-2xl border border-gray-100 dark:border-[#3a3a40] hover:shadow-sm transition-shadow flex flex-col sm:flex-row gap-0 overflow-hidden opacity-90 hover:opacity-100 transition-opacity">
       {/* Thumbnail */}
       <div className="relative w-full sm:w-28 h-24 sm:h-auto flex-shrink-0">
         <Image
@@ -109,8 +109,8 @@ function CompletedCard({ challenge }: { challenge: Challenge }) {
       {/* Content */}
       <div className="flex-1 p-5 flex flex-col gap-2">
         <div>
-          <h4 className="text-base font-bold text-gray-900">{challenge.title}</h4>
-          <p className="text-xs text-gray-400 mt-0.5">{challenge.difficulty} · {challenge.durationDays} days</p>
+          <h4 className="text-base font-bold text-gray-900 dark:text-white">{challenge.title}</h4>
+          <p className="text-xs text-gray-400 dark:text-slate-300 mt-0.5">{challenge.difficulty} · {challenge.durationDays} days</p>
         </div>
         <div className="flex flex-wrap items-center gap-2 mt-auto">
           <span className="flex items-center gap-1 text-xs font-bold text-green-700 bg-green-50 px-2.5 py-1 rounded-full">
@@ -121,7 +121,7 @@ function CompletedCard({ challenge }: { challenge: Challenge }) {
           </span>
           <Link
             href={`/challenges/${challenge.id}`}
-            className="ml-auto flex items-center gap-1.5 border border-gray-200 hover:border-green-400 text-gray-600 hover:text-green-700 text-xs font-bold px-4 py-2 rounded-xl transition-colors"
+            className="ml-auto flex items-center gap-1.5 rounded-xl border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-bold text-gray-600 transition-all hover:-translate-y-0.5 hover:border-green-400 hover:bg-green-50 hover:text-green-700 hover:shadow-sm dark:border-[#4fbd7b] dark:bg-[#123523] dark:text-[#9bf3ba] dark:hover:border-[#83f7ad] dark:hover:bg-[#1b5233] dark:hover:text-white dark:hover:shadow-[0_6px_18px_rgba(79,189,123,0.2)]"
           >
             View <ArrowRight size={13} />
           </Link>
@@ -173,7 +173,7 @@ export default function MyChallengesClient() {
   if (!isPending && !session?.user) {
     return (
       <div className="mb-12">
-        <h3 className="text-2xl font-bold text-green-950 mb-6">My Challenges</h3>
+        <h3 className="mb-6 bg-gradient-to-r from-[#0F432B] via-[#4AB741] to-[#154D31] bg-clip-text text-2xl font-bold text-transparent">My Challenges</h3>
         <div className="flex flex-col items-center justify-center py-16 px-6 bg-gray-50 rounded-2xl border border-dashed border-gray-200 text-center">
           <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center mb-4">
             <LogIn className="text-green-600" size={26} />
@@ -192,7 +192,7 @@ export default function MyChallengesClient() {
   if (isLoading || isPending) {
     return (
       <div className="mb-12">
-        <h3 className="text-2xl font-bold text-green-950 mb-6">My Challenges</h3>
+        <h3 className="mb-6 bg-gradient-to-r from-[#0F432B] via-[#4AB741] to-[#154D31] bg-clip-text text-2xl font-bold text-transparent">My Challenges</h3>
         <div className="space-y-3">
           <SkeletonCard />
           <SkeletonCard />
@@ -206,7 +206,7 @@ export default function MyChallengesClient() {
   if (error) {
     return (
       <div className="mb-12">
-        <h3 className="text-2xl font-bold text-green-950 mb-6">My Challenges</h3>
+        <h3 className="mb-6 bg-gradient-to-r from-[#0F432B] via-[#4AB741] to-[#154D31] bg-clip-text text-2xl font-bold text-transparent">My Challenges</h3>
         <div className="flex flex-col items-center justify-center py-14 px-6 bg-red-50 rounded-2xl border border-red-100 text-center">
           <p className="text-red-600 font-semibold mb-4">{error}</p>
           <button onClick={() => userId && fetchMine(userId)} className="inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white font-bold px-5 py-2 rounded-xl text-sm transition-colors">
@@ -221,7 +221,7 @@ export default function MyChallengesClient() {
   if (active.length === 0 && completed.length === 0) {
     return (
       <div className="mb-12">
-        <h3 className="text-2xl font-bold text-green-950 mb-6">My Challenges</h3>
+        <h3 className="mb-6 bg-gradient-to-r from-[#0F432B] via-[#4AB741] to-[#154D31] bg-clip-text text-2xl font-bold text-transparent">My Challenges</h3>
         <div className="flex flex-col items-center justify-center py-16 px-6 bg-gray-50 rounded-2xl border border-dashed border-gray-200 text-center">
           <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center mb-4">
             <Rocket className="text-green-600" size={26} />
@@ -239,12 +239,12 @@ export default function MyChallengesClient() {
   // ── Populated ─────────────────────────────────────────────────────────────
   return (
     <div className="mb-12 space-y-10">
-      <h3 className="text-2xl font-bold text-green-950">My Challenges</h3>
+      <h3 className="bg-gradient-to-r from-[#0F432B] via-[#4AB741] to-[#154D31] bg-clip-text text-2xl font-bold text-transparent">My Challenges</h3>
 
       {/* Active section */}
       <section>
         <div className="flex items-center gap-3 mb-4">
-          <h4 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+          <h4 className="flex items-center gap-2 bg-gradient-to-r from-[#0F432B] via-[#4AB741] to-[#154D31] bg-clip-text text-lg font-bold text-transparent dark:from-[#9bf3ba] dark:via-[#4AB741] dark:to-[#d2f58a]">
             <span className="w-2.5 h-2.5 rounded-full bg-green-500 inline-block animate-pulse" />
             Active
           </h4>
@@ -273,7 +273,7 @@ export default function MyChallengesClient() {
       {completed.length > 0 && (
         <section>
           <div className="flex items-center gap-3 mb-4">
-            <h4 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+            <h4 className="flex items-center gap-2 bg-gradient-to-r from-[#0F432B] via-[#4AB741] to-[#154D31] bg-clip-text text-lg font-bold text-transparent dark:from-[#9bf3ba] dark:via-[#4AB741] dark:to-[#d2f58a]">
               <Trophy size={18} className="text-amber-500" /> Completed
             </h4>
             <span className="text-xs font-bold bg-amber-100 text-amber-700 px-2.5 py-0.5 rounded-full">

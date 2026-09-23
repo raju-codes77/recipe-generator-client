@@ -2,7 +2,7 @@
 
 import React, { useRef, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useNotifications } from "./NotificationContext";
+import { useNotifications, type Notification } from "./NotificationContext";
 import { useRouter } from "next/navigation";
 import { 
   Bell, 
@@ -83,14 +83,24 @@ export default function NotificationPanel() {
     }
   };
 
-  const handleNotificationClick = (notification: any) => {
+  const getNotificationHref = (notification: Notification) => {
+    if (notification.relatedPostId && (!notification.actionUrl || notification.actionUrl === "/community")) {
+      return `/community/recipe/${encodeURIComponent(notification.relatedPostId)}?comments=1`;
+    }
+    if (notification.actionUrl && notification.actionUrl !== "undefined" && notification.actionUrl !== "null") {
+      return notification.actionUrl;
+    }
+    return null;
+  };
+
+  const handleNotificationClick = (notification: Notification) => {
     if (!notification.isRead) {
       markAsRead(notification.id);
     }
     
-    // Safely fallback or simply close if actionUrl is missing or invalid
-    if (notification.actionUrl && notification.actionUrl !== "undefined" && notification.actionUrl !== "null") {
-      router.push(notification.actionUrl);
+    const notificationHref = getNotificationHref(notification);
+    if (notificationHref) {
+      router.push(notificationHref);
     }
     closePanel();
   };
@@ -183,11 +193,13 @@ export default function NotificationPanel() {
                 {notifications.map((notification, index) => {
                   const rawNotificationId = typeof notification.id === "string" ? notification.id.trim() : "";
                   const notificationKey = `notification-${rawNotificationId || "unknown"}-${index}`;
-                  const content = (
-                    <div 
-                      className={`flex gap-3 px-5 py-4 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50 relative ${
-                        !notification.isRead ? "bg-emerald-50/30 dark:bg-emerald-900/10" : ""
-                      }`}
+                    const notificationHref = getNotificationHref(notification);
+                    const content = (
+                      <div
+                        onClick={() => handleNotificationClick(notification)}
+                        className={`group relative flex cursor-pointer gap-3 px-5 py-4 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50 ${
+                          !notification.isRead ? "bg-emerald-50/30 dark:bg-emerald-900/10" : ""
+                        }`}
                     >
                       {!notification.isRead && (
                         <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-emerald-500 rounded-r-full" />
@@ -196,19 +208,29 @@ export default function NotificationPanel() {
                       {/* Avatar / Icon */}
                       <div className="relative shrink-0">
                         {notification.actor?.image && !failedActorImages[notification.actor.id] ? (
-                          <div className="w-10 h-10 rounded-full overflow-hidden border border-slate-200 dark:border-slate-700">
+                          <Link
+                            href={`/community/users/${encodeURIComponent(notification.actor.id)}`}
+                            onClick={(event) => event.stopPropagation()}
+                            aria-label={`Open ${notification.actor.name}'s community profile`}
+                            className="relative block h-10 w-10 rounded-full border border-slate-200 dark:border-slate-700"
+                          >
                             <Image 
                               src={notification.actor.image} 
                               alt={notification.actor.name} 
                               fill 
-                              className="object-cover"
+                              className="rounded-full object-cover"
                               onError={() => setFailedActorImages((current) => ({ ...current, [notification.actor?.id ?? notification.id]: true }))}
                             />
-                          </div>
+                          </Link>
                         ) : notification.actor ? (
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-bold text-sm">
+                          <Link
+                            href={`/community/users/${encodeURIComponent(notification.actor.id)}`}
+                            onClick={(event) => event.stopPropagation()}
+                            aria-label={`Open ${notification.actor.name}'s community profile`}
+                            className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 text-sm font-bold text-white"
+                          >
                             {notification.actor.name.substring(0, 2).toUpperCase()}
-                          </div>
+                          </Link>
                         ) : (
                           <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
                             {getIcon(notification.type)}
@@ -244,20 +266,11 @@ export default function NotificationPanel() {
                     </div>
                   );
 
-                  return notification.actionUrl ? (
-                    <Link 
-                      key={notificationKey} 
-                      href={notification.actionUrl}
-                      onClick={() => handleNotificationClick(notification)}
-                      className="group border-b border-slate-100 dark:border-slate-800/60 last:border-0"
-                    >
-                      {content}
-                    </Link>
-                  ) : (
-                    <div 
+                  return (
+                    <div
                       key={notificationKey}
-                      onClick={() => handleNotificationClick(notification)}
-                      className="cursor-pointer border-b border-slate-100 dark:border-slate-800/60 last:border-0"
+                      data-has-action={notificationHref ? "true" : "false"}
+                      className="border-b border-slate-100 dark:border-slate-800/60 last:border-0"
                     >
                       {content}
                     </div>

@@ -51,27 +51,27 @@ export default function ChallengeDashboardClient({ challenge }: { challenge: any
 
   const renderSidebar = () => {
     if (isLoading || isPending) {
-      return <div className="h-32 flex items-center justify-center bg-gray-50 rounded-2xl"><Loader2 className="animate-spin text-green-600" /></div>;
+      return <div className="h-32 flex items-center justify-center bg-gray-50 dark:bg-[#25252a] rounded-2xl"><Loader2 className="animate-spin text-green-600" /></div>;
     }
 
     if (!participant) {
       return (
-        <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100 sticky top-8">
-          <h3 className="text-xl font-bold text-green-950 mb-4">Ready to Start?</h3>
-          <p className="text-gray-600 mb-6 text-sm">Join this challenge to track your progress, earn XP, and unlock exclusive community badges.</p>
+        <div className="bg-gray-50 dark:bg-[#25252a] rounded-2xl p-6 border border-gray-100 dark:border-[#3a3a40] sticky top-8">
+          <h3 className="text-xl font-bold text-green-950 dark:text-emerald-300 mb-4">Ready to Start?</h3>
+          <p className="text-gray-600 dark:text-slate-300 mb-6 text-sm">Join this challenge to track your progress, earn XP, and unlock exclusive community badges.</p>
           
           <JoinChallengeButton challengeId={challenge.id} onJoinSuccess={(newParticipant) => setParticipant(newParticipant)} />
 
-          <div className="mt-6 pt-6 border-t border-gray-200">
-            <h4 className="font-semibold text-gray-900 mb-3 text-sm">Rewards Included</h4>
+          <div className="mt-6 pt-6 border-t border-gray-200 dark:border-[#3a3a40]">
+            <h4 className="font-semibold text-gray-900 dark:text-white mb-3 text-sm">Rewards Included</h4>
             <ul className="space-y-3">
-              <li className="flex items-center gap-3 text-sm text-gray-600">
+            <li className="flex items-center gap-3 text-sm text-gray-600 dark:text-slate-300">
                 <div className="w-8 h-8 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center">
                   <Gift size={14} />
                 </div>
                 {challenge.rewardPoints} Experience Points
               </li>
-              <li className="flex items-center gap-3 text-sm text-gray-600">
+            <li className="flex items-center gap-3 text-sm text-gray-600 dark:text-slate-300">
                 <div className="w-8 h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center">
                   <Trophy size={14} />
                 </div>
@@ -88,31 +88,31 @@ export default function ChallengeDashboardClient({ challenge }: { challenge: any
     const daysRemaining = Math.max(0, Math.ceil((deadline.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)));
 
     return (
-      <div className="bg-white rounded-2xl p-6 border border-green-200 shadow-sm sticky top-8">
-        <h3 className="text-xl font-bold text-green-950 mb-2">
+      <div className="bg-white dark:bg-[#25252a] rounded-2xl p-6 border border-green-200 dark:border-[#3a3a40] shadow-sm sticky top-8">
+        <h3 className="text-xl font-bold text-green-950 dark:text-[#4AB741] mb-2">
           {participant.status === "COMPLETED" ? "Challenge Completed!" : 
            participant.status === "EXPIRED" ? "Challenge Expired" : "Continue Challenge"}
         </h3>
         
         <div className="mt-6 space-y-4">
           <div>
-            <div className="flex justify-between text-sm font-semibold text-gray-600 mb-1">
+            <div className="flex justify-between text-sm font-semibold text-gray-600 dark:text-slate-300 mb-1">
               <span>Progress</span>
               <span>{participant.completedDays} / {participant.totalDays} days</span>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-3.5 overflow-hidden">
+            <div className="w-full bg-gray-200 dark:bg-[#3a3a40] rounded-full h-3.5 overflow-hidden">
               <div className="bg-green-600 h-3.5 rounded-full transition-all duration-500" style={{ width: `${participant.completionPercentage}%` }}></div>
             </div>
             <p className="text-right text-xs font-bold text-green-700 mt-1">{participant.completionPercentage}%</p>
           </div>
 
-          <div className="flex justify-between bg-green-50 p-4 rounded-xl border border-green-100">
+          <div className="flex justify-between bg-green-50 dark:bg-[#effcf4] p-4 rounded-xl border border-green-100 dark:border-[#00c853]">
             <div className="text-center">
-              <p className="text-xs text-green-800 font-semibold uppercase tracking-wider">Current Streak</p>
+            <p className="text-xs text-green-800 dark:text-[#0f5b2d] font-semibold uppercase tracking-wider">Current Streak</p>
               <p className="text-2xl font-black text-green-600">{participant.currentStreak} <span className="text-sm">days</span></p>
             </div>
             <div className="text-center">
-              <p className="text-xs text-orange-800 font-semibold uppercase tracking-wider">Deadline</p>
+            <p className="text-xs text-orange-800 dark:text-orange-300 font-semibold uppercase tracking-wider">Deadline</p>
               <p className="text-2xl font-black text-orange-500">{daysRemaining} <span className="text-sm">days left</span></p>
             </div>
           </div>
@@ -127,16 +127,16 @@ export default function ChallengeDashboardClient({ challenge }: { challenge: any
       <div className="lg:col-span-2 space-y-10">
         
         <section>
-          <h2 className="text-2xl font-bold text-green-950 mb-4 flex items-center gap-2">
+          <h2 className="text-2xl font-bold text-green-950 dark:text-[#4AB741] mb-4 flex items-center gap-2">
             <Target className="text-green-600" /> Overview
           </h2>
-          <p className="text-gray-600 leading-relaxed text-lg bg-green-50/30 p-6 rounded-2xl border border-green-100">
+          <p className="text-gray-600 dark:text-slate-200 leading-relaxed text-lg bg-green-50/30 dark:bg-[#25252a] p-6 rounded-2xl border border-green-100 dark:border-[#3a3a40]">
             {challenge.description}
           </p>
         </section>
 
         <section>
-          <h2 className="text-2xl font-bold text-green-950 mb-6 flex items-center gap-2">
+          <h2 className="text-2xl font-bold text-green-950 dark:text-[#4AB741] mb-6 flex items-center gap-2">
             <Trophy className="text-green-600" /> Your Challenge Mission
           </h2>
           <div className="space-y-4">
@@ -151,13 +151,13 @@ export default function ChallengeDashboardClient({ challenge }: { challenge: any
 
                 return (
                   <div key={day.id} className={`p-6 rounded-2xl border-2 transition-all ${
-                    isCompleted ? 'bg-gray-50 border-gray-200 opacity-70' :
-                    isCurrent ? 'bg-green-50 border-green-500 shadow-sm' :
-                    unjoined ? 'bg-white border-gray-100 hover:border-green-200' :
-                    'bg-white border-gray-100 opacity-50'
+                    isCompleted ? 'bg-gray-50 dark:bg-[#25252a] border-gray-200 dark:border-[#3a3a40] opacity-70' :
+                    isCurrent ? 'bg-green-50 dark:bg-[#effcf4] border-green-500 dark:border-[#00c853] shadow-sm' :
+                    unjoined ? 'bg-white dark:bg-[#25252a] border-gray-100 dark:border-[#3a3a40] hover:border-green-200' :
+                    'bg-white dark:bg-[#25252a] border-gray-100 dark:border-[#3a3a40] opacity-50'
                   }`}>
                     <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-3">
-                      <h3 className={`text-lg font-bold ${isCurrent ? 'text-green-900' : 'text-gray-900'}`}>
+                      <h3 className={`text-lg font-bold ${isCurrent ? 'text-green-900 dark:text-[#0f5b2d]' : 'text-gray-900 dark:text-white'}`}>
                         {day.title}
                       </h3>
                       {!unjoined && (
@@ -169,7 +169,7 @@ export default function ChallengeDashboardClient({ challenge }: { challenge: any
                       )}
                     </div>
                     
-                    <p className="text-gray-600 text-base leading-relaxed">{day.description}</p>
+                    <p className={`text-base leading-relaxed ${isCurrent ? "text-gray-600 dark:!text-[#244b35]" : "text-gray-600 dark:text-slate-300"}`}>{day.description}</p>
 
                     {isCurrent && (
                       <button
@@ -184,7 +184,7 @@ export default function ChallengeDashboardClient({ challenge }: { challenge: any
                 );
               })
             ) : (
-              <p className="text-gray-500 bg-gray-50 p-6 rounded-2xl border border-gray-100">No mission points available for this challenge yet.</p>
+              <p className="text-gray-500 dark:text-slate-300 bg-gray-50 dark:bg-[#25252a] p-6 rounded-2xl border border-gray-100 dark:border-[#3a3a40]">No mission points available for this challenge yet.</p>
             )}
           </div>
         </section>

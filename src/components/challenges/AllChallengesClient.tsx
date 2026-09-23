@@ -30,6 +30,63 @@ function SkeletonCard() {
   );
 }
 
+type PaginationState = {
+  page: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+};
+
+function PaginationControls({
+  pagination,
+  page,
+  onPageChange,
+  disabled = false,
+}: {
+  pagination: PaginationState | null;
+  page: number;
+  onPageChange: (page: number) => void;
+  disabled?: boolean;
+}) {
+  if (!pagination || pagination.totalPages <= 1) return null;
+
+  return (
+    <div className="flex items-center justify-center gap-2">
+      <button
+        onClick={() => onPageChange(Math.max(1, page - 1))}
+        disabled={disabled || !pagination.hasPreviousPage}
+        className="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-slate-300 bg-white dark:bg-[#25252a] border border-gray-200 dark:border-[#3a3a40] rounded-lg hover:bg-gray-50 dark:hover:bg-[#303038] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+      >
+        Previous
+      </button>
+
+      <div className="flex items-center gap-1 mx-2">
+        {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map(pageNumber => (
+          <button
+            key={pageNumber}
+            onClick={() => onPageChange(pageNumber)}
+            disabled={disabled}
+            className={`w-8 h-8 flex items-center justify-center text-sm font-bold rounded-md transition-colors disabled:cursor-wait ${page === pageNumber
+                ? "bg-green-600 text-white"
+                : "text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-[#303038]"
+              }`}
+          >
+            {pageNumber}
+          </button>
+        ))}
+      </div>
+
+      <button
+        onClick={() => onPageChange(Math.min(pagination.totalPages, page + 1))}
+        disabled={disabled || !pagination.hasNextPage}
+        className="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-slate-300 bg-white dark:bg-[#25252a] border border-gray-200 dark:border-[#3a3a40] rounded-lg hover:bg-gray-50 dark:hover:bg-[#303038] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+      >
+        Next
+      </button>
+    </div>
+  );
+}
+
 // ─── Individual discovery card ────────────────────────────────────────────
 function DiscoveryChallengeCard({
   challenge,
@@ -68,7 +125,7 @@ function DiscoveryChallengeCard({
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col hover:shadow-md transition-shadow duration-300 group">
+    <div className="bg-white dark:bg-[#25252a] rounded-2xl border border-gray-100 dark:border-[#3a3a40] shadow-sm overflow-hidden flex flex-col hover:shadow-md transition-shadow duration-300 group">
       {/* Cover */}
       <div className="relative h-52 w-full flex-shrink-0 overflow-hidden">
         <Image
@@ -97,14 +154,32 @@ function DiscoveryChallengeCard({
       </div>
 
       {/* Body */}
-      <div className="p-5 flex flex-col flex-1 gap-3">
-        <div>
-          <h3 className="text-lg font-bold text-gray-900 leading-snug mb-1">{challenge.title}</h3>
-          <p className="text-sm text-gray-500 line-clamp-2">{challenge.description}</p>
+      <div className="p-5 flex flex-col flex-1 gap-2">
+        <div className="h-[88px] overflow-hidden">
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white leading-snug mb-1">{challenge.title}</h3>
+          <p className="text-sm text-gray-500 dark:text-slate-300 line-clamp-2">{challenge.description}</p>
         </div>
 
+        {/* If already joined, show mini progress */}
+        {joined && participant && (
+          <div className="min-h-[34px]">
+            <div className="flex justify-between text-xs font-semibold text-gray-500 dark:text-slate-300 mb-1">
+              <span>Your progress</span>
+              <span className="text-green-700 dark:text-emerald-300">{participant.completedDays}/{participant.totalDays} days · {participant.completionPercentage}%</span>
+            </div>
+            <div className="w-full bg-gray-100 dark:bg-[#3a3a40] rounded-full h-2 overflow-hidden">
+              <div
+                className="bg-gradient-to-r from-green-500 to-emerald-400 h-2 rounded-full"
+                style={{ width: `${participant.completionPercentage}%` }}
+              />
+            </div>
+          </div>
+        )}
+
+        {!joined && <div className="h-[34px]" aria-hidden="true" />}
+
         {/* Stats */}
-        <div className="flex flex-wrap gap-3 text-xs font-semibold text-gray-500">
+        <div className="flex flex-wrap gap-3 text-xs font-semibold text-gray-500 dark:text-slate-300">
           <span className="flex items-center gap-1">
             <Clock size={13} className="text-green-500" />
             {challenge.durationDays} days
@@ -119,22 +194,6 @@ function DiscoveryChallengeCard({
           </span>
         </div>
 
-        {/* If already joined, show mini progress */}
-        {joined && participant && (
-          <div>
-            <div className="flex justify-between text-xs font-semibold text-gray-500 mb-1">
-              <span>Your progress</span>
-              <span className="text-green-700">{participant.completedDays}/{participant.totalDays} days · {participant.completionPercentage}%</span>
-            </div>
-            <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
-              <div
-                className="bg-gradient-to-r from-green-500 to-emerald-400 h-2 rounded-full"
-                style={{ width: `${participant.completionPercentage}%` }}
-              />
-            </div>
-          </div>
-        )}
-
         {/* CTA */}
         <div className="mt-auto">
           {joined ? (
@@ -148,7 +207,7 @@ function DiscoveryChallengeCard({
             <button
               onClick={handleJoin}
               disabled={isJoining}
-              className="w-full flex items-center justify-center gap-2 bg-white border-2 border-green-600 text-green-700 hover:bg-green-600 hover:text-white font-bold py-2.5 rounded-xl transition-all text-sm disabled:opacity-60"
+              className="w-full flex items-center justify-center gap-2 bg-white dark:bg-[#25252a] border-2 border-green-600 dark:border-[#167043] text-green-700 dark:text-[#4fae72] hover:bg-green-600 dark:hover:bg-[#123b2a] hover:text-white dark:hover:text-[#8bd49e] font-bold py-2.5 rounded-xl transition-all text-sm disabled:opacity-60"
             >
               {isJoining ? (
                 <><Loader2 size={15} className="animate-spin" /> Joining…</>
@@ -237,10 +296,16 @@ export default function AllChallengesClient({
     return (
       <div className="mb-12">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-2xl font-bold text-green-950">All Challenges</h3>
+          <h3 className="bg-gradient-to-r from-[#0F432B] via-[#4AB741] to-[#154D31] bg-clip-text text-2xl font-bold text-transparent">All Challenges</h3>
+          <span className="text-xs font-bold bg-gray-100 dark:bg-[#25252a] text-gray-600 dark:text-slate-300 px-3 py-1 rounded-full">
+            Page {page} {pagination && pagination.totalPages > 1 && `of ${pagination.totalPages}`}
+          </span>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[1, 2, 3, 4, 5, 6].map(i => <SkeletonCard key={i} />)}
+        </div>
+        <div className="mt-8">
+          <PaginationControls pagination={pagination} page={page} onPageChange={setPage} disabled />
         </div>
       </div>
     );
@@ -250,7 +315,7 @@ export default function AllChallengesClient({
   if (error) {
     return (
       <div className="mb-12">
-        <h3 className="text-2xl font-bold text-green-950 mb-6">All Challenges</h3>
+        <h3 className="mb-6 bg-gradient-to-r from-[#0F432B] via-[#4AB741] to-[#154D31] bg-clip-text text-2xl font-bold text-transparent">All Challenges</h3>
         <div className="flex flex-col items-center justify-center py-14 px-6 bg-red-50 rounded-2xl border border-red-100 text-center">
           <p className="text-red-600 font-semibold mb-4">{error}</p>
           <button
@@ -268,7 +333,7 @@ export default function AllChallengesClient({
   if (challenges.length === 0) {
     return (
       <div className="mb-12">
-        <h3 className="text-2xl font-bold text-green-950 mb-6">All Challenges</h3>
+        <h3 className="mb-6 bg-gradient-to-r from-[#0F432B] via-[#4AB741] to-[#154D31] bg-clip-text text-2xl font-bold text-transparent">All Challenges</h3>
         <div className="flex flex-col items-center justify-center py-16 px-6 bg-gray-50 rounded-2xl border border-dashed border-gray-200 text-center">
           <Trophy className="text-green-500 mb-4" size={36} />
           <h4 className="text-lg font-bold text-gray-900 mb-2">No challenges available</h4>
@@ -281,8 +346,8 @@ export default function AllChallengesClient({
   return (
     <div className="mb-12">
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-2xl font-bold text-green-950">All Challenges</h3>
-        <span className="text-xs font-bold bg-gray-100 text-gray-600 px-3 py-1 rounded-full">
+        <h3 className="bg-gradient-to-r from-[#0F432B] via-[#4AB741] to-[#154D31] bg-clip-text text-2xl font-bold text-transparent">All Challenges</h3>
+        <span className="text-xs font-bold bg-gray-100 dark:bg-[#25252a] text-gray-600 dark:text-slate-300 px-3 py-1 rounded-full">
           Page {page} {pagination && pagination.totalPages > 1 && `of ${pagination.totalPages}`}
         </span>
       </div>
@@ -298,40 +363,7 @@ export default function AllChallengesClient({
       </div>
 
       {/* Pagination Controls */}
-      {pagination && pagination.totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2">
-          <button
-            onClick={() => setPage(p => Math.max(1, p - 1))}
-            disabled={!pagination.hasPreviousPage}
-            className="px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            Previous
-          </button>
-
-          <div className="flex items-center gap-1 mx-2">
-            {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map(p => (
-              <button
-                key={p}
-                onClick={() => setPage(p)}
-                className={`w-8 h-8 flex items-center justify-center text-sm font-bold rounded-md transition-colors ${page === p
-                    ? "bg-green-600 text-white"
-                    : "text-gray-600 hover:bg-gray-100"
-                  }`}
-              >
-                {p}
-              </button>
-            ))}
-          </div>
-
-          <button
-            onClick={() => setPage(p => Math.min(pagination.totalPages, p + 1))}
-            disabled={!pagination.hasNextPage}
-            className="px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            Next
-          </button>
-        </div>
-      )}
+      <PaginationControls pagination={pagination} page={page} onPageChange={setPage} />
     </div>
   );
 }

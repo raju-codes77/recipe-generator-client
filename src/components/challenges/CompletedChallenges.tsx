@@ -42,7 +42,7 @@ export default function CompletedChallenges() {
   if (!isPending && !userId) {
     return (
       <div className="mb-12">
-        <h3 className="text-2xl font-bold text-green-950 mb-6">Completed Challenges</h3>
+        <h3 className="mb-6 bg-gradient-to-r from-[#0F432B] via-[#4AB741] to-[#154D31] bg-clip-text text-2xl font-bold text-transparent">Completed Challenges</h3>
         <div className="flex flex-col items-center justify-center py-16 px-6 bg-gray-50 rounded-2xl border border-dashed border-gray-200 text-center">
           <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center mb-4">
             <LogIn className="text-green-600" size={26} />
@@ -60,10 +60,10 @@ export default function CompletedChallenges() {
   if (isLoading || isPending) {
     return (
       <div className="mb-12">
-        <h3 className="text-2xl font-bold text-green-950 mb-6">Completed Challenges</h3>
+        <h3 className="mb-6 bg-gradient-to-r from-[#0F432B] via-[#4AB741] to-[#154D31] bg-clip-text text-2xl font-bold text-transparent">Completed Challenges</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[1, 2, 3].map(i => (
-            <div key={i} className="bg-white rounded-2xl border border-gray-100 h-64 animate-pulse"></div>
+            <div key={i} className="bg-white dark:bg-[#25252a] rounded-2xl border border-gray-100 dark:border-[#3a3a40] h-64 animate-pulse"></div>
           ))}
         </div>
       </div>
@@ -73,7 +73,7 @@ export default function CompletedChallenges() {
   if (error) {
     return (
       <div className="mb-12">
-        <h3 className="text-2xl font-bold text-green-950 mb-6">Completed Challenges</h3>
+        <h3 className="mb-6 bg-gradient-to-r from-[#0F432B] via-[#4AB741] to-[#154D31] bg-clip-text text-2xl font-bold text-transparent">Completed Challenges</h3>
         <div className="flex flex-col items-center justify-center py-14 px-6 bg-red-50 rounded-2xl border border-red-100 text-center">
           <p className="text-red-600 font-semibold mb-4">{error}</p>
           <button onClick={() => userId && fetchCompleted(userId)} className="inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white font-bold px-5 py-2 rounded-xl text-sm transition-colors">
@@ -87,7 +87,7 @@ export default function CompletedChallenges() {
   if (completed.length === 0) {
     return (
       <div className="mb-12">
-        <h3 className="text-2xl font-bold text-green-950 mb-6">Completed Challenges</h3>
+        <h3 className="mb-6 bg-gradient-to-r from-[#0F432B] via-[#4AB741] to-[#154D31] bg-clip-text text-2xl font-bold text-transparent">Completed Challenges</h3>
         <div className="flex flex-col items-center justify-center py-16 px-6 bg-gray-50 rounded-2xl border border-dashed border-gray-200 text-center">
           <div className="w-14 h-14 rounded-full bg-amber-100 flex items-center justify-center mb-4">
             <Trophy className="text-amber-600" size={26} />
@@ -105,7 +105,7 @@ export default function CompletedChallenges() {
   return (
     <div className="mb-12">
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-2xl font-bold text-green-950">Completed Challenges</h3>
+        <h3 className="bg-gradient-to-r from-[#0F432B] via-[#4AB741] to-[#154D31] bg-clip-text text-2xl font-bold text-transparent">Completed Challenges</h3>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
