@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo, useState, useEffect, useCallback } from "react";
-import { Home as HomeIcon, ChevronRight, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
 
 import { ShoppingItem, SortMode, Category } from "@/components/aitools/shopping-list/types";
@@ -206,11 +206,20 @@ export default function ShoppingListPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6 ">
-      {/* Breadcrumb */}
-      <div className="flex items-center gap-1.5 text-sm text-[#8A948D] dark:text-[#A6B0A9] mb-5"><Link className="flex justify-center items-center gap-1 hover:text-[#16A34A] cursor-pointer " href='/ai-tools'>
-        <span>AI Tools</span>
-        <ChevronRight size={14} /></Link>
-        <span className="text-[#17211D] dark:text-[#F4F7F4] font-medium">Shopping List</span>
+      <div className="flex items-center gap-3 mb-6">
+        <Link
+          href="/ai-tools"
+          className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50 dark:border-[#2c2c32] dark:bg-[#1a1a1f] dark:text-slate-300 dark:hover:bg-[#25252a]"
+        >
+          <ArrowLeft size={16} />
+          Back to AI Tools
+        </Link>
+        <div className="flex items-center gap-1.5 text-sm text-slate-400">
+          <span>/</span>
+          <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+            Smart Shopping List
+          </span>
+        </div>
       </div>
 
       <div className="space-y-6 mb-6">

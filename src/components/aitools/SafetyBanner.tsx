@@ -1,4 +1,5 @@
-import { ShieldCheck } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, ShieldCheck } from "lucide-react";
 
 export default function SafetyBanner() {
   return (
@@ -15,10 +16,14 @@ export default function SafetyBanner() {
           </p>
         </div>
       </div>
-      
-      <button className="flex-shrink-0 bg-green-700 hover:bg-green-800 text-white font-bold py-3 px-6 rounded-xl transition-colors shadow-sm w-full md:w-auto text-sm">
+
+      <Link
+        href="/ai-tools/ai-overview"
+        className="flex-shrink-0 inline-flex items-center justify-center gap-2 bg-green-700 hover:bg-green-800 text-white font-bold py-3 px-6 rounded-xl transition-colors shadow-sm w-full md:w-auto text-sm"
+      >
         Learn More About Our AI
-      </button>
+        <ArrowRight size={16} />
+      </Link>
     </div>
   );
 }

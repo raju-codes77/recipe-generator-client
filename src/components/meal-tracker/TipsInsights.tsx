@@ -71,7 +71,7 @@ export default function MonthlyCalendarTracker() {
   }).length;
 
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm p-5 flex flex-col gap-4 h-full relative">
+    <div className="bg-white dark:bg-[#1a1a1f] rounded-2xl border border-gray-200 dark:border-[#2c2c32] shadow-sm p-5 flex flex-col gap-4 h-full relative">
       {isLoading && (
         <div className="absolute inset-0 z-10 bg-white/60 dark:bg-slate-800/60 backdrop-blur-[1px] flex items-center justify-center rounded-2xl">
           <div className="w-8 h-8 rounded-full border-2 border-green-500 border-t-transparent animate-spin"></div>

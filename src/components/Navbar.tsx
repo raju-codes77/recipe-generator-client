@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, type MouseEvent } from "react";
+import { useState, useEffect, useRef, type MouseEvent } from "react";
 import Image from "next/image";
 
 import Link from "next/link";
@@ -30,6 +30,7 @@ function NavbarContent() {
 
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const themeToastTimeoutRef = useRef<number | null>(null);
 
 
 
@@ -110,6 +111,30 @@ function NavbarContent() {
   }, []);
 
   useEffect(() => {
+    return () => {
+      if (themeToastTimeoutRef.current !== null) {
+        window.clearTimeout(themeToastTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const showThemeToast = (message: string, icon: string) => {
+    toast.dismiss();
+
+    if (themeToastTimeoutRef.current !== null) {
+      window.clearTimeout(themeToastTimeoutRef.current);
+    }
+
+    themeToastTimeoutRef.current = window.setTimeout(() => {
+      toast(message, {
+        icon,
+        duration: 2200,
+      });
+      themeToastTimeoutRef.current = null;
+    }, 180);
+  };
+
+  useEffect(() => {
     if (
 
       localStorage.theme === "dark" ||
@@ -146,7 +171,7 @@ function NavbarContent() {
 
       setIsDarkMode(false);
 
-      toast("Light mode activated ☀️", { icon: "🔆" });
+      showThemeToast("Light mode activated ☀️", "🔆");
 
     } else {
 
@@ -156,7 +181,7 @@ function NavbarContent() {
 
       setIsDarkMode(true);
 
-      toast("Dark mode activated 🌙", { icon: "🌙" });
+      showThemeToast("Dark mode activated 🌙", "🌙");
 
     }
 

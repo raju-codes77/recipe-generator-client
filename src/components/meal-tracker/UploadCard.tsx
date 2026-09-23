@@ -166,7 +166,7 @@ export default function UploadCard() {
   };
 
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm p-5 flex flex-col gap-3">
+    <div className="bg-white dark:bg-[#1a1a1f] rounded-2xl border border-gray-200 dark:border-[#2c2c32] shadow-sm p-5 flex flex-col gap-3">
       {/* Header */}
       <div className="flex items-center gap-2">
         <span className="flex items-center justify-center w-6 h-6 rounded-full bg-green-600 text-white text-xs font-bold shrink-0">

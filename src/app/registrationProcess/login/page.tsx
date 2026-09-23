@@ -127,7 +127,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-[calc(100dvh-80px)] lg:min-h-[calc(100dvh-88px)] lg:h-[calc(100dvh-88px)] flex items-center justify-center bg-gradient-to-br from-[#89986D]/20 via-white to-white dark:from-black dark:via-gray-950 dark:to-black p-3 sm:p-4 transition-colors duration-500 overflow-x-hidden lg:overflow-hidden">
+    <div className="w-full min-h-[calc(100dvh-80px)] lg:min-h-[calc(100dvh-88px)] lg:h-[calc(100dvh-88px)] flex items-center justify-center bg-gradient-to-br from-[#89986D]/20 via-white to-white dark:from-black dark:via-gray-950 dark:to-black p-3 sm:p-4 transition-colors duration-500 overflow-x-hidden lg:overflow-hidden">
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
@@ -337,7 +337,7 @@ export default function LoginPage() {
         </div>
       </motion.div>
 
-      <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-[#FF9F43]/10 dark:bg-[#FF9F43]/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="hidden lg:block absolute -bottom-32 -right-32 w-96 h-96 bg-[#FF9F43]/10 dark:bg-[#FF9F43]/5 rounded-full blur-3xl pointer-events-none" />
     </div>
   );
 }

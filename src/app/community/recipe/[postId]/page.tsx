@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { communityApi } from "@/app/api/community/community-api";
 import { Post } from "@/components/community/types";
 import { RecipeDetailsModal } from "@/components/community/RecipeDetailsModal";
@@ -10,7 +10,9 @@ import { authClient } from "@/lib/auth-client";
 export default function CommunityRecipePage() {
   const params = useParams<{ postId: string }>();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { data: session } = authClient.useSession();
+  const shouldOpenComments = searchParams.get("comments") === "1";
   const [post, setPost] = useState<Post | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,6 +35,7 @@ export default function CommunityRecipePage() {
       post={post}
       isOpen
       fullScreen
+      initialShowComments={shouldOpenComments}
       currentUserId={session?.user?.id}
       onClose={() => router.back()}
       onLike={async () => {

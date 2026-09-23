@@ -14,7 +14,7 @@ export default function TodaysMealLog() {
   const totalFat = mealLog.reduce((s, m) => s + m.fat, 0);
 
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm p-5 flex flex-col gap-4">
+    <div className="bg-white dark:bg-[#1a1a1f] rounded-2xl border border-gray-200 dark:border-[#2c2c32] shadow-sm p-5 flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-bold text-gray-900 dark:text-white">Today&apos;s Meal Log</h3>
         <button className="text-xs text-green-600 font-semibold hover:underline">

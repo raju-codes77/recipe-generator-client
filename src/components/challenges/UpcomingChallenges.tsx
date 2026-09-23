@@ -9,13 +9,13 @@ export default function UpcomingChallenges({ challenges = [] }: { challenges?: C
   return (
     <div className="mb-10">
       <div className="flex justify-between items-end mb-6">
-        <h3 className="text-xl font-bold text-slate-900 dark:text-white">Upcoming Challenges</h3>
+        <h3 className="bg-gradient-to-r from-[#0F432B] via-[#4AB741] to-[#154D31] bg-clip-text text-xl font-bold text-transparent">Upcoming Challenges</h3>
         <Link href="/challenges?tab=upcoming" className="text-sm font-semibold text-green-600 hover:text-green-700">View All</Link>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {challenges.map((c) => (
-          <Link href={`/challenges/${c.id}`} key={c.id} className="bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-sm border border-slate-100 dark:border-slate-700/50 flex group hover:shadow-md transition-shadow">
+          <Link href={`/challenges/${c.id}`} key={c.id} className="bg-white dark:bg-[#25252a] rounded-2xl overflow-hidden shadow-sm border border-slate-100 dark:border-[#3a3a40] flex group hover:shadow-md transition-shadow">
             
             {/* Image (Left) */}
             <div className="relative w-1/3 min-w-[100px] h-full overflow-hidden">
@@ -34,7 +34,7 @@ export default function UpcomingChallenges({ challenges = [] }: { challenges?: C
                 <span>Starts Soon</span>
               </div>
               <h4 className="font-bold text-slate-900 dark:text-white text-sm mb-1 leading-tight">{c.title}</h4>
-              <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
+              <p className="text-xs text-slate-500 dark:text-slate-300 line-clamp-2 leading-relaxed">
                 {c.description}
               </p>
             </div>

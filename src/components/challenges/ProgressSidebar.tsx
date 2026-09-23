@@ -46,7 +46,7 @@ export default function ProgressSidebar() {
     <div className="flex flex-col gap-6">
       
       {/* 1. My Progress Card */}
-      <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-slate-700/50">
+      <div className="bg-white dark:bg-[#25252a] rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-[#3a3a40]">
         <div className="flex justify-between items-end mb-6">
           <h3 className="font-bold text-slate-900 dark:text-white">My Progress</h3>
         </div>
@@ -94,7 +94,7 @@ export default function ProgressSidebar() {
 
       {/* 2. Recent Badges Card */}
       {badges.length > 0 && (
-        <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-slate-700/50">
+        <div className="bg-white dark:bg-[#25252a] rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-[#3a3a40]">
           <div className="flex justify-between items-end mb-6">
             <h3 className="font-bold text-slate-900 dark:text-white">Recent Badges</h3>
           </div>
@@ -118,7 +118,7 @@ export default function ProgressSidebar() {
       )}
 
       {/* 3. Leaderboard Card */}
-      <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-slate-700/50">
+      <div className="bg-white dark:bg-[#25252a] rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-[#3a3a40]">
         <div className="flex justify-between items-center mb-6">
           <h3 className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
             <Trophy size={16} className="text-amber-500" /> Leaderboard
