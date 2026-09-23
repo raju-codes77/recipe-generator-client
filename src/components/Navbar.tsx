@@ -245,12 +245,12 @@ function NavbarContent() {
 
   return (
     <div
-      className={`w-full sticky top-0 z-50 transition-all duration-300 ${scrolled
-          ? "bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-gray-100/50 dark:border-slate-800/50 shadow-sm"
-          : "bg-transparent border-b border-transparent"
-        }`}
+      className={`w-full fixed top-0 z-50 transition-all duration-300 pt-4 px-4 md:px-8 pointer-events-none`}
     >
-      <header className="max-w-[1440px] mx-auto flex items-center justify-between px-6 lg:px-12 py-4 lg:py-5">
+      <header className={`max-w-[1200px] w-[95%] mx-auto flex items-center justify-between px-6 lg:px-8 h-[60px] lg:h-[64px] rounded-[24px] pointer-events-auto transition-all duration-300 shadow-2xl ${scrolled
+          ? "bg-white/95 dark:bg-[#161616]/95 backdrop-blur-xl border border-stone-200/50 dark:border-white/10"
+          : "bg-white dark:bg-[#161616] border border-transparent dark:border-white/5"
+        }`}>
 
 
 
@@ -296,31 +296,23 @@ function NavbarContent() {
           {/* Desktop Navigation */}
           <nav className="hidden xl:flex items-center gap-1.5 lg:gap-2">
             {navLinks.map((link) => {
-
               const isActive = pathname === link.href;
-
-
-
               return (
-
                 <Link
-  key={link.name}
-  href={link.href}
-  onClick={(event) => handleNavLinkClick(event, link.href)}
-  className={`relative px-4 py-2.5 text-[15px] rounded-full transition-all duration-300 ${
-    isActive
-      ? "text-emerald-700 dark:text-emerald-400 font-bold bg-emerald-50/80 dark:bg-emerald-500/10"
-      : "text-slate-600 dark:text-slate-300 font-medium hover:text-emerald-600 dark:hover:text-emerald-300 hover:bg-slate-50 dark:hover:bg-slate-800/50"
-  }`}
->
-  {link.name}
-</Link>
+                  key={link.name}
+                  href={link.href}
+                  onClick={(event) => handleNavLinkClick(event, link.href)}
+                  className={`relative px-4 py-2 text-[14px] rounded-full transition-all duration-300 ${
+                    isActive
+                      ? "text-stone-900 dark:text-white font-bold bg-stone-100 dark:bg-white/10"
+                      : "text-stone-600 dark:text-stone-300 font-medium hover:text-stone-900 dark:hover:text-white hover:bg-stone-50 dark:hover:bg-white/5"
+                  }`}
+                >
+                  {link.name}
+                </Link>
               );
-
             })}
-
           </nav>
-
         </div>
 
 
@@ -332,13 +324,11 @@ function NavbarContent() {
 
           {/* Theme Toggle */}
 
-          <button
-
-            onClick={toggleTheme}
-            className="p-2.5 text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all duration-200"
-            aria-label="Toggle Dark Mode"
-
-          >
+            <button
+              onClick={toggleTheme}
+              className="p-2 text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-white/10 rounded-full transition-all duration-200"
+              aria-label="Toggle Dark Mode"
+            >
             {isDarkMode ? <Sun size={18} strokeWidth={2.5} /> : <Moon size={18} strokeWidth={2.5} />}
           </button>
 
@@ -355,7 +345,7 @@ function NavbarContent() {
                 <button
                   id="notification-bell-btn"
                   onClick={togglePanel}
-                  className="p-2.5 text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all duration-200 relative"
+                  className="p-2 text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-white/10 rounded-full transition-all duration-200 relative"
                   aria-label="Notifications"
                 >
                   <Bell size={18} strokeWidth={2.5} />
@@ -371,7 +361,7 @@ function NavbarContent() {
 
 
               {/* User Profile and Logout */}
-              <div className="hidden sm:flex items-center gap-4 pl-2 border-l border-slate-200 dark:border-slate-700/50">
+              <div className="hidden sm:flex items-center gap-4 pl-3 border-l border-stone-200 dark:border-white/10">
                 <div className="flex items-center gap-3">
                   <div className="h-9 w-9 rounded-full overflow-hidden border-2 border-white dark:border-slate-800 shadow-sm relative bg-gradient-to-br from-emerald-500 to-teal-600 text-white font-bold flex items-center justify-center text-xs">
                     {user.image ? (
@@ -391,9 +381,8 @@ function NavbarContent() {
                     )}
 
                   </div>
-                  <span className="text-[14px] font-semibold text-slate-700 dark:text-slate-200 max-w-[120px] truncate">
+                  <span className="text-[14px] font-semibold text-stone-700 dark:text-stone-200 max-w-[120px] truncate">
                     {user.name}
-
                   </span>
 
                 </div>
@@ -403,7 +392,7 @@ function NavbarContent() {
                 <button
 
                   onClick={handleLogout}
-                  className="p-2.5 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-full transition-all duration-200"
+                  className="p-2 text-stone-500 dark:text-stone-400 hover:text-red-600 dark:hover:text-rose-400 hover:bg-red-50 dark:hover:bg-rose-500/10 rounded-full transition-all duration-200"
                   aria-label="Logout"
                   title="Logout"
                 >
@@ -418,20 +407,13 @@ function NavbarContent() {
             <div className="hidden sm:flex items-center gap-2">
               <Link
                 href="/registrationProcess/login"
-                className="px-5 py-2.5 text-slate-600 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 text-[15px] font-bold transition-colors"
+                className="px-5 py-2 text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white text-[14px] font-bold transition-colors"
               >
                 Log in
               </Link>
               <Link
                 href="/registrationProcess/register"
-                className="group relative px-6 py-2.5 text-white text-[15px] font-bold rounded-full transition-all duration-300 shadow-lg hover:shadow-xl flex items-center gap-2"
-                style={{
-                  background: 'linear-gradient(90deg, #154D31 0%, #24733E 50%, #10B981 100%)',
-                  backgroundSize: '200% 100%',
-                  transition: 'background-position 0.3s ease',
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundPosition = 'right center'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundPosition = 'left center'}
+                className="group relative px-6 py-2 bg-stone-900 dark:bg-white text-white dark:text-[#111111] text-[14px] font-bold rounded-full transition-all duration-300 shadow-lg hover:shadow-xl hover:bg-stone-800 dark:hover:bg-stone-100 flex items-center gap-2"
               >
                 <span>Sign Up</span>
                 <ChevronRight size={16} strokeWidth={3} className="opacity-70 group-hover:translate-x-0.5 transition-transform" />
@@ -445,11 +427,9 @@ function NavbarContent() {
           {/* Mobile Menu Button */}
 
           <button
-            className="xl:hidden p-2.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
+            className="xl:hidden p-2 text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-white/10 rounded-full transition-colors"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-
             aria-label="Toggle mobile menu"
-
           >
             {isMobileMenuOpen ? <X size={24} strokeWidth={2.5} /> : <Menu size={24} strokeWidth={2.5} />}
           </button>
@@ -470,8 +450,7 @@ function NavbarContent() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.25, ease: "easeOut" }}
-            className="xl:hidden absolute top-full left-0 w-full bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl shadow-2xl px-6 pb-6 pt-2 z-50 rounded-b-3xl border-b border-slate-100 dark:border-slate-800"
+            className="xl:hidden absolute top-[110%] left-0 w-full bg-white/95 dark:bg-[#161616] backdrop-blur-xl shadow-2xl px-6 pb-6 pt-2 z-50 rounded-2xl border border-stone-200/50 dark:border-white/10"
           >
             <div className="flex flex-col gap-1.5">
               {navLinks.map((link) => {
@@ -484,9 +463,9 @@ function NavbarContent() {
                     key={link.name}
 
                     href={link.href}
-                    className={`text-[16px] px-5 py-3.5 rounded-2xl transition-all ${isActive
-                      ? "font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10"
-                      : "font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                    className={`text-[15px] px-5 py-3.5 rounded-xl transition-all ${isActive
+                      ? "font-bold text-emerald-700 dark:text-white bg-emerald-50 dark:bg-white/10"
+                      : "font-semibold text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-white hover:bg-stone-50 dark:hover:bg-white/5"
                       }`}
                     onClick={(event) => {
                       setIsMobileMenuOpen(false);
@@ -502,7 +481,7 @@ function NavbarContent() {
 
               })}
 
-              <div className="pt-4 mt-2 border-t border-slate-100 dark:border-slate-800/60 flex flex-col gap-3">
+              <div className="pt-4 mt-2 border-t border-stone-100 dark:border-white/10 flex flex-col gap-3">
                 {user ? (
                   <div className="flex flex-col gap-4">
                     <div className="flex items-center gap-4 px-2">
@@ -525,9 +504,8 @@ function NavbarContent() {
                         )}
 
                       </div>
-                      <span className="text-[16px] font-bold text-slate-800 dark:text-slate-100">
+                      <span className="text-[16px] font-bold text-stone-900 dark:text-white">
                         {user.name}
-
                       </span>
 
                     </div>
@@ -547,24 +525,16 @@ function NavbarContent() {
                   <div className="flex flex-col gap-3">
                     <Link
                       href="/registrationProcess/login"
-                      className="flex items-center justify-center w-full py-3.5 bg-slate-50 dark:bg-slate-800/50 text-slate-800 dark:text-white text-[15px] font-bold rounded-2xl transition-colors"
+                      className="flex items-center justify-center w-full py-3.5 bg-white/5 hover:bg-white/10 text-white text-[15px] font-bold rounded-2xl transition-colors"
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
                       Log in
                     </Link>
                     <Link
                       href="/registrationProcess/register"
-                      className="flex items-center justify-center w-full py-3.5 text-white text-[15px] font-bold rounded-2xl transition-all shadow-lg"
-                      style={{
-                        background: 'linear-gradient(90deg, #154D31 0%, #24733E 50%, #10B981 100%)',
-                        backgroundSize: '200% 100%',
-                        transition: 'background-position 0.3s ease',
-                      }}
+                      className="flex items-center justify-center w-full py-3.5 bg-white text-[#111111] text-[15px] font-bold rounded-2xl transition-all shadow-lg hover:bg-stone-100"
                       onClick={() => setIsMobileMenuOpen(false)}
-                      onMouseEnter={(e) => e.currentTarget.style.backgroundPosition = 'right center'}
-                      onMouseLeave={(e) => e.currentTarget.style.backgroundPosition = 'left center'}
                     >
-
                       Sign Up
 
                     </Link>

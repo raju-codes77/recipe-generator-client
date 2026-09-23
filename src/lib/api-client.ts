@@ -39,15 +39,16 @@ function resolveUrl(endpoint: string): string {
   // Clean endpoint
   const cleanEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
   
-  const relativeApiUrl = cleanEndpoint.startsWith("/api/")
-    ? cleanEndpoint
-    : `/api${cleanEndpoint}`;
+  const path = cleanEndpoint.startsWith("/api/") ? cleanEndpoint : `/api${cleanEndpoint}`;
 
-  // Browser fetch can resolve relative URLs against the current page, but
-  // Server Components run in Node.js where fetch requires an absolute URL.
-  return typeof window === "undefined"
-    ? `${BACKEND_URL}${relativeApiUrl}`
-    : relativeApiUrl;
+  // If running on the server (Next.js SSR/RSC), we MUST provide an absolute URL.
+  // We use BACKEND_URL to bypass the frontend proxy and hit the backend directly.
+  if (typeof window === "undefined") {
+    return `${BACKEND_URL}${path}`;
+  }
+
+  // On the client, use relative path to route through the Next.js proxy
+  return path;
 }
 
 async function request<T>(endpoint: string, method: HttpMethod, options: RequestOptions = {}): Promise<T> {
