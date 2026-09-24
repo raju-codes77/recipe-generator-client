@@ -163,7 +163,7 @@ export const CommunityMessenger: React.FC<{ initialRecipientId?: string; returnT
 
   if (!session?.user?.id) {
     return (
-      <main className="min-h-screen bg-[#FCFDF9] px-4 py-8 dark:bg-[#0a0a0a]">
+      <main data-community-messenger-route className="min-h-screen bg-[#FCFDF9] px-4 py-8 dark:bg-[#0a0a0a]">
         <div className="mx-auto max-w-5xl rounded-3xl border border-slate-200 bg-white p-10 text-center shadow-xs dark:border-neutral-800 dark:bg-[#121212]">
           <MessageSquare className="mx-auto h-10 w-10 text-[#2F8F46]" />
           <h1 className="mt-4 text-xl font-extrabold text-neutral-900 dark:text-white">Community Messenger</h1>
@@ -177,7 +177,7 @@ export const CommunityMessenger: React.FC<{ initialRecipientId?: string; returnT
   }
 
   return (
-    <main className="h-[calc(100dvh-5rem)] overflow-hidden bg-[#FCFDF9] px-0 py-0 dark:bg-[#0a0a0a] sm:h-[calc(100dvh-5.5rem)] sm:px-6 sm:py-1 lg:h-[calc(100dvh-6rem)]">
+    <main data-community-messenger-route className="h-[calc(100dvh-5rem)] overflow-hidden bg-[#FCFDF9] px-0 py-0 dark:bg-[#0a0a0a] sm:h-[calc(100dvh-5.5rem)] sm:px-6 sm:py-1 lg:h-[calc(100dvh-6rem)]">
       <style>{`
         .community-dm-scrollbar {
           scrollbar-color: transparent transparent;
