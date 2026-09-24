@@ -17,7 +17,7 @@ const fredoka = Fredoka({
 
 export default function Footer() {
     return (
-        <footer className="w-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-t border-gray-100 dark:border-slate-800 transition-colors duration-300 text-gray-600 dark:text-slate-300">
+        <footer className="w-full bg-white/80 dark:bg-[#080B12] backdrop-blur-md border-t border-gray-100 dark:border-[#080B12] transition-colors duration-300 text-gray-600 dark:text-slate-300">
             <div className="max-w-7xl mx-auto px-6 lg:px-10 py-12 lg:py-16">
 
                 {/* Top Grid Section */}
@@ -87,7 +87,7 @@ export default function Footer() {
                     </div>
 
                     {/* Quick Links */}
-                    <div className="col-span-1 md:col-span-1 space-y-4">
+                    <div className="col-span-1 md:col-span-1 space-y-4 lg:text-center">
                         <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider">
                             Quick Links
                         </h3>
@@ -121,7 +121,7 @@ export default function Footer() {
                     </div>
 
                     {/* Legal / Support */}
-                    <div className="space-y-4">
+                    <div className="space-y-4 lg:text-center">
                         <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider">
                             Support & Legal
                         </h3>

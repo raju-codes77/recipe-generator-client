@@ -161,30 +161,58 @@ function NavbarContent() {
 
 
 
-  const toggleTheme = () => {
+  const toggleTheme = (event: MouseEvent<HTMLButtonElement>) => {
+    const nextIsDarkMode = !isDarkMode;
+    const root = document.documentElement;
 
-    if (isDarkMode) {
+    const applyTheme = () => {
+      root.classList.toggle("dark", nextIsDarkMode);
+      localStorage.theme = nextIsDarkMode ? "dark" : "light";
+      setIsDarkMode(nextIsDarkMode);
+      showThemeToast(
+        nextIsDarkMode ? "Dark mode activated 🌙" : "Light mode activated ☀️",
+        nextIsDarkMode ? "🌙" : "🔆",
+      );
+    };
 
-      document.documentElement.classList.remove("dark");
+    const transitionDocument = document as Document & {
+      startViewTransition?: (callback: () => void) => { finished: Promise<void> };
+    };
 
-      localStorage.theme = "light";
-
-      setIsDarkMode(false);
-
-      showThemeToast("Light mode activated ☀️", "🔆");
-
-    } else {
-
-      document.documentElement.classList.add("dark");
-
-      localStorage.theme = "dark";
-
-      setIsDarkMode(true);
-
-      showThemeToast("Dark mode activated 🌙", "🌙");
-
+    if (
+      !transitionDocument.startViewTransition ||
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
+      applyTheme();
+      return;
     }
 
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const originX = bounds.left + bounds.width / 2;
+    const originY = bounds.top + bounds.height / 2;
+    const farthestCorner = Math.max(
+      Math.hypot(originX, originY),
+      Math.hypot(window.innerWidth - originX, originY),
+      Math.hypot(originX, window.innerHeight - originY),
+      Math.hypot(window.innerWidth - originX, window.innerHeight - originY),
+    );
+
+    root.style.setProperty("--theme-reveal-x", `${originX}px`);
+    root.style.setProperty("--theme-reveal-y", `${originY}px`);
+    root.style.setProperty("--theme-reveal-radius", `${Math.ceil(farthestCorner)}px`);
+
+    const transition = transitionDocument.startViewTransition(() => {
+      root.classList.add("theme-reveal-active");
+      applyTheme();
+    });
+
+    const cleanupThemeTransition = () => {
+      root.classList.remove("theme-reveal-active");
+      root.style.removeProperty("--theme-reveal-x");
+      root.style.removeProperty("--theme-reveal-y");
+      root.style.removeProperty("--theme-reveal-radius");
+    };
+    void transition.finished.then(cleanupThemeTransition, cleanupThemeTransition);
   };
 
   const handleNavLinkClick = (
@@ -247,15 +275,21 @@ function NavbarContent() {
     <div
       className={`w-full fixed top-0 z-50 transition-all duration-300 pt-4 px-4 md:px-8 pointer-events-none`}
     >
-      <header className={`max-w-[1200px] w-[95%] mx-auto flex items-center justify-between px-6 lg:px-8 h-[60px] lg:h-[64px] rounded-[24px] pointer-events-auto transition-all duration-300 shadow-2xl ${scrolled
+      <div className="relative mx-auto w-fit max-w-full pointer-events-auto">
+      <motion.header
+        data-nav-alignment
+        layout="size"
+        transition={{ layout: { type: "spring", stiffness: 160, damping: 28, mass: 1 } }}
+        className={`w-fit max-w-[calc(100vw-2rem)] ${user ? "xl:min-w-[min(95%,1200px)]" : ""} mx-auto flex items-center justify-between px-6 lg:px-8 h-[60px] lg:h-[64px] rounded-[24px] pointer-events-auto transition-all duration-300 shadow-2xl ${scrolled
           ? "bg-white/95 dark:bg-[#161616]/95 backdrop-blur-xl border border-stone-200/50 dark:border-white/10"
           : "bg-white dark:bg-[#161616] border border-transparent dark:border-white/5"
-        }`}>
+        }`}
+      >
 
 
 
         {/* Left Section */}
-        <div className="flex items-center gap-10 lg:gap-14">
+        <motion.div layout className="flex shrink-0 items-center gap-10 lg:gap-14">
           <Link
             href="/"
             className="flex items-center gap-2 h-12 shrink-0 group"
@@ -294,12 +328,22 @@ function NavbarContent() {
 
 
           {/* Desktop Navigation */}
-          <nav className="hidden xl:flex items-center gap-1.5 lg:gap-2">
+          <motion.nav layout className="hidden shrink-0 items-center gap-1.5 lg:gap-2 xl:flex">
+            <AnimatePresence initial={false}>
             {navLinks.map((link) => {
               const isActive = pathname === link.href;
               return (
-                <Link
+                <motion.div
                   key={link.name}
+                  layout
+                  initial={link.name === "Dashboard" ? { opacity: 0, scale: 0 } : false}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={link.name === "Dashboard" ? { opacity: 0, scale: 0 } : undefined}
+                  transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
+                  style={{ transformOrigin: "center" }}
+                  className="shrink-0"
+                >
+                <Link
                   href={link.href}
                   onClick={(event) => handleNavLinkClick(event, link.href)}
                   className={`relative px-4 py-2 text-[14px] rounded-full transition-all duration-300 ${
@@ -310,15 +354,17 @@ function NavbarContent() {
                 >
                   {link.name}
                 </Link>
+                </motion.div>
               );
             })}
-          </nav>
-        </div>
+            </AnimatePresence>
+          </motion.nav>
+        </motion.div>
 
 
 
         {/* Right Section */}
-        <div className="flex items-center gap-3 sm:gap-5">
+        <motion.div layout className="ml-3 flex shrink-0 items-center gap-3 sm:ml-5 sm:gap-5 xl:ml-0">
 
 
 
@@ -341,7 +387,15 @@ function NavbarContent() {
           ) : user ? (
             <>
 
-              <div className="relative flex items-center">
+              <motion.div
+                layout
+                initial={{ opacity: 0, scale: 0, width: 0 }}
+                animate={{ opacity: 1, scale: 1, width: "auto" }}
+                exit={{ opacity: 0, scale: 0, width: 0 }}
+                transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
+                style={{ transformOrigin: "center" }}
+                className="relative flex items-center"
+              >
                 <button
                   id="notification-bell-btn"
                   onClick={togglePanel}
@@ -356,12 +410,12 @@ function NavbarContent() {
                   )}
                 </button>
                 <NotificationPanel />
-              </div>
+              </motion.div>
 
 
 
               {/* User Profile and Logout */}
-              <div className="hidden sm:flex items-center gap-4 pl-3 border-l border-stone-200 dark:border-white/10">
+              <motion.div initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.45, duration: 0.38, ease: [0.22, 1, 0.36, 1] }} style={{ transformOrigin: "center" }} className="hidden xl:flex items-center gap-4 pl-3 border-l border-stone-200 dark:border-white/10">
                 <div className="flex items-center gap-3">
                   <div className="h-9 w-9 rounded-full overflow-hidden border-2 border-white dark:border-slate-800 shadow-sm relative bg-gradient-to-br from-emerald-500 to-teal-600 text-white font-bold flex items-center justify-center text-xs">
                     {user.image ? (
@@ -399,12 +453,42 @@ function NavbarContent() {
                   <LogOut size={18} strokeWidth={2.5} />
                 </button>
 
-              </div>
+              </motion.div>
+
+              {/* Keep the signed-in avatar visible beside the mobile menu button. */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+                className="xl:hidden"
+              >
+                <Link
+                  href={dashboardHref}
+                  aria-label="Open dashboard"
+                  title="Open dashboard"
+                  className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-gradient-to-br from-emerald-500 to-teal-600 text-xs font-bold text-white shadow-sm transition-transform hover:scale-105 dark:border-slate-800"
+                >
+                  {user.image ? (
+                    <Image
+                      src={user.image}
+                      alt=""
+                      fill
+                      sizes="36px"
+                      className="object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = "none";
+                      }}
+                    />
+                  ) : (
+                    <span>{getInitials(user.name)}</span>
+                  )}
+                </Link>
+              </motion.div>
 
             </>
 
           ) : (
-            <div className="hidden sm:flex items-center gap-2">
+            <motion.div layout initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }} style={{ transformOrigin: "center" }} className="hidden sm:flex items-center gap-2">
               <Link
                 href="/registrationProcess/login"
                 className="px-5 py-2 text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white text-[14px] font-bold transition-colors"
@@ -418,7 +502,7 @@ function NavbarContent() {
                 <span>Sign Up</span>
                 <ChevronRight size={16} strokeWidth={3} className="opacity-70 group-hover:translate-x-0.5 transition-transform" />
               </Link>
-            </div>
+            </motion.div>
 
           )}
 
@@ -427,16 +511,28 @@ function NavbarContent() {
           {/* Mobile Menu Button */}
 
           <button
-            className="xl:hidden p-2 text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-white/10 rounded-full transition-colors"
+            className="xl:hidden flex items-center justify-center p-2 text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-white/10 rounded-full transition-colors"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             aria-label="Toggle mobile menu"
+            aria-expanded={isMobileMenuOpen}
           >
-            {isMobileMenuOpen ? <X size={24} strokeWidth={2.5} /> : <Menu size={24} strokeWidth={2.5} />}
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.span
+                key={isMobileMenuOpen ? "close" : "menu"}
+                initial={{ opacity: 0, rotate: -90, scale: 0.7 }}
+                animate={{ opacity: 1, rotate: 0, scale: 1 }}
+                exit={{ opacity: 0, rotate: 90, scale: 0.7 }}
+                transition={{ duration: 0.18, ease: "easeOut" }}
+                className="flex h-6 w-6 items-center justify-center"
+              >
+                {isMobileMenuOpen ? <X size={24} strokeWidth={2.5} /> : <Menu size={24} strokeWidth={2.5} />}
+              </motion.span>
+            </AnimatePresence>
           </button>
 
-        </div>
+        </motion.div>
 
-      </header>
+      </motion.header>
 
 
 
@@ -450,7 +546,7 @@ function NavbarContent() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="xl:hidden absolute top-[110%] left-0 w-full bg-white/95 dark:bg-[#161616] backdrop-blur-xl shadow-2xl px-6 pb-6 pt-2 z-50 rounded-2xl border border-stone-200/50 dark:border-white/10"
+            className="xl:hidden pointer-events-auto absolute top-[calc(100%+0.5rem)] left-0 w-full bg-white/95 dark:bg-[#161616] backdrop-blur-xl shadow-2xl px-6 pb-6 pt-2 z-50 rounded-2xl border border-stone-200/50 dark:border-white/10"
           >
             <div className="flex flex-col gap-1.5">
               {navLinks.map((link) => {
@@ -552,6 +648,7 @@ function NavbarContent() {
         )}
 
       </AnimatePresence>
+      </div>
 
     </div>
 

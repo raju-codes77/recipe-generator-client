@@ -155,10 +155,10 @@ export default function NotificationPanel() {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: -10, scale: 0.95 }}
           transition={{ duration: 0.2, ease: "easeOut" }}
-          className="absolute top-14 right-0 sm:right-6 w-[340px] sm:w-[380px] bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-100 dark:border-slate-800 overflow-hidden z-[100]"
+          className="fixed top-20 left-1/2 right-auto w-[calc(100vw-2rem)] max-w-[380px] -translate-x-1/2 bg-white dark:bg-[#080B12] rounded-3xl shadow-2xl border border-slate-100 dark:border-[#1B2942] overflow-hidden z-[100] xl:absolute xl:top-14 xl:left-auto xl:right-0 xl:w-[380px] xl:translate-x-0"
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-[#1B2942] bg-slate-50/50 dark:bg-[#101A2C]">
             <div className="flex items-center gap-2">
               <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">Notifications</h3>
               {unreadCount > 0 && (
@@ -182,7 +182,7 @@ export default function NotificationPanel() {
           <div className="notification-panel-scrollbar max-h-[400px] overflow-y-auto">
             {notifications.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
-                <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4">
+                <div className="w-16 h-16 bg-slate-100 dark:bg-[#111B2D] rounded-full flex items-center justify-center mb-4">
                   <CheckCircle2 size={32} className="text-emerald-500 opacity-80" />
                 </div>
                 <p className="text-slate-700 dark:text-slate-300 font-semibold">You're all caught up!</p>
@@ -197,7 +197,7 @@ export default function NotificationPanel() {
                     const content = (
                       <div
                         onClick={() => handleNotificationClick(notification)}
-                        className={`group relative flex cursor-pointer gap-3 px-5 py-4 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50 ${
+                        className={`group relative flex cursor-pointer gap-3 px-5 py-4 transition-colors hover:bg-slate-50 dark:hover:bg-[#111B2D] ${
                           !notification.isRead ? "bg-emerald-50/30 dark:bg-emerald-900/10" : ""
                         }`}
                     >
@@ -212,7 +212,7 @@ export default function NotificationPanel() {
                             href={`/community/users/${encodeURIComponent(notification.actor.id)}`}
                             onClick={(event) => event.stopPropagation()}
                             aria-label={`Open ${notification.actor.name}'s community profile`}
-                            className="relative block h-10 w-10 rounded-full border border-slate-200 dark:border-slate-700"
+                            className="relative block h-10 w-10 rounded-full border border-slate-200 dark:border-[#263653]"
                           >
                             <Image 
                               src={notification.actor.image} 
@@ -232,14 +232,14 @@ export default function NotificationPanel() {
                             {notification.actor.name.substring(0, 2).toUpperCase()}
                           </Link>
                         ) : (
-                          <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                          <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-[#102A3A] flex items-center justify-center">
                             {getIcon(notification.type)}
                           </div>
                         )}
                         
                         {/* Type Badge */}
                         {notification.actor && (
-                          <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-white dark:bg-slate-900 rounded-full flex items-center justify-center shadow-sm">
+                          <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-white dark:bg-[#101A2C] rounded-full flex items-center justify-center shadow-sm">
                             {getIcon(notification.type)}
                           </div>
                         )}
@@ -270,7 +270,7 @@ export default function NotificationPanel() {
                     <div
                       key={notificationKey}
                       data-has-action={notificationHref ? "true" : "false"}
-                      className="border-b border-slate-100 dark:border-slate-800/60 last:border-0"
+                      className="border-b border-slate-100 dark:border-[#1B2942]/70 last:border-0"
                     >
                       {content}
                     </div>
@@ -281,7 +281,7 @@ export default function NotificationPanel() {
                   <button
                     onClick={fetchMore}
                     disabled={isLoading}
-                    className="py-3 text-sm font-semibold text-emerald-600 dark:text-emerald-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors text-center w-full"
+                    className="py-3 text-sm font-semibold text-emerald-600 dark:text-emerald-400 hover:bg-slate-50 dark:hover:bg-[#111B2D] transition-colors text-center w-full"
                   >
                     {isLoading ? "Loading..." : "Load earlier notifications"}
                   </button>

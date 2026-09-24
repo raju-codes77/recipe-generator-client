@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { 
@@ -14,14 +14,35 @@ import {
 import Link from "next/link";
 
 export default function NutritionistSupportSection() {
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const navbar = document.querySelector<HTMLElement>("[data-nav-alignment]");
+    const content = contentRef.current;
+    if (!navbar || !content) return;
+
+    const syncWidth = () => {
+      content.style.width = `${navbar.getBoundingClientRect().width}px`;
+    };
+
+    syncWidth();
+    const observer = new ResizeObserver(syncWidth);
+    observer.observe(navbar);
+    return () => observer.disconnect();
+  }, []);
+
   return (
-    <section className="w-full bg-white dark:bg-[#080B12] py-16 lg:py-24 px-6 md:px-8 transition-colors duration-300 overflow-hidden relative">
+    <section className="w-full bg-white dark:bg-[#080B12] py-16 lg:py-24 transition-colors duration-300 overflow-hidden relative">
       
       {/* Decorative Background Element */}
       <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-emerald-50 dark:bg-emerald-900/10 rounded-bl-[150px] -z-10 opacity-70 blur-3xl" />
       <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-teal-50 dark:bg-teal-900/10 rounded-tr-[150px] -z-10 opacity-60 blur-3xl" />
 
-      <div className="max-w-[1300px] mx-auto flex flex-col lg:flex-row items-center justify-between gap-16 lg:gap-20">
+      <div
+        ref={contentRef}
+        className="mx-auto flex max-w-[calc(100%-2rem)] flex-col items-center justify-between gap-16 lg:flex-row lg:gap-20"
+        style={{ width: "min(100%, 1300px)" }}
+      >
         
         {/* Left Content Area (Width: 5/12) */}
         <motion.div 

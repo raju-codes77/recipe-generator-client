@@ -197,7 +197,7 @@ function MealProfileOnboarding({ profile, onSave, userId }: { profile: MealProfi
           </div>
         </div>
 
-        <div className="flex-1 bg-white dark:bg-[#1a1a1f] rounded-3xl p-6 md:p-10 border border-slate-200 dark:border-[#2c2c32] shadow-sm mb-24 lg:mb-0">
+        <div className="flex-1 bg-white dark:bg-[#1a1a1f] rounded-3xl p-6 md:p-10 border border-slate-200 dark:border-[#2c2c32] shadow-sm">
           
           {step === 1 && (
             <div className="animate-in fade-in slide-in-from-right-4 duration-300">
@@ -392,7 +392,7 @@ function MealProfileOnboarding({ profile, onSave, userId }: { profile: MealProfi
         </div>
       </div>
 
-      <div className="fixed bottom-0 left-0 w-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 p-4 lg:relative lg:!bg-transparent lg:!border-t-0 lg:p-0 lg:mt-6 z-40">
+      <div className="relative w-full mt-4 lg:mt-6">
         <div className="max-w-6xl mx-auto flex justify-between items-center lg:justify-end lg:gap-4">
           {step > 1 && (
             <button onClick={() => setStep(step - 1)} className="px-6 py-3.5 rounded-xl font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 flex items-center gap-2 transition">
