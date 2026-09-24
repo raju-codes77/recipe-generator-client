@@ -6,6 +6,7 @@ import { ArrowRight, Sparkles } from "lucide-react";
 import Link from "next/link";
 import RecipeCard from "./recipes/RecipeCard";
 import { apiClient } from "@/lib/api-client";
+import { useSplitTextReveal } from "@/hooks/useSplitTextReveal";
 
 interface Recipe {
   id: string;
@@ -49,6 +50,8 @@ export default function RecipeCollectionSection() {
   const prefersReducedMotion = useReducedMotion();
   const sectionRef = useRef<HTMLElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLDivElement>(null);
+  useSplitTextReveal(headerRef);
   const { scrollYProgress } = useScroll({
     target: sectionRef,
     offset: ["start start", "end end"],
@@ -107,12 +110,12 @@ export default function RecipeCollectionSection() {
       <div className="relative z-10 mx-auto flex w-[95%] max-w-[1200px] flex-col items-center">
         
         {/* Section Header */}
-        <div className="mb-10 max-w-2xl text-center lg:mb-12">
+        <div ref={headerRef} className="mb-10 max-w-2xl text-center lg:mb-12">
           <span className="text-[11px] font-black uppercase tracking-[0.15em] text-emerald-700 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-500/10 px-3 py-1.5 rounded-full mb-4 inline-flex items-center gap-1.5 border border-emerald-100 dark:border-emerald-800/30 shadow-sm">
             <Sparkles size={12} />
             Trending Recipes
           </span>
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-black tracking-tight mb-4 leading-tight text-stone-900 dark:text-white">
+          <h2 data-split-reveal className="text-3xl md:text-4xl lg:text-5xl font-black tracking-tight mb-4 leading-tight text-stone-900 dark:text-white">
             Trending in the{" "}
             <span
               style={{
@@ -125,7 +128,7 @@ export default function RecipeCollectionSection() {
               Community
             </span>
           </h2>
-          <p className="text-base text-stone-500 dark:text-slate-400 font-medium leading-relaxed">
+          <p data-split-reveal className="text-base text-stone-500 dark:text-slate-400 font-medium leading-relaxed">
             Discover what home cooks and AI are creating right now. Handpicked recipes for taste, health, and simplicity.
           </p>
         </div>

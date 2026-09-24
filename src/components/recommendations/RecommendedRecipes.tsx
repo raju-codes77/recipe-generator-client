@@ -1,9 +1,30 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Sparkles, Loader2 } from "lucide-react";
 import { apiClient } from "@/lib/api-client";
 import RecipeCard from "@/components/recipes/RecipeCard";
+import { useSplitTextReveal } from "@/hooks/useSplitTextReveal";
+
+function RecommendedRecipesHeader({ personalized, reason }: { personalized: boolean; reason: string }) {
+  const headerRef = useRef<HTMLDivElement>(null);
+  useSplitTextReveal(headerRef);
+
+  return (
+    <div ref={headerRef} className="mb-8 flex flex-col items-center text-center">
+      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-900/30 text-[#24733E] dark:text-[#10B981] text-xs font-bold uppercase tracking-wider mb-3">
+        <Sparkles className="w-3.5 h-3.5" />
+        <span>{personalized ? "Recommended for You" : "Popular for You"}</span>
+      </div>
+      <h2 data-split-reveal className="text-3xl md:text-4xl font-black text-gray-900 dark:text-white mb-2">
+        {personalized ? "Curated to Your Taste" : "Explore Popular Recipes"}
+      </h2>
+      <p data-split-reveal className="text-sm text-gray-500 dark:text-gray-400 max-w-lg">
+        {reason}
+      </p>
+    </div>
+  );
+}
 
 export default function RecommendedRecipes() {
   const [recipes, setRecipes] = useState<any[]>([]);
@@ -53,18 +74,7 @@ export default function RecommendedRecipes() {
   return (
     <section className="w-full py-12 lg:py-16 px-6 lg:px-8 bg-gradient-to-b from-white to-gray-50 dark:from-[#080B12] dark:to-black">
       <div className="max-w-[1200px] mx-auto">
-        <div className="mb-8 flex flex-col items-center text-center">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-900/30 text-[#24733E] dark:text-[#10B981] text-xs font-bold uppercase tracking-wider mb-3">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>{personalized ? "Recommended for You" : "Popular for You"}</span>
-          </div>
-          <h2 className="text-3xl md:text-4xl font-black text-gray-900 dark:text-white mb-2">
-            {personalized ? "Curated to Your Taste" : "Explore Popular Recipes"}
-          </h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400 max-w-lg">
-            {reason}
-          </p>
-        </div>
+        <RecommendedRecipesHeader personalized={personalized} reason={reason} />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {recipes.map((recipe, idx) => (

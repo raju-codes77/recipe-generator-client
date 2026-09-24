@@ -3,6 +3,7 @@
 import React, { useEffect, useRef } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
+import { useSplitTextReveal } from "@/hooks/useSplitTextReveal";
 import { 
   Sparkles, 
   Stethoscope, 
@@ -15,6 +16,7 @@ import Link from "next/link";
 
 export default function NutritionistSupportSection() {
   const contentRef = useRef<HTMLDivElement>(null);
+  const textRevealRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const navbar = document.querySelector<HTMLElement>("[data-nav-alignment]");
@@ -31,6 +33,8 @@ export default function NutritionistSupportSection() {
     return () => observer.disconnect();
   }, []);
 
+  useSplitTextReveal(textRevealRef);
+
   return (
     <section className="w-full bg-white dark:bg-[#080B12] py-16 lg:py-24 transition-colors duration-300 overflow-hidden relative">
       
@@ -46,6 +50,7 @@ export default function NutritionistSupportSection() {
         
         {/* Left Content Area (Width: 5/12) */}
         <motion.div 
+          ref={textRevealRef}
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-100px" }}
@@ -60,7 +65,7 @@ export default function NutritionistSupportSection() {
           </div>
 
           {/* Main Title */}
-          <h2 className="text-4xl md:text-5xl lg:text-[56px] font-black tracking-tight text-stone-900 dark:text-white leading-[1.05] z-10">
+          <h2 data-split-reveal className="text-4xl md:text-5xl lg:text-[56px] font-black tracking-tight text-stone-900 dark:text-white leading-[1.05] z-10">
             Your Personal <br />
             Nutrition Team, <br />
             <span 
@@ -77,7 +82,7 @@ export default function NutritionistSupportSection() {
           </h2>
 
           {/* Description */}
-          <p className="text-lg text-stone-600 dark:text-stone-300/90 leading-relaxed font-medium max-w-lg">
+          <p data-split-reveal className="text-lg text-stone-600 dark:text-stone-300/90 leading-relaxed font-medium max-w-lg">
             Whether you need instant AI-powered dietary advice or personalized, ongoing counseling from a certified human nutritionist, FoodCanvas has you covered.
           </p>
 
@@ -88,8 +93,8 @@ export default function NutritionistSupportSection() {
                 <Sparkles className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-base font-bold text-stone-900 dark:text-white mb-1">AI Nutrition Assistant</h3>
-                <p className="text-sm font-medium text-stone-500 dark:text-stone-400 leading-snug">Get instant meal plans, macro tracking, and personalized alternative ingredients anytime you need.</p>
+                <h3 data-split-reveal className="text-base font-bold text-stone-900 dark:text-white mb-1">AI Nutrition Assistant</h3>
+                <p data-split-reveal className="text-sm font-medium text-stone-500 dark:text-stone-400 leading-snug">Get instant meal plans, macro tracking, and personalized alternative ingredients anytime you need.</p>
               </div>
             </div>
 
@@ -98,8 +103,8 @@ export default function NutritionistSupportSection() {
                 <Activity className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-base font-bold text-stone-900 dark:text-white mb-1">Certified Human Dietitians</h3>
-                <p className="text-sm font-medium text-stone-500 dark:text-stone-400 leading-snug">Connect with registered professionals for tailored health strategies and ongoing support.</p>
+                <h3 data-split-reveal className="text-base font-bold text-stone-900 dark:text-white mb-1">Certified Human Dietitians</h3>
+                <p data-split-reveal className="text-sm font-medium text-stone-500 dark:text-stone-400 leading-snug">Connect with registered professionals for tailored health strategies and ongoing support.</p>
               </div>
             </div>
           </div>
