@@ -226,14 +226,13 @@ function NavbarContent() {
       !event.shiftKey &&
       !event.altKey;
 
-    if (
-      href === "/community" &&
-      pathname === "/community" &&
-      isUnmodifiedLeftClick
-    ) {
+    if (pathname === href && isUnmodifiedLeftClick) {
       event.preventDefault();
-      window.scrollTo({ top: 0, behavior: "smooth" });
-      window.dispatchEvent(new Event("community:refresh"));
+      window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+
+      if (href === "/community") {
+        window.dispatchEvent(new Event("community:refresh"));
+      }
     }
   };
 
@@ -294,6 +293,7 @@ function NavbarContent() {
             href="/"
             className="flex items-center gap-2 h-12 shrink-0 group"
             aria-label="FoodCanvas - Go to homepage"
+            onClick={(event) => handleNavLinkClick(event, "/")}
           >
             {/* Icon Container */}
             <div className="flex shrink-0 transition-transform duration-300 group-hover:scale-105">

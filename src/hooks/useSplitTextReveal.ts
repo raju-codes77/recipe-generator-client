@@ -29,8 +29,7 @@ export function useSplitTextReveal(containerRef: RefObject<HTMLElement | null>) 
               scrollTrigger: {
                 trigger: target,
                 start: "top 82%",
-                end: "bottom 18%",
-                toggleActions: "play reverse play reverse",
+                toggleActions: "play none none none",
               },
             }),
         });
