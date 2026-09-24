@@ -14,13 +14,13 @@ import {
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
 function SkeletonCard() {
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden animate-pulse flex gap-4 p-4">
-      <div className="w-20 h-20 bg-gray-200 rounded-xl flex-shrink-0" />
+    <div className="bg-white dark:bg-[#25252a] rounded-2xl border border-gray-100 dark:border-[#3a3a40] overflow-hidden animate-pulse flex gap-4 p-4">
+      <div className="w-20 h-20 bg-gray-200 dark:bg-[#303038] rounded-xl flex-shrink-0" />
       <div className="flex-1 space-y-2.5 py-1">
-        <div className="h-4 bg-gray-200 rounded w-3/4" />
-        <div className="h-2.5 bg-gray-100 rounded w-full" />
-        <div className="h-2.5 bg-gray-100 rounded w-2/3" />
-        <div className="h-8 bg-gray-200 rounded-xl w-28 mt-2" />
+        <div className="h-4 bg-gray-200 dark:bg-[#3a3a40] rounded w-3/4" />
+        <div className="h-2.5 bg-gray-100 dark:bg-[#303038] rounded w-full" />
+        <div className="h-2.5 bg-gray-100 dark:bg-[#303038] rounded w-2/3" />
+        <div className="h-8 bg-gray-200 dark:bg-[#3a3a40] rounded-xl w-28 mt-2" />
       </div>
     </div>
   );

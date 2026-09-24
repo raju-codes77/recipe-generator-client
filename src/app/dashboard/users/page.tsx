@@ -106,7 +106,7 @@ export default function UserDashboardPage() {
       </div>
 
       {/* Expert consultation banner */}
-      <div className="relative overflow-hidden rounded-[26px] border border-[#dfe9d7] bg-[#f2f8ed] p-5 shadow-sm dark:border-[#89986D]/20 dark:bg-[#1a291d] sm:p-6">
+      <div className="relative overflow-hidden rounded-[26px] border border-[#dfe9d7] bg-[#f2f8ed] p-5 shadow-sm dark:border-[#89986D]/20 dark:bg-[#111318] sm:p-6">
         <div className="absolute -right-8 -top-12 h-36 w-36 rounded-full border-18 border-[#b7df86]/25" />
         <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-start gap-4">
@@ -287,7 +287,7 @@ export default function UserDashboardPage() {
       </div>
 
       {/* 4. Monthly Tracker Calendar (Synced with Meal Tracker) */}
-      <div className="relative overflow-hidden bg-white dark:bg-[#1d293d] rounded-3xl border border-gray-100 dark:border-[#31435f] shadow-sm p-5 sm:p-7">
+      <div className="relative overflow-hidden bg-white dark:bg-[#111318] rounded-3xl border border-gray-100 dark:border-white/10 shadow-sm p-4 sm:p-5">
         {(() => {
           const history = (data?.monthlyDailyEntries || []).reduce((acc: any, curr: any) => {
             acc[curr.date] = curr;
@@ -330,14 +330,14 @@ export default function UserDashboardPage() {
           }).length;
 
           return (
-            <div className="flex flex-col gap-5">
+            <div className="flex flex-col gap-4">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#dff7e8] text-[#117A38] dark:bg-[#123d2b] dark:text-[#63e6a0]">
-                    <FiCalendar className="h-5 w-5" />
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#dff7e8] text-[#117A38] dark:bg-[#123d2b] dark:text-[#63e6a0]">
+                    <FiCalendar className="h-4 w-4" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">Monthly Tracker</h3>
+                    <h3 className="text-base font-bold text-gray-900 dark:text-white">Monthly Tracker</h3>
                     <p className="mt-0.5 text-[11px] font-medium text-gray-500 dark:text-slate-400">Your daily nutrition at a glance</p>
                   </div>
                 </div>
@@ -354,9 +354,9 @@ export default function UserDashboardPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-7 gap-2.5">
+              <div className="grid grid-cols-7 gap-1.5 sm:gap-2">
                 {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map(d => (
-                  <div key={d} className="pb-1 text-center text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-slate-400">{d}</div>
+                  <div key={d} className="pb-0.5 text-center text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-slate-400">{d}</div>
                 ))}
                 
                 {Array.from({ length: firstDay }).map((_, i) => (
@@ -374,7 +374,7 @@ export default function UserDashboardPage() {
                     <div
                       key={dateStr}
                       title={entry ? `${entry.kcal} kcal · ${entry.protein}g protein` : "No data"}
-                      className={`group relative flex h-14 cursor-default flex-col items-center justify-start rounded-2xl border p-2 transition hover:-translate-y-0.5 hover:shadow-md sm:h-16 ${statusStyle[status]} ${status === "empty" ? "border-transparent dark:border-[#33445e]" : ""} ${isToday ? "ring-2 ring-[#00c853] ring-offset-2 dark:ring-offset-[#1d293d]" : ""}`}
+                      className={`group relative flex h-11 cursor-default flex-col items-center justify-start rounded-xl border p-1.5 transition hover:-translate-y-0.5 hover:shadow-md sm:h-12 ${statusStyle[status]} ${status === "empty" ? "border-transparent dark:border-[#33445e]" : ""} ${isToday ? "ring-2 ring-[#00c853] ring-offset-1 dark:ring-offset-[#1d293d]" : ""}`}
                     >
                       <span className={`text-xs font-bold leading-tight ${isToday ? "text-green-700 dark:text-[#63e6a0]" : "text-gray-700 dark:text-slate-200"}`}>
                         {day}
@@ -389,23 +389,23 @@ export default function UserDashboardPage() {
                 })}
               </div>
 
-              <div className="flex flex-wrap items-center gap-2.5 pt-1">
+              <div className="flex flex-wrap items-center gap-2 pt-0.5">
                 <div className="flex items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-1 dark:bg-blue-400/10"><span className="h-2 w-2 rounded-full bg-blue-300" /><span className="text-[11px] font-medium text-gray-600 dark:text-slate-300">Under goal</span></div>
                 <div className="flex items-center gap-1.5 rounded-full bg-green-50 px-2.5 py-1 dark:bg-green-400/10"><span className="h-2 w-2 rounded-full bg-green-300" /><span className="text-[11px] font-medium text-gray-600 dark:text-slate-300">On track</span></div>
                 <div className="flex items-center gap-1.5 rounded-full bg-orange-50 px-2.5 py-1 dark:bg-orange-400/10"><span className="h-2 w-2 rounded-full bg-orange-300" /><span className="text-[11px] font-medium text-gray-600 dark:text-slate-300">Over goal</span></div>
               </div>
 
-              <div className="grid grid-cols-3 gap-2 border-t border-gray-100 pt-5 dark:border-[#31435f]">
-                <div className="rounded-2xl bg-gray-50 px-2 py-3 text-center dark:bg-[#26364e]">
-                  <p className="text-xl font-extrabold text-gray-900 dark:text-white">{daysLogged}</p>
+              <div className="grid grid-cols-3 gap-2 border-t border-gray-100 pt-4 dark:border-[#31435f]">
+                <div className="rounded-xl bg-gray-50 px-2 py-2.5 text-center dark:bg-[#26364e]">
+                  <p className="text-lg font-extrabold text-gray-900 dark:text-white">{daysLogged}</p>
                   <p className="text-[11px] font-medium text-gray-400">Days Logged</p>
                 </div>
-                <div className="rounded-2xl bg-green-50 px-2 py-3 text-center dark:bg-green-400/10">
-                  <p className="text-xl font-extrabold text-green-600">{todayKcal > 0 ? `${todayKcal}` : "--"}</p>
+                <div className="rounded-xl bg-green-50 px-2 py-2.5 text-center dark:bg-green-400/10">
+                  <p className="text-lg font-extrabold text-green-600">{todayKcal > 0 ? `${todayKcal}` : "--"}</p>
                   <p className="text-[11px] font-medium text-gray-400">Today's kcal</p>
                 </div>
-                <div className="rounded-2xl bg-blue-50 px-2 py-3 text-center dark:bg-blue-400/10">
-                  <p className="text-xl font-extrabold text-blue-600">{todayProtein > 0 ? `${todayProtein}g` : "--"}</p>
+                <div className="rounded-xl bg-blue-50 px-2 py-2.5 text-center dark:bg-blue-400/10">
+                  <p className="text-lg font-extrabold text-blue-600">{todayProtein > 0 ? `${todayProtein}g` : "--"}</p>
                   <p className="text-[11px] font-medium text-gray-400">Today's protein</p>
                 </div>
               </div>

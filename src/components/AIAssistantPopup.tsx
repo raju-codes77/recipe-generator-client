@@ -31,8 +31,13 @@ export default function AIAssistantPopup() {
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messengerNavigationTimeoutRef = useRef<number | null>(null);
+  const resolveMessengerTransitionRef = useRef<(() => void) | null>(null);
+  const messengerTransitionTargetRef = useRef<string | null>(null);
 
-  const showCommunityMessenger = pathname === "/community" && !isSessionPending && Boolean(session?.user);
+  const showCommunityMessenger =
+    (pathname === "/community" || pathname === "/community/messages") &&
+    !isSessionPending &&
+    Boolean(session?.user);
   const isAuthPage = pathname === "/registrationProcess/login" || pathname === "/registrationProcess/register";
 
   const popularPrompts = [
@@ -61,18 +66,87 @@ export default function AIAssistantPopup() {
 
   useEffect(() => {
     setIsMessengerNavigating(false);
+
+    if (messengerTransitionTargetRef.current === pathname) {
+      resolveMessengerTransitionRef.current?.();
+      resolveMessengerTransitionRef.current = null;
+      messengerTransitionTargetRef.current = null;
+    }
+
     if (messengerNavigationTimeoutRef.current !== null) {
       window.clearTimeout(messengerNavigationTimeoutRef.current);
       messengerNavigationTimeoutRef.current = null;
     }
   }, [pathname]);
 
-  const openCommunityMessenger = () => {
+  const openCommunityMessenger = (event: React.MouseEvent<HTMLButtonElement>) => {
     if (isMessengerNavigating) return;
     setIsMessengerNavigating(true);
+
+    const isClosingMessenger = pathname === "/community/messages";
+    const destination = isClosingMessenger ? "/community" : "/community/messages";
+    const transitionDocument = document as Document & {
+      startViewTransition?: (callback: () => void | Promise<void>) => { finished: Promise<void> };
+    };
+
+    if (
+      !transitionDocument.startViewTransition ||
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
+      router.push(destination);
+      return;
+    }
+
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const originX = bounds.left + bounds.width / 2;
+    const originY = bounds.top + bounds.height / 2;
+    const farthestCorner = Math.max(
+      Math.hypot(originX, originY),
+      Math.hypot(window.innerWidth - originX, originY),
+      Math.hypot(originX, window.innerHeight - originY),
+      Math.hypot(window.innerWidth - originX, window.innerHeight - originY),
+    );
+    const root = document.documentElement;
+
+    root.style.setProperty("--theme-reveal-x", `${originX}px`);
+    root.style.setProperty("--theme-reveal-y", `${originY}px`);
+    root.style.setProperty("--theme-reveal-radius", `${Math.ceil(farthestCorner)}px`);
+
+    let resolveRouteUpdate: (() => void) | null = null;
+    const routeUpdate = new Promise<void>((resolve) => {
+      resolveRouteUpdate = resolve;
+      resolveMessengerTransitionRef.current = resolve;
+      messengerTransitionTargetRef.current = destination;
+    });
+
+    const transition = transitionDocument.startViewTransition(() => {
+      root.classList.add(isClosingMessenger ? "theme-reveal-close-active" : "theme-reveal-active");
+      router.push(destination);
+      return routeUpdate;
+    });
+
     messengerNavigationTimeoutRef.current = window.setTimeout(() => {
-      router.push("/community/messages");
-    }, 140);
+      resolveRouteUpdate?.();
+      resolveMessengerTransitionRef.current = null;
+      messengerTransitionTargetRef.current = null;
+    }, 3000);
+
+    const cleanupTransition = () => {
+      root.classList.remove("theme-reveal-active");
+      root.classList.remove("theme-reveal-close-active");
+      root.style.removeProperty("--theme-reveal-x");
+      root.style.removeProperty("--theme-reveal-y");
+      root.style.removeProperty("--theme-reveal-radius");
+      resolveMessengerTransitionRef.current = null;
+      messengerTransitionTargetRef.current = null;
+      if (messengerNavigationTimeoutRef.current !== null) {
+        window.clearTimeout(messengerNavigationTimeoutRef.current);
+        messengerNavigationTimeoutRef.current = null;
+      }
+      setIsMessengerNavigating(false);
+    };
+
+    void transition.finished.then(cleanupTransition, cleanupTransition);
   };
 
   const handleSendMessage = async (queryText?: string) => {
@@ -121,11 +195,10 @@ export default function AIAssistantPopup() {
               <button
                 type="button"
                 onClick={openCommunityMessenger}
-                aria-label="Open Community Messenger"
-                title="Community Messenger"
+                aria-label={pathname === "/community/messages" ? "Return to Community" : "Open Community Messenger"}
+                title={pathname === "/community/messages" ? "Return to Community" : "Community Messenger"}
                 className={`group relative flex h-13 w-13 items-center justify-center rounded-2xl border-2 border-emerald-500/35 bg-white text-emerald-700 shadow-[0_10px_28px_rgba(15,80,50,0.22)] transition hover:scale-105 hover:border-emerald-600 hover:shadow-[0_14px_34px_rgba(15,80,50,0.32)] dark:bg-slate-850 sm:h-14 sm:w-14 sm:rounded-[22px] ${isMessengerNavigating ? "scale-110" : ""}`}
               >
-                {isMessengerNavigating && <motion.span initial={{ scale: 1, opacity: 0.45 }} animate={{ scale: 7, opacity: 0 }} transition={{ duration: 0.3 }} className="pointer-events-none absolute inset-0 rounded-full bg-emerald-500" />}
                 <MessageCircle className="h-6 w-6" strokeWidth={2.5} />
                 <span className="pointer-events-none absolute right-full mr-3 whitespace-nowrap rounded-lg bg-slate-900 px-2.5 py-1.5 text-xs font-semibold text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
                   Community Messenger
@@ -139,6 +212,7 @@ export default function AIAssistantPopup() {
           onClick={() => setIsOpen((prev) => !prev)}
           whileHover={{ scale: 1.06 }}
           whileTap={{ scale: 0.94 }}
+          style={{ viewTransitionName: "ai-assistant-fab" }}
           className={`group relative flex h-13 w-13 sm:h-14 sm:w-14 items-center justify-center rounded-2xl sm:rounded-[22px] transition-all duration-300 ${
             isOpen
               ? "bg-gradient-to-br from-[#14532D] via-[#166534] to-[#15803D] text-white shadow-[0_10px_25px_rgba(20,83,45,0.35)] border border-white/20"

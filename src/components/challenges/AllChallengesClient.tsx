@@ -15,16 +15,16 @@ import { toast } from "react-hot-toast";
 // ─── Skeleton ──────────────────────────────────────────────────────────────────
 function SkeletonCard() {
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden animate-pulse">
-      <div className="h-52 bg-gray-200" />
+    <div className="bg-white dark:bg-[#25252a] rounded-2xl border border-gray-100 dark:border-[#3a3a40] overflow-hidden animate-pulse">
+      <div className="h-52 bg-gray-200 dark:bg-[#303038]" />
       <div className="p-5 space-y-3">
-        <div className="h-5 bg-gray-200 rounded-md w-3/4" />
-        <div className="h-3 bg-gray-100 rounded-md w-full" />
+        <div className="h-5 bg-gray-200 dark:bg-[#3a3a40] rounded-md w-3/4" />
+        <div className="h-3 bg-gray-100 dark:bg-[#303038] rounded-md w-full" />
         <div className="flex gap-3 mt-3">
-          <div className="h-7 bg-gray-200 rounded-full w-20" />
-          <div className="h-7 bg-gray-200 rounded-full w-20" />
+          <div className="h-7 bg-gray-200 dark:bg-[#3a3a40] rounded-full w-20" />
+          <div className="h-7 bg-gray-200 dark:bg-[#3a3a40] rounded-full w-20" />
         </div>
-        <div className="h-10 bg-gray-200 rounded-xl w-full mt-2" />
+        <div className="h-10 bg-gray-200 dark:bg-[#3a3a40] rounded-xl w-full mt-2" />
       </div>
     </div>
   );

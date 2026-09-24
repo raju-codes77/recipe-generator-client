@@ -1,21 +1,28 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import {
   FiHome, FiUsers, FiBookOpen, FiFolder, FiAward, FiMessageSquare,
   FiAlertCircle, FiCpu, FiShield, FiMenu, FiX, FiActivity,
-  FiBox, FiCalendar, FiShoppingCart, FiList, FiGrid, FiHeart, FiUser
+  FiBox, FiCalendar, FiShoppingCart, FiList, FiGrid, FiHeart, FiUser, FiChevronDown
 } from "react-icons/fi";
 import { FaDochub } from "react-icons/fa6";
 import { authClient } from "@/lib/auth-client";
 
 export default function DashboardSidebar() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [aiToolsOpen, setAiToolsOpen] = useState(false);
+  const [communityOpen, setCommunityOpen] = useState(false);
   const pathname = usePathname();
   const { data: session } = authClient.useSession();
+
+  useEffect(() => {
+    setAiToolsOpen(pathname.startsWith("/ai-tools"));
+    setCommunityOpen(pathname.startsWith("/community") || pathname.startsWith("/recipes"));
+  }, [pathname]);
 
 
   const isAdmin = pathname?.includes("/admin");
@@ -40,7 +47,6 @@ export default function DashboardSidebar() {
     { name: "Collections", icon: <FiFolder />, href: "/dashboard/users/collections" },
     { name: "Challenges", icon: <FiAward />, href: "/dashboard/users/challenges" },
     { name: "Wellness Reminders", icon: <FiAlertCircle />, href: "/dashboard/wellness-reminders" },
-    { name: "All AI Tools", icon: <FiCpu />, href: "/ai-tools" },
   ];
 
   const aiToolsNavItems = [
@@ -88,8 +94,8 @@ export default function DashboardSidebar() {
 
       {/* Sidebar Container */}
       <aside className={`
-        fixed lg:sticky lg:top-[88px] inset-y-0 left-0 z-50 lg:z-40 w-64 lg:h-[calc(100vh-88px)] flex flex-col justify-between
-        border-r border-[#dfe8da] bg-[#fbfdf9] p-4 shadow-[8px_0_30px_rgba(40,70,45,0.04)] transition-transform duration-300 ease-in-out dark:border-white/10 dark:bg-[#101611] lg:p-5
+        fixed lg:sticky lg:top-[80px] inset-y-0 left-0 z-50 lg:z-40 w-64 lg:h-[calc(100vh-80px)] flex flex-col justify-between
+        border-r border-[#dfe8da] bg-[#fbfdf9] p-4 shadow-[8px_0_30px_rgba(40,70,45,0.04)] transition-transform duration-300 ease-in-out dark:border-white/10 dark:bg-[#111318] lg:p-5
         ${mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
       `}>
         <div className="dashboard-sidebar-scrollbar -mr-2 space-y-6 overflow-y-auto pt-0 pr-2">
@@ -120,7 +126,7 @@ export default function DashboardSidebar() {
                       key={idx}
                       href={item.href}
                       onClick={() => setMobileOpen(false)}
-                      className={`group flex items-center space-x-3 rounded-2xl px-3 py-2.5 text-xs font-medium transition-all ${isActive
+                      className={`group flex items-center space-x-3 rounded-2xl px-3 py-2.5 text-xs font-medium transition-all hover:translate-x-0.5 ${isActive
                           ? "bg-[#2F8F46] font-semibold text-white shadow-md shadow-[#2F8F46]/20"
                           : "text-gray-600 hover:bg-[#edf6e9] hover:text-[#2F8F46] dark:text-[#F6F0D7]/70 dark:hover:bg-white/10 dark:hover:text-[#F6F0D7]"
                         }`}
@@ -146,7 +152,7 @@ export default function DashboardSidebar() {
                         key={idx}
                         href={item.href}
                         onClick={() => setMobileOpen(false)}
-                        className={`group flex items-center justify-between rounded-2xl px-3 py-2.5 text-xs transition-all ${isActive
+                        className={`group flex items-center justify-between rounded-2xl px-3 py-2.5 text-xs transition-all hover:translate-x-0.5 ${isActive
                             ? "bg-[#eaf7e8] font-bold text-[#176B35] shadow-sm dark:bg-[#2F8F46]/20 dark:text-[#B7E35F]"
                             : "font-medium text-gray-600 hover:bg-[#f0f6ed] dark:text-gray-400 dark:hover:bg-white/10"
                           }`}
@@ -171,52 +177,100 @@ export default function DashboardSidebar() {
 
               {/* AI TOOLS Section */}
               <div>
-                <p className="px-3 text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">AI Tools</p>
-                <div className="space-y-1">
-                  {aiToolsNavItems.map((item, idx) => {
-                    const isActive = pathname === item.href;
-                    return (
-                      <Link
-                        key={idx}
-                        href={item.href}
-                        onClick={() => setMobileOpen(false)}
-                        className={`group flex items-center gap-3 rounded-2xl px-3 py-2.5 text-xs font-medium transition-all ${isActive
-                            ? "bg-[#eaf7e8] font-bold text-[#176B35] shadow-sm dark:bg-[#2F8F46]/20 dark:text-[#B7E35F]"
-                            : "text-gray-600 hover:bg-[#f0f6ed] dark:text-gray-400 dark:hover:bg-white/10"
-                          }`}
-                      >
-                        <span className={`text-base transition-transform group-hover:scale-105 ${isActive ? "text-[#2F8F46] dark:text-[#b7df86]" : ""}`}>{item.icon}</span>
-                        <span>{item.name}</span>
-                      </Link>
-                    );
-                  })}
-                </div>
+                <button
+                  type="button"
+                  aria-expanded={aiToolsOpen}
+                  onClick={() => setAiToolsOpen(open => !open)}
+                  className="group flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-gray-400 transition-colors hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+                >
+                  <span className="flex items-center gap-2.5">
+                    <FiCpu className="h-3.5 w-3.5 text-gray-500 dark:text-gray-400" />
+                    AI Tools
+                  </span>
+                  <FiChevronDown className={`h-3.5 w-3.5 transition-transform duration-300 ${aiToolsOpen ? "rotate-180" : ""}`} />
+                </button>
+                <AnimatePresence initial={false}>
+                  {aiToolsOpen && (
+                    <motion.div
+                      key="ai-tools-menu"
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+                      className="overflow-hidden"
+                    >
+                      <div className="space-y-1 pt-1">
+                        {aiToolsNavItems.map((item, idx) => {
+                          const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+                          return (
+                            <Link
+                              key={idx}
+                              href={item.href}
+                              onClick={() => setMobileOpen(false)}
+                              className={`group flex items-center gap-3 rounded-2xl px-3 py-2.5 text-xs font-medium transition-all hover:translate-x-0.5 ${isActive
+                                  ? "bg-[#eaf7e8] font-bold text-[#176B35] shadow-sm dark:bg-[#2F8F46]/20 dark:text-[#B7E35F]"
+                                  : "text-gray-600 hover:bg-[#f0f6ed] dark:text-gray-400 dark:hover:bg-white/10"
+                                }`}
+                            >
+                              <span className={`text-base transition-transform group-hover:scale-105 ${isActive ? "text-[#2F8F46] dark:text-[#b7df86]" : ""}`}>{item.icon}</span>
+                              <span>{item.name}</span>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
               {/* COMMUNITY Section */}
               <div>
-                <p className="px-3 text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">Community</p>
-                <div className="space-y-1">
-                  {communityNavItems.map((item, idx) => {
-                    const isActive = item.name === "Community Profile"
-                      ? pathname.startsWith("/community/users/")
-                      : pathname === item.href;
-                    return (
-                      <Link
-                        key={idx}
-                        href={item.href}
-                        onClick={() => setMobileOpen(false)}
-                        className={`group flex items-center gap-3 rounded-2xl px-3 py-2.5 text-xs font-medium transition-all ${isActive
-                            ? "bg-[#eaf7e8] font-bold text-[#176B35] shadow-sm dark:bg-[#2F8F46]/20 dark:text-[#B7E35F]"
-                            : "text-gray-600 hover:bg-[#f0f6ed] dark:text-gray-400 dark:hover:bg-white/10"
-                          }`}
-                      >
-                        <span className={`text-base transition-transform group-hover:scale-105 ${isActive ? "text-[#2F8F46] dark:text-[#b7df86]" : ""}`}>{item.icon}</span>
-                        <span>{item.name}</span>
-                      </Link>
-                    );
-                  })}
-                </div>
+                <button
+                  type="button"
+                  aria-expanded={communityOpen}
+                  onClick={() => setCommunityOpen(open => !open)}
+                  className="group flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-gray-400 transition-colors hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+                >
+                  <span className="flex items-center gap-2.5">
+                    <FiUsers className="h-3.5 w-3.5 text-gray-500 dark:text-gray-400" />
+                    Community
+                  </span>
+                  <FiChevronDown className={`h-3.5 w-3.5 transition-transform duration-300 ${communityOpen ? "rotate-180" : ""}`} />
+                </button>
+                <AnimatePresence initial={false}>
+                  {communityOpen && (
+                    <motion.div
+                      key="community-menu"
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+                      className="overflow-hidden"
+                    >
+                      <div className="space-y-1 pt-1">
+                        {communityNavItems.map((item, idx) => {
+                          const isActive = item.name === "Community Profile"
+                            ? pathname.startsWith("/community/users/")
+                            : pathname === item.href;
+                          return (
+                            <Link
+                              key={idx}
+                              href={item.href}
+                              onClick={() => setMobileOpen(false)}
+                              className={`group flex items-center gap-3 rounded-2xl px-3 py-2.5 text-xs font-medium transition-all hover:translate-x-0.5 ${isActive
+                                  ? "bg-[#eaf7e8] font-bold text-[#176B35] shadow-sm dark:bg-[#2F8F46]/20 dark:text-[#B7E35F]"
+                                  : "text-gray-600 hover:bg-[#f0f6ed] dark:text-gray-400 dark:hover:bg-white/10"
+                                }`}
+                            >
+                              <span className={`text-base transition-transform group-hover:scale-105 ${isActive ? "text-[#2F8F46] dark:text-[#b7df86]" : ""}`}>{item.icon}</span>
+                              <span>{item.name}</span>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
             </div>
@@ -230,15 +284,12 @@ export default function DashboardSidebar() {
         <div className="mt-auto space-y-4 pt-6">
           {!isAdmin && (
             <div className="rounded-[22px] border border-[#cce2c4] bg-[#edf7e9] p-4 shadow-sm dark:border-[#2F8F46]/20 dark:bg-[#2F8F46]/10">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-lg">👑</span>
-                <h4 className="font-bold text-gray-900 dark:text-[#F6F0D7] text-xs">Upgrade to Pro</h4>
-              </div>
               <p className="text-[10px] text-gray-600 dark:text-[#F6F0D7]/60 mb-3 leading-relaxed">
                 Unlock advanced AI tools, custom meal plans, and more.
               </p>
-              <Link href="/pro" className="w-full py-2 bg-[#2F8F46] hover:bg-[#257338] text-white text-[11px] font-bold rounded-xl shadow-md transition flex items-center justify-center gap-1.5">
-                <span>Upgrade Now</span>
+              <Link href="/pro" className="w-full py-2 bg-[#2F8F46] hover:bg-[#257338] text-white text-[11px] font-bold rounded-xl shadow-md transition flex items-center justify-center gap-2">
+                <span aria-hidden="true">👑</span>
+                <span>Upgrade to Pro</span>
                 <span>→</span>
               </Link>
             </div>

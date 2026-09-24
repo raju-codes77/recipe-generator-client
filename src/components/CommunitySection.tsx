@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { useState, useEffect } from "react";
 import { apiClient } from "@/lib/api-client";
@@ -18,7 +17,6 @@ const FALLBACK_AVATARS = [
 
 export default function CommunitySection() {
   const [avatars, setAvatars] = useState<string[]>(FALLBACK_AVATARS);
-  const [totalUsers, setTotalUsers] = useState<number | null>(null);
 
   useEffect(() => {
     async function fetchDynamicCommunityData() {
@@ -42,11 +40,6 @@ export default function CommunitySection() {
               setAvatars(combinedAvatars);
             }
             
-            // Just for dynamic flavor, we can use the total recipes to imply community size, 
-            // or if the backend provides pagination totals, we can use that.
-            if (data.total) {
-              setTotalUsers(data.total * 12); // Rough multiplier to imply active users based on recipes
-            }
         }
       } catch (error) {
         console.error("Failed to fetch dynamic community data:", error);
@@ -92,10 +85,6 @@ export default function CommunitySection() {
         {/* Main Content */}
         <div className="relative z-10 max-w-2xl mx-auto flex flex-col items-center">
           
-          <div className="inline-flex items-center gap-2 bg-white/5 backdrop-blur-md border border-white/10 text-emerald-400 px-4 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-widest mb-5 w-fit shadow-sm">
-            <span>Join {totalUsers ? (totalUsers > 1000 ? `${(totalUsers / 1000).toFixed(1)}k+` : `${totalUsers}+`) : "50,000+"} Creators</span>
-          </div>
-
           <h2 className="text-3xl md:text-4xl lg:text-[52px] font-black text-white tracking-tight mb-5 leading-[1.1]">
             Join a Community of <br className="hidden md:block" />
             <span 

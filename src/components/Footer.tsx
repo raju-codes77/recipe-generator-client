@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState, type RefObject } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { FiMail, FiSend, FiHeart } from "react-icons/fi";
@@ -15,10 +16,114 @@ const fredoka = Fredoka({
   display: "swap"
 });
 
-export default function Footer() {
+const RESTING_EDGE = "M 0 16 L 1000 16";
+const RESTING_FILL = `${RESTING_EDGE} L 1000 32 L 0 32 Z`;
+
+function getWavePaths(amplitude: number, phase: number) {
+    const segments = 48;
+    const points = Array.from({ length: segments + 1 }, (_, index) => {
+        const position = index / segments;
+        const envelope = Math.sin(Math.PI * position);
+        const wave = Math.sin(position * Math.PI * 2 + phase);
+        const y = 16 + amplitude * envelope * wave;
+        return `${(position * 1000).toFixed(1)} ${y.toFixed(2)}`;
+    });
+    const edge = `M ${points[0]} L ${points.slice(1).join(" L ")}`;
+
+    return { edge, fill: `${edge} L 1000 32 L 0 32 Z` };
+}
+
+function FooterBounceEdge({ footerRef }: { footerRef: RefObject<HTMLElement | null> }) {
+    const [paths, setPaths] = useState({ edge: RESTING_EDGE, fill: RESTING_FILL });
+
+    useEffect(() => {
+        let amplitude = 0;
+        let phase = 0;
+        let previousFrameTime = 0;
+        let previousScrollY = window.scrollY;
+        let previousScrollTime = performance.now();
+        let lastImpactTime = 0;
+        let animationFrame = 0;
+
+        const isAtPageBottom = () =>
+            document.documentElement.scrollHeight - (window.scrollY + window.innerHeight) <= 3;
+        let wasAtBottom = isAtPageBottom();
+
+        const triggerWave = (speed: number) => {
+            const now = performance.now();
+            if (speed < 0.55 || now - lastImpactTime < 240) return;
+            if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+            lastImpactTime = now;
+            amplitude = Math.max(amplitude, Math.min(4 + speed * 1.5, 9));
+            phase = 0;
+            if (animationFrame === 0) animationFrame = window.requestAnimationFrame(animateWave);
+        };
+
+        const animateWave = (time: number) => {
+            animationFrame = 0;
+            const elapsed = previousFrameTime ? Math.min(time - previousFrameTime, 32) : 16;
+            previousFrameTime = time;
+            amplitude *= Math.exp(-elapsed / 340);
+            phase += elapsed * 0.009;
+
+            if (amplitude < 0.2) {
+                amplitude = 0;
+                previousFrameTime = 0;
+                setPaths({ edge: RESTING_EDGE, fill: RESTING_FILL });
+                return;
+            }
+
+            setPaths(getWavePaths(amplitude, phase));
+            animationFrame = window.requestAnimationFrame(animateWave);
+        };
+
+        const handleScroll = () => {
+            const now = performance.now();
+            const currentY = window.scrollY;
+            const elapsed = Math.max(now - previousScrollTime, 16);
+            const velocity = (currentY - previousScrollY) / elapsed;
+            previousScrollY = currentY;
+            previousScrollTime = now;
+
+            const atBottom = isAtPageBottom();
+            const reachedBottom = !wasAtBottom && atBottom;
+            wasAtBottom = atBottom;
+
+            if (reachedBottom && velocity > 0 && footerRef.current) triggerWave(velocity);
+        };
+
+        window.addEventListener("scroll", handleScroll, { passive: true });
+        return () => {
+            window.removeEventListener("scroll", handleScroll);
+            if (animationFrame !== 0) window.cancelAnimationFrame(animationFrame);
+        };
+    }, [footerRef]);
+
     return (
-        <footer className="w-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-t border-gray-100 dark:border-slate-800 transition-colors duration-300 text-gray-600 dark:text-slate-300">
-            <div className="max-w-7xl mx-auto px-6 lg:px-10 py-12 lg:py-16">
+        <svg
+            aria-hidden="true"
+            className="pointer-events-none absolute -top-4 inset-x-0 z-0 h-8 w-full overflow-visible"
+            viewBox="0 0 1000 32"
+            preserveAspectRatio="none"
+        >
+            <path d={paths.fill} className="fill-white/80 dark:fill-[#080B12]" />
+            <path d={paths.edge} fill="none" className="stroke-black/10 dark:stroke-white/10" strokeWidth="1" vectorEffect="non-scaling-stroke" />
+        </svg>
+    );
+}
+
+export default function Footer() {
+    const footerRef = useRef<HTMLElement>(null);
+
+    return (
+        <footer
+            ref={footerRef}
+            className="relative w-full pt-4 text-gray-600 dark:text-slate-300"
+        >
+            <FooterBounceEdge footerRef={footerRef} />
+            <div className="relative z-10 bg-white/80 dark:bg-[#080B12] backdrop-blur-md transition-colors duration-300">
+            <div className="max-w-7xl mx-auto px-6 pt-4 pb-12 lg:px-10 lg:pt-8 lg:pb-16">
 
                 {/* Top Grid Section */}
                 <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-5 gap-10 lg:gap-8 mb-12">
@@ -87,7 +192,7 @@ export default function Footer() {
                     </div>
 
                     {/* Quick Links */}
-                    <div className="col-span-1 md:col-span-1 space-y-4">
+                    <div className="col-span-1 md:col-span-1 space-y-4 lg:text-center">
                         <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider">
                             Quick Links
                         </h3>
@@ -121,7 +226,7 @@ export default function Footer() {
                     </div>
 
                     {/* Legal / Support */}
-                    <div className="space-y-4">
+                    <div className="space-y-4 lg:text-center">
                         <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider">
                             Support & Legal
                         </h3>
@@ -188,6 +293,7 @@ export default function Footer() {
                     </p>
                 </div>
 
+            </div>
             </div>
         </footer>
     );

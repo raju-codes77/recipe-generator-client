@@ -24,6 +24,59 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+html:has([data-community-messenger-route]) {
+  overflow-y: scroll;
+}
+
+html::view-transition-group(ai-assistant-fab) {
+  z-index: 3;
+}
+
+html::view-transition-old(ai-assistant-fab),
+html::view-transition-new(ai-assistant-fab) {
+  animation: none;
+}
+
+html.theme-reveal-active::view-transition-old(root) {
+  animation: none;
+  z-index: 1;
+}
+
+html.theme-reveal-active::view-transition-new(root) {
+  z-index: 2;
+  animation: theme-circle-reveal 1400ms cubic-bezier(0.65, 0, 0.35, 1) both;
+  will-change: clip-path;
+}
+
+html.theme-reveal-close-active::view-transition-old(root) {
+  z-index: 2;
+  animation: theme-circle-close 1400ms cubic-bezier(0.65, 0, 0.35, 1) both;
+  will-change: clip-path;
+}
+
+html.theme-reveal-close-active::view-transition-new(root) {
+  z-index: 1;
+  animation: none;
+}
+
+@keyframes theme-circle-reveal {
+  from {
+    clip-path: circle(0 at var(--theme-reveal-x) var(--theme-reveal-y));
+  }
+  to {
+    clip-path: circle(var(--theme-reveal-radius) at var(--theme-reveal-x) var(--theme-reveal-y));
+  }
+}
+
+@keyframes theme-circle-close {
+  from {
+    clip-path: circle(var(--theme-reveal-radius) at var(--theme-reveal-x) var(--theme-reveal-y));
+  }
+  to {
+    clip-path: circle(0 at var(--theme-reveal-x) var(--theme-reveal-y));
+  }
+}
+
 /* Keep interactive Community controls visibly interactive without changing other pages. */
 .community-surface :is(a[href], button:not(:disabled), [role="button"], label[for]) {
   cursor: pointer;

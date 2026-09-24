@@ -11,17 +11,17 @@ import { Flame, Clock, ArrowRight, RotateCcw, LogIn, Rocket } from "lucide-react
 // Skeleton loader card
 function SkeletonCard() {
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden animate-pulse">
-      <div className="h-44 bg-gray-200" />
+    <div className="bg-white dark:bg-[#25252a] rounded-2xl border border-gray-100 dark:border-[#3a3a40] overflow-hidden animate-pulse">
+      <div className="h-44 bg-gray-200 dark:bg-[#303038]" />
       <div className="p-5 space-y-3">
-        <div className="h-5 bg-gray-200 rounded-md w-3/4" />
-        <div className="h-3 bg-gray-100 rounded-md w-full" />
-        <div className="h-2.5 bg-gray-100 rounded-full w-full mt-2" />
+        <div className="h-5 bg-gray-200 dark:bg-[#3a3a40] rounded-md w-3/4" />
+        <div className="h-3 bg-gray-100 dark:bg-[#303038] rounded-md w-full" />
+        <div className="h-2.5 bg-gray-100 dark:bg-[#303038] rounded-full w-full mt-2" />
         <div className="flex gap-3 mt-3">
-          <div className="h-8 bg-gray-200 rounded-lg w-24" />
-          <div className="h-8 bg-gray-200 rounded-lg w-24" />
+          <div className="h-8 bg-gray-200 dark:bg-[#3a3a40] rounded-lg w-24" />
+          <div className="h-8 bg-gray-200 dark:bg-[#3a3a40] rounded-lg w-24" />
         </div>
-        <div className="h-10 bg-gray-200 rounded-xl w-full mt-2" />
+        <div className="h-10 bg-gray-200 dark:bg-[#3a3a40] rounded-xl w-full mt-2" />
       </div>
     </div>
   );
