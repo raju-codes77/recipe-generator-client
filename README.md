@@ -1,4 +1,4 @@
-# 🍳 Recipe Generator (Client)
+# 🍳 FoodCanvas Receipe Generator
 
 A modern, full-stack AI-driven culinary companion and wellness platform. Recipe Generator helps users discover customized recipes, plan nutritious meals, track wellness and fitness goals, take on health challenges, and connect with a passionate foodie community.
 
