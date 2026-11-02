@@ -54,56 +54,8 @@ src/
 
 ---
 
-## 🚀 Getting Started
 
-### Prerequisites
 
-Ensure you have the following installed on your machine:
-- **Node.js** (v18.17.0 or later recommended)
-- **npm**, **yarn**, **pnpm**, or **bun**
-
-### Installation
-
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/raju-codes77/recipe-generator-client.git
-   cd recipe-generator-client
-   ```
-
-2. **Install dependencies:**
-   ```bash
-   npm install
-   # or
-   pnpm install
-   ```
-
-3. **Set up Environment Variables:**
-   Create a `.env.local` file in the root directory and configure the necessary variables (API URLs, Auth secrets, etc.):
-   ```env
-   NEXT_PUBLIC_API_URL=http://localhost:5000/api
-   BETTER_AUTH_URL=http://localhost:3000
-   ```
-
-4. **Run the development server:**
-   ```bash
-   npm run dev
-   ```
-
-5. **Open in browser:**
-   Navigate to [http://localhost:3000](http://localhost:3000) to view the application.
-
----
-
-## 📜 Available Scripts
-
-| Command | Description |
-| :--- | :--- |
-| `npm run dev` | Starts the development server with Hot Module Replacement (HMR) |
-| `npm run build` | Compiles and builds the production application bundle |
-| `npm run start` | Starts the production server |
-| `npm run lint` | Runs ESLint to check for code quality and style issues |
-
----
 
 ## 👥 Contributors
 
