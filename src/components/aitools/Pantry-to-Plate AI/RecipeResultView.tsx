@@ -1,19 +1,163 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import toast from "react-hot-toast";
-import { ArrowLeft, Sparkles, Bookmark, Share2, RotateCcw } from "lucide-react";
+import { ArrowLeft, Sparkles, Bookmark, Share2, RotateCcw, Replace, ChevronDown, ChevronUp, Loader2, CheckCircle2, Circle } from "lucide-react";
 import { Recipe } from "./types";
 import RefineChips from "./RefineChips";
-// import RefineChips from "./RefineChips";
-// import { Recipe } from "./types";
+import HealthScoreCard from "./HealthScoreCard";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { apiClient } from "@/lib/api-client";
+
+const DEFAULT_FOOD_IMAGE =
+  "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=1200&q=80";
+
+function sanitizeImageUrl(url?: string): string {
+  if (!url || typeof url !== "string" || !url.trim() || url.includes("source.unsplash.com")) {
+    return DEFAULT_FOOD_IMAGE;
+  }
+  return url;
+}
 
 interface RecipeResultViewProps {
   recipe: Recipe;
   onBack: () => void;
+  onRefine: (refinement: string) => void;
+  refiningOption: string | null;
+  userPantryIngredients?: string[];
 }
 
-export default function RecipeResultView({ recipe, onBack }: RecipeResultViewProps) {
+// ─── Inline Ingredient Substitution ──────────────────────────────────────────
+
+interface SubResult {
+  name: string;
+  amount: string;
+  reason: string;
+}
+
+function IngredientSubPanel({ ingredient, recipeTitle, isAvailable }: { ingredient: string; recipeTitle: string, isAvailable?: boolean }) {
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [subs, setSubs] = useState<SubResult[] | null>(null);
+
+
+  const fetchSubs = async () => {
+    if (subs) { setOpen((o) => !o); return; }
+    setOpen(true);
+    setLoading(true);
+    try {
+      const data = await apiClient.post<any>("/ingredient-substitution", { ingredient, recipeContext: recipeTitle });
+      setSubs(data.substitutes || []);
+    } catch {
+      toast.error(`Could not find substitutes for ${ingredient}`);
+      setOpen(false);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <li className="space-y-1">
+      <div className="flex items-center gap-2 group">
+        {isAvailable ? (
+          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 mt-1.5 flex-shrink-0" />
+        ) : (
+          <Circle className="w-3.5 h-3.5 text-rose-400 mt-1.5 flex-shrink-0" />
+        )}
+        <span className="flex-1 text-sm text-zinc-600 dark:text-zinc-300">{ingredient}</span>
+        <button
+          onClick={fetchSubs}
+          title={`Find substitutes for ${ingredient}`}
+          className="opacity-0 group-hover:opacity-100 transition flex items-center gap-1 text-[10px] text-rose-500 hover:text-rose-700 font-semibold px-1.5 py-0.5 rounded-md border border-rose-200 dark:border-rose-800/50 hover:bg-rose-50 dark:hover:bg-rose-950/30"
+        >
+          <Replace className="w-3 h-3" /> Sub
+        </button>
+      </div>
+
+      {open && (
+        <div className="ml-5 bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-800/40 rounded-xl p-3 space-y-2">
+          {loading ? (
+            <div className="flex items-center gap-2 text-xs text-zinc-400">
+              <Loader2 className="w-3 h-3 animate-spin" /> Finding substitutes...
+            </div>
+          ) : subs && subs.length > 0 ? (
+            <div className="space-y-2">
+              <p className="text-[10px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider">Substitutes for {ingredient}</p>
+              {subs.map((s, i) => (
+                <div key={i} className="text-xs space-y-0.5">
+                  <p className="font-semibold text-zinc-800 dark:text-zinc-100">{s.name} <span className="text-rose-600 dark:text-rose-400 font-normal">— {s.amount}</span></p>
+                  <p className="text-zinc-500 dark:text-zinc-400 italic">{s.reason}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-zinc-400">No substitutes found.</p>
+          )}
+        </div>
+      )}
+    </li>
+  );
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
+
+export default function RecipeResultView({ recipe, onBack, onRefine, refiningOption, userPantryIngredients }: RecipeResultViewProps) {
+  const router = useRouter();
+  const [imgSrc, setImgSrc] = useState<string>(() => sanitizeImageUrl(recipe?.image));
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isAddingMissing, setIsAddingMissing] = useState<boolean>(false);
+
+  const availableIngredients: string[] = [];
+  const missingIngredients: string[] = [];
+
+  if (userPantryIngredients) {
+    recipe.ingredients.forEach((ing) => {
+      const isAvail = userPantryIngredients.some((pantryIng) => {
+        const normIng = ing.toLowerCase();
+        const normPantry = pantryIng.toLowerCase().trim();
+        return normPantry && normIng.includes(normPantry);
+      });
+      if (isAvail) availableIngredients.push(ing);
+      else missingIngredients.push(ing);
+    });
+  }
+
+  useEffect(() => {
+    setImgSrc(sanitizeImageUrl(recipe?.image));
+    setIsLoading(true);
+  }, [recipe?.image]);
+
+  const handleAddMissingIngredients = async () => {
+    if (!recipe?.id) {
+      toast.error("Recipe ID is missing");
+      return;
+    }
+    setIsAddingMissing(true);
+    const toastId = toast.loading("Comparing recipe with your pantry...");
+    try {
+      const data = await apiClient.post<any>("/shopping-list/from-recipe", { 
+        recipeId: recipe.id,
+        userPantryIngredients 
+      });
+
+      toast.success(
+        data.message || "Missing ingredients added to your shopping list!",
+        { id: toastId }
+      );
+
+      setTimeout(() => {
+        router.push("/ai-tools/shopping-list");
+      }, 1000);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to add to shopping list", { id: toastId });
+    } finally {
+      setIsAddingMissing(false);
+    }
+  };
+
   return (
     <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6 animate-in fade-in duration-300">
       <button
@@ -24,9 +168,28 @@ export default function RecipeResultView({ recipe, onBack }: RecipeResultViewPro
       </button>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+        {/* Left column — image + stats + health score */}
         <div className="space-y-5">
-          <div className="relative w-full h-64 sm:h-80 rounded-2xl overflow-hidden shadow-md border border-zinc-200/60 dark:border-zinc-800">
-            <Image src={recipe.image} alt={recipe.title} fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" className="object-cover" priority />
+          <div className="relative w-full h-64 sm:h-80 rounded-2xl overflow-hidden shadow-md border border-zinc-200/60 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-800">
+            <Image
+              src={imgSrc}
+              alt={recipe?.title || "Recipe Image"}
+              fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              className={`object-cover transition-opacity duration-300 ${isLoading ? "opacity-0" : "opacity-100"}`}
+              priority
+              unoptimized
+              onLoadingComplete={() => setIsLoading(false)}
+              onError={() => {
+                setImgSrc(DEFAULT_FOOD_IMAGE);
+                setIsLoading(false);
+              }}
+            />
+            {isLoading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 animate-pulse">
+                <span className="text-xs text-zinc-400 font-medium">Loading AI generated photo...</span>
+              </div>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -46,6 +209,16 @@ export default function RecipeResultView({ recipe, onBack }: RecipeResultViewPro
             <Stat label="Protein" value={recipe.protein} />
           </div>
 
+          {/* ─── Health Score ─── */}
+          <HealthScoreCard
+            kcal={recipe.kcal}
+            protein={recipe.protein}
+            time={recipe.time}
+            level={recipe.level}
+            instructions={recipe.instructions}
+            ingredients={recipe.ingredients}
+          />
+
           <div className="bg-purple-50/60 dark:bg-purple-950/30 border border-purple-200/60 dark:border-purple-800/50 p-4 rounded-2xl space-y-1.5">
             <div className="flex items-center gap-1.5 text-purple-700 dark:text-purple-300 font-semibold text-xs sm:text-sm">
               <Sparkles className="w-4 h-4" />
@@ -57,17 +230,51 @@ export default function RecipeResultView({ recipe, onBack }: RecipeResultViewPro
           </div>
         </div>
 
+        {/* Right column — ingredients (with substitution) + instructions + actions */}
         <div className="space-y-6">
           <div className="space-y-3">
-            <h3 className="text-lg font-bold">Ingredients</h3>
-            <ul className="space-y-2 text-sm text-zinc-600 dark:text-zinc-300">
-              {recipe.ingredients.map((item, idx) => (
-                <li key={idx} className="flex items-start gap-2.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 mt-1.5 flex-shrink-0" />
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ul>
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-bold">Ingredients</h3>
+              <span className="text-[10px] text-zinc-400 font-medium flex items-center gap-1">
+                <Replace className="w-3 h-3" /> Hover an ingredient to substitute
+              </span>
+            </div>
+            {userPantryIngredients ? (
+              <>
+                <div className="mb-4">
+                  <h4 className="text-sm font-semibold text-emerald-600 mb-2 flex items-center gap-1">
+                    <CheckCircle2 className="w-4 h-4" /> Available from Pantry
+                  </h4>
+                  <ul className="space-y-2">
+                    {availableIngredients.map((item, idx) => (
+                      <IngredientSubPanel key={idx} ingredient={item} recipeTitle={recipe.title} isAvailable />
+                    ))}
+                  </ul>
+                  {availableIngredients.length === 0 && (
+                    <p className="text-xs text-zinc-500 italic">None</p>
+                  )}
+                </div>
+                <div>
+                  <h4 className="text-sm font-semibold text-rose-500 mb-2 flex items-center gap-1">
+                    <Circle className="w-4 h-4" /> Missing Ingredients
+                  </h4>
+                  <ul className="space-y-2">
+                    {missingIngredients.map((item, idx) => (
+                      <IngredientSubPanel key={idx} ingredient={item} recipeTitle={recipe.title} />
+                    ))}
+                  </ul>
+                  {missingIngredients.length === 0 && (
+                    <p className="text-xs text-zinc-500 italic">None</p>
+                  )}
+                </div>
+              </>
+            ) : (
+              <ul className="space-y-2">
+                {recipe.ingredients.map((item, idx) => (
+                  <IngredientSubPanel key={idx} ingredient={item} recipeTitle={recipe.title} />
+                ))}
+              </ul>
+            )}
           </div>
 
           <div className="space-y-3">
@@ -84,19 +291,51 @@ export default function RecipeResultView({ recipe, onBack }: RecipeResultViewPro
             </ol>
           </div>
 
-          <RefineChips />
+          <RefineChips onRefine={onRefine} refiningOption={refiningOption} />
 
           <div className="pt-2 space-y-3">
+            <button
+              type="button"
+              disabled={isAddingMissing}
+              onClick={handleAddMissingIngredients}
+              className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-sm flex items-center justify-center gap-2 transition shadow-sm hover:shadow-md cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {isAddingMissing ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" /> Comparing & Adding Ingredients...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4" /> Add Missing Ingredients to Shopping List
+                </>
+              )}
+            </button>
             <div className="grid grid-cols-2 gap-3">
               <button
-                onClick={() => toast.success("Recipe saved!")}
-                className="w-full py-3 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm flex items-center justify-center gap-2 transition"
+                disabled={isSaving}
+                onClick={async () => {
+                  if (!recipe?.id) {
+                    toast.error("Recipe ID is missing");
+                    return;
+                  }
+
+                  setIsSaving(true);
+                  try {
+                    const data = await apiClient.post<any>("/pantry-to-plate/save", { id: recipe.id });
+                    toast.success(data.message || "Recipe saved to your profile");
+                  } catch (error) {
+                    toast.error(error instanceof Error ? error.message : "Failed to save recipe");
+                  } finally {
+                    setIsSaving(false);
+                  }
+                }}
+                className="w-full py-3 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm flex items-center justify-center gap-2 transition cursor-pointer"
               >
-                <Bookmark className="w-4 h-4" /> Save Recipe
+                <Bookmark className="w-4 h-4" /> {isSaving ? "Saving..." : "Save Recipe"}
               </button>
               <button
                 onClick={() => toast.success("Publish link copied!")}
-                className="w-full py-3 px-4 rounded-2xl bg-zinc-900 hover:bg-black dark:bg-zinc-100 dark:hover:bg-white dark:text-zinc-900 text-white font-semibold text-sm flex items-center justify-center gap-2 transition"
+                className="w-full py-3 px-4 rounded-2xl bg-zinc-900 hover:bg-black dark:bg-zinc-100 dark:hover:bg-white dark:text-zinc-900 text-white font-semibold text-sm flex items-center justify-center gap-2 transition cursor-pointer"
               >
                 <Share2 className="w-4 h-4" /> Publish
               </button>
@@ -104,7 +343,7 @@ export default function RecipeResultView({ recipe, onBack }: RecipeResultViewPro
             <div className="text-center">
               <button
                 onClick={onBack}
-                className="text-xs text-zinc-500 dark:text-zinc-400 hover:underline inline-flex items-center gap-1"
+                className="text-xs text-zinc-500 dark:text-zinc-400 hover:underline inline-flex items-center gap-1 cursor-pointer"
               >
                 <RotateCcw className="w-3 h-3" /> Start over
               </button>

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState } from "react";
+import { authClient } from "@/lib/auth-client";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -98,6 +99,9 @@ export interface MealAnalysisResult {
 // ─── Context Shape ────────────────────────────────────────────────────────────
 
 interface MealTrackerContextValue {
+  // The authenticated user's ID (null when logged out / session loading)
+  userId: string | null;
+
   // Upload / Preview
   analysisImage: string | null;
   setAnalysisImage: (url: string | null) => void;
@@ -108,6 +112,8 @@ interface MealTrackerContextValue {
 
   isAnalyzing: boolean;
   setIsAnalyzing: (val: boolean) => void;
+
+  isLoading: boolean;
 
   analysisSteps: AnalysisStep[];
   analysisProgress: number;
@@ -151,6 +157,8 @@ interface MealTrackerContextValue {
 // ─── Default State ────────────────────────────────────────────────────────────
 
 const defaultValue: MealTrackerContextValue = {
+  userId: null,
+
   analysisImage: null,
   setAnalysisImage: () => { },
 
@@ -159,6 +167,8 @@ const defaultValue: MealTrackerContextValue = {
 
   isAnalyzing: false,
   setIsAnalyzing: () => { },
+
+  isLoading: true,
 
   analysisSteps: [
     { label: "Detecting food items", done: false },
@@ -212,6 +222,19 @@ export function MealTrackerProvider({
 }: {
   children: React.ReactNode;
 }) {
+  // ── Auth: derive the real user ID from the better-auth session ─────────────
+  // authClient.useSession() re-renders this provider whenever auth state
+  // changes (login, logout, token refresh), which drives the isolation effect.
+  const { data: session, isPending: isSessionPending } =
+    authClient.useSession();
+
+  // While the session is still resolving, treat userId as null so we do not
+  // accidentally load or show any user-specific data prematurely.
+  const userId: string | null = isSessionPending
+    ? null
+    : (session?.user?.id ?? null);
+
+  // ── Meal-tracker state ─────────────────────────────────────────────────────
   const [analysisImage, setAnalysisImage] =
     useState<string | null>(null);
 
@@ -219,42 +242,89 @@ export function MealTrackerProvider({
     useState<MealAnalysisResult | null>(null);
 
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const [dailyGoalKcal, setDailyGoalKcal] = useState<number | null>(2000);
+  const [dailyGoalKcal, setDailyGoalKcal] = useState<number | null>(null);
   const [mealLog, setMealLog] = useState<Meal[]>([]);
 
+  // ── Data isolation: reset + refetch whenever the authenticated user changes ─
   React.useEffect(() => {
-    import("@/app/api/meal-tracker/meal-tracker").then(({ getUserGoal, getMealLog }) => {
-      getUserGoal().then((goal) => {
-        if (goal && typeof goal === "number") {
-          setDailyGoalKcal(goal);
-        }
-      });
-      getMealLog().then((logs) => {
-        if (logs && Array.isArray(logs)) {
-          setMealLog(logs);
-        }
-      });
-    });
-  }, []);
+    // Do nothing while the session is still loading
+    if (isSessionPending) return;
+
+    // If nobody is logged in, wipe state and stop.
+    if (!userId) {
+      setMealLog([]);
+      setDailyGoalKcal(null);
+      setAnalysisImage(null);
+      setAnalysisResult(null);
+      setIsLoading(false);
+      return;
+    }
+
+    // Set loading state before fetching new user data
+    setIsLoading(true);
+
+    // Fetch this user's data from the correct, isolated sources.
+    import("@/app/api/meal-tracker/meal-tracker").then(
+      ({ getUserGoal, getMealLog }) => {
+        const localDate = new Date().toLocaleDateString("en-CA");
+        
+        Promise.all([
+          getUserGoal(userId),
+          getMealLog(userId, localDate)
+        ]).then(([goal, logs]) => {
+          setDailyGoalKcal(typeof goal === "number" ? goal : 2000);
+          
+          if (Array.isArray(logs)) {
+            const mappedLogs = logs.map((log: any) => ({
+              type: "Meal", // Fallback, since DB doesn't store category
+              time: new Date(log.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+              name: log.name,
+              kcal: log.calories,
+              protein: log.protein,
+              carbs: log.carbs,
+              fat: log.fat,
+              img: log.imageUrl || "",
+            }));
+            setMealLog(mappedLogs);
+          }
+          
+          // Clear previous analysis when loading existing data on refresh
+          setAnalysisImage(null);
+          setAnalysisResult(null);
+          
+          setIsLoading(false);
+        }).catch((err) => {
+          console.error("Failed to load user meal data", err);
+          setIsLoading(false);
+        });
+      }
+    );
+  }, [userId, isSessionPending]);
+
+  // Derived state
+  const consumedKcal = mealLog.reduce((acc: number, meal: any) => acc + (meal.kcal || meal.calories || 0), 0);
+  const remainingKcal = dailyGoalKcal ? Math.max(0, dailyGoalKcal - consumedKcal) : null;
+  const goalPercent = dailyGoalKcal ? Math.min(100, Math.round((consumedKcal / dailyGoalKcal) * 100)) : null;
 
   const value: MealTrackerContextValue = {
     ...defaultValue,
-
+    userId,
     analysisImage,
     setAnalysisImage,
-
     analysisResult,
     setAnalysisResult,
-
     isAnalyzing,
     setIsAnalyzing,
-
+    isLoading,
     dailyGoalKcal,
     setDailyGoalKcal,
-
     mealLog,
     setMealLog,
+    consumedKcal,
+    remainingKcal,
+    goalPercent,
   };
 
   return (

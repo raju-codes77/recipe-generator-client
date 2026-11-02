@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -16,15 +16,11 @@ import {
   FiShield,
   FiEye,
   FiEyeOff,
+  FiUpload,
 } from "react-icons/fi";
 import { FcGoogle } from "react-icons/fc";
-import { createAuthClient } from "better-auth/react";
 import toast from "react-hot-toast";
-
-// ব্যাকএন্ড এক্সপ্র্রেস সার্ভারের পোর্ট 5000 পয়েন্ট করার জন্য ক্লায়েন্ট কনফিগারেশন
-export const authClient = createAuthClient({
-  baseURL: "http://localhost:5000",
-});
+import { authClient } from "@/lib/auth-client";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -34,7 +30,10 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [photo, setPhoto] = useState("");
+  const [photoDataUrl, setPhotoDataUrl] = useState("");
+  const [selectedPhotoName, setSelectedPhotoName] = useState("");
   const [role, setRole] = useState("USER");
+  const photoInputRef = useRef<HTMLInputElement>(null);
 
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -61,6 +60,33 @@ export default function RegisterPage() {
   ];
 
   const isPasswordValid = passwordSteps.every((step) => step.met);
+
+  const handlePhotoFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setErrorMessage("Please choose an image file.");
+      return;
+    }
+
+    if (file.size > 6 * 1024 * 1024) {
+      setErrorMessage("Profile photo must be 6 MB or smaller.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") {
+        setPhotoDataUrl(reader.result);
+        setPhoto("");
+        setSelectedPhotoName(file.name);
+        setErrorMessage("");
+      }
+    };
+    reader.onerror = () => setErrorMessage("Unable to read this image. Please try another file.");
+    reader.readAsDataURL(file);
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -89,72 +115,62 @@ export default function RegisterPage() {
       return;
     }
 
-   try {
-  setLoading(true);
-
-  const { data, error } = await authClient.signUp.email({
-    name: name.trim(),
-    email: email.trim(),
-    password,
-    image: photo.trim() || undefined,
-  });
-
-  if (error) {
-    console.error("Signup error:", error);
-
-    setErrorMessage(
-      error.message || "Unable to create your account. Please try again."
-    );
-
-    return;
-  }
-
-  console.log("Signup successful:", data);
-
-  setSuccessMessage(
-    "Account created successfully! Redirecting..."
-  );
-
-  setTimeout(() => {
-    router.push("/dashboard/users");
-    router.refresh();
-  }, 1000);
-} catch (error) {
-  console.error("Unexpected signup error:", error);
-
-  setErrorMessage(
-    "Something went wrong. Please check your connection and try again."
-  );
-} finally {
-  setLoading(false);
-}
-  };
-
-  const handleGoogleSignup = async () => {
-    setErrorMessage("");
-    setSuccessMessage("");
-
     try {
       setLoading(true);
-      toast.loading("Connecting with Google...", { id: "google-signup" });
-      
-      await authClient.signIn.social({
-        provider: "google",
-        callbackURL: "http://localhost:3000/dashboard/users", // সফল লগইনের পর ফ্রন্টএন্ড ড্যাশবোর্ডে আসবে
-      });
+
+      const { data, error } = await authClient.signUp.email({
+        name: name.trim(),
+        email: email.trim(),
+        password,
+        image: photoDataUrl || photo.trim() || undefined,
+        role: role,
+      } as any);
+
+      if (error) {
+        console.error("Signup error:", error);
+        setErrorMessage(
+          error.message || "Unable to create your account. Please try again."
+        );
+        return;
+      }
+
+      console.log("Signup successful:", data);
+      setSuccessMessage("Account created successfully! Redirecting...");
+
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 1000);
     } catch (error) {
-      console.error("Google signup error:", error);
-      toast.dismiss("google-signup");
-      const msg = "Google signup failed. Please try again.";
-      setErrorMessage(msg);
-      toast.error(msg);
+      console.error("Unexpected signup error:", error);
+      setErrorMessage(
+        "Something went wrong. Please check your connection and try again."
+      );
+    } finally {
       setLoading(false);
     }
   };
 
+  const handleGoogleSignup = async () => {
+    try {
+      // Use window.location.origin so this always resolves correctly in both
+      // local development and production (food-canvas.vercel.app), never hardcoded localhost
+      const appUrl = typeof window !== "undefined"
+        ? window.location.origin
+        : (process.env.NEXT_PUBLIC_LOCAL_URL || "http://localhost:3000");
+      await authClient.signIn.social({
+        provider: "google",
+        callbackURL: `${appUrl}/`,
+        errorCallbackURL: `${appUrl}/registrationProcess/login`,
+      });
+    } catch (err) {
+      console.error("Google login error:", err);
+      toast.error("Failed to sign in with Google.");
+    }
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#F9F6F0] dark:bg-black p-4 sm:p-6 lg:p-8 font-sans transition-colors duration-500">
-      
+    <div className="min-h-[calc(100dvh-80px)] lg:min-h-[calc(100dvh-88px)] flex items-center justify-center bg-[#F9F6F0] dark:bg-black p-3 sm:p-4 lg:p-5 font-sans transition-colors duration-500 overflow-x-hidden">
+
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
@@ -163,14 +179,15 @@ export default function RegisterPage() {
       >
 
         {/* LEFT COLUMN: Image with overlay text and features */}
-        <div className="lg:w-1/2 p-8 sm:p-12 flex flex-col justify-between relative overflow-hidden">
-          
+        <div className="hidden lg:flex lg:w-1/2 p-8 sm:p-12 flex-col justify-between relative overflow-hidden">
+
           {/* Background Image with Dark Overlay */}
           <div className="absolute inset-0 z-0">
             <Image
               src="/brooke-lark-4J059aGa5s4-unsplash.jpg"
               alt="Food Background"
               fill
+              sizes="(max-width: 1024px) 100vw, 50vw"
               className="object-cover object-center"
               priority
             />
@@ -185,6 +202,7 @@ export default function RegisterPage() {
                   src="/logohere.png"
                   alt="FoodCanvas Logo"
                   fill
+                  sizes="36px"
                   className="object-contain"
                   priority
                 />
@@ -251,8 +269,8 @@ export default function RegisterPage() {
         </div>
 
         {/* RIGHT COLUMN: Register Form Section */}
-        <div className="w-full lg:w-1/2 bg-white dark:bg-[#121212] p-8 sm:p-10 flex flex-col justify-between overflow-y-auto max-h-[900px] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-gray-200 dark:[&::-webkit-scrollbar-thumb]:bg-gray-800 [&::-webkit-scrollbar-thumb]:rounded-full">
-          
+        <div className="w-full lg:w-1/2 bg-white dark:bg-[#121212] p-6 sm:p-8 flex flex-col justify-between overflow-visible">
+
           <div>
             {/* Top Log in link header */}
             <div className="flex justify-end items-center mb-6">
@@ -329,23 +347,6 @@ export default function RegisterPage() {
                 </div>
               </div>
 
-              {/* Role Selection Dropdown */}
-              <div>
-                <div className="relative">
-                  <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-gray-400">
-                    <FiShield size={15} />
-                  </span>
-                  <select
-                    value={role}
-                    onChange={(e) => setRole(e.target.value)}
-                    disabled={loading}
-                    className="w-full pl-10 pr-4 py-3 rounded-xl bg-gray-50/50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 text-xs text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#3A6B35]/30 focus:border-[#3A6B35] transition-all disabled:opacity-50 appearance-none"
-                  >
-                    <option value="USER" className="bg-white dark:bg-gray-900">User (Standard)</option>
-                    <option value="ADMIN" className="bg-white dark:bg-gray-900">Admin</option>
-                  </select>
-                </div>
-              </div>
 
               {/* Password */}
               <div>
@@ -405,9 +406,31 @@ export default function RegisterPage() {
                     onChange={(e) => setPhoto(e.target.value)}
                     placeholder="Profile Photo URL (Optional)"
                     disabled={loading}
-                    className="w-full pl-10 pr-4 py-3 rounded-xl bg-gray-50/50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 text-xs text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#3A6B35]/30 focus:border-[#3A6B35] transition-all disabled:opacity-50 placeholder:text-gray-400"
+                    className="w-full pl-10 pr-12 py-3 rounded-xl bg-gray-50/50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 text-xs text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#3A6B35]/30 focus:border-[#3A6B35] transition-all disabled:opacity-50 placeholder:text-gray-400"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => photoInputRef.current?.click()}
+                    disabled={loading}
+                    aria-label="Choose profile photo from device"
+                    title="Choose photo from device"
+                    className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-gray-400 transition-colors hover:text-[#3A6B35] disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <FiUpload size={16} />
+                  </button>
+                  <input
+                    ref={photoInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handlePhotoFileChange}
+                    className="hidden"
                   />
                 </div>
+                {selectedPhotoName && (
+                  <p className="mt-1.5 truncate px-1 text-[10px] text-[#3A6B35]" title={selectedPhotoName}>
+                    Selected: {selectedPhotoName}
+                  </p>
+                )}
               </div>
 
               {/* Submit Button */}

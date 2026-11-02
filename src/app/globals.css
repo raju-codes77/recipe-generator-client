@@ -24,6 +24,64 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+html:has([data-community-messenger-route]) {
+  overflow-y: scroll;
+}
+
+html::view-transition-group(ai-assistant-fab) {
+  z-index: 3;
+}
+
+html::view-transition-old(ai-assistant-fab),
+html::view-transition-new(ai-assistant-fab) {
+  animation: none;
+}
+
+html.theme-reveal-active::view-transition-old(root) {
+  animation: none;
+  z-index: 1;
+}
+
+html.theme-reveal-active::view-transition-new(root) {
+  z-index: 2;
+  animation: theme-circle-reveal 1400ms cubic-bezier(0.65, 0, 0.35, 1) both;
+  will-change: clip-path;
+}
+
+html.theme-reveal-close-active::view-transition-old(root) {
+  z-index: 2;
+  animation: theme-circle-close 1400ms cubic-bezier(0.65, 0, 0.35, 1) both;
+  will-change: clip-path;
+}
+
+html.theme-reveal-close-active::view-transition-new(root) {
+  z-index: 1;
+  animation: none;
+}
+
+@keyframes theme-circle-reveal {
+  from {
+    clip-path: circle(0 at var(--theme-reveal-x) var(--theme-reveal-y));
+  }
+  to {
+    clip-path: circle(var(--theme-reveal-radius) at var(--theme-reveal-x) var(--theme-reveal-y));
+  }
+}
+
+@keyframes theme-circle-close {
+  from {
+    clip-path: circle(var(--theme-reveal-radius) at var(--theme-reveal-x) var(--theme-reveal-y));
+  }
+  to {
+    clip-path: circle(0 at var(--theme-reveal-x) var(--theme-reveal-y));
+  }
+}
+
+/* Keep interactive Community controls visibly interactive without changing other pages. */
+.community-surface :is(a[href], button:not(:disabled), [role="button"], label[for]) {
+  cursor: pointer;
+}
+
 @keyframes aiScan {
   0% {
     transform: translateY(0%);
@@ -43,4 +101,133 @@ body {
 
 .animate-ai-scan {
   animation: aiScan 9s ease-in-out infinite;
+}
+
+@keyframes pulseFloat {
+  0%, 100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  50% {
+    transform: translateY(-8px);
+    opacity: 0.8;
+  }
+}
+
+.animate-pulse-float {
+  animation: pulseFloat 3s ease-in-out infinite;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+.community-comments-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.28) transparent;
+}
+
+.community-comments-scroll::-webkit-scrollbar {
+  width: 7px;
+}
+
+.community-comments-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.community-comments-scroll::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.28);
+  border-radius: 999px;
+}
+
+.community-comments-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.42);
+}
+
+.dashboard-sidebar-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #2f8f46 transparent;
+}
+
+.dashboard-sidebar-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.dashboard-sidebar-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.dashboard-sidebar-scrollbar::-webkit-scrollbar-thumb {
+  background: #2f8f46;
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background-clip: padding-box;
+}
+
+.dashboard-sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #24733e;
+  border-width: 1px;
+}
+
+.dark .dashboard-sidebar-scrollbar {
+  scrollbar-color: #4caf60 transparent;
+}
+
+.dark .dashboard-sidebar-scrollbar::-webkit-scrollbar-thumb {
+  background: #4caf60;
+  background-clip: padding-box;
+}
+
+.dark .dashboard-sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #67c878;
+}
+
+.flavor-ai-chat-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(47, 143, 70, 0.55) transparent;
+  scrollbar-gutter: stable;
+}
+
+.flavor-ai-chat-scrollbar::-webkit-scrollbar {
+  width: 9px;
+}
+
+.flavor-ai-chat-scrollbar::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.flavor-ai-chat-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.flavor-ai-chat-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(47, 143, 70, 0.55);
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background-clip: padding-box;
+}
+
+.flavor-ai-chat-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #2f8f46;
+  border-width: 1px;
+}
+
+.dark .flavor-ai-chat-scrollbar {
+  scrollbar-color: rgba(183, 227, 95, 0.48) transparent;
+}
+
+.dark .flavor-ai-chat-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(183, 227, 95, 0.48);
+  background-clip: padding-box;
+}
+
+.dark .flavor-ai-chat-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #b7e35f;
 }

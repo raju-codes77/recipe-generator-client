@@ -6,14 +6,16 @@ import { getDailyHistory, DayEntry } from "@/app/api/meal-tracker/meal-tracker";
 import { useMealTracker } from "./MealTrackerContext";
 
 export default function MonthlyCalendarTracker() {
-  const { mealLog, dailyGoalKcal } = useMealTracker();
+  const { mealLog, dailyGoalKcal, userId, isLoading } = useMealTracker();
   const [viewDate, setViewDate] = useState(new Date());
   const [history, setHistory] = useState<Record<string, DayEntry>>({});
 
   // Load stored history
   useEffect(() => {
-    getDailyHistory().then((h) => setHistory(h));
-  }, [mealLog]);
+    if (userId) {
+      getDailyHistory(userId).then((h) => setHistory(h));
+    }
+  }, [mealLog, userId]);
 
   const year = viewDate.getFullYear();
   const month = viewDate.getMonth();
@@ -44,7 +46,7 @@ export default function MonthlyCalendarTracker() {
   };
 
   const statusStyle: Record<string, string> = {
-    empty: "bg-gray-50 text-gray-300",
+    empty: "bg-gray-50 dark:bg-slate-700/50 text-gray-300",
     under: "bg-blue-50 text-blue-700 border border-blue-200",
     "on-track": "bg-green-50 text-green-700 border border-green-200",
     over: "bg-orange-50 text-orange-700 border border-orange-200",
@@ -56,12 +58,11 @@ export default function MonthlyCalendarTracker() {
   const monthEntries = Object.entries(history).filter(([d]) =>
     d.startsWith(`${year}-${String(month + 1).padStart(2, "0")}`)
   );
-  const monthAvgKcal = monthEntries.length
-    ? Math.round(monthEntries.reduce((s, [, e]) => s + e.kcal, 0) / monthEntries.length)
-    : 0;
-  const monthAvgProtein = monthEntries.length
-    ? Math.round(monthEntries.reduce((s, [, e]) => s + e.protein, 0) / monthEntries.length)
-    : 0;
+  
+  const todayEntry = history[todayStr];
+  const todayKcal = todayEntry?.kcal || 0;
+  const todayProtein = todayEntry?.protein || 0;
+
   const daysLogged = monthEntries.length;
   const onTrackDays = monthEntries.filter(([, e]) => {
     const goal = dailyGoalKcal ?? 2000;
@@ -70,25 +71,31 @@ export default function MonthlyCalendarTracker() {
   }).length;
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 flex flex-col gap-4 h-full">
+    <div className="bg-white dark:bg-[#1a1a1f] rounded-2xl border border-gray-200 dark:border-[#2c2c32] shadow-sm p-5 flex flex-col gap-4 h-full relative">
+      {isLoading && (
+        <div className="absolute inset-0 z-10 bg-white/60 dark:bg-slate-800/60 backdrop-blur-[1px] flex items-center justify-center rounded-2xl">
+          <div className="w-8 h-8 rounded-full border-2 border-green-500 border-t-transparent animate-spin"></div>
+        </div>
+      )}
+      
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-bold text-gray-900">Monthly Tracker</h3>
+        <h3 className="text-sm font-bold text-gray-900 dark:text-white">Monthly Tracker</h3>
         <div className="flex items-center gap-2">
           <button
             onClick={prevMonth}
-            className="p-1 rounded-lg hover:bg-gray-100 transition"
+            className="p-1 rounded-lg hover:bg-gray-100 dark:bg-slate-700 transition"
           >
-            <ChevronLeft className="w-4 h-4 text-gray-500" />
+            <ChevronLeft className="w-4 h-4 text-gray-500 dark:text-gray-400" />
           </button>
-          <span className="text-xs font-semibold text-gray-700 w-24 text-center">
+          <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 w-24 text-center">
             {monthName} {year}
           </span>
           <button
             onClick={nextMonth}
-            className="p-1 rounded-lg hover:bg-gray-100 transition"
+            className="p-1 rounded-lg hover:bg-gray-100 dark:bg-slate-700 transition"
           >
-            <ChevronRight className="w-4 h-4 text-gray-500" />
+            <ChevronRight className="w-4 h-4 text-gray-500 dark:text-gray-400" />
           </button>
         </div>
       </div>
@@ -156,28 +163,28 @@ export default function MonthlyCalendarTracker() {
         ].map((l) => (
           <div key={l.label} className="flex items-center gap-1">
             <span className={`w-2.5 h-2.5 rounded-sm ${l.color}`} />
-            <span className="text-[10px] text-gray-500">{l.label}</span>
+            <span className="text-[10px] text-gray-500 dark:text-gray-400">{l.label}</span>
           </div>
         ))}
       </div>
 
       {/* Monthly Summary */}
-      <div className="grid grid-cols-3 gap-2 pt-2 border-t border-gray-100">
+      <div className="grid grid-cols-3 gap-2 pt-2 border-t border-gray-100 dark:border-slate-700">
         <div className="text-center">
-          <p className="text-base font-extrabold text-gray-900">{daysLogged}</p>
+          <p className="text-base font-extrabold text-gray-900 dark:text-white">{daysLogged}</p>
           <p className="text-[10px] text-gray-400">Days Logged</p>
         </div>
         <div className="text-center">
           <p className="text-base font-extrabold text-green-600">
-            {monthAvgKcal > 0 ? `${monthAvgKcal}` : "--"}
+            {todayKcal > 0 ? `${todayKcal}` : "--"}
           </p>
-          <p className="text-[10px] text-gray-400">Avg kcal/day</p>
+          <p className="text-[10px] text-gray-400">Today's kcal</p>
         </div>
         <div className="text-center">
           <p className="text-base font-extrabold text-blue-600">
-            {monthAvgProtein > 0 ? `${monthAvgProtein}g` : "--"}
+            {todayProtein > 0 ? `${todayProtein}g` : "--"}
           </p>
-          <p className="text-[10px] text-gray-400">Avg protein</p>
+          <p className="text-[10px] text-gray-400">Today's protein</p>
         </div>
       </div>
 

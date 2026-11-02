@@ -1,199 +1,515 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { 
-  FiBookOpen, FiHeart, FiAward, FiPieChart, FiPlusCircle, 
-  FiClock, FiTrendingUp, FiSmile, FiCheckCircle, FiChevronRight 
+  FiBookOpen, FiFolder, FiAward, FiPieChart, FiPlusCircle, 
+  FiTrendingUp, FiCheckCircle, FiChevronRight, FiChevronLeft, FiHeart, FiArrowRight, FiCpu, FiCalendar
 } from "react-icons/fi";
-import { ResponsiveContainer, AreaChart, Area, XAxis, Tooltip } from "recharts";
+import { ResponsiveContainer, AreaChart, Area, XAxis, Tooltip, CartesianGrid } from "recharts";
+import { authClient } from "@/lib/auth-client";
+import { apiClient } from "@/lib/api-client";
 
-// Mock Data for User Calorie/Nutrition Intake Trend
-const calorieData = [
-  { day: "Sun", calories: 1850 },
-  { day: "Mon", calories: 2100 },
-  { day: "Tue", calories: 1950 },
-  { day: "Wed", calories: 2300 },
-  { day: "Thu", calories: 2000 },
-  { day: "Fri", calories: 2150 },
-  { day: "Sat", calories: 1900 },
+
+
+// Mock Data for User Calorie/Nutrition Intake Trend fallback
+const fallbackCalorieData = [
+  { day: "Mon", calories: 1650 },
+  { day: "Tue", calories: 1820 },
+  { day: "Wed", calories: 1950 },
+  { day: "Thu", calories: 2100 },
+  { day: "Fri", calories: 1880 },
+  { day: "Sat", calories: 1760 },
+  { day: "Sun", calories: 1980 },
 ];
 
+
 export default function UserDashboardPage() {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const { data: session, isPending } = authClient.useSession();
+
+  useEffect(() => {
+    if (isPending) return;
+
+    async function fetchDashboard() {
+      try {
+        const userId = session?.user?.id;
+        const queryStr = userId ? `?userId=${encodeURIComponent(userId)}` : "";
+        const data = await apiClient.get<any>(`/dashboard/user/overview${queryStr}`);
+        setData(data);
+      } catch (err) {
+        console.error("Failed to load dashboard data", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchDashboard();
+  }, [isPending, session]);
+
+
+  const stats = data?.stats || { recipes: 0, collections: 0, activeChallenges: 0, badges: 0 };
+  const nutrition = data?.nutrition || { avgKcal: 0, maxKcal: 0, minKcal: 0, targetKcal: 2000, chartData: fallbackCalorieData };
+  const chartData = data?.nutrition?.chartData?.length > 0 ? data.nutrition.chartData : fallbackCalorieData;
+  const userLevel = data?.userLevel || 1;
+  const streak = data?.streak || 0;
+
   return (
     <div className="space-y-6">
       {/* 1. Welcome Header Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between bg-gradient-to-r from-[#2F8F46] to-[#176B35] text-white p-6 rounded-2xl shadow-xl relative overflow-hidden">
-        <div className="absolute right-4 -bottom-6 opacity-10 text-9xl">🥗</div>
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            Welcome back, Chef! 👋
-          </h1>
-          <p className="text-sm text-white/80 mt-1 max-w-xl">
-            Ready to achieve your health goals today? Generate a new AI recipe or track your daily nutrition intake effortlessly.
-          </p>
+      <div className="relative w-full h-48 sm:h-56 rounded-3xl overflow-hidden shadow-sm flex items-center p-6 sm:p-10">
+        <Image 
+          src="/dashboard_banner_1788270745532.jpg" 
+          alt="Dashboard Banner" 
+          fill 
+          className="object-cover"
+          priority
+        />
+        {/* Soft white-to-transparent overlay for text readability */}
+        <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-white/80 to-transparent dark:from-black/95 dark:via-black/80"></div>
+        
+        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between w-full">
+          <div className="flex items-start gap-4 sm:gap-6">
+            <div className="hidden sm:flex w-16 h-16 rounded-full bg-[#2F8F46] text-white items-center justify-center text-3xl shadow-lg shadow-[#2F8F46]/30 shrink-0">
+              👨‍🍳
+            </div>
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white flex items-center gap-2">
+                Welcome back, Chef! <span className="text-2xl">👋</span>
+              </h1>
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mt-1 max-w-xl leading-relaxed font-medium">
+                Ready to achieve your health goals today? Generate a new AI recipe or track your daily nutrition intake effortlessly.
+              </p>
+              
+              <div className="flex items-center gap-4 mt-4 text-[11px] font-bold text-gray-700 dark:text-gray-200">
+                <span className="flex items-center gap-1.5"><span className="text-orange-500 text-sm">🔥</span> {streak} Day Streak</span>
+                <span className="text-gray-300 dark:text-gray-600">|</span>
+                <span className="flex items-center gap-1.5"><span className="text-yellow-500 text-sm">⭐</span> Level {userLevel} Chef</span>
+              </div>
+            </div>
+          </div>
+          
+          <div className="mt-6 sm:mt-0 relative group">
+            <button className="px-5 py-3 bg-[#117A38] hover:bg-[#0E602A] text-white font-bold rounded-2xl shadow-xl shadow-[#117A38]/30 transition-all flex items-center gap-2 text-sm z-10 relative overflow-hidden">
+              <span className="relative z-10 flex items-center gap-2">
+                <FiPlusCircle size={18} />
+                Generate New Recipe
+              </span>
+            </button>
+            <div className="absolute -right-8 -top-8 text-[#117A38]/40 dark:text-[#B7E35F]/40 font-cursive text-sm rotate-12 pointer-events-none group-hover:rotate-6 transition-transform">
+              Let AI cook~
+            </div>
+          </div>
         </div>
-        <div className="mt-4 md:mt-0">
-          <button className="px-5 py-2.5 bg-[#FF9F43] hover:bg-[#FF9F43]/90 text-white font-bold rounded-xl shadow-lg transition flex items-center gap-2 text-sm">
-            <FiPlusCircle size={18} />
-            <span>Generate New Recipe</span>
-          </button>
+      </div>
+
+      {/* Expert consultation banner */}
+      <div className="relative overflow-hidden rounded-[26px] border border-[#dfe9d7] bg-[#f2f8ed] p-5 shadow-sm dark:border-[#89986D]/20 dark:bg-[#111318] sm:p-6">
+        <div className="absolute -right-8 -top-12 h-36 w-36 rounded-full border-18 border-[#b7df86]/25" />
+        <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex items-start gap-4">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#2F8F46] text-white shadow-md shadow-[#2F8F46]/20"><FiHeart size={21} /></div>
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#2F8F46] dark:text-[#b7df86]">Personal support, when you need it</p>
+              <h2 className="mt-1 text-xl font-black tracking-tight text-slate-900 dark:text-white sm:text-2xl">Your next healthy choice can start with an expert.</h2>
+              <p className="mt-1.5 max-w-2xl text-xs leading-5 text-slate-600 dark:text-white/60">Book a consultation with a nutritionist for guidance tailored to your goals, routine, and favorite foods.</p>
+            </div>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row lg:shrink-0">
+            <Link href="/dashboard/users/health-consultant" className="flex items-center justify-center gap-2 rounded-xl bg-[#2F8F46] px-4 py-3 text-xs font-bold text-white shadow-md shadow-[#2F8F46]/15 transition hover:bg-[#235f31]">Find an expert <FiArrowRight size={15} /></Link>
+            <Link href="/dashboard/users/ai-recepi-generator" className="flex items-center justify-center gap-2 rounded-xl border border-[#cbdcc1] bg-white/75 px-4 py-3 text-xs font-bold text-[#2F8F46] transition hover:bg-white dark:border-white/10 dark:bg-white/5 dark:text-[#b7df86]">Ask free AI <FiCpu size={15} /></Link>
+          </div>
         </div>
       </div>
 
       {/* 2. User Stats Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Saved Recipes */}
-        <div className="p-5 rounded-2xl bg-white dark:bg-black/40 border border-gray-200 dark:border-[#89986D]/20 shadow-sm">
-          <div className="flex items-center justify-between mb-2">
-            <span className="p-2.5 rounded-xl bg-[#EAF7E8] dark:bg-[#2F8F46]/20 text-[#2F8F46] dark:text-[#B7E35F] text-lg"><FiBookOpen /></span>
-            <span className="text-[11px] font-semibold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-500/10 px-2 py-0.5 rounded-full">Active</span>
+        <div className="p-5 rounded-2xl bg-white dark:bg-black/40 border border-gray-100 dark:border-[#89986D]/20 shadow-sm flex flex-col justify-between h-32">
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                <FiBookOpen size={18} />
+              </div>
+              <div>
+                <h4 className="text-[11px] text-gray-500 dark:text-[#F6F0D7]/60 font-semibold uppercase tracking-wider">My Recipes</h4>
+                <h2 className="text-2xl font-black text-gray-900 dark:text-[#F6F0D7] leading-none mt-0.5">{loading ? "..." : stats.recipes} <span className="text-xs font-semibold text-gray-400">Items</span></h2>
+              </div>
+            </div>
           </div>
-          <h4 className="text-xs text-gray-500 dark:text-[#F6F0D7]/60 font-medium">My Recipes</h4>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-[#F6F0D7] mt-1">24 Items</h2>
-          <p className="text-[10px] text-gray-400 dark:text-[#F6F0D7]/40 mt-1">3 added this week</p>
+          <div className="flex items-end justify-between mt-2">
+            <p className="text-[10px] text-gray-400 dark:text-[#F6F0D7]/40 font-medium">3 added this week</p>
+            {/* Mock Sparkline */}
+            <svg className="w-16 h-6 text-emerald-500" viewBox="0 0 100 30" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="0,25 20,20 40,25 60,10 80,15 100,5" />
+              <circle cx="100" cy="5" r="2.5" fill="currentColor" />
+            </svg>
+          </div>
         </div>
 
         {/* Favorite Collections */}
-        <div className="p-5 rounded-2xl bg-white dark:bg-black/40 border border-gray-200 dark:border-[#89986D]/20 shadow-sm">
-          <div className="flex items-center justify-between mb-2">
-            <span className="p-2.5 rounded-xl bg-pink-50 dark:bg-pink-500/20 text-pink-600 dark:text-pink-300 text-lg"><FiHeart /></span>
-            <span className="text-[11px] font-semibold text-pink-600 dark:text-pink-400 bg-pink-50 dark:bg-pink-500/10 px-2 py-0.5 rounded-full">Loved</span>
+        <div className="p-5 rounded-2xl bg-white dark:bg-black/40 border border-gray-100 dark:border-[#89986D]/20 shadow-sm flex flex-col justify-between h-32">
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-500/10 flex items-center justify-center text-purple-600 dark:text-purple-400">
+                <FiFolder size={18} />
+              </div>
+              <div>
+                <h4 className="text-[11px] text-gray-500 dark:text-[#F6F0D7]/60 font-semibold uppercase tracking-wider">Collections</h4>
+                <h2 className="text-2xl font-black text-gray-900 dark:text-[#F6F0D7] leading-none mt-0.5">{loading ? "..." : stats.collections} <span className="text-xs font-semibold text-gray-400">Folders</span></h2>
+              </div>
+            </div>
           </div>
-          <h4 className="text-xs text-gray-500 dark:text-[#F6F0D7]/60 font-medium">Collections</h4>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-[#F6F0D7] mt-1">8 Folders</h2>
-          <p className="text-[10px] text-gray-400 dark:text-[#F6F0D7]/40 mt-1">Organized meals</p>
+          <div className="flex items-end justify-between mt-2">
+            <p className="text-[10px] text-gray-400 dark:text-[#F6F0D7]/40 font-medium">2 updated this week</p>
+            {/* Mock Sparkline */}
+            <svg className="w-16 h-6 text-purple-500" viewBox="0 0 100 30" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="0,20 20,25 40,15 60,20 80,10 100,15" />
+              <circle cx="100" cy="15" r="2.5" fill="currentColor" />
+            </svg>
+          </div>
         </div>
 
         {/* Daily Calorie Intake */}
-        <div className="p-5 rounded-2xl bg-white dark:bg-black/40 border border-gray-200 dark:border-[#89986D]/20 shadow-sm">
-          <div className="flex items-center justify-between mb-2">
-            <span className="p-2.5 rounded-xl bg-[#FFF0DD] dark:bg-[#FF9F43]/20 text-[#FF9F43] text-lg"><FiTrendingUp /></span>
-            <span className="text-[11px] font-semibold text-[#FF9F43] bg-orange-50 dark:bg-[#FF9F43]/10 px-2 py-0.5 rounded-full">On Track</span>
+        <div className="p-5 rounded-2xl bg-white dark:bg-black/40 border border-gray-100 dark:border-[#89986D]/20 shadow-sm flex flex-col justify-between h-32">
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-orange-50 dark:bg-orange-500/10 flex items-center justify-center text-orange-500 dark:text-orange-400">
+                <span className="text-lg">🔥</span>
+              </div>
+              <div>
+                <h4 className="text-[11px] text-gray-500 dark:text-[#F6F0D7]/60 font-semibold uppercase tracking-wider">Avg. Calories</h4>
+                <h2 className="text-2xl font-black text-gray-900 dark:text-[#F6F0D7] leading-none mt-0.5">{loading ? "..." : nutrition.avgKcal.toLocaleString()} <span className="text-xs font-semibold text-gray-400">kcal</span></h2>
+              </div>
+            </div>
           </div>
-          <h4 className="text-xs text-gray-500 dark:text-[#F6F0D7]/60 font-medium">Avg. Calories</h4>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-[#F6F0D7] mt-1">1,980 kcal</h2>
-          <p className="text-[10px] text-gray-400 dark:text-[#F6F0D7]/40 mt-1">Target: 2,000 kcal/day</p>
+          <div className="flex items-end justify-between mt-2">
+            <p className="text-[10px] text-gray-400 dark:text-[#F6F0D7]/40 font-medium">Target: {nutrition.targetKcal.toLocaleString()} kcal/day</p>
+            {/* Mock Sparkline */}
+            <svg className="w-16 h-6 text-orange-500" viewBox="0 0 100 30" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="0,15 20,20 40,10 60,15 80,5 100,10" />
+              <circle cx="100" cy="10" r="2.5" fill="currentColor" />
+            </svg>
+          </div>
         </div>
 
         {/* Active Challenges */}
-        <div className="p-5 rounded-2xl bg-white dark:bg-black/40 border border-gray-200 dark:border-[#89986D]/20 shadow-sm">
-          <div className="flex items-center justify-between mb-2">
-            <span className="p-2.5 rounded-xl bg-yellow-50 dark:bg-yellow-500/20 text-yellow-600 dark:text-yellow-300 text-lg"><FiAward /></span>
-            <span className="text-[11px] font-semibold text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-500/10 px-2 py-0.5 rounded-full">2 Active</span>
+        <div className="p-5 rounded-2xl bg-white dark:bg-black/40 border border-gray-100 dark:border-[#89986D]/20 shadow-sm flex flex-col justify-between h-32">
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-blue-500 dark:text-blue-400">
+                <FiCheckCircle size={18} />
+              </div>
+              <div>
+                <h4 className="text-[11px] text-gray-500 dark:text-[#F6F0D7]/60 font-semibold uppercase tracking-wider">Challenges</h4>
+                <h2 className="text-2xl font-black text-gray-900 dark:text-[#F6F0D7] leading-none mt-0.5">{loading ? "..." : stats.activeChallenges} <span className="text-xs font-semibold text-gray-400">Active</span></h2>
+              </div>
+            </div>
           </div>
-          <h4 className="text-xs text-gray-500 dark:text-[#F6F0D7]/60 font-medium">Challenges</h4>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-[#F6F0D7] mt-1">7-Day Clean</h2>
-          <p className="text-[10px] text-gray-400 dark:text-[#F6F0D7]/40 mt-1">5 days completed</p>
+          <div className="flex items-end justify-between mt-2">
+            <p className="text-[10px] text-gray-400 dark:text-[#F6F0D7]/40 font-medium">Keep going strong!</p>
+            {/* Mock Sparkline */}
+            <svg className="w-16 h-6 text-blue-500" viewBox="0 0 100 30" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="0,25 20,20 40,15 60,25 80,10 100,5" />
+              <circle cx="100" cy="5" r="2.5" fill="currentColor" />
+            </svg>
+          </div>
         </div>
       </div>
 
       {/* 3. Middle Section: Calorie Trend Chart & Active Challenges */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Calorie Trend Chart (Spans 2 cols) */}
-        <div className="lg:col-span-2 p-6 rounded-2xl bg-white dark:bg-black/40 border border-gray-200 dark:border-[#89986D]/20 shadow-sm flex flex-col justify-between">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="font-bold text-gray-900 dark:text-[#F6F0D7]">Weekly Calorie Intake Trend</h3>
-              <p className="text-xs text-gray-400 dark:text-[#F6F0D7]/60">Track your daily calorie burn and consumption</p>
-            </div>
-            <span className="text-xs px-3 py-1 bg-gray-100 dark:bg-[#89986D]/10 rounded-lg text-gray-600 dark:text-[#F6F0D7]">This Week ▾</span>
-          </div>
-          <div className="h-56 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={calorieData}>
-                <XAxis dataKey="day" stroke="#89986D" fontSize={11} tickLine={false} />
-                <Tooltip />
-                <Area type="monotone" dataKey="calories" stroke="#2F8F46" fill="#2F8F46" fillOpacity={0.15} strokeWidth={2} />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+      <div className="grid grid-cols-1 gap-6">
+
 
         {/* Current Challenges Progress */}
-        <div className="p-6 rounded-2xl bg-white dark:bg-black/40 border border-gray-200 dark:border-[#89986D]/20 shadow-sm flex flex-col justify-between">
+        <div className="p-6 rounded-3xl bg-white dark:bg-black/40 border border-gray-100 dark:border-[#89986D]/20 shadow-sm flex flex-col justify-between">
           <div>
-            <h3 className="font-bold text-gray-900 dark:text-[#F6F0D7] mb-1">Active Challenges</h3>
-            <p className="text-xs text-gray-400 dark:text-[#F6F0D7]/60 mb-4">Keep pushing your wellness goals</p>
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-[#F6F0D7]">Active Challenges</h3>
+              <a href="#" className="text-xs font-bold text-[#117A38] hover:underline">View All</a>
+            </div>
             
-            <div className="space-y-4">
-              <div className="p-3.5 rounded-xl bg-gray-50 dark:bg-[#89986D]/5 border border-gray-100 dark:border-[#89986D]/10">
-                <div className="flex justify-between text-xs font-semibold text-gray-900 dark:text-[#F6F0D7] mb-1">
-                  <span>7-Day Healthy Eating</span>
-                  <span className="text-[#2F8F46] dark:text-[#B7E35F]">5/7 Days</span>
-                </div>
-                <div className="w-full h-2 bg-gray-200 dark:bg-[#89986D]/20 rounded-full overflow-hidden">
-                  <div className="h-full bg-[#2F8F46] rounded-full" style={{ width: "70%" }}></div>
-                </div>
-              </div>
+            <div className="space-y-6">
+              {loading ? (
+                <p className="text-xs text-gray-500">Loading challenges...</p>
+              ) : data?.activeChallengesList?.length > 0 ? (
+                data.activeChallengesList.map((cp: any, idx: number) => {
+                  const percent = cp.totalDays > 0 ? Math.round((cp.completedDays / cp.totalDays) * 100) : 0;
+                  const colors = [
+                    { bg: "bg-[#117A38]", text: "text-[#117A38]", iconBg: "bg-[#EAF7E8]" },
+                    { bg: "bg-[#FF9F43]", text: "text-[#FF9F43]", iconBg: "bg-orange-50" },
+                    { bg: "bg-blue-500", text: "text-blue-500", iconBg: "bg-blue-50" }
+                  ];
+                  const c = colors[idx % colors.length];
 
-              <div className="p-3.5 rounded-xl bg-gray-50 dark:bg-[#89986D]/5 border border-gray-100 dark:border-[#89986D]/10">
-                <div className="flex justify-between text-xs font-semibold text-gray-900 dark:text-[#F6F0D7] mb-1">
-                  <span>Sugar Detox Challenge</span>
-                  <span className="text-[#FF9F43]">3/10 Days</span>
-                </div>
-                <div className="w-full h-2 bg-gray-200 dark:bg-[#89986D]/20 rounded-full overflow-hidden">
-                  <div className="h-full bg-[#FF9F43] rounded-full" style={{ width: "30%" }}></div>
-                </div>
-              </div>
+                  return (
+                    <div key={cp.id} className={idx > 0 ? "pt-2" : ""}>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-bold text-gray-900 dark:text-[#F6F0D7] truncate max-w-[150px]">{cp.challenge.title}</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className={`text-xs font-bold ${c.text}`}>{cp.completedDays} / {cp.totalDays || cp.challenge.durationDays}</span>
+                          <span className="text-[10px] text-gray-400 font-medium">Days</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="w-full h-2.5 bg-gray-100 dark:bg-[#89986D]/20 rounded-full overflow-hidden">
+                          <div className={`h-full ${c.bg} rounded-full`} style={{ width: `${percent}%` }}></div>
+                        </div>
+                        <div className={`w-8 h-8 rounded-full ${c.iconBg} flex items-center justify-center shrink-0 shadow-sm border border-white text-xs`}>
+                          🏆
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="text-sm text-gray-500">No active challenges. Join one today!</div>
+              )}
             </div>
           </div>
 
-          <button className="w-full mt-4 py-2 text-xs font-semibold text-center text-[#2F8F46] dark:text-[#B7E35F] bg-[#EAF7E8] dark:bg-[#2F8F46]/10 rounded-xl hover:bg-[#EAF7E8]/80 transition">
-            Browse All Challenges →
-          </button>
+          <div className="mt-6 p-4 bg-[#F5FAF6] dark:bg-[#2F8F46]/5 rounded-2xl border border-[#2F8F46]/10 flex items-center justify-between gap-4">
+            <div>
+              <h4 className="text-xs font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
+                <span className="text-yellow-500">🏆</span> You're on fire! <span className="text-orange-500">🔥</span>
+              </h4>
+              <p className="text-[10px] text-gray-500 mt-1 font-medium leading-relaxed">
+                Complete 2 more challenges to earn a special badge!
+              </p>
+            </div>
+            <div className="w-10 h-10 bg-[#117A38] rounded-xl flex items-center justify-center text-white shrink-0 shadow-lg shadow-[#117A38]/20">
+              <span className="text-lg">⭐</span>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* 4. Bottom Section: Recent AI Generated Recipes & Quick Tips */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent AI Generations (Spans 2 cols) */}
-        <div className="lg:col-span-2 p-6 rounded-2xl bg-white dark:bg-black/40 border border-gray-200 dark:border-[#89986D]/20 shadow-sm">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-bold text-gray-900 dark:text-[#F6F0D7]">Recent AI Recipe Generations</h3>
-            <span className="text-xs text-[#2F8F46] dark:text-[#B7E35F] font-semibold cursor-pointer">View All</span>
-          </div>
-          <div className="space-y-3">
-            {[
-              { title: "Avocado Green Wellness Bowl", time: "2 hours ago", cal: "320 kcal", category: "Healthy" },
-              { title: "Mint & Spinach Detox Smoothie", time: "Yesterday", cal: "180 kcal", category: "Beverage" },
-              { title: "High-Protein Quinoa Salad", time: "3 days ago", cal: "450 kcal", category: "Protein" },
-            ].map((rec, i) => (
-              <div key={i} className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-[#89986D]/5 transition border border-gray-100 dark:border-[#89986D]/10">
+      {/* 4. Monthly Tracker Calendar (Synced with Meal Tracker) */}
+      <div className="relative overflow-hidden bg-white dark:bg-[#111318] rounded-3xl border border-gray-100 dark:border-white/10 shadow-sm p-4 sm:p-5">
+        {(() => {
+          const history = (data?.monthlyDailyEntries || []).reduce((acc: any, curr: any) => {
+            acc[curr.date] = curr;
+            return acc;
+          }, {});
+          
+          const year = new Date().getFullYear();
+          const month = new Date().getMonth();
+          const monthName = new Date().toLocaleString("default", { month: "long" });
+          const todayStr = new Date().toISOString().split("T")[0];
+          const firstDay = new Date(year, month, 1).getDay();
+          const daysInMonth = new Date(year, month + 1, 0).getDate();
+          const targetKcal = data?.nutrition?.targetKcal || 2000;
+          
+          const getStatus = (entry: any, isToday: boolean) => {
+            if (!entry || entry.kcal === 0) return "empty";
+            const pct = entry.kcal / targetKcal;
+            if (pct <= 0.75) return "under";
+            if (pct <= 1.05) return "on-track";
+            return "over";
+          };
+          
+          const statusStyle: any = {
+            empty: "bg-gray-50 dark:bg-slate-700/50 text-gray-300",
+            under: "bg-blue-50 text-blue-700 border border-blue-200 dark:bg-[#223754] dark:text-blue-200 dark:border-[#3d6599]",
+            "on-track": "bg-green-50 text-green-700 border border-green-200 dark:bg-[#163c2b] dark:text-[#8ff0ba] dark:border-[#3d9867]",
+            over: "bg-orange-50 text-orange-700 border border-orange-200 dark:bg-[#4b3420] dark:text-[#ffd09b] dark:border-[#9d6a31]",
+          };
+          
+          const monthEntries = Object.entries(history).filter(([d]) => d.startsWith(`${year}-${String(month + 1).padStart(2, "0")}`));
+          const daysLogged = monthEntries.length;
+          
+          const todayEntry = history[todayStr];
+          const todayKcal = todayEntry ? todayEntry.kcal : 0;
+          const todayProtein = todayEntry ? todayEntry.protein : 0;
+
+          const onTrackDays = monthEntries.filter(([, e]: any) => {
+            const pct = e.kcal / targetKcal;
+            return pct > 0.75 && pct <= 1.05;
+          }).length;
+
+          return (
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-[#EAF7E8] dark:bg-[#2F8F46]/20 text-[#2F8F46] dark:text-[#B7E35F] flex items-center justify-center font-bold">
-                    🥗
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#dff7e8] text-[#117A38] dark:bg-[#123d2b] dark:text-[#63e6a0]">
+                    <FiCalendar className="h-4 w-4" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-gray-900 dark:text-[#F6F0D7]">{rec.title}</h4>
-                    <p className="text-[10px] text-gray-400 dark:text-[#F6F0D7]/60">{rec.time} • {rec.cal}</p>
+                    <h3 className="text-base font-bold text-gray-900 dark:text-white">Monthly Tracker</h3>
+                    <p className="mt-0.5 text-[11px] font-medium text-gray-500 dark:text-slate-400">Your daily nutrition at a glance</p>
                   </div>
                 </div>
-                <span className="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-[#EAF7E8] dark:bg-[#2F8F46]/20 text-[#2F8F46] dark:text-[#B7E35F]">
-                  {rec.category}
-                </span>
+                <div className="flex items-center gap-1 rounded-xl border border-gray-200 bg-gray-50 p-1 dark:border-[#3b4e69] dark:bg-[#26364e]">
+                  <button aria-label="Previous month" className="rounded-lg p-1.5 transition hover:bg-white dark:hover:bg-[#344762]">
+                    <FiChevronLeft className="h-4 w-4 text-gray-500 dark:text-slate-300" />
+                  </button>
+                  <span className="min-w-28 px-1 text-center text-xs font-bold text-gray-700 dark:text-slate-100">
+                    {monthName} {year}
+                  </span>
+                  <button aria-label="Next month" className="rounded-lg p-1.5 transition hover:bg-white dark:hover:bg-[#344762]">
+                    <FiChevronRight className="h-4 w-4 text-gray-500 dark:text-slate-300" />
+                  </button>
+                </div>
               </div>
-            ))}
+
+              <div className="grid grid-cols-7 gap-1.5 sm:gap-2">
+                {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map(d => (
+                  <div key={d} className="pb-0.5 text-center text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-slate-400">{d}</div>
+                ))}
+                
+                {Array.from({ length: firstDay }).map((_, i) => (
+                  <div key={`pad-${i}`} />
+                ))}
+
+                {Array.from({ length: daysInMonth }).map((_, i) => {
+                  const day = i + 1;
+                  const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+                  const entry = history[dateStr];
+                  const isToday = dateStr === todayStr;
+                  const status = getStatus(entry, isToday);
+
+                  return (
+                    <div
+                      key={dateStr}
+                      title={entry ? `${entry.kcal} kcal · ${entry.protein}g protein` : "No data"}
+                      className={`group relative flex h-11 cursor-default flex-col items-center justify-start rounded-xl border p-1.5 transition hover:-translate-y-0.5 hover:shadow-md sm:h-12 ${statusStyle[status]} ${status === "empty" ? "border-transparent dark:border-[#33445e]" : ""} ${isToday ? "ring-2 ring-[#00c853] ring-offset-1 dark:ring-offset-[#1d293d]" : ""}`}
+                    >
+                      <span className={`text-xs font-bold leading-tight ${isToday ? "text-green-700 dark:text-[#63e6a0]" : "text-gray-700 dark:text-slate-200"}`}>
+                        {day}
+                      </span>
+                      {entry && entry.kcal > 0 && (
+                        <span className="text-[10px] leading-tight font-medium opacity-80 mt-auto">
+                          {entry.kcal >= 1000 ? `${(entry.kcal / 1000).toFixed(1)}k` : entry.kcal}
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                <div className="flex items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-1 dark:bg-blue-400/10"><span className="h-2 w-2 rounded-full bg-blue-300" /><span className="text-[11px] font-medium text-gray-600 dark:text-slate-300">Under goal</span></div>
+                <div className="flex items-center gap-1.5 rounded-full bg-green-50 px-2.5 py-1 dark:bg-green-400/10"><span className="h-2 w-2 rounded-full bg-green-300" /><span className="text-[11px] font-medium text-gray-600 dark:text-slate-300">On track</span></div>
+                <div className="flex items-center gap-1.5 rounded-full bg-orange-50 px-2.5 py-1 dark:bg-orange-400/10"><span className="h-2 w-2 rounded-full bg-orange-300" /><span className="text-[11px] font-medium text-gray-600 dark:text-slate-300">Over goal</span></div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2 border-t border-gray-100 pt-4 dark:border-[#31435f]">
+                <div className="rounded-xl bg-gray-50 px-2 py-2.5 text-center dark:bg-[#26364e]">
+                  <p className="text-lg font-extrabold text-gray-900 dark:text-white">{daysLogged}</p>
+                  <p className="text-[11px] font-medium text-gray-400">Days Logged</p>
+                </div>
+                <div className="rounded-xl bg-green-50 px-2 py-2.5 text-center dark:bg-green-400/10">
+                  <p className="text-lg font-extrabold text-green-600">{todayKcal > 0 ? `${todayKcal}` : "--"}</p>
+                  <p className="text-[11px] font-medium text-gray-400">Today's kcal</p>
+                </div>
+                <div className="rounded-xl bg-blue-50 px-2 py-2.5 text-center dark:bg-blue-400/10">
+                  <p className="text-lg font-extrabold text-blue-600">{todayProtein > 0 ? `${todayProtein}g` : "--"}</p>
+                  <p className="text-[11px] font-medium text-gray-400">Today's protein</p>
+                </div>
+              </div>
+
+              {daysLogged > 0 && (
+                <p className="text-xs text-center text-gray-400 mt-2">
+                  🎯 {onTrackDays} of {daysLogged} days on target this month
+                </p>
+              )}
+            </div>
+          );
+        })()}
+      </div>
+
+      {/* 5. Bottom Section: Recent AI Generated Recipes & Quick Tips */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        {/* Recent AI Generations (Spans 2 cols) */}
+        <div className="xl:col-span-2 p-6 rounded-3xl bg-white dark:bg-black/40 border border-gray-100 dark:border-[#89986D]/20 shadow-sm">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-[#F6F0D7]">Recent AI Recipe Generations</h3>
+            <Link href="/dashboard/users/ai-recipes" className="text-xs font-bold text-[#117A38] hover:underline">View All</Link>
+          </div>
+          
+          <div className="relative flex items-center group">
+            {/* Left Arrow */}
+            <button className="absolute -left-3 z-10 w-8 h-8 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-500 shadow-md hover:bg-gray-50 opacity-0 group-hover:opacity-100 transition-opacity">
+              <FiChevronLeft size={16} />
+            </button>
+
+            {/* Horizontal Scroll Container */}
+            <div className="flex gap-4 overflow-x-auto pb-4 pt-2 px-1 snap-x snap-mandatory hide-scrollbar w-full">
+              {loading ? (
+                <p className="text-xs text-gray-500">Loading recipes...</p>
+              ) : data?.recentAiRecipes?.length > 0 ? (
+                data.recentAiRecipes.map((rec: any, i: number) => (
+                  <div key={rec.id || i} className="min-w-[240px] sm:min-w-[280px] bg-white dark:bg-gray-800 rounded-2xl p-3 shadow-sm border border-gray-100 hover:shadow-md transition-shadow snap-start flex items-center gap-4">
+                    <div className="relative w-20 h-20 rounded-xl overflow-hidden shrink-0 shadow-inner bg-gray-100 flex items-center justify-center">
+                      {rec.image ? (
+                        <Image src={rec.image} alt={rec.title} fill sizes="(max-width: 768px) 100vw, 33vw" className="object-cover" />
+                      ) : (
+                        <span className="text-2xl">🍽️</span>
+                      )}
+                      <div className="absolute top-1 left-1 px-1.5 py-0.5 bg-green-500 text-white text-[8px] font-bold rounded uppercase tracking-wider shadow-sm">
+                        NEW
+                      </div>
+                    </div>
+                    <div className="flex-1 overflow-hidden">
+                      <h4 className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white leading-tight mb-1 truncate">{rec.title}</h4>
+                      <div className="flex items-center gap-2 text-[10px] text-gray-500 font-medium mb-1.5">
+                        <span>{rec.kcal ? `${rec.kcal} kcal` : "N/A"}</span>
+                        <span>•</span>
+                        <span>{rec.time || rec.cookingTime || "20 min"}</span>
+                      </div>
+                      <span className="inline-block text-[9px] font-bold px-2 py-0.5 rounded-md bg-gray-100 text-gray-600 truncate max-w-full">
+                        {rec.cuisine || rec.category || "AI Generated"}
+                      </span>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-gray-500">No AI recipes generated yet.</p>
+              )}
+            </div>
+
+            {/* Right Arrow */}
+            <button className="absolute -right-3 z-10 w-8 h-8 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-500 shadow-md hover:bg-gray-50 opacity-0 group-hover:opacity-100 transition-opacity">
+              <FiChevronRight size={16} />
+            </button>
           </div>
         </div>
 
         {/* Daily Nutrition Tip */}
-        <div className="p-6 rounded-2xl bg-white dark:bg-black/40 border border-gray-200 dark:border-[#89986D]/20 shadow-sm flex flex-col justify-between">
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-xl">💡</span>
-              <h3 className="font-bold text-gray-900 dark:text-[#F6F0D7]">Daily Nutrition Tip</h3>
-            </div>
-            <p className="text-xs text-gray-600 dark:text-[#F6F0D7]/80 leading-relaxed">
-              "Hydration is key to metabolism! Try drinking at least 500ml of water before your first meal to boost your morning energy and digestion."
+        <div className="p-6 rounded-3xl bg-white dark:bg-black/40 border border-gray-100 dark:border-[#89986D]/20 shadow-sm relative overflow-hidden flex flex-col justify-between">
+          <div className="flex items-center justify-between mb-4 relative z-10">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-[#F6F0D7]">Daily Nutrition Tip</h3>
+            <a href="#" className="text-xs font-bold text-[#117A38] hover:underline">View All</a>
+          </div>
+          
+          <div className="relative z-10 pr-20">
+            <span className="text-4xl text-gray-200 dark:text-gray-700 font-serif absolute -top-4 -left-2 leading-none">“</span>
+            <p className="text-[11px] sm:text-xs text-gray-600 dark:text-[#F6F0D7]/80 leading-relaxed font-medium relative z-10 italic pl-3">
+              Hydration is key to a healthier life. Drink at least 8 glasses of water before your first meal to boost metabolism and energy.
+            </p>
+            <p className="text-[9px] font-bold text-gray-400 mt-3 pl-3 uppercase tracking-wider">
+              - FoodCanvas Nutrition Team
             </p>
           </div>
-          <div className="mt-4 pt-4 border-t border-gray-100 dark:border-[#89986D]/10 flex items-center justify-between text-xs text-gray-400 dark:text-[#F6F0D7]/60">
-            <span>FlavorAI Health Bot</span>
-            <span className="text-[#2F8F46] dark:text-[#B7E35F] font-semibold">Updated Today</span>
+
+          <div className="absolute -bottom-8 -right-8 w-48 h-48 opacity-90 mix-blend-multiply dark:mix-blend-normal pointer-events-none">
+            <Image src="/water_glass_1788270793954.jpg" alt="Water Glass" fill sizes="(max-width: 768px) 100vw, 33vw" className="object-contain" />
           </div>
         </div>
       </div>
+      
+      {/* Add CSS to hide scrollbar for the horizontal list */}
+      <style dangerouslySetInnerHTML={{__html: `
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+      `}} />
     </div>
   );
 }

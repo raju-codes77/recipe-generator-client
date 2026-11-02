@@ -15,25 +15,50 @@ import {
   ShieldAlert,
   ChefHat,
   SendHorizontal,
+  Trash2,
+  Pencil,
+  Pin,
+  Reply,
+  X,
 } from "lucide-react";
-import { Post } from "./types";
+import { Comment, Post } from "./types";
 import { RecipeDetailsModal } from "./RecipeDetailsModal";
 import { CommunityAvatar } from "./CommunityAvatar";
+import { CommunityConfirmModal } from "./CommunityConfirmModal";
+import { parseCommunityTags } from "./community-tags";
+import Link from "next/link";
+
+const countLoadedComments = (comments: Comment[]): number =>
+  comments.reduce((total, comment) => total + 1 + countLoadedComments(comment.replies ?? []), 0);
 
 interface PostCardProps {
   post: Post;
   onLike: (postId: string) => void;
   onSave: (postId: string) => void;
   onShare: (post: Post) => void;
+  onShareToProfile?: (post: Post) => void | Promise<void>;
   onRate: (post: Post) => void;
   onReport: (post: Post) => void;
+  onDelete?: (postId: string) => void | Promise<void>;
+  onEdit?: (post: Post) => void | Promise<void>;
+  onTogglePin?: (postId: string, isPinned: boolean) => void | Promise<void>;
   onDirectMessage: (authorId: string, post?: Post) => void;
   onToggleFollow: (authorId: string) => void;
-  onAddComment: (postId: string, content: string) => void;
+  onAddComment: (postId: string, content: string, parentId?: string) => void;
+  onUpdateComment?: (postId: string, commentId: string, content: string) => Promise<void>;
+  onDeleteComment?: (postId: string, commentId: string) => Promise<void>;
+  onLoadInteractions?: (
+    postId: string,
+    options?: { commentsTake?: number; commentsSkip?: number; reviewsTake?: number; reviewsSkip?: number },
+  ) => Promise<unknown>;
   onMadeIt: (postId: string) => void;
   currentUserId?: string;
   isAuthenticated?: boolean;
   onRequireAuthentication?: (action: string) => void;
+  hasActiveStory?: boolean;
+  onAuthorAvatarClick?: () => void;
+  onImageClick?: (post: Post) => void;
+  onViewRecipe?: (post: Post) => void;
 }
 
 export const PostCard: React.FC<PostCardProps> = ({
@@ -41,24 +66,53 @@ export const PostCard: React.FC<PostCardProps> = ({
   onLike,
   onSave,
   onShare,
+  onShareToProfile,
   onRate,
   onReport,
+  onDelete,
+  onEdit,
+  onTogglePin,
   onDirectMessage,
   onToggleFollow,
-  onAddComment,
+    onAddComment,
+  onUpdateComment,
+  onDeleteComment,
+    onLoadInteractions,
   onMadeIt,
   currentUserId,
   isAuthenticated = true,
   onRequireAuthentication = () => undefined,
+    hasActiveStory = false,
+    onAuthorAvatarClick,
+    onImageClick,
+    onViewRecipe,
 }) => {
   const [isRecipeModalOpen, setIsRecipeModalOpen] = useState(false);
   const [isCaptionExpanded, setIsCaptionExpanded] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [showShareMenu, setShowShareMenu] = useState(false);
   const [newCommentText, setNewCommentText] = useState("");
   const [likedAnimation, setLikedAnimation] = useState(false);
+  const [isLoadingComments, setIsLoadingComments] = useState(false);
+  const [isLoadingMoreComments, setIsLoadingMoreComments] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [commentToDelete, setCommentToDelete] = useState<Comment | null>(null);
+  const [isDeletingComment, setIsDeletingComment] = useState(false);
+  const [replyingTo, setReplyingTo] = useState<Comment | null>(null);
+  const [replyText, setReplyText] = useState("");
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editingCommentText, setEditingCommentText] = useState("");
+  const [commentMenuId, setCommentMenuId] = useState<string | null>(null);
+  const [visibleRepliesByComment, setVisibleRepliesByComment] = useState<Record<string, number>>({});
+  const displayTags = Array.from(new Set((post.tags ?? []).flatMap((tag) => parseCommunityTags(tag))));
+  const sharedOriginalTags = post.sharedOriginal
+    ? Array.from(new Set(parseCommunityTags(post.sharedOriginal.tags.join(" "))))
+    : [];
 
   const menuRef = useRef<HTMLDivElement>(null);
+  const shareMenuRef = useRef<HTMLDivElement>(null);
 
   // Close 3-dot dropdown menu when clicking anywhere outside
   useEffect(() => {
@@ -75,6 +129,19 @@ export const PostCard: React.FC<PostCardProps> = ({
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [showMenu]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (shareMenuRef.current && !shareMenuRef.current.contains(event.target as Node)) {
+        setShowShareMenu(false);
+      }
+    };
+
+    if (showShareMenu) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showShareMenu]);
 
   const handleLikeClick = () => {
     if (!isAuthenticated) {
@@ -97,21 +164,180 @@ export const PostCard: React.FC<PostCardProps> = ({
     setNewCommentText("");
   };
 
+  const handleReplySubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!replyingTo || !replyText.trim()) return;
+    if (!isAuthenticated) {
+      onRequireAuthentication("reply to comments");
+      return;
+    }
+    onAddComment(post.id, replyText.trim(), replyingTo.id);
+    setReplyText("");
+    setReplyingTo(null);
+  };
+
+  const handleEditComment = async (comment: Comment) => {
+    if (!onUpdateComment || !editingCommentText.trim()) return;
+    try {
+      await onUpdateComment(post.id, comment.id, editingCommentText.trim());
+      setEditingCommentId(null);
+      setEditingCommentText("");
+    } catch {
+      // The parent handler displays the request error.
+    }
+  };
+
+  const handleDeleteComment = async (comment: Comment) => {
+    if (!onDeleteComment) return;
+    try {
+      await onDeleteComment(post.id, comment.id);
+      setCommentMenuId(null);
+    } catch {
+      // The parent handler displays the request error.
+    }
+  };
+
+  const handleRepliesToggle = (commentId: string, replyCount: number) => {
+    setVisibleRepliesByComment((current) => {
+      const visibleCount = current[commentId] ?? 0;
+      return {
+        ...current,
+        [commentId]: visibleCount >= replyCount ? 0 : Math.min(visibleCount + 1, replyCount),
+      };
+    });
+  };
+
+  const renderComment = (comment: Comment, depth = 0, parentAuthorName?: string): React.ReactNode => {
+    const isOwnComment = Boolean(currentUserId && currentUserId === comment.userId);
+    const isEditing = editingCommentId === comment.id;
+    const replies = comment.replies ?? [];
+    const visibleReplyCount = Math.min(visibleRepliesByComment[comment.id] ?? 0, replies.length);
+    const hiddenReplyCount = replies.length - visibleReplyCount;
+    return (
+      <div key={comment.id} className={`flex items-start gap-3 text-xs sm:text-sm ${depth > 0 ? "ml-8 border-l-2 border-emerald-100 pl-3 dark:border-emerald-950" : ""}`}>
+        <Link
+          href={`/community/users/${comment.userId}`}
+          aria-label={`View ${comment.userName}'s profile`}
+          className="shrink-0 rounded-full transition hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-[#2F8F46]"
+        >
+          <CommunityAvatar
+            src={comment.userAvatar}
+            alt={comment.userName}
+            className="h-8 w-8 rounded-full object-cover ring-1 ring-slate-200 dark:ring-neutral-700"
+          />
+        </Link>
+        <div className="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-white p-3.5 shadow-xs dark:border-neutral-800 dark:bg-[#18181b]">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex min-w-0 items-center gap-2">
+              <Link
+                href={`/community/users/${comment.userId}`}
+                className="truncate font-bold text-neutral-900 transition hover:text-[#2F8F46] dark:text-white dark:hover:text-[#B7E35F]"
+              >
+                {comment.userName}
+              </Link>
+              {comment.userId !== currentUserId && <button type="button" onClick={() => onDirectMessage(comment.userId, post)} aria-label={`Message ${comment.userName}`} className="text-neutral-400 transition hover:text-[#FF9F43]"><Send className="h-3.5 w-3.5" /></button>}
+            </div>
+            <div className="flex shrink-0 items-center gap-1">
+              <span className="text-[11px] text-neutral-400">{comment.createdAt}</span>
+              {isOwnComment && (
+                <div className="relative">
+                  <button type="button" onClick={() => setCommentMenuId((current) => current === comment.id ? null : comment.id)} aria-label="Comment options" className="rounded-full p-1 text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </button>
+                  {commentMenuId === comment.id && (
+                    <div className="absolute right-0 top-7 z-20 w-28 rounded-xl border border-slate-200 bg-white p-1 shadow-lg dark:border-neutral-700 dark:bg-neutral-900">
+                      <button type="button" onClick={() => { setEditingCommentId(comment.id); setEditingCommentText(comment.content); setCommentMenuId(null); }} className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-xs hover:bg-neutral-100 dark:hover:bg-neutral-800"><Pencil className="h-3.5 w-3.5" /> Edit</button>
+                      <button type="button" onClick={() => { setCommentMenuId(null); setCommentToDelete(comment); }} className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"><Trash2 className="h-3.5 w-3.5" /> Delete</button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+          {depth > 0 && <p className="mt-1 text-[10px] font-semibold text-[#2F8F46] dark:text-[#B7E35F]">Replying to {parentAuthorName || "this comment"}</p>}
+          {isEditing ? (
+            <form onSubmit={(event) => { event.preventDefault(); void handleEditComment(comment); }} className="mt-2 flex items-center gap-2">
+              <input value={editingCommentText} onChange={(event) => setEditingCommentText(event.target.value)} autoFocus className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-neutral-50 px-2.5 py-2 text-xs dark:border-neutral-700 dark:bg-neutral-900 dark:text-white" />
+              <button type="submit" className="text-xs font-bold text-[#2F8F46]">Save</button>
+              <button type="button" onClick={() => { setEditingCommentId(null); setEditingCommentText(""); }} aria-label="Cancel edit" className="text-neutral-400"><X className="h-4 w-4" /></button>
+            </form>
+          ) : (
+            <p className="mt-1 leading-relaxed text-neutral-700 dark:text-neutral-300">{comment.content}</p>
+          )}
+          {isAuthenticated && <button type="button" onClick={() => { setReplyingTo(comment); setReplyText(""); }} className="mt-2 inline-flex items-center gap-1 text-[11px] font-bold text-neutral-500 hover:text-[#2F8F46] dark:text-neutral-400 dark:hover:text-[#B7E35F]"><Reply className="h-3.5 w-3.5" /> Reply</button>}
+          {replyingTo?.id === comment.id && (
+            <form onSubmit={handleReplySubmit} className="mt-2 flex items-center gap-2">
+              <input value={replyText} onChange={(event) => setReplyText(event.target.value)} placeholder={`Reply to ${comment.userName}...`} autoFocus className="min-w-0 flex-1 rounded-lg border border-emerald-200 bg-neutral-50 px-2.5 py-2 text-xs dark:border-emerald-900 dark:bg-neutral-900 dark:text-white" />
+              <button type="submit" disabled={!replyText.trim()} className="text-xs font-bold text-[#2F8F46] disabled:opacity-40">Send</button>
+              <button type="button" onClick={() => setReplyingTo(null)} aria-label="Cancel reply" className="text-neutral-400"><X className="h-4 w-4" /></button>
+            </form>
+          )}
+          {replies.length > 0 && (
+            <div className="mt-3">
+              <button
+                type="button"
+                onClick={() => handleRepliesToggle(comment.id, replies.length)}
+                className="text-[11px] font-bold text-[#2F8F46] transition hover:text-[#176B35] dark:text-[#B7E35F] dark:hover:text-white"
+              >
+                {visibleReplyCount === 0
+                  ? `See Replies (${replies.length})`
+                  : hiddenReplyCount > 0
+                    ? `See ${hiddenReplyCount} more ${hiddenReplyCount === 1 ? "reply" : "replies"}`
+                    : "Hide Replies"}
+              </button>
+              {visibleReplyCount > 0 && (
+                <div className="mt-3 space-y-3">
+                  {replies.slice(0, visibleReplyCount).map((reply) => renderComment(reply, depth + 1, comment.userName))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  const loadedCommentCount = countLoadedComments(post.comments);
+  const hasMoreComments = loadedCommentCount < post.commentsCount;
+
   return (
     <motion.article
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xs transition-shadow duration-300 hover:shadow-lg dark:border-neutral-800 dark:bg-[#121212]"
+      className="relative overflow-visible rounded-3xl border border-slate-200 bg-white shadow-xs transition-shadow duration-300 hover:shadow-lg dark:border-neutral-800 dark:bg-[#121212]"
     >
       {/* 1. Author Header Bar */}
       <div className="flex items-center justify-between gap-2 px-4 sm:px-6 pt-5 pb-3.5">
         <div className="flex items-center gap-3 sm:gap-3.5 min-w-0">
-          <div className="relative shrink-0">
+          {onAuthorAvatarClick ? (
+            <button
+              type="button"
+              onClick={onAuthorAvatarClick}
+              aria-label={`View ${post.author.name}'s story`}
+              className="relative shrink-0"
+            >
+              <CommunityAvatar
+                src={post.author.avatar}
+                alt={post.author.name}
+                className={`h-11 w-11 rounded-full object-cover ring-2 ${
+                  hasActiveStory ? "ring-[#FF9F43]" : "ring-emerald-100 dark:ring-emerald-950"
+                }`}
+              />
+              {post.author.role === "chef" && (
+                <span className="absolute -bottom-1 -right-1 rounded-full bg-[#FF9F43] p-1 text-white ring-2 ring-white dark:ring-[#121212]">
+                  <ChefHat className="h-3 w-3" />
+                </span>
+              )}
+            </button>
+          ) : (
+          <Link href={`/community/users/${post.author.id}`} className="relative shrink-0">
             <CommunityAvatar
               src={post.author.avatar}
               alt={post.author.name}
-              className="h-10 w-10 rounded-full object-cover ring-2 ring-emerald-100 sm:h-12 sm:w-12 dark:ring-emerald-950"
+              className={`h-10 w-10 rounded-full object-cover ring-2 sm:h-12 sm:w-12 ${
+                hasActiveStory ? "ring-[#FF9F43]" : "ring-emerald-100 dark:ring-emerald-950"
+              }`}
             />
             {post.author.role === "chef" && (
               <span
@@ -121,12 +347,16 @@ export const PostCard: React.FC<PostCardProps> = ({
                 <ChefHat className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
               </span>
             )}
-          </div>
+          </Link>
+          )}
           <div className="min-w-0 truncate">
             <div className="flex items-center gap-2">
-              <h3 className="font-bold text-sm sm:text-base text-neutral-900 dark:text-white hover:text-[#2F8F46] cursor-pointer transition truncate">
+              <Link
+                href={`/community/users/${post.author.id}`}
+                className="font-bold text-sm sm:text-base text-neutral-900 dark:text-white hover:text-[#2F8F46] cursor-pointer transition truncate"
+              >
                 {post.author.name}
-              </h3>
+              </Link>
               {post.author.badge && (
                 <span className="hidden sm:inline-flex items-center rounded-full bg-[#EAF7E8] px-2.5 py-0.5 text-[10px] font-bold text-[#176B35] dark:bg-emerald-950/60 dark:text-[#B7E35F] shrink-0">
                   {post.author.badge}
@@ -172,8 +402,18 @@ export const PostCard: React.FC<PostCardProps> = ({
                   initial={{ opacity: 0, scale: 0.92, y: 5 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.92, y: 5 }}
-                  className="absolute right-0 top-10 z-20 w-52 rounded-2xl border border-slate-200 bg-white py-2 shadow-xl dark:border-neutral-800 dark:bg-[#18181b] text-xs"
+                  className="absolute right-0 top-10 z-40 w-52 rounded-2xl border border-slate-200 bg-white py-2 shadow-xl dark:border-neutral-800 dark:bg-[#18181b] text-xs"
                 >
+                  {post.author.id === currentUserId ? (
+                    <>
+                      <button onClick={() => { void onEdit?.(post); setShowMenu(false); }} className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-neutral-700 hover:bg-neutral-50 dark:text-neutral-200 dark:hover:bg-neutral-800"><Pencil className="h-4 w-4 text-[#2F8F46]" /> Edit post</button>
+                      <button onClick={() => { onSave(post.id); setShowMenu(false); }} className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-neutral-700 hover:bg-neutral-50 dark:text-neutral-200 dark:hover:bg-neutral-800"><Bookmark className="h-4 w-4 text-[#2F8F46]" /> {post.isSaved ? "Remove from Saved" : "Save to Collection"}</button>
+                      {onTogglePin && <button onClick={() => { void onTogglePin(post.id, !post.isPinned); setShowMenu(false); }} className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-neutral-700 hover:bg-neutral-50 dark:text-neutral-200 dark:hover:bg-neutral-800"><Pin className="h-4 w-4 text-[#FF9F43]" /> {post.isPinned ? "Unpin post" : "Pin post"}</button>}
+                      <div className="my-1.5 border-t border-slate-100 dark:border-neutral-800" />
+                      <button onClick={() => { setShowMenu(false); setIsDeleteConfirmOpen(true); }} className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40"><Trash2 className="h-4 w-4" /> Delete post</button>
+                    </>
+                  ) : (
+                    <>
                   <button
                     onClick={() => {
                       if (isAuthenticated) onSave(post.id);
@@ -206,6 +446,19 @@ export const PostCard: React.FC<PostCardProps> = ({
                     <Share2 className="h-4 w-4 text-neutral-500" />
                     Copy Recipe Link
                   </button>
+                  {onShareToProfile && (
+                    <button
+                      onClick={() => {
+                        if (isAuthenticated) void onShareToProfile(post);
+                        else onRequireAuthentication("share posts to your profile");
+                        setShowMenu(false);
+                      }}
+                      className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-neutral-700 hover:bg-neutral-50 dark:text-neutral-200 dark:hover:bg-neutral-800"
+                    >
+                      <Share2 className="h-4 w-4 text-[#2F8F46]" />
+                      Share to Profile
+                    </button>
+                  )}
                   <div className="my-1.5 border-t border-slate-100 dark:border-neutral-800" />
                   <button
                     onClick={() => {
@@ -218,6 +471,8 @@ export const PostCard: React.FC<PostCardProps> = ({
                     <ShieldAlert className="h-4 w-4" />
                     Report Recipe Content
                   </button>
+                    </>
+                  )}
                 </motion.div>
               )}
             </AnimatePresence>
@@ -226,52 +481,47 @@ export const PostCard: React.FC<PostCardProps> = ({
       </div>
 
       {/* 2. Post Caption Narrative */}
-      <div className="px-4 sm:px-6 pb-4">
-        <div>
-          <p
-            className={`text-sm sm:text-base text-neutral-800 dark:text-neutral-200 leading-relaxed whitespace-pre-line ${
-              !isCaptionExpanded ? "line-clamp-2" : ""
-            }`}
-          >
-            {post.caption}
-          </p>
-          {post.caption.length > 120 && (
-            <button
-              onClick={() => setIsCaptionExpanded(!isCaptionExpanded)}
-              className="mt-1 text-xs sm:text-sm font-bold text-[#2F8F46] hover:underline dark:text-[#B7E35F] cursor-pointer"
-            >
-              {isCaptionExpanded ? "Show less" : "...more"}
-            </button>
-          )}
-        </div>
-
-        {/* Tags */}
-        {post.tags && post.tags.length > 0 && (
-          <div className="mt-3 flex flex-wrap gap-2">
-            {post.tags.map((tag, idx) => (
-              <span
-                key={idx}
-                className="rounded-lg bg-[#EAF7E8] px-2.5 py-1 text-xs font-semibold text-[#176B35] hover:bg-[#D8F3DC] cursor-pointer transition dark:bg-emerald-950/50 dark:text-[#B7E35F]"
-              >
-                {tag}
-              </span>
-            ))}
-            {post.isChallengeEntry && (
-              <span className="rounded-lg bg-[#FFF0DD] px-2.5 py-1 text-xs font-bold text-[#FF9F43] flex items-center gap-1.5 dark:bg-amber-950/40">
-                <Flame className="h-3.5 w-3.5" /> Challenge: {post.challengeName}
-              </span>
-            )}
+      {post.sharedOriginal ? (
+        <div className="space-y-3 px-4 pb-0 sm:px-6">
+          {post.caption.trim() && <div>
+            <p className="whitespace-pre-line text-sm sm:text-base text-neutral-800 dark:text-neutral-200">{post.caption}</p>
+          </div>}
+          {displayTags.length > 0 && <div className="flex flex-wrap gap-2">
+            {displayTags.map((tag) => <span key={tag} className="rounded-lg bg-[#EAF7E8] px-2.5 py-1 text-xs font-semibold text-[#176B35] dark:bg-emerald-950/50 dark:text-[#B7E35F]">{tag}</span>)}
+          </div>}
+          <div className="rounded-t-2xl border border-b-0 border-slate-200 bg-neutral-50 p-4 pb-3 dark:border-neutral-700 dark:bg-[#181B19]">
+            <div className="flex items-center gap-3">
+              <CommunityAvatar src={post.sharedOriginal.author.avatar} alt={post.sharedOriginal.author.name} className="h-10 w-10 rounded-full object-cover" />
+              <div className="min-w-0">
+                <p className="truncate text-sm font-bold text-neutral-900 dark:text-white">{post.sharedOriginal.author.name}</p>
+                <p className="text-xs text-neutral-500">{post.sharedOriginal.createdAt}</p>
+              </div>
+            </div>
+            <p className="mt-3 whitespace-pre-line text-sm leading-6 text-neutral-800 dark:text-neutral-200">{post.sharedOriginal.caption}</p>
+            {sharedOriginalTags.length > 0 && <div className="mt-3 flex flex-wrap gap-2">
+              {sharedOriginalTags.map((tag) => <span key={tag} className="rounded-lg bg-[#EAF7E8] px-2.5 py-1 text-xs font-semibold text-[#176B35] dark:bg-emerald-950/50 dark:text-[#B7E35F]">{tag}</span>)}
+            </div>}
           </div>
-        )}
-      </div>
+        </div>
+      ) : <div className={post.caption.trim() ? "px-4 pb-4 sm:px-6" : ""}>
+        {post.caption.trim() && <div>
+          <p className={`text-sm sm:text-base text-neutral-800 dark:text-neutral-200 leading-relaxed whitespace-pre-line ${!isCaptionExpanded ? "line-clamp-2" : ""}`}>{post.caption}</p>
+          {post.caption.length > 120 && <button onClick={() => setIsCaptionExpanded(!isCaptionExpanded)} className="mt-1 text-xs sm:text-sm font-bold text-[#2F8F46] hover:underline dark:text-[#B7E35F] cursor-pointer">{isCaptionExpanded ? "Show less" : "...more"}</button>}
+        </div>}
+        {displayTags.length > 0 && <div className="mt-3 flex flex-wrap gap-2">
+          {displayTags.map((tag) => <span key={tag} className="rounded-lg bg-[#EAF7E8] px-2.5 py-1 text-xs font-semibold text-[#176B35] hover:bg-[#D8F3DC] cursor-pointer transition dark:bg-emerald-950/50 dark:text-[#B7E35F]">{tag}</span>)}
+        </div>}
+      </div>}
 
       {/* 3. Food Photo with Overlay Metadata Badge */}
-      <div className="relative aspect-4/3 sm:aspect-16/10 w-full overflow-hidden bg-neutral-100 dark:bg-neutral-900">
-        <img
-          src={post.imageUrl}
-          alt={post.recipe?.title || "Community Food"}
-          className="h-full w-full object-cover transition duration-500 hover:scale-105"
-        />
+      {post.imageUrl && <div className={`relative aspect-4/3 sm:aspect-16/10 w-full overflow-hidden bg-neutral-100 dark:bg-neutral-900 ${post.sharedOriginal ? "mx-4 w-[calc(100%-2rem)] border-x border-slate-200 sm:mx-6 sm:w-[calc(100%-3rem)] dark:border-neutral-700" : ""}`}>
+        {onImageClick ? (
+          <button type="button" onClick={() => onImageClick(post)} className="absolute inset-0 h-full w-full cursor-zoom-in text-left" aria-label="Open full-size food image">
+            <img src={post.imageUrl} alt={post.recipe?.title || "Community Food"} className="h-full w-full object-cover transition duration-500 hover:scale-105" />
+          </button>
+        ) : (
+          <img src={post.imageUrl} alt={post.recipe?.title || "Community Food"} className="h-full w-full object-cover transition duration-500 hover:scale-105" />
+        )}
 
         {/* Metadata Chips on Image */}
         {post.recipe && (
@@ -303,13 +553,13 @@ export const PostCard: React.FC<PostCardProps> = ({
             </motion.div>
           </div>
         )}
-      </div>
+      </div>}
 
       {/* 4. Recipe Accordion / Drawer Toggle */}
       {post.recipe && (
-        <div className="border-t border-slate-100 bg-neutral-50/50 dark:border-neutral-800 dark:bg-neutral-900/30">
+        <div className={`border-t border-slate-100 bg-neutral-50/50 dark:border-neutral-800 dark:bg-neutral-900/30 ${post.sharedOriginal ? "mx-4 mb-3 border-x border-b border-slate-200 rounded-b-2xl sm:mx-6 dark:border-neutral-700" : ""}`}>
           <button
-            onClick={() => setIsRecipeModalOpen(true)}
+            onClick={() => (onViewRecipe ? onViewRecipe(post) : setIsRecipeModalOpen(true))}
             className="flex w-full items-center justify-between gap-3 px-4 sm:px-6 py-4 text-left transition hover:bg-neutral-100/60 dark:hover:bg-neutral-900"
           >
             <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -354,11 +604,19 @@ export const PostCard: React.FC<PostCardProps> = ({
           {/* Comments Toggle */}
           <motion.button
             whileTap={{ scale: 0.9 }}
-            onClick={() => setShowComments(!showComments)}
+            onClick={() => {
+              const shouldShowComments = !showComments;
+              setShowComments(shouldShowComments);
+              if (shouldShowComments && post.commentsCount > 0 && post.comments.length === 0 && onLoadInteractions) {
+                setIsLoadingComments(true);
+                void onLoadInteractions(post.id, { commentsTake: 4, commentsSkip: 0, reviewsTake: 0 })
+                  .finally(() => setIsLoadingComments(false));
+              }
+            }}
             className="flex items-center gap-2 text-xs sm:text-sm font-bold text-neutral-600 hover:text-[#2F8F46] transition dark:text-neutral-300 dark:hover:text-[#B7E35F]"
           >
             <MessageCircle className="h-5 w-5" />
-            <span>{post.comments.length || post.commentsCount}</span>
+            <span>{post.commentsCount}</span>
           </motion.button>
 
           {/* Rate Trigger - Star Icon Only */}
@@ -366,7 +624,8 @@ export const PostCard: React.FC<PostCardProps> = ({
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.85 }}
             onClick={() => (isAuthenticated ? onRate(post) : onRequireAuthentication("rate and review recipes"))}
-            title="Rate & Review Recipe"
+            title={`Rate & Review ${post.recipe ? "Recipe" : "Post"}`}
+            aria-label={`Rate & Review ${post.recipe ? "Recipe" : "Post"}`}
             className="flex items-center text-neutral-600 hover:text-amber-500 transition dark:text-neutral-300"
           >
             <Star className="h-5 w-5 fill-amber-400 text-amber-400" />
@@ -399,15 +658,55 @@ export const PostCard: React.FC<PostCardProps> = ({
           >
             <Bookmark className={`h-4 w-4 ${post.isSaved ? "fill-[#2F8F46]" : ""}`} />
           </motion.button>
-          <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            onClick={() => onShare(post)}
-            title="Share Recipe"
-            className="rounded-full p-2 text-neutral-500 hover:bg-neutral-100 hover:text-neutral-700 dark:text-neutral-400 dark:hover:bg-neutral-800"
-          >
-            <Share2 className="h-4 w-4" />
-          </motion.button>
+          <div ref={shareMenuRef} className="relative">
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={() => setShowShareMenu((visible) => !visible)}
+              title="Share Recipe"
+              aria-expanded={showShareMenu}
+              className={`rounded-full p-2 text-neutral-500 transition hover:bg-neutral-100 hover:text-neutral-700 dark:text-neutral-400 dark:hover:bg-neutral-800 ${showShareMenu ? "bg-neutral-100 dark:bg-neutral-800" : ""}`}
+            >
+              <Share2 className="h-4 w-4" />
+            </motion.button>
+
+            <AnimatePresence>
+              {showShareMenu && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.94, y: 5 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.94, y: 5 }}
+                  className="absolute bottom-11 right-0 z-30 w-52 overflow-hidden rounded-2xl border border-slate-200 bg-white py-1.5 shadow-xl dark:border-neutral-800 dark:bg-[#18181b]"
+                >
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onShare(post);
+                      setShowShareMenu(false);
+                    }}
+                    className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-xs font-semibold text-neutral-700 transition hover:bg-neutral-50 dark:text-neutral-200 dark:hover:bg-neutral-800"
+                  >
+                    <Share2 className="h-4 w-4 text-neutral-500" />
+                    Copy Recipe Link
+                  </button>
+                  {onShareToProfile && post.author.id !== currentUserId && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (isAuthenticated) void onShareToProfile(post);
+                        else onRequireAuthentication("share posts to your profile");
+                        setShowShareMenu(false);
+                      }}
+                      className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-xs font-semibold text-neutral-700 transition hover:bg-neutral-50 dark:text-neutral-200 dark:hover:bg-neutral-800"
+                    >
+                      <Share2 className="h-4 w-4 text-[#2F8F46]" />
+                      Share to Profile
+                    </button>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       </div>
 
@@ -422,7 +721,7 @@ export const PostCard: React.FC<PostCardProps> = ({
             className="overflow-hidden border-t border-slate-100 bg-neutral-50/50 px-6 py-5 dark:border-neutral-800 dark:bg-neutral-900/40"
           >
             <h5 className="font-bold text-xs uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mb-3">
-              Community Comments ({post.comments.length})
+              Community Comments ({post.commentsCount})
             </h5>
 
             {/* New Comment Input */}
@@ -456,33 +755,95 @@ export const PostCard: React.FC<PostCardProps> = ({
 
             {/* Comments List */}
             <div className="space-y-3">
-              {post.comments.length === 0 ? (
+              {isLoadingComments ? (
+                <div className="flex items-center justify-center gap-1 py-3 text-xs font-semibold text-neutral-400" aria-live="polite">
+                  <span>Loading comments</span>
+                  {[0, 1, 2].map((dot) => (
+                    <motion.span
+                      key={dot}
+                      aria-hidden="true"
+                      animate={{ y: [0, -4, 0] }}
+                      transition={{ duration: 0.65, repeat: Infinity, delay: dot * 0.14, ease: "easeInOut" }}
+                    >
+                      .
+                    </motion.span>
+                  ))}
+                </div>
+              ) : post.comments.length === 0 ? (
                 <p className="text-center text-xs text-neutral-400 py-3">
                   No comments yet. Be the first cook to share feedback!
                 </p>
               ) : (
-                post.comments.map((comment) => (
-                  <div key={comment.id} className="flex items-start gap-3 text-xs sm:text-sm">
-                    <CommunityAvatar
-                      src={comment.userAvatar}
-                      alt={comment.userName}
-                      className="h-8 w-8 shrink-0 rounded-full object-cover ring-1 ring-slate-200 dark:ring-neutral-700"
-                    />
-                    <div className="flex-1 rounded-2xl bg-white p-3.5 shadow-xs border border-slate-200 dark:border-neutral-800 dark:bg-[#18181b]">
-                      <div className="flex items-center justify-between">
-                        <span className="font-bold text-neutral-900 dark:text-white">{comment.userName}</span>
-                        <span className="text-[11px] text-neutral-400">{comment.createdAt}</span>
-                      </div>
-                      <p className="mt-1 text-neutral-700 dark:text-neutral-300 leading-relaxed">{comment.content}</p>
-                    </div>
-                  </div>
-                ))
+                post.comments.map((comment) => renderComment(comment))
               )}
             </div>
+
+            {hasMoreComments ? (
+              <button
+                type="button"
+                disabled={isLoadingMoreComments}
+                onClick={() => {
+                  if (!onLoadInteractions) return;
+                  setIsLoadingMoreComments(true);
+                  void onLoadInteractions(post.id, {
+                    commentsTake: 4,
+                    commentsSkip: post.comments.length,
+                    reviewsTake: 0,
+                  }).finally(() => setIsLoadingMoreComments(false));
+                }}
+                className="mt-4 w-full rounded-xl border border-slate-200 px-4 py-2 text-xs font-bold text-[#176B35] transition hover:bg-[#EAF7E8] disabled:cursor-not-allowed disabled:opacity-60 dark:border-neutral-700 dark:text-[#B7E35F] dark:hover:bg-emerald-950/40"
+              >
+                {isLoadingMoreComments ? "Loading comments..." : "See more comments"}
+              </button>
+            ) : post.comments.length > 0 ? (
+              <button
+                type="button"
+                onClick={() => setShowComments(false)}
+                className="mt-4 w-full rounded-xl border border-slate-200 px-4 py-2 text-xs font-bold text-[#176B35] transition hover:bg-[#EAF7E8] dark:border-neutral-700 dark:text-[#B7E35F] dark:hover:bg-emerald-950/40"
+              >
+                Hide Comments
+              </button>
+            ) : null}
           </motion.div>
         )}
       </AnimatePresence>
       <RecipeDetailsModal post={post} isOpen={isRecipeModalOpen} onClose={() => setIsRecipeModalOpen(false)} />
+      <CommunityConfirmModal
+        isOpen={isDeleteConfirmOpen}
+        title="Delete this post?"
+        message="This post and its Community interactions will be permanently removed."
+        confirmLabel="Delete post"
+        isLoading={isDeleting}
+        onClose={() => setIsDeleteConfirmOpen(false)}
+        onConfirm={async () => {
+          if (!onDelete || isDeleting) return;
+          setIsDeleting(true);
+          try {
+            await onDelete(post.id);
+            setIsDeleteConfirmOpen(false);
+          } finally {
+            setIsDeleting(false);
+          }
+        }}
+      />
+      <CommunityConfirmModal
+        isOpen={Boolean(commentToDelete)}
+        title="Delete this comment?"
+        message="This comment and its replies will be permanently removed."
+        confirmLabel="Delete comment"
+        isLoading={isDeletingComment}
+        onClose={() => setCommentToDelete(null)}
+        onConfirm={async () => {
+          if (!commentToDelete || !onDeleteComment || isDeletingComment) return;
+          setIsDeletingComment(true);
+          try {
+            await handleDeleteComment(commentToDelete);
+            setCommentToDelete(null);
+          } finally {
+            setIsDeletingComment(false);
+          }
+        }}
+      />
     </motion.article>
   );
 };

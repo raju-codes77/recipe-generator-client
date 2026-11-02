@@ -7,7 +7,7 @@ export default function NextDashboardLayout({ children }: { children: React.Reac
       <DashboardSidebar />
       
       {/* Main Content Screen */}
-      <div className="flex-1 flex flex-col min-w-0 pt-16 lg:pt-0">
+      <div className="flex-1 flex flex-col min-w-0">
         <main className="flex-1 overflow-y-auto p-6 lg:p-8 bg-gradient-to-b from-transparent via-[#2F8F46]/5 to-transparent">
           {children}
         </main>

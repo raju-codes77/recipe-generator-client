@@ -2,13 +2,16 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { 
-  ChevronRight, 
+import {
+  ChevronRight,
   Plus,
   Folder,
   X
 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
+import Link from "next/link";
+import toast from "react-hot-toast";
+import { apiClient } from "@/lib/api-client";
 
 interface SidebarProps {
   selectedCollectionId?: string | null;
@@ -21,7 +24,7 @@ export default function Sidebar({ selectedCollectionId, onSelectCollection }: Si
 
   const [collections, setCollections] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newCollectionName, setNewCollectionName] = useState("");
   const [creating, setCreating] = useState(false);
@@ -30,8 +33,7 @@ export default function Sidebar({ selectedCollectionId, onSelectCollection }: Si
   const fetchCollections = async () => {
     if (!userId) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/collections?userId=${userId}`);
-      const data = await res.json();
+      const data = await apiClient.get<any>(`/collections?userId=${userId}`);
       if (data.success) {
         setCollections(data.collections || []);
       }
@@ -52,11 +54,11 @@ export default function Sidebar({ selectedCollectionId, onSelectCollection }: Si
     }
   }, [userId, session]);
 
-  // কাস্টম ইভেন্ট লিসেনার: কালেকশন তৈরি বা রেসিপি অ্যাড হলেই সাথে সাথে কল হবে
+
   useEffect(() => {
     const handleCollectionUpdate = () => {
       if (userId) {
-        fetchCollections(); // পেজ রিলোড ছাড়াই সাথে সাথে নতুন ডেটা নিয়ে আসবে
+        fetchCollections();
       }
     };
 
@@ -66,24 +68,21 @@ export default function Sidebar({ selectedCollectionId, onSelectCollection }: Si
     };
   }, [userId]);
 
-  // নতুন কালেকশন তৈরির ফাংশন
+  // new collection
   const handleCreateCollection = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCollectionName.trim() || !userId) return;
 
     try {
       setCreating(true);
-      const res = await fetch("http://localhost:5000/api/collections", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, name: newCollectionName }),
-      });
-      const data = await res.json();
+      const data = await apiClient.post<any>("/collections", { userId, name: newCollectionName });
       if (data.success) {
         setNewCollectionName("");
         setIsModalOpen(false);
-        // ইভেন্ট ট্রিগার করে সাথে সাথে সাইডবার আপডেট করে দেওয়া হলো
+        // sidebar update
         window.dispatchEvent(new Event("collectionUpdated"));
+      } else {
+        alert(data.message || "Failed to create collection");
       }
     } catch (error) {
       console.error("Failed to create collection:", error);
@@ -94,10 +93,10 @@ export default function Sidebar({ selectedCollectionId, onSelectCollection }: Si
 
   return (
     <div className="space-y-6">
-      
+
       {/* MY COLLECTIONS CARD */}
       <div className="rounded-[28px] border border-[#E2EBE4] bg-white p-6 shadow-sm dark:border-white/10 dark:bg-[#131B2E]">
-        
+
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-bold text-gray-900 dark:text-white">My Collections</h3>
           <span className="text-xs font-bold text-gray-400">
@@ -120,11 +119,10 @@ export default function Sidebar({ selectedCollectionId, onSelectCollection }: Si
                       onSelectCollection(col.id, col.name);
                     }
                   }}
-                  className={`group flex items-center justify-between p-2 rounded-2xl transition-colors cursor-pointer ${
-                    selectedCollectionId === col.id 
-                      ? "bg-[#EAF4EB] dark:bg-[#10B981]/20 border border-[#24733E]/30 dark:border-[#10B981]/30" 
+                  className={`group flex items-center justify-between p-2 rounded-2xl transition-colors cursor-pointer ${selectedCollectionId === col.id
+                      ? "bg-[#EAF4EB] dark:bg-[#10B981]/20 border border-[#24733E]/30 dark:border-[#10B981]/30"
                       : "hover:bg-gray-50 dark:hover:bg-white/5"
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center gap-3">
                     <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-xl bg-[#EAF4EB] text-[#24733E] dark:bg-[#10B981]/10 dark:text-[#10B981] flex items-center justify-center">
@@ -150,10 +148,10 @@ export default function Sidebar({ selectedCollectionId, onSelectCollection }: Si
           )}
         </div>
 
-        <button 
+        <button
           onClick={() => {
             if (!userId) {
-              alert("Please login first to create collections.");
+              toast.error("Please login first to create collections.");
               return;
             }
             setIsModalOpen(true);
@@ -166,43 +164,13 @@ export default function Sidebar({ selectedCollectionId, onSelectCollection }: Si
 
       </div>
 
-      {/* RECOMMENDED COLLECTIONS CARD */}
-      <div className="rounded-[28px] border border-[#E2EBE4] bg-white p-6 shadow-sm dark:border-white/10 dark:bg-[#131B2E]">
-        <h3 className="font-bold text-gray-900 dark:text-white mb-4">Recommended Collections</h3>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-gray-100">
-                <Image src="https://images.unsplash.com/photo-1543339308-43e59d6b73a6?w=100&auto=format&fit=crop&q=60" alt="High Protein Meals" fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" className="object-cover" />
-              </div>
-              <div>
-                <h4 className="text-xs font-bold text-gray-900 dark:text-white line-clamp-1">High Protein Meals</h4>
-                <p className="text-[10px] text-gray-500 dark:text-gray-400">24 recipes • 1.2k followers</p>
-              </div>
-            </div>
-            <button className="cursor-pointer px-3 py-1.5 rounded-xl border border-[#E2EBE4] text-xs font-bold text-gray-700 hover:bg-gray-50 dark:border-white/10 dark:text-gray-300 dark:hover:bg-white/5 transition-colors">Follow</button>
-          </div>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-gray-100">
-                <Image src="https://images.unsplash.com/photo-1498837167922-ddd27525d352?w=100&auto=format&fit=crop&q=60" alt="Low Carb Recipes" fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" className="object-cover" />
-              </div>
-              <div>
-                <h4 className="text-xs font-bold text-gray-900 dark:text-white line-clamp-1">Low Carb Recipes</h4>
-                <p className="text-[10px] text-gray-500 dark:text-gray-400">18 recipes • 892 followers</p>
-              </div>
-            </div>
-            <button className="cursor-pointer px-3 py-1.5 rounded-xl border border-[#E2EBE4] text-xs font-bold text-gray-700 hover:bg-gray-50 dark:border-white/10 dark:text-gray-300 dark:hover:bg-white/5 transition-colors">Follow</button>
-          </div>
-        </div>
-      </div>
 
       {/* AI BANNER CARD */}
       <div className="rounded-[28px] bg-[#EAF4EB] dark:bg-[#132A26] p-6 relative overflow-hidden border border-[#D1E7D3] dark:border-white/10">
         <div className="max-w-[70%]">
           <h3 className="font-bold text-gray-900 dark:text-white text-sm mb-1">Can&apos;t find what you want?</h3>
           <p className="text-xs text-gray-600 dark:text-gray-300 mb-4 leading-relaxed">Generate recipes from your ingredients with AI</p>
-          <button className="cursor-pointer px-4 py-2.5 rounded-xl bg-[#24733E] text-white text-xs font-bold hover:bg-[#1e5d32] transition-colors shadow-sm">Try Pantry-to-Plate AI</button>
+          <Link href="/ai-tools/pantry-to-plate" className="cursor-pointer px-4 py-2.5 rounded-xl bg-[#24733E] text-white text-xs font-bold hover:bg-[#1e5d32] transition-colors shadow-sm">Try Pantry-to-Plate AI</Link>
         </div>
         <div className="absolute -bottom-4 -right-4 w-32 h-32 pointer-events-none opacity-90">
           <Image src="https://images.unsplash.com/photo-1540420773420-3366772f4999?w=300&auto=format&fit=crop&q=60" alt="AI Vegetables Bowl" fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" className="object-contain" />

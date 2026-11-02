@@ -3,17 +3,12 @@ import Link from "next/link";
 import { motion } from "motion/react";
 import {
   Compass,
-  TrendingUp,
   Users,
   Clock,
   Salad,
-  Trophy,
-  Sparkles,
   Bookmark,
   Heart,
   ChefHat,
-  ChevronRight,
-  ShieldCheck,
 } from "lucide-react";
 import { CURRENT_USER } from "./mockData";
 import { Author, RecipeCollection } from "./types";
@@ -22,48 +17,75 @@ import { CommunityAvatar } from "./CommunityAvatar";
 interface CommunitySidebarLeftProps {
   activeFilter: string;
   setActiveFilter: (filter: string) => void;
-  collections: RecipeCollection[];
+  collections?: RecipeCollection[];
   savedPostsCount: number;
   likedPostsCount: number;
   currentUser?: Author | null;
   isAuthenticated?: boolean;
   onRequireAuthentication?: (action: string) => void;
+  onOpenFollowers?: () => void;
+  onOpenSaved?: () => void;
 }
+
+const AnimatedCount: React.FC<{ value: number }> = ({ value }) => {
+  const [displayValue, setDisplayValue] = React.useState(value);
+  const previousValue = React.useRef(value);
+
+  React.useEffect(() => {
+    const startValue = previousValue.current;
+    if (startValue === value) return;
+
+    const duration = 650;
+    let animationFrame = 0;
+    let startedAt: number | null = null;
+
+    const animate = (timestamp: number) => {
+      startedAt ??= timestamp;
+      const progress = Math.min((timestamp - startedAt) / duration, 1);
+      const easedProgress = 1 - Math.pow(1 - progress, 3);
+      setDisplayValue(Math.round(startValue + (value - startValue) * easedProgress));
+
+      if (progress < 1) {
+        animationFrame = requestAnimationFrame(animate);
+      } else {
+        previousValue.current = value;
+      }
+    };
+
+    animationFrame = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(animationFrame);
+  }, [value]);
+
+  return <>{displayValue}</>;
+};
 
 export const CommunitySidebarLeft: React.FC<CommunitySidebarLeftProps> = ({
   activeFilter,
   setActiveFilter,
-  collections,
   savedPostsCount,
   likedPostsCount,
   currentUser = CURRENT_USER,
   isAuthenticated = true,
   onRequireAuthentication = () => undefined,
+  onOpenFollowers = () => undefined,
+  onOpenSaved = () => undefined,
 }) => {
   const filterCategories = [
     { id: "all", label: "All Community Posts", icon: Compass },
-    { id: "trending", label: "Trending & Top Rated", icon: TrendingUp, badge: "Hot" },
     { id: "following", label: "Following Cooks", icon: Users },
     { id: "quick", label: "Quick 15-Min Meals", icon: Clock },
     { id: "wellness", label: "High Protein & Healthy", icon: Salad },
-    {
-      id: "challenge",
-      label: "Summer Salad Challenge",
-      icon: Trophy,
-      badge: "500 XP",
-    },
-    { id: "ai_sparks", label: "AI Generated Sparks", icon: Sparkles },
     ...(isAuthenticated
       ? [
           {
             id: "saved",
-            label: "My Saved Recipes",
+            label: "My Saved Posts",
             icon: Bookmark,
             count: savedPostsCount,
           },
           {
             id: "liked",
-            label: "Recipes I Liked",
+            label: "Posts I Like",
             icon: Heart,
             count: likedPostsCount,
           },
@@ -77,7 +99,7 @@ export const CommunitySidebarLeft: React.FC<CommunitySidebarLeftProps> = ({
       {isAuthenticated && currentUser ? (
         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-xs dark:border-neutral-800 dark:bg-[#121212]">
           <div className="flex items-center gap-3.5">
-            <div className="relative">
+            <Link href={`/community/users/${currentUser.id}`} className="relative shrink-0" aria-label="Open your community profile">
               <CommunityAvatar
                 src={currentUser.avatar}
                 alt={currentUser.name}
@@ -86,9 +108,9 @@ export const CommunitySidebarLeft: React.FC<CommunitySidebarLeftProps> = ({
               <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-[#FF9F43] text-white ring-2 ring-white dark:ring-[#121212]">
                 <ChefHat className="h-3 w-3" />
               </span>
-            </div>
+            </Link>
 
-            <div>
+            <Link href={`/community/users/${currentUser.id}`} className="min-w-0">
               <h3 className="font-bold text-base leading-tight text-neutral-900 dark:text-white">
                 {currentUser.name}
               </h3>
@@ -98,37 +120,37 @@ export const CommunitySidebarLeft: React.FC<CommunitySidebarLeftProps> = ({
               <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-[#EAF7E8] px-2.5 py-0.5 text-[10px] font-bold text-[#176B35] dark:bg-emerald-950/60 dark:text-[#B7E35F]">
                 🥈 {currentUser.badge || "FoodCanvas Cook"}
               </span>
-            </div>
+            </Link>
           </div>
 
           {/* User Stats Grid */}
           <div className="mt-4 grid grid-cols-3 gap-2 rounded-xl bg-neutral-50 p-3 text-center dark:bg-neutral-900/60">
             <div>
               <span className="block font-extrabold text-sm text-[#2F8F46] dark:text-[#B7E35F]">
-                {currentUser.recipesCount}
+                <AnimatedCount value={currentUser.recipesCount} />
               </span>
               <span className="text-[10px] font-medium text-neutral-500 dark:text-neutral-400">
                 Recipes
               </span>
             </div>
 
-            <div>
+            <button type="button" onClick={onOpenFollowers} className="cursor-pointer rounded-lg px-1 py-0.5 transition hover:bg-neutral-100 dark:hover:bg-neutral-800">
               <span className="block font-extrabold text-sm text-neutral-800 dark:text-neutral-200">
-                {currentUser.followersCount}
+                <AnimatedCount value={currentUser.followersCount} />
               </span>
               <span className="text-[10px] font-medium text-neutral-500 dark:text-neutral-400">
                 Followers
               </span>
-            </div>
+            </button>
 
-            <div>
+            <button type="button" onClick={onOpenSaved} className="cursor-pointer rounded-lg px-1 py-0.5 transition hover:bg-neutral-100 dark:hover:bg-neutral-800">
               <span className="block font-extrabold text-sm text-[#FF9F43]">
-                {savedPostsCount}
+                <AnimatedCount value={savedPostsCount} />
               </span>
               <span className="text-[10px] font-medium text-neutral-500 dark:text-neutral-400">
                 Saved
               </span>
-            </div>
+            </button>
           </div>
         </div>
       ) : (
@@ -187,26 +209,14 @@ export const CommunitySidebarLeft: React.FC<CommunitySidebarLeftProps> = ({
                       : "text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-900 dark:hover:text-white"
                   }`}
                 >
-                  <div className="flex items-center gap-2.5">
+                  <div className="flex min-w-0 flex-1 items-center gap-2.5">
                     <Icon
                       className={`h-4 w-4 ${
                         isActive ? "text-white" : "text-neutral-400"
                       }`}
                     />
-                    <span>{cat.label}</span>
+                    <span className="text-left">{cat.label}</span>
                   </div>
-
-                  {cat.badge && (
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-[9px] font-bold ${
-                        isActive
-                          ? "bg-white/20 text-white"
-                          : "bg-[#FF9F43]/15 text-[#FF9F43]"
-                      }`}
-                    >
-                      {cat.badge}
-                    </span>
-                  )}
 
                   {cat.count !== undefined && (
                     <span
@@ -216,7 +226,7 @@ export const CommunitySidebarLeft: React.FC<CommunitySidebarLeftProps> = ({
                           : "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400"
                       }`}
                     >
-                      {cat.count}
+                      <AnimatedCount value={cat.count} />
                     </span>
                   )}
                 </motion.button>
@@ -225,55 +235,6 @@ export const CommunitySidebarLeft: React.FC<CommunitySidebarLeftProps> = ({
         </nav>
       </div>
 
-      {/* Recipe Collections Box */}
-      {isAuthenticated && (
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs dark:border-neutral-800 dark:bg-[#121212]">
-          <div className="flex items-center justify-between pb-3">
-            <h4 className="text-[11px] font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
-              My Collections
-            </h4>
-            <span className="cursor-pointer text-xs font-semibold text-[#2F8F46] hover:underline dark:text-[#B7E35F]">
-              + New
-            </span>
-          </div>
-
-          <div className="space-y-2">
-            {collections.map((col) => (
-              <motion.div
-                key={col.id}
-                whileHover={{ x: 3 }}
-                onClick={() => setActiveFilter("saved")}
-                className="group flex cursor-pointer items-center justify-between rounded-xl p-2 transition hover:bg-neutral-50 dark:hover:bg-neutral-900"
-              >
-                <div className="flex items-center gap-3 overflow-hidden">
-                  <img
-                    src={col.coverImage}
-                    alt={col.name}
-                    className="h-10 w-10 rounded-lg object-cover"
-                  />
-
-                  <div className="truncate">
-                    <p className="truncate text-xs font-bold text-neutral-800 group-hover:text-[#2F8F46] dark:text-neutral-200">
-                      {col.name}
-                    </p>
-                    <p className="text-[11px] text-neutral-400">
-                      {col.recipeCount} recipes
-                    </p>
-                  </div>
-                </div>
-
-                <ChevronRight className="h-4 w-4 text-neutral-400 transition-transform group-hover:text-[#2F8F46]" />
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Community Safety Note */}
-      <div className="flex items-center gap-2.5 rounded-xl bg-neutral-50 px-3.5 py-2.5 text-xs text-neutral-500 dark:bg-neutral-900/50 dark:text-neutral-400">
-        <ShieldCheck className="h-4 w-4 shrink-0 text-[#2F8F46]" />
-        <span>FoodCanvas 24/7 moderation active for recipe safety.</span>
-      </div>
     </aside>
   );
 };

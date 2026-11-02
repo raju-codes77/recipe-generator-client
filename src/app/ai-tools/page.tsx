@@ -14,7 +14,7 @@ export default function AIToolsPage() {
     <div className="w-full max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 py-4 lg:py-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <AIToolsHeader />
       <AvailableTools />
-      
+
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 mb-10">
         <div className="xl:col-span-5">
           <HowItWorks />

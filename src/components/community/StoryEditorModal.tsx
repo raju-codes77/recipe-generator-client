@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { Crop, Eraser, Pencil, RotateCcw, Send, Type, X } from "lucide-react";
+import { UnsavedChangesModal } from "@/components/community/UnsavedChangesModal";
 
 type EditorTool = "crop" | "draw" | "text";
 type ImageFit = "cover" | "contain";
@@ -169,6 +170,7 @@ export const StoryEditorModal: React.FC<StoryEditorModalProps> = ({ file, isOpen
   const [fontStyle, setFontStyle] = useState<FontStyle>("classic");
   const [isSharing, setIsSharing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isCloseConfirmOpen, setIsCloseConfirmOpen] = useState(false);
 
   useEffect(() => {
     if (!file) return;
@@ -314,6 +316,27 @@ export const StoryEditorModal: React.FC<StoryEditorModalProps> = ({ file, isOpen
     setFontStyle("classic");
   };
 
+  const hasUnsavedChanges = Boolean(
+    storyText.trim() ||
+      strokes.length ||
+      zoom !== 1 ||
+      pan.x !== 0 ||
+      pan.y !== 0 ||
+      frameBackground !== "#111827" ||
+      textColor !== "#ffffff" ||
+      textStyle !== "transparent" ||
+      textBackdropColor !== "#2563eb" ||
+      fontStyle !== "classic",
+  );
+
+  const requestClose = () => {
+    if (hasUnsavedChanges) {
+      setIsCloseConfirmOpen(true);
+      return;
+    }
+    onClose();
+  };
+
   const handleShare = async () => {
     if (!file || !imageRef.current) return;
     setError(null);
@@ -353,7 +376,7 @@ export const StoryEditorModal: React.FC<StoryEditorModalProps> = ({ file, isOpen
       const editedFile = new File([outputBlob], `${file.name.replace(/\.[^.]+$/, "") || "foodcanvas-story"}.jpg`, {
         type: "image/jpeg",
       });
-      await onShare(editedFile, storyText.trim() || "Shared a kitchen story");
+      await onShare(editedFile, storyText.trim());
       onClose();
     } catch (shareError) {
       setError(shareError instanceof Error ? shareError.message : "Unable to share this story.");
@@ -364,21 +387,26 @@ export const StoryEditorModal: React.FC<StoryEditorModalProps> = ({ file, isOpen
 
   return (
     <AnimatePresence>
-      {isOpen && file && (
+      {isOpen && file && !isCloseConfirmOpen && (
         <motion.div
+          key="story-editor"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-60 flex items-center justify-center bg-black/75 p-3 backdrop-blur-sm sm:p-6"
+           className="fixed inset-0 z-60 flex items-center justify-center bg-black/75 p-0 backdrop-blur-sm sm:p-6"
           role="dialog"
           aria-modal="true"
           aria-label="Edit your Community story"
+          onClick={(event) => {
+            if (!(event.target instanceof Element && event.target.closest("[data-story-editor]"))) requestClose();
+          }}
         >
           <motion.div
             initial={{ opacity: 0, y: 20, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.98 }}
-            className="flex max-h-[94vh] w-full max-w-5xl flex-col overflow-hidden rounded-3xl border border-emerald-200 bg-white shadow-2xl dark:border-emerald-900/60 dark:bg-[#121212]"
+            data-story-editor
+             className="flex h-dvh max-h-none w-full max-w-none flex-col overflow-hidden rounded-none border-0 bg-white shadow-2xl dark:bg-[#121212] sm:h-auto sm:max-h-[94vh] sm:max-w-5xl sm:rounded-3xl sm:border sm:border-emerald-200 sm:dark:border-emerald-900/60"
           >
             <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-neutral-800 sm:px-6">
               <div>
@@ -388,7 +416,7 @@ export const StoryEditorModal: React.FC<StoryEditorModalProps> = ({ file, isOpen
                 </p>
               </div>
               <button
-                onClick={onClose}
+                onClick={requestClose}
                 disabled={isSharing}
                 className="rounded-full p-2 text-neutral-500 transition hover:bg-neutral-100 dark:hover:bg-neutral-800"
                 aria-label="Cancel story editing"
@@ -398,7 +426,7 @@ export const StoryEditorModal: React.FC<StoryEditorModalProps> = ({ file, isOpen
             </div>
 
             <div className="grid min-h-0 flex-1 gap-5 overflow-y-auto p-4 sm:p-6 lg:grid-cols-[minmax(0,1fr)_280px]">
-              <div className="flex min-h-[420px] items-center justify-center rounded-2xl bg-neutral-950 p-3 sm:p-5">
+               <div className="flex h-[38vh] min-h-[220px] items-center justify-center rounded-2xl bg-neutral-950 p-3 sm:h-auto sm:min-h-[420px] sm:p-5">
                 <canvas
                   ref={canvasRef}
                   width={PREVIEW_WIDTH}
@@ -408,7 +436,7 @@ export const StoryEditorModal: React.FC<StoryEditorModalProps> = ({ file, isOpen
                   onPointerUp={handlePointerUp}
                   onPointerCancel={handlePointerUp}
                   style={{ cursor: tool === "draw" ? PENCIL_CURSOR : tool === "text" ? "move" : "grab" }}
-                  className="max-h-[62vh] w-auto max-w-full touch-none rounded-xl shadow-2xl"
+                   className="max-h-full w-auto max-w-full touch-none rounded-xl shadow-2xl sm:max-h-[62vh]"
                 />
               </div>
 
@@ -473,9 +501,9 @@ export const StoryEditorModal: React.FC<StoryEditorModalProps> = ({ file, isOpen
                             ["#111827", "Black"],
                             ["#ffffff", "White"],
                             ["#176B35", "Green"],
-                          ].map(([value, label]) => (
+                          ].map(([value, label], index) => (
                             <button
-                              key={value}
+                              key={`frame-background-${index}-${value || "option"}`}
                               onClick={() => setFrameBackground(value)}
                               className={`rounded-full px-3 py-1.5 text-[10px] font-bold transition ${frameBackground === value ? "bg-[#2F8F46] text-white" : "border border-slate-200 text-neutral-600 dark:border-neutral-700 dark:text-neutral-300"}`}
                             >
@@ -615,7 +643,7 @@ export const StoryEditorModal: React.FC<StoryEditorModalProps> = ({ file, isOpen
 
             <div className="flex items-center justify-between gap-3 border-t border-slate-100 px-5 py-4 dark:border-neutral-800 sm:px-6">
               <button
-                onClick={onClose}
+                onClick={requestClose}
                 disabled={isSharing}
                 className="rounded-xl px-4 py-2.5 text-xs font-bold text-neutral-600 transition hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800"
               >
@@ -633,6 +661,14 @@ export const StoryEditorModal: React.FC<StoryEditorModalProps> = ({ file, isOpen
           </motion.div>
         </motion.div>
       )}
+      <UnsavedChangesModal
+        key="discard-story-edits"
+        isOpen={isCloseConfirmOpen && isOpen && Boolean(file)}
+        title="Discard story edits?"
+        message="You have unsaved story edits. Do you want to close this editor without sharing?"
+        onKeepEditing={() => setIsCloseConfirmOpen(false)}
+        onDiscard={() => { setIsCloseConfirmOpen(false); onClose(); }}
+      />
     </AnimatePresence>
   );
 };

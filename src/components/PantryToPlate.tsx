@@ -11,195 +11,174 @@ import {
   Clock, 
   ChefHat, 
   CheckCircle2, 
-  Refrigerator 
+  Refrigerator,
+  ChevronRight
 } from "lucide-react";
 
 export default function PantryToPlateSection() {
   return (
-    <section className="w-full bg-[#FAF8F5] dark:bg-[#0b0f19] py-16 px-4 md:px-8 transition-colors duration-300 overflow-hidden">
-      <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-12">
+    <section className="w-full bg-[#FCFBF8] dark:bg-[#0b0f19] py-16 lg:py-20 px-6 md:px-8 transition-colors duration-300 overflow-hidden relative">
+      
+      {/* Decorative Background Element */}
+      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-stone-100 dark:bg-amber-900/10 rounded-bl-[100px] -z-10 opacity-60" />
+
+      <div className="max-w-[1440px] mx-auto flex flex-col lg:flex-row items-center justify-between gap-12 lg:gap-16">
         
         {/* Left Content Area (Width: 5/12) */}
         <motion.div 
           initial={{ opacity: 0, x: -30 }}
           whileInView={{ opacity: 1, x: 0 }}
-          viewport={{ once: true }}
+          viewport={{ once: true, margin: "-100px" }}
           transition={{ duration: 0.6 }}
-          className="lg:w-5/12 space-y-6"
+          className="lg:w-5/12 space-y-6 relative z-10"
         >
           
           {/* Top Pill Badge */}
           <motion.div 
-            whileHover={{ scale: 1.05 }}
-            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-100/70 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 text-xs font-semibold border border-emerald-200/60 dark:border-emerald-800/50 cursor-pointer"
+            whileHover={{ scale: 1.02 }}
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white dark:bg-amber-500/10 text-stone-700 dark:text-amber-400 text-[12px] font-bold border border-stone-200 dark:border-amber-800/30 cursor-pointer shadow-sm"
           >
-            <Leaf className="w-3.5 h-3.5" />
-            <span>PANTRY TO PLATE AI</span>
+            <Leaf className="w-3.5 h-3.5 text-emerald-600" />
+            <span className="tracking-wide uppercase">Pantry to Plate AI</span>
           </motion.div>
 
           {/* Main Title */}
-          <h1 className="text-4xl md:text-5xl font-black tracking-tight text-gray-900 dark:text-white leading-[1.15]">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-black tracking-tight text-stone-900 dark:text-white leading-tight z-10">
             From What You Have, <br />
-            To What <span className="text-emerald-700 dark:text-emerald-400 underline decoration-emerald-400/40 decoration-wavy underline-offset-8">You&apos;ll Love</span>
-          </h1>
+            To What <span className="text-emerald-700 dark:text-emerald-400">You'll Love.</span>
+          </h2>
 
           {/* Description */}
-          <p className="text-sm md:text-base text-gray-600 dark:text-gray-300 leading-relaxed">
-            Turn your everyday ingredients into amazing meals with our Pantry-to-Plate AI. Reduce food waste, save money, and discover new favorites — instantly.
+          <p className="text-base text-stone-600 dark:text-slate-400 leading-relaxed font-medium max-w-lg">
+            Turn your everyday ingredients into amazing meals with our Pantry-to-Plate AI. Reduce food waste, save money, and discover new favorites instantly.
           </p>
 
           {/* Feature List */}
-          <div className="space-y-4 pt-2">
+          <div className="space-y-5 pt-2">
             <motion.div 
               whileHover={{ x: 5 }}
-              className="flex items-start gap-3.5 cursor-pointer"
+              className="flex items-start gap-4 cursor-pointer group"
             >
-              <div className="w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-950 flex items-center justify-center text-emerald-700 dark:text-emerald-400 shrink-0 mt-0.5 shadow-sm">
+              <div className="w-10 h-10 rounded-xl bg-white dark:bg-emerald-500/10 flex items-center justify-center text-emerald-700 dark:text-emerald-400 shrink-0 shadow-sm border border-stone-200 dark:border-emerald-800/50 group-hover:scale-105 transition-transform duration-300">
                 <Leaf className="w-4 h-4" />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-gray-900 dark:text-white">Reduce Food Waste</h3>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Use what you already have in stock</p>
+                <h3 className="text-[15px] font-bold text-stone-900 dark:text-white mb-1 group-hover:text-emerald-700 transition-colors">Reduce Food Waste</h3>
+                <p className="text-[13px] font-medium text-stone-500 dark:text-slate-400 leading-snug">Use what you already have in stock to make a delicious meal.</p>
               </div>
             </motion.div>
 
             <motion.div 
               whileHover={{ x: 5 }}
-              className="flex items-start gap-3.5 cursor-pointer"
+              className="flex items-start gap-4 cursor-pointer group"
             >
-              <div className="w-9 h-9 rounded-xl bg-amber-100 dark:bg-amber-950 flex items-center justify-center text-amber-700 dark:text-amber-400 shrink-0 mt-0.5 shadow-sm">
+              <div className="w-10 h-10 rounded-xl bg-white dark:bg-orange-500/10 flex items-center justify-center text-orange-500 dark:text-orange-400 shrink-0 shadow-sm border border-stone-200 dark:border-orange-800/50 group-hover:scale-105 transition-transform duration-300">
                 <DollarSign className="w-4 h-4" />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-gray-900 dark:text-white">Save Money</h3>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Make more with less groceries</p>
+                <h3 className="text-[15px] font-bold text-stone-900 dark:text-white mb-1 group-hover:text-orange-500 transition-colors">Save Money</h3>
+                <p className="text-[13px] font-medium text-stone-500 dark:text-slate-400 leading-snug">Make more with less groceries and cut down on takeout.</p>
               </div>
             </motion.div>
 
             <motion.div 
               whileHover={{ x: 5 }}
-              className="flex items-start gap-3.5 cursor-pointer"
+              className="flex items-start gap-4 cursor-pointer group"
             >
-              <div className="w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-950 flex items-center justify-center text-emerald-700 dark:text-emerald-400 shrink-0 mt-0.5 shadow-sm">
+              <div className="w-10 h-10 rounded-xl bg-white dark:bg-teal-500/10 flex items-center justify-center text-emerald-600 dark:text-teal-400 shrink-0 shadow-sm border border-stone-200 dark:border-teal-800/50 group-hover:scale-105 transition-transform duration-300">
                 <Sparkles className="w-4 h-4" />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-gray-900 dark:text-white">AI-Powered Ideas</h3>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Smart recipes customized just for you</p>
+                <h3 className="text-[15px] font-bold text-stone-900 dark:text-white mb-1 group-hover:text-emerald-600 transition-colors">AI-Powered Ideas</h3>
+                <p className="text-[13px] font-medium text-stone-500 dark:text-slate-400 leading-snug">Smart recipes customized just for your taste and diet.</p>
               </div>
             </motion.div>
           </div>
 
           {/* CTA Button */}
-          <div className="pt-2">
+          <div className="pt-4">
             <motion.button 
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-              className="bg-emerald-800 hover:bg-emerald-900 text-white font-bold py-4 px-7 rounded-2xl text-sm transition-all shadow-lg shadow-emerald-800/20 flex items-center gap-2.5"
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.98 }}
+              className="bg-stone-900 hover:bg-stone-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white font-bold py-3.5 px-6 rounded-full text-[14px] transition-all shadow-sm flex items-center gap-2 group"
             >
               <span>Try Pantry-to-Plate AI</span>
-              <ArrowRight className="w-4 h-4" />
+              <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </motion.button>
           </div>
-
-          {/* Social Proof / Loved by */}
-          <div className="flex items-center gap-3 pt-2">
-            <div className="flex -space-x-2 overflow-hidden">
-              <img className="inline-block h-7 w-7 rounded-full ring-2 ring-white dark:ring-gray-900 object-cover" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80" alt="User" />
-              <img className="inline-block h-7 w-7 rounded-full ring-2 ring-white dark:ring-gray-900 object-cover" src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=100&q=80" alt="User" />
-              <img className="inline-block h-7 w-7 rounded-full ring-2 ring-white dark:ring-gray-900 object-cover" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=100&q=80" alt="User" />
-              <img className="inline-block h-7 w-7 rounded-full ring-2 ring-white dark:ring-gray-900 object-cover" src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=100&q=80" alt="User" />
-            </div>
-            <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
-              Loved by <span className="text-emerald-700 dark:text-emerald-400">10K+</span> home cooks
-            </span>
-          </div>
-
         </motion.div>
 
         {/* Right Visual Interactive Mockup Area (Width: 7/12) */}
         <motion.div 
           initial={{ opacity: 0, x: 30 }}
           whileInView={{ opacity: 1, x: 0 }}
-          viewport={{ once: true }}
+          viewport={{ once: true, margin: "-100px" }}
           transition={{ duration: 0.6 }}
-          className="lg:w-7/12 relative flex flex-col md:flex-row items-center justify-center gap-6"
+          className="lg:w-7/12 relative flex flex-col md:flex-row items-center justify-center gap-6 lg:gap-8 w-full z-10"
         >
           
+          {/* Subtle Back Glow for Cards */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-emerald-500/5 dark:bg-emerald-500/10 rounded-full blur-[60px] -z-10" />
+
           {/* Center Column: Fridge & Ingredients Box */}
-          <div className="flex flex-col gap-4 w-full max-w-sm">
+          <div className="flex flex-col gap-5 w-full max-w-sm">
             
             {/* Fridge Window Card */}
             <motion.div 
-              whileHover={{ y: -5 }}
+              whileHover={{ y: -2 }}
               transition={{ duration: 0.3 }}
-              className="bg-white dark:bg-gray-900 border border-amber-200/60 dark:border-gray-800 rounded-3xl p-4 shadow-xl relative pt-6"
+              className="bg-white dark:bg-slate-900/95 border border-stone-200 dark:border-slate-800 rounded-3xl p-3 shadow-md relative pt-6 group cursor-pointer"
             >
               {/* Fixed Badge with inline-flex, whitespace-nowrap and correct padding */}
-              <motion.div 
-                animate={{ y: [-2, 2, -2] }}
-                transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
-                className="absolute -top-3 left-1/2 -translate-x-1/2 bg-white dark:bg-gray-800 border border-emerald-100 dark:border-gray-700 px-4 py-1.5 rounded-full shadow-sm inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-400 whitespace-nowrap z-20"
+              <div 
+                className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-white dark:bg-slate-800 border border-stone-200 dark:border-slate-700 px-3 py-1.5 rounded-full shadow-sm inline-flex items-center gap-1.5 text-[12px] font-bold text-emerald-700 dark:text-emerald-400 whitespace-nowrap z-20 transition-transform group-hover:-translate-y-0.5"
               >
                 <Refrigerator className="w-3.5 h-3.5 shrink-0" /> 
                 <span>Your Pantry</span>
-              </motion.div>
+              </div>
 
               {/* Picture with Smooth Zoom Animation */}
-              <motion.div 
-                whileHover="hover"
-                className="relative h-44 w-full rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 cursor-pointer"
-              >
-                <motion.div 
-                  variants={{
-                    hover: { scale: 1.08 }
-                  }}
-                  transition={{ duration: 0.4, ease: "easeOut" }}
-                  className="w-full h-full relative"
-                >
+              <div className="relative h-40 w-full rounded-2xl overflow-hidden bg-stone-100 dark:bg-slate-800">
+                <div className="w-full h-full relative group-hover:scale-105 transition-transform duration-700 ease-out">
                   <Image 
-                    src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRY5JZ7Cbp7XWghSEZip8dxrpJTyyM4lOUqCvbDuGRPdg&s=10" 
+                    src="https://images.unsplash.com/photo-1590779033100-9f60a05a013d?q=80&w=600&auto=format&fit=crop" 
                     alt="Open Fridge with Fresh Vegetables"
                     fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     className="object-cover"
                   />
-                </motion.div>
-              </motion.div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-stone-900/30 to-transparent"></div>
+                </div>
+              </div>
 
               {/* Floating Magic Wand Button */}
               <motion.div 
-                animate={{ scale: [1, 1.1, 1] }}
-                transition={{ repeat: Infinity, duration: 2 }}
-                className="absolute -right-4 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-emerald-700 text-white flex items-center justify-center shadow-lg border-2 border-white dark:border-gray-900"
+                animate={{ scale: [1, 1.05, 1], rotate: [0, 5, -5, 0] }}
+                transition={{ repeat: Infinity, duration: 4 }}
+                className="absolute -right-2 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-emerald-700 text-white flex items-center justify-center shadow-md border-[3px] border-[#FCFBF8] dark:border-slate-900"
               >
-                <Sparkles className="w-5 h-5" />
+                <Sparkles className="w-4 h-4" />
               </motion.div>
             </motion.div>
 
             {/* You Have Ingredients Box */}
             <motion.div 
-              whileHover={{ y: -5 }}
+              whileHover={{ y: -2 }}
               transition={{ duration: 0.3 }}
-              className="bg-white dark:bg-gray-900 border border-amber-200/60 dark:border-gray-800 rounded-3xl p-5 shadow-xl space-y-3"
+              className="bg-white dark:bg-slate-900/95 border border-stone-200 dark:border-slate-800 rounded-3xl p-4 shadow-sm space-y-3"
             >
-              <h4 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                You have:
+              <h4 className="text-[11px] font-bold text-stone-500 dark:text-slate-400 uppercase tracking-widest pl-1">
+                Ingredients Found
               </h4>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="flex flex-wrap gap-2">
                 {["🥚 Eggs", "🍅 Tomato", "🥬 Spinach", "🧅 Onion", "🧀 Cheese", "🍗 Chicken"].map((item, index) => (
                   <motion.div 
-                    whileHover={{ scale: 1.05 }}
+                    whileHover={{ scale: 1.02, backgroundColor: "rgb(245 245 244)" }}
                     key={index} 
-                    className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800/60 border border-gray-100 dark:border-gray-700/50 p-2 rounded-2xl text-xs font-semibold text-gray-800 dark:text-gray-200 cursor-pointer"
+                    className="flex items-center gap-1.5 bg-stone-50 dark:bg-slate-800/60 border border-stone-100 dark:border-slate-700 p-1.5 px-2.5 rounded-xl text-[12px] font-bold text-stone-700 dark:text-slate-300 cursor-pointer transition-colors"
                   >
                     <span>{item.split(" ")[0]}</span> {item.split(" ")[1]}
                   </motion.div>
                 ))}
-              </div>
-              <div className="text-center pt-1">
-                <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 cursor-pointer hover:underline">
-                  + more
-                </span>
               </div>
             </motion.div>
 
@@ -207,85 +186,60 @@ export default function PantryToPlateSection() {
 
           {/* Right Column: AI Recipe Result Mobile/Card Preview */}
           <motion.div 
-            whileHover={{ y: -6 }}
+            whileHover={{ y: -4 }}
             transition={{ duration: 0.3 }}
-            className="w-full max-w-sm bg-white dark:bg-gray-900 border border-amber-200/60 dark:border-gray-800 rounded-3xl p-5 shadow-2xl relative pt-6"
+            className="w-full max-w-sm bg-white dark:bg-slate-900/95 border border-stone-200 dark:border-slate-800 rounded-3xl p-4 shadow-md relative pt-6 group cursor-pointer"
           >
             
             {/* Fixed Badge with inline-flex, whitespace-nowrap and correct padding */}
-            <motion.div 
-              animate={{ y: [-2, 2, -2] }}
-              transition={{ repeat: Infinity, duration: 3, ease: "easeInOut", delay: 0.5 }}
-              className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-white dark:bg-gray-800 border border-amber-200 dark:border-gray-700 px-4 py-1.5 rounded-full shadow-sm inline-flex items-center gap-1.5 text-xs font-bold text-amber-700 dark:text-amber-400 whitespace-nowrap z-20"
+            <div 
+              className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-orange-50 dark:bg-slate-800 border border-orange-100 dark:border-slate-700 px-3 py-1.5 rounded-full shadow-sm inline-flex items-center gap-1.5 text-[12px] font-bold text-orange-600 dark:text-amber-400 whitespace-nowrap z-20 transition-transform group-hover:-translate-y-0.5"
             >
+              <Sparkles className="w-3.5 h-3.5 shrink-0 text-orange-500" />
               <span>AI Recipe Result</span> 
-              <Sparkles className="w-3.5 h-3.5 shrink-0" />
-            </motion.div>
+            </div>
 
             {/* Picture with Smooth Zoom Animation */}
-            <motion.div 
-              whileHover="hover"
-              className="relative h-48 w-full rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 shadow-inner cursor-pointer"
-            >
-              <motion.div 
-                variants={{
-                  hover: { scale: 1.08 }
-                }}
-                transition={{ duration: 0.4, ease: "easeOut" }}
-                className="w-full h-full relative"
-              >
+            <div className="relative h-48 w-full rounded-2xl overflow-hidden bg-stone-100 dark:bg-slate-800 shadow-inner">
+              <div className="w-full h-full relative group-hover:scale-105 transition-transform duration-700 ease-out">
                 <Image 
-                  src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQi1qGNSVM4nNIFprertZHCEuenjks5T4q5CGjO3-ngBA&s=10" 
+                  src="https://images.unsplash.com/photo-1525385133512-2f3bdd039054?q=80&w=600&auto=format&fit=crop" 
                   alt="Spicy Tomato Egg Skillet"
                   fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                   className="object-cover"
                 />
-              </motion.div>
-            </motion.div>
+              </div>
+            </div>
 
             {/* Recipe Info */}
-            <div className="space-y-3 pt-4">
-              <h3 className="text-base font-bold text-gray-900 dark:text-white">
-                Spicy Tomato Egg Skillet
+            <div className="space-y-4 pt-4 px-2">
+              <h3 className="text-[17px] font-black text-stone-900 dark:text-white leading-tight">
+                Shakshuka Skillet
               </h3>
 
-              <div className="flex items-center gap-4 text-xs font-semibold text-gray-500 dark:text-gray-400">
-                <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> 20 min</span>
-                <span className="flex items-center gap-1"><ChefHat className="w-3.5 h-3.5" /> Easy</span>
-                <span className="flex items-center gap-1">🍽️ 2 servings</span>
+              <div className="flex flex-wrap items-center gap-2 text-[12px] font-bold text-stone-500 dark:text-slate-400">
+                <span className="flex items-center gap-1 bg-stone-50 dark:bg-slate-800 px-2 py-1 rounded-md border border-stone-100 dark:border-slate-700"><Clock className="w-3 h-3" /> 20 min</span>
+                <span className="flex items-center gap-1 bg-stone-50 dark:bg-slate-800 px-2 py-1 rounded-md border border-stone-100 dark:border-slate-700"><ChefHat className="w-3 h-3" /> Easy</span>
+                <span className="flex items-center gap-1 bg-stone-50 dark:bg-slate-800 px-2 py-1 rounded-md border border-stone-100 dark:border-slate-700">🍽️ 2 servings</span>
               </div>
 
-              <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed">
-                A protein-packed, flavorful skillet made with ingredients you already have.
-              </p>
-
-              <div className="space-y-1.5 pt-1 border-t border-gray-100 dark:border-gray-800">
-                <h5 className="text-xs font-bold text-gray-800 dark:text-gray-200 pt-1">
-                  Why you&apos;ll love it
-                </h5>
-                <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                  <span>Made with your pantry ingredients</span>
+              <div className="space-y-2 pt-2 border-t border-stone-100 dark:border-slate-800">
+                <div className="flex items-center gap-2 text-[13px] font-medium text-stone-600 dark:text-slate-300">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>Made with your pantry items</span>
                 </div>
-                <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                  <span>Quick & easy</span>
-                </div>
-                <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                  <span>Delicious & nutritious</span>
+                <div className="flex items-center gap-2 text-[13px] font-medium text-stone-600 dark:text-slate-300">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>High in protein</span>
                 </div>
               </div>
 
               {/* View Full Recipe Button */}
               <div className="pt-2">
-                <motion.button 
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="w-full bg-emerald-800 hover:bg-emerald-900 text-white font-bold py-3 px-4 rounded-xl text-xs transition-colors shadow-md"
-                >
-                  View Full Recipe
-                </motion.button>
+                <div className="w-full bg-[#EEF5F0] hover:bg-emerald-100 dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20 text-emerald-800 dark:text-emerald-400 font-bold py-3 px-4 rounded-xl text-[13px] text-center transition-colors flex justify-center items-center gap-1.5">
+                  <span>View Full Recipe</span>
+                  <ArrowRight size={14} />
+                </div>
               </div>
 
             </div>

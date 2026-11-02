@@ -3,6 +3,10 @@ export interface Author {
   name: string;
   username: string;
   avatar: string;
+  bio?: string;
+  location?: string;
+  interests?: string[];
+  coverImage?: string;
   badge?: string; // e.g. "Verified Chef", "Top Contributor", "Healthy Foodie"
   role: 'user' | 'creator' | 'chef' | 'admin';
   followersCount: number;
@@ -75,6 +79,7 @@ export interface Review {
 export interface Comment {
   id: string;
   userId: string;
+  parentId?: string | null;
   userName: string;
   userAvatar: string;
   content: string;
@@ -103,9 +108,15 @@ export interface Post {
   hasMadeIt?: boolean;
   tags: string[];
   createdAt: string;
-  isChallengeEntry?: boolean;
-  challengeName?: string;
   isPinned?: boolean;
+  sharedFrom?: Author;
+  sharedOriginal?: {
+    author: Author;
+    caption: string;
+    tags: string[];
+    createdAt: string;
+    imageUrl: string;
+  };
 }
 
 export interface StoryItem {
@@ -115,7 +126,35 @@ export interface StoryItem {
   caption: string;
   tag?: string;
   viewed?: boolean;
+  reacted?: boolean;
   timestamp: string;
+}
+
+export interface CommunityPostLiker {
+  id: string;
+  name: string;
+  username: string;
+  avatar: string;
+  reactedAt: string;
+}
+
+export interface StoryViewer {
+  id: string;
+  name: string;
+  avatar: string;
+  viewedAt: string;
+  reacted: boolean;
+}
+
+export interface PublicCommunityProfile {
+  user: Author;
+  posts: Post[];
+  pinnedPost?: Post | null;
+  stories: StoryItem[];
+  followingCount: number;
+  postsTotal?: number;
+  likesTotal?: number;
+  hasMorePosts?: boolean;
 }
 
 export interface RecipeCollection {
@@ -135,7 +174,7 @@ export interface ReportReason {
 
 export interface NotificationItem {
   id: string;
-  type: 'like' | 'comment' | 'review' | 'follow' | 'challenge' | 'mention';
+  type: 'like' | 'comment' | 'review' | 'follow' | 'mention';
   user: Author;
   text: string;
   targetPostId?: string;
@@ -151,5 +190,6 @@ export interface DirectMessageUser {
   online: boolean;
   lastMessage: string;
   lastMessageTime: string;
+  lastMessageAt?: string | null;
   unreadCount?: number;
 }

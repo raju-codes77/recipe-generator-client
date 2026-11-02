@@ -9,7 +9,14 @@ export default function ChallengesHeader() {
           <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/50 flex items-center justify-center text-green-600 dark:text-green-400">
             <Trophy size={20} className="fill-green-600 dark:fill-green-400" />
           </div>
-          <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+          <h1 
+            className="text-3xl md:text-4xl font-extrabold tracking-tight"
+            style={{
+              background: 'linear-gradient(90deg, #0F432B 0%, #4AB741 40%, #154D31 80%, #082E1A 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+            }}
+          >
             Cooking Challenges
           </h1>
         </div>

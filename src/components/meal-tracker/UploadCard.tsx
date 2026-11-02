@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { toast } from "react-hot-toast";
 import { Upload, CloudUpload, CheckSquare } from "lucide-react";
 import { useMealTracker } from "./MealTrackerContext";
@@ -13,11 +13,13 @@ export default function UploadCard() {
     setIsAnalyzing,
     setMealLog,
     mealLog,
+    userId,
   } = useMealTracker();
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string>("");
+  const isRequestingRef = useRef(false);
 
   const handleFile = (file: File) => {
     if (!file.type.startsWith("image/")) {
@@ -61,55 +63,91 @@ export default function UploadCard() {
   };
 
   const handleAnalyze = async () => {
+    if (isRequestingRef.current) return;
+    
     if (!selectedFile) {
       toast.error("Please select an image first.");
       return;
     }
 
+    isRequestingRef.current = true;
+
     try {
       setLoading(true);
       setIsAnalyzing(true);
 
-      const result = await analyzeMeal(selectedFile);
+      const rawResult = await analyzeMeal(selectedFile, userId ?? undefined);
 
-      console.log("Meal analysis result:", result);
+      console.log("Raw Meal analysis result:", rawResult);
 
-      if (!result.success) {
-        toast.error(result.message || "Meal analysis failed.");
+      if (!rawResult.success) {
+        toast.error(rawResult.message || "Meal analysis failed.");
         return;
       }
 
+      // Map raw backend response to frontend MealAnalysisResult interface
+      const getMacro = (label: string) =>
+        rawResult.macros?.find((m: any) => m.label.toLowerCase() === label.toLowerCase())?.grams || 0;
+      const getMicro = (label: string) =>
+        parseInt(rawResult.micros?.find((m: any) => m.label.toLowerCase() === label.toLowerCase())?.value || "0") || 0;
+
+      const mappedResult = {
+        success: rawResult.success,
+        isFood: rawResult.isFood,
+        imageUrl: rawResult.imageUrl,
+        message: rawResult.message,
+        confidenceScore: rawResult.confidenceScore || 0,
+        detectedFoods: (rawResult.detectedItems || []).map((item: any) => ({
+          name: item.name,
+          portion: item.portion || "1 serving",
+          emoji: item.icon || "🍽️",
+          color: "#4ade80", // Default green color for dot
+        })),
+        nutritionFacts: {
+          kcal: rawResult.calories || 0,
+          protein: getMacro("protein"),
+          carbs: getMacro("carbs"),
+          fat: getMacro("fat"),
+          fiber: getMicro("fiber"),
+          sugar: getMicro("sugar"),
+          sodium: getMicro("sodium"),
+          cholesterol: getMicro("cholesterol"),
+        },
+        mealName: rawResult.foodName || rawResult.mealName || "Analyzed Meal",
+        category: rawResult.tag || rawResult.category || "Meal",
+        insightHeading: "Health Score: " + (rawResult.healthScoreLabel || "Good"),
+        insightMessage: "Score: " + (rawResult.healthScore || "N/A"),
+        tips: (rawResult.recommendations || []).map((r: any) => ({
+          emoji: "💡",
+          tip: r.description,
+        })),
+      };
+
       // Save API result in Context
-      setAnalysisResult(result);
+      setAnalysisResult(mappedResult);
 
       // Create a Meal object and add to log
       const newMeal = {
-        type: result.category || "Meal",
+        type: mappedResult.category,
         time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        name: result.mealName || "Analyzed Meal",
-        kcal: result.nutritionFacts?.kcal || 0,
-        protein: result.nutritionFacts?.protein || 0,
-        carbs: result.nutritionFacts?.carbs || 0,
-        fat: result.nutritionFacts?.fat || 0,
-        img: result.imageUrl || previewUrl || "",
+        name: mappedResult.mealName,
+        kcal: mappedResult.nutritionFacts.kcal,
+        protein: mappedResult.nutritionFacts.protein,
+        carbs: mappedResult.nutritionFacts.carbs,
+        fat: mappedResult.nutritionFacts.fat,
+        img: mappedResult.imageUrl || previewUrl || "",
       };
 
       const updated = [...mealLog, newMeal];
       setMealLog(updated);
 
-      // Persist meal log and daily history to server
-      import("@/app/api/meal-tracker/meal-tracker").then(({ saveMealLog, saveDayEntry }) => {
-        saveMealLog(updated);
-        const todayKcal = updated.reduce((sum: number, m: any) => sum + (m.kcal || 0), 0);
-        const todayProtein = updated.reduce((sum: number, m: any) => sum + (m.protein || 0), 0);
-        const todayDate = new Date().toISOString().split("T")[0];
-        saveDayEntry({ date: todayDate, kcal: todayKcal, protein: todayProtein });
-      });
+      // Persist meal log and daily history to server is now handled entirely
+      // by the backend /api/meals/analyze endpoint to prevent data duplication.
 
-      console.log("Meal name:", result.mealName);
-      console.log("Foods:", result.detectedFoods);
-      console.log("Nutrition:", result.nutritionFacts);
-      console.log("Image URL:", result.imageUrl);
+      console.log("Meal name:", mappedResult.mealName);
+      console.log("Foods:", mappedResult.detectedFoods);
+      console.log("Nutrition:", mappedResult.nutritionFacts);
+      console.log("Image URL:", mappedResult.imageUrl);
 
       toast.success("Meal analyzed successfully!");
     } catch (error) {
@@ -123,24 +161,25 @@ export default function UploadCard() {
     } finally {
       setLoading(false);
       setIsAnalyzing(false);
+      isRequestingRef.current = false;
     }
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 flex flex-col gap-3">
+    <div className="bg-white dark:bg-[#1a1a1f] rounded-2xl border border-gray-200 dark:border-[#2c2c32] shadow-sm p-5 flex flex-col gap-3">
       {/* Header */}
       <div className="flex items-center gap-2">
         <span className="flex items-center justify-center w-6 h-6 rounded-full bg-green-600 text-white text-xs font-bold shrink-0">
           1
         </span>
 
-        <h3 className="text-sm font-bold text-gray-900">
+        <h3 className="text-sm font-bold text-gray-900 dark:text-white">
           Upload Your Meal
         </h3>
       </div>
 
       {/* Description */}
-      <div className="flex items-center gap-2 text-xs text-gray-600">
+      <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
         <CheckSquare className="w-4 h-4 text-green-600 shrink-0" />
 
         <span>Upload a clear photo of your meal</span>
@@ -150,11 +189,11 @@ export default function UploadCard() {
       <div
         onDragOver={(e) => e.preventDefault()}
         onDrop={handleDrop}
-        className="flex-1 flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-xl py-8 px-4 transition cursor-pointer border-gray-300 hover:border-green-400 hover:bg-gray-50"
+        className="flex-1 flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-xl py-8 px-4 transition cursor-pointer border-gray-300 hover:border-green-400 hover:bg-gray-50 dark:bg-slate-700/50"
       >
         <CloudUpload className="w-10 h-10 text-gray-400" />
 
-        <p className="text-xs text-gray-500 text-center">
+        <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
           Drag &amp; drop an image here
         </p>
 

@@ -1,129 +1,114 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { 
-  FiHome, FiUsers, FiBookOpen, FiFolder, FiAward, FiMessageSquare, 
-  FiAlertCircle, FiCpu, FiShield, FiSliders, FiSettings, FiLock, 
-  FiServer, FiHeadphones, FiMenu, FiX, FiLogOut, FiActivity,
-  FiBox, FiCalendar, FiShoppingCart, FiList, FiGrid
+import {
+  FiHome, FiUsers, FiBookOpen, FiFolder, FiAward, FiMessageSquare,
+  FiAlertCircle, FiCpu, FiShield, FiMenu, FiX, FiActivity,
+  FiBox, FiCalendar, FiShoppingCart, FiList, FiGrid, FiHeart, FiUser, FiChevronDown
 } from "react-icons/fi";
+import { FaDochub } from "react-icons/fa6";
+import { authClient } from "@/lib/auth-client";
 
 export default function DashboardSidebar() {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [darkMode, setDarkMode] = useState(true);
+  const [aiToolsOpen, setAiToolsOpen] = useState(false);
+  const [communityOpen, setCommunityOpen] = useState(false);
   const pathname = usePathname();
+  const { data: session } = authClient.useSession();
 
   useEffect(() => {
-    if (document.documentElement.classList.contains("dark")) {
-      setDarkMode(true);
-    }
-  }, []);
+    setAiToolsOpen(pathname.startsWith("/ai-tools"));
+    setCommunityOpen(pathname.startsWith("/community") || pathname.startsWith("/recipes"));
+  }, [pathname]);
 
 
   const isAdmin = pathname?.includes("/admin");
-  const role = isAdmin ? "admin" : "user";
+  const dashboardIdentity = isAdmin ? "Admin Panel" : "My Dashboard";
 
   // Admin Navigation  Items
   const adminNavItems = [
     { name: "Dashboard", icon: <FiHome />, href: "/dashboard/admin" },
     { name: "Users", icon: <FiUsers />, href: "/dashboard/admin/users" },
     { name: "Recipes", icon: <FiBookOpen />, href: "/dashboard/admin/recipes" },
-    { name: "Collections", icon: <FiFolder />, href: "/dashboard/admin/collections" },
     { name: "Challenges", icon: <FiAward />, href: "/dashboard/admin/challenges" },
-    { name: "Community Posts", icon: <FiMessageSquare />, href: "/dashboard/admin/posts" },
-    { name: "Reports", icon: <FiAlertCircle />, href: "/dashboard/admin/reports" },
-  ];
-
-  const adminToolsItems = [
-    { name: "AI Tools", icon: <FiCpu />, href: "/dashboard/admin/ai-tools" },
-    { name: "Moderation", icon: <FiShield />, href: "/dashboard/admin/moderation" },
-    { name: "Nutrition Analyzer", icon: <FiSliders />, href: "/dashboard/admin/nutrition" },
-  ];
-
-  const adminSettingsItems = [
-    { name: "Settings", icon: <FiSettings />, href: "/dashboard/admin/settings" },
-    { name: "Roles & Permissions", icon: <FiLock />, href: "/dashboard/admin/roles" },
-    { name: "System Logs", icon: <FiServer />, href: "/dashboard/admin/logs" },
-    { name: "Support Tickets", icon: <FiHeadphones />, href: "/dashboard/admin/support" },
+    { name: "Community Posts", icon: <FiMessageSquare />, href: "/dashboard/admin/posts" }
   ];
 
   // User Navigation Items (Screenshot onujayi grouped sections)
   const mainNavItems = [
-    { name: "Dashboard", icon: <FiHome />, href: "/dashboard/users" },
-    { name: "My Recipes", icon: <FiBookOpen />, href: "/dashboard/users/myRecipes" },
-    { name: "Generate Recipe", icon: <FiCpu />, href: "/dashboard/users/ai-generate", badge: "AI" },
-    { name: "Collections", icon: <FiFolder />, href: "/dashboard/users/collectionsDs" },
+    { name: "Dashboard", icon: <FiHome />, href: "/dashboard/user" },
+    { name: "Wellness Hub", icon: <FiHeart />, href: "/dashboard/users/wellness" },
+    { name: "Consultation", icon: <FaDochub />, href: "/dashboard/users/health-consultant" },
+    { name: "My Recipes", icon: <FiBookOpen />, href: "/dashboard/users/recipes" },
+    { name: "Flavor AI", icon: <FiCpu />, href: "/dashboard/users/ai-recepi-generator", badge: "AI" },
+    { name: "Collections", icon: <FiFolder />, href: "/dashboard/users/collections" },
     { name: "Challenges", icon: <FiAward />, href: "/dashboard/users/challenges" },
-    { name: "AI Tools", icon: <FiCpu />, href: "/dashboard/users/ai-tools" },
-    { name: "Nutrition", icon: <FiActivity />, href: "/dashboard/users/nutrition" },
+    { name: "Wellness Reminders", icon: <FiAlertCircle />, href: "/dashboard/wellness-reminders" },
   ];
 
-  const kitchenNavItems = [
-    { name: "Pantry", icon: <FiBox />, href: "/dashboard/user/pantry" },
-    { name: "Meal Plan", icon: <FiCalendar />, href: "/dashboard/user/meal-plan" },
-    { name: "Shopping List", icon: <FiShoppingCart />, href: "/dashboard/user/shopping-list" },
+  const aiToolsNavItems = [
+    { name: "Ingredient Rescue", icon: <FiBox />, href: "/ai-tools/ingredient-rescue" },
+    { name: "Nutrition Analyzer", icon: <FiActivity />, href: "/ai-tools/nutrition-analyzer" },
+    { name: "Meal Tracker", icon: <FiActivity />, href: "/ai-tools/meal-tracker" },
+    { name: "Taste Matcher", icon: <FiActivity />, href: "/ai-tools/taste-matcher" },
+    { name: "Meal Planner", icon: <FiCalendar />, href: "/ai-tools/meal-planner" },
+    { name: "Shopping List", icon: <FiShoppingCart />, href: "/ai-tools/shopping-list" },
   ];
 
   const communityNavItems = [
-    { name: "Feed", icon: <FiList />, href: "/dashboard/user/feed" },
-    { name: "All Recipes", icon: <FiGrid />, href: "/dashboard/user/all-recipes" },
-    { name: "Community", icon: <FiUsers />, href: "/dashboard/user/community" },
+    { name: "Feed", icon: <FiList />, href: "/community" },
+    { name: "All Recipes", icon: <FiGrid />, href: "/recipes" },
+    { name: "Community Profile", icon: <FiUser />, href: session?.user?.id ? `/community/users/${encodeURIComponent(session.user.id)}?from=dashboard` : "/community" },
   ];
 
   return (
 
-    
+
     <>
-      {/* Mobile Header with Hamburger Button */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between p-4 bg-white dark:bg-black border-b border-gray-200 dark:border-[#89986D]/20 shadow-sm">
-        <div className="flex items-center space-x-2">
-          <div className="w-8 h-8 rounded-lg bg-[#2F8F46] flex items-center justify-center text-white font-bold">F</div>
-          <span className="text-lg font-bold text-gray-900 dark:text-[#F6F0D7]">FlavorAI</span>
-          <span className="text-[10px] px-2 py-0.5 rounded uppercase font-semibold bg-[#2F8F46]/20 text-[#2F8F46] dark:text-[#B7E35F]">
-            {role}
-          </span>
-        </div>
-        <button 
-          onClick={() => setMobileOpen(!mobileOpen)}
-          className="p-2 rounded-xl bg-gray-100 dark:bg-[#89986D]/10 text-gray-800 dark:text-[#F6F0D7] focus:outline-none"
-        >
-          {mobileOpen ? <FiX size={24} /> : <FiMenu size={24} />}
-        </button>
-      </div>
+      {/* Responsive floating dashboard menu control */}
+      <button
+        type="button"
+        onClick={() => setMobileOpen((open) => !open)}
+        aria-label={mobileOpen ? "Close dashboard menu" : "Open dashboard menu"}
+        aria-expanded={mobileOpen}
+        className="fixed bottom-[5.75rem] right-5 z-[60] flex h-13 w-13 items-center justify-center rounded-2xl border-2 border-emerald-500/35 bg-white text-emerald-700 shadow-[0_10px_28px_rgba(15,80,50,0.22)] transition hover:scale-105 hover:border-emerald-600 hover:shadow-[0_14px_34px_rgba(15,80,50,0.32)] dark:bg-slate-850 sm:bottom-[6.25rem] sm:right-6 sm:h-14 sm:w-14 sm:rounded-[22px] lg:hidden"
+      >
+        {mobileOpen ? <FiX size={23} /> : <FiMenu size={23} />}
+      </button>
 
       {/* Mobile Backdrop */}
       <AnimatePresence>
         {mobileOpen && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setMobileOpen(false)}
-            className="fixed inset-0 z-40 bg-black/60 lg:hidden backdrop-blur-sm"
+            className="fixed inset-0 z-40 bg-[#102016]/55 backdrop-blur-sm lg:hidden"
           />
         )}
       </AnimatePresence>
 
       {/* Sidebar Container */}
       <aside className={`
-        fixed lg:static inset-y-0 left-0 z-50 w-64 flex flex-col justify-between
-        bg-white dark:bg-black border-r border-gray-200 dark:border-[#89986D]/20 p-5 transition-transform duration-300 ease-in-out
+        fixed lg:sticky lg:top-[80px] inset-y-0 left-0 z-50 lg:z-40 w-64 lg:h-[calc(100vh-80px)] flex flex-col justify-between
+        border-r border-[#dfe8da] bg-[#fbfdf9] p-4 shadow-[8px_0_30px_rgba(40,70,45,0.04)] transition-transform duration-300 ease-in-out dark:border-white/10 dark:bg-[#111318] lg:p-5
         ${mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
       `}>
-        <div className="overflow-y-auto space-y-6 pt-14 lg:pt-0">
-          
-          {/* Logo & Brand */}
-          <div className="flex items-center space-x-3 px-2">
-            <div className="w-9 h-9 rounded-xl bg-[#2F8F46] flex items-center justify-center text-white font-bold text-lg shadow-md shadow-[#2F8F46]/30">
-              F
+        <div className="dashboard-sidebar-scrollbar -mr-2 space-y-6 overflow-y-auto pt-0 pr-2">
+
+          {/* Dashboard identity */}
+          <div className="mb-3 flex items-center space-x-3 px-2">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#2F8F46] text-white shadow-md shadow-[#2F8F46]/30">
+              {isAdmin ? <FiShield size={20} /> : <FiHome size={20} />}
             </div>
             <div>
-              <h1 className="text-base font-bold tracking-wide text-gray-900 dark:text-[#F6F0D7]">FlavorAI</h1>
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#EAF7E8] dark:bg-[#EAF7E8]/10 text-[#2F8F46] dark:text-[#B7E35F] capitalize font-medium">
-                {role} Panel
+              <h1 className="text-base font-black tracking-tight text-gray-900 dark:text-[#F6F0D7]">{dashboardIdentity}</h1>
+              <span className="rounded-full bg-[#EAF7E8] px-2 py-1 text-[9px] font-bold capitalize tracking-wider text-[#2F8F46] dark:bg-[#EAF7E8]/10 dark:text-[#B7E35F]">
+                {isAdmin ? "Admin" : "Personal"}
               </span>
             </div>
           </div>
@@ -141,57 +126,10 @@ export default function DashboardSidebar() {
                       key={idx}
                       href={item.href}
                       onClick={() => setMobileOpen(false)}
-                      className={`flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-medium transition-all ${
-                        isActive 
-                          ? "bg-[#2F8F46] text-white shadow-md shadow-[#2F8F46]/20 font-semibold" 
-                          : "text-gray-600 dark:text-[#F6F0D7]/70 hover:bg-[#EAF7E8] dark:hover:bg-[#89986D]/15 hover:text-[#2F8F46] dark:hover:text-[#F6F0D7]"
-                      }`}
-                    >
-                      <span className="text-base">{item.icon}</span>
-                      <span>{item.name}</span>
-                    </Link>
-                  );
-                })}
-              </div>
-
-              {/* AI & TOOLS */}
-              <div className="space-y-1 pt-2">
-                <p className="px-2 text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-[#F6F0D7]/40 mb-2">AI & Tools</p>
-                {adminToolsItems.map((item, idx) => {
-                  const isActive = pathname === item.href;
-                  return (
-                    <Link
-                      key={idx}
-                      href={item.href}
-                      onClick={() => setMobileOpen(false)}
-                      className={`flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-medium transition-all ${
-                        isActive 
-                          ? "bg-[#2F8F46] text-white shadow-md shadow-[#2F8F46]/20 font-semibold" 
-                          : "text-gray-600 dark:text-[#F6F0D7]/70 hover:bg-[#EAF7E8] dark:hover:bg-[#89986D]/15 hover:text-[#2F8F46] dark:hover:text-[#F6F0D7]"
-                      }`}
-                    >
-                      <span className="text-base">{item.icon}</span>
-                      <span>{item.name}</span>
-                    </Link>
-                  );
-                })}
-              </div>
-
-              {/* SETTINGS */}
-              <div className="space-y-1 pt-2">
-                <p className="px-2 text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-[#F6F0D7]/40 mb-2">Settings</p>
-                {adminSettingsItems.map((item, idx) => {
-                  const isActive = pathname === item.href;
-                  return (
-                    <Link
-                      key={idx}
-                      href={item.href}
-                      onClick={() => setMobileOpen(false)}
-                      className={`flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-medium transition-all ${
-                        isActive 
-                          ? "bg-[#2F8F46] text-white shadow-md shadow-[#2F8F46]/20 font-semibold" 
-                          : "text-gray-600 dark:text-[#F6F0D7]/70 hover:bg-[#EAF7E8] dark:hover:bg-[#89986D]/15 hover:text-[#2F8F46] dark:hover:text-[#F6F0D7]"
-                      }`}
+                      className={`group flex items-center space-x-3 rounded-2xl px-3 py-2.5 text-xs font-medium transition-all hover:translate-x-0.5 ${isActive
+                          ? "bg-[#2F8F46] font-semibold text-white shadow-md shadow-[#2F8F46]/20"
+                          : "text-gray-600 hover:bg-[#edf6e9] hover:text-[#2F8F46] dark:text-[#F6F0D7]/70 dark:hover:bg-white/10 dark:hover:text-[#F6F0D7]"
+                        }`}
                     >
                       <span className="text-base">{item.icon}</span>
                       <span>{item.name}</span>
@@ -202,87 +140,137 @@ export default function DashboardSidebar() {
             </>
           ) : (
             <div className="space-y-6">
-              
+
               {/* MAIN Section */}
               <div>
                 <p className="px-3 text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">Main</p>
                 <div className="space-y-1">
                   {mainNavItems.map((item, idx) => {
-                    const isActive = pathname === item.href;
+                    const isActive = pathname === item.href || (item.href === "/dashboard/user" && pathname === "/dashboard/users");
                     return (
                       <Link
                         key={idx}
                         href={item.href}
                         onClick={() => setMobileOpen(false)}
-                        className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-xs transition-all ${
-                          isActive 
-                            ? "bg-[#EAF7E8] dark:bg-[#2F8F46]/20 font-bold text-[#176B35] dark:text-[#B7E35F]" 
-                            : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-[#89986D]/10 font-medium"
-                        }`}
+                        className={`group flex items-center justify-between rounded-2xl px-3 py-2.5 text-xs transition-all hover:translate-x-0.5 ${isActive
+                            ? "bg-[#eaf7e8] font-bold text-[#176B35] shadow-sm dark:bg-[#2F8F46]/20 dark:text-[#B7E35F]"
+                            : "font-medium text-gray-600 hover:bg-[#f0f6ed] dark:text-gray-400 dark:hover:bg-white/10"
+                          }`}
                       >
                         <div className="flex items-center gap-3">
-                          <span className="text-base">{item.icon}</span>
+                          <span className={`text-base transition-transform group-hover:scale-105 ${isActive ? "text-[#2F8F46] dark:text-[#b7df86]" : ""}`}>{item.icon}</span>
                           <span>{item.name}</span>
                         </div>
-                        {item.badge && (
-                          <span className="px-2 py-0.5 text-[9px] font-bold rounded-full bg-emerald-50 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 border border-emerald-200/50">
-                            ✨ {item.badge}
-                          </span>
-                        )}
+                        <div className="flex items-center gap-2">
+                          {item.badge && (
+                            <span className="px-2 py-0.5 text-[9px] font-bold rounded-full bg-emerald-50 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 border border-emerald-200/50">
+                              ✨ {item.badge}
+                            </span>
+                          )}
+                          {isActive && <div className="w-1.5 h-1.5 rounded-full bg-[#176B35] dark:bg-[#B7E35F]"></div>}
+                        </div>
                       </Link>
                     );
                   })}
                 </div>
               </div>
 
-              {/* MY KITCHEN Section */}
+              {/* AI TOOLS Section */}
               <div>
-                <p className="px-3 text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">My Kitchen</p>
-                <div className="space-y-1">
-                  {kitchenNavItems.map((item, idx) => {
-                    const isActive = pathname === item.href;
-                    return (
-                      <Link
-                        key={idx}
-                        href={item.href}
-                        onClick={() => setMobileOpen(false)}
-                        className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium transition-all ${
-                          isActive 
-                            ? "bg-[#EAF7E8] dark:bg-[#2F8F46]/20 font-bold text-[#176B35] dark:text-[#B7E35F]" 
-                            : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-[#89986D]/10"
-                        }`}
-                      >
-                        <span className="text-base">{item.icon}</span>
-                        <span>{item.name}</span>
-                      </Link>
-                    );
-                  })}
-                </div>
+                <button
+                  type="button"
+                  aria-expanded={aiToolsOpen}
+                  onClick={() => setAiToolsOpen(open => !open)}
+                  className="group flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-gray-400 transition-colors hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+                >
+                  <span className="flex items-center gap-2.5">
+                    <FiCpu className="h-3.5 w-3.5 text-gray-500 dark:text-gray-400" />
+                    AI Tools
+                  </span>
+                  <FiChevronDown className={`h-3.5 w-3.5 transition-transform duration-300 ${aiToolsOpen ? "rotate-180" : ""}`} />
+                </button>
+                <AnimatePresence initial={false}>
+                  {aiToolsOpen && (
+                    <motion.div
+                      key="ai-tools-menu"
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+                      className="overflow-hidden"
+                    >
+                      <div className="space-y-1 pt-1">
+                        {aiToolsNavItems.map((item, idx) => {
+                          const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+                          return (
+                            <Link
+                              key={idx}
+                              href={item.href}
+                              onClick={() => setMobileOpen(false)}
+                              className={`group flex items-center gap-3 rounded-2xl px-3 py-2.5 text-xs font-medium transition-all hover:translate-x-0.5 ${isActive
+                                  ? "bg-[#eaf7e8] font-bold text-[#176B35] shadow-sm dark:bg-[#2F8F46]/20 dark:text-[#B7E35F]"
+                                  : "text-gray-600 hover:bg-[#f0f6ed] dark:text-gray-400 dark:hover:bg-white/10"
+                                }`}
+                            >
+                              <span className={`text-base transition-transform group-hover:scale-105 ${isActive ? "text-[#2F8F46] dark:text-[#b7df86]" : ""}`}>{item.icon}</span>
+                              <span>{item.name}</span>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
               {/* COMMUNITY Section */}
               <div>
-                <p className="px-3 text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">Community</p>
-                <div className="space-y-1">
-                  {communityNavItems.map((item, idx) => {
-                    const isActive = pathname === item.href;
-                    return (
-                      <Link
-                        key={idx}
-                        href={item.href}
-                        onClick={() => setMobileOpen(false)}
-                        className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium transition-all ${
-                          isActive 
-                            ? "bg-[#EAF7E8] dark:bg-[#2F8F46]/20 font-bold text-[#176B35] dark:text-[#B7E35F]" 
-                            : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-[#89986D]/10"
-                        }`}
-                      >
-                        <span className="text-base">{item.icon}</span>
-                        <span>{item.name}</span>
-                      </Link>
-                    );
-                  })}
-                </div>
+                <button
+                  type="button"
+                  aria-expanded={communityOpen}
+                  onClick={() => setCommunityOpen(open => !open)}
+                  className="group flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-gray-400 transition-colors hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+                >
+                  <span className="flex items-center gap-2.5">
+                    <FiUsers className="h-3.5 w-3.5 text-gray-500 dark:text-gray-400" />
+                    Community
+                  </span>
+                  <FiChevronDown className={`h-3.5 w-3.5 transition-transform duration-300 ${communityOpen ? "rotate-180" : ""}`} />
+                </button>
+                <AnimatePresence initial={false}>
+                  {communityOpen && (
+                    <motion.div
+                      key="community-menu"
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+                      className="overflow-hidden"
+                    >
+                      <div className="space-y-1 pt-1">
+                        {communityNavItems.map((item, idx) => {
+                          const isActive = item.name === "Community Profile"
+                            ? pathname.startsWith("/community/users/")
+                            : pathname === item.href;
+                          return (
+                            <Link
+                              key={idx}
+                              href={item.href}
+                              onClick={() => setMobileOpen(false)}
+                              className={`group flex items-center gap-3 rounded-2xl px-3 py-2.5 text-xs font-medium transition-all hover:translate-x-0.5 ${isActive
+                                  ? "bg-[#eaf7e8] font-bold text-[#176B35] shadow-sm dark:bg-[#2F8F46]/20 dark:text-[#B7E35F]"
+                                  : "text-gray-600 hover:bg-[#f0f6ed] dark:text-gray-400 dark:hover:bg-white/10"
+                                }`}
+                            >
+                              <span className={`text-base transition-transform group-hover:scale-105 ${isActive ? "text-[#2F8F46] dark:text-[#b7df86]" : ""}`}>{item.icon}</span>
+                              <span>{item.name}</span>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
             </div>
@@ -291,28 +279,23 @@ export default function DashboardSidebar() {
 
 
 
-        {/* Bottom User Profile Preview */}
-        
-        <div className="space-y-3 pt-4 border-t border-gray-200 dark:border-[#89986D]/20">
-          <div className="flex items-center justify-between px-2 pt-1">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 rounded-full bg-[#2F8F46]/20 text-[#2F8F46] dark:text-[#B7E35F] flex items-center justify-center font-bold text-xs">
-                {isAdmin ? "A" : "N"}
-              </div>
-              <div className="overflow-hidden">
-                <h4 className="text-xs font-bold text-gray-900 dark:text-[#F6F0D7] truncate">
-                  {isAdmin ? "Admin User" : "Nazmul Hossain"}
-                </h4>
-                <p className="text-[10px] text-gray-400 dark:text-[#F6F0D7]/60 truncate">
-                  {isAdmin ? "admin@flavorai.com" : "nazmul@flavorai.com"}
-                </p>
-              </div>
-            </div>
-            <Link href="/login" className="text-red-500 hover:text-red-600 p-1">
-              <FiLogOut size={16} />
-            </Link>
+        {/* Upgrade to Pro & User Profile Preview */}
 
-          </div>
+        <div className="mt-auto space-y-4 pt-6">
+          {!isAdmin && (
+            <div className="rounded-[22px] border border-[#cce2c4] bg-[#edf7e9] p-4 shadow-sm dark:border-[#2F8F46]/20 dark:bg-[#2F8F46]/10">
+              <p className="text-[10px] text-gray-600 dark:text-[#F6F0D7]/60 mb-3 leading-relaxed">
+                Unlock advanced AI tools, custom meal plans, and more.
+              </p>
+              <Link href="/pro" className="w-full py-2 bg-[#2F8F46] hover:bg-[#257338] text-white text-[11px] font-bold rounded-xl shadow-md transition flex items-center justify-center gap-2">
+                <span aria-hidden="true">👑</span>
+                <span>Upgrade to Pro</span>
+                <span>→</span>
+              </Link>
+            </div>
+          )}
+
+
         </div>
       </aside>
     </>
